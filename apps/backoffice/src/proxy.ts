@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 const PUBLIC_ROUTES = new Set([
 	'/sign-in',
 	'/forgot-password',
-	'reset-password',
+	'/reset-password',
 ]);
 
 async function proxy(request: NextRequest) {

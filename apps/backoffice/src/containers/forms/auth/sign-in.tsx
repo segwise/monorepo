@@ -33,7 +33,8 @@ function FormSignIn() {
 		},
 	});
 
-	const isSubmit = !(!form.formState.isValid || !form.formState.isDirty);
+	const { isDirty, isValid } = form.formState;
+	const isSubmit = isValid && isDirty;
 
 	function handler(_: SignIn) {
 		router.push('/');
@@ -96,13 +97,13 @@ function FormSignIn() {
 					/>
 					<Link
 						href='/forgot-password'
-						className='text-sm font-normal underline underline-offset-4'
+						className='text-sm underline underline-offset-3'
 					>
 						Esqueceu a senha?
 					</Link>
 				</div>
 				<Button className='w-full' type='submit' disabled={!isSubmit}>
-					Entrar
+					Acessar
 				</Button>
 			</form>
 		</Form>
