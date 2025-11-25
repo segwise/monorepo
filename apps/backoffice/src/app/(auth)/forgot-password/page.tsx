@@ -2,7 +2,7 @@ import { ArrowLeftIcon } from 'lucide-react';
 import Link from 'next/link';
 import { FormForgotPassword } from '@/containers/forms/auth/forgot-password';
 
-function ForgotPage() {
+function ForgotPasswordPage() {
 	return (
 		<div className='min-h-screen grid lg:grid-cols-2'>
 			<div className='flex items-center justify-center p-8 lg:p-12'>
@@ -64,4 +64,4 @@ function ForgotPage() {
 	);
 }
 
-export default ForgotPage;
+export default ForgotPasswordPage;
