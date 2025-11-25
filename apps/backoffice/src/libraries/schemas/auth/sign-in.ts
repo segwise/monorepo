@@ -1,12 +1,12 @@
 import z from 'zod';
 import { SchemaEmail } from '@/schemas/utils/email';
-import { SchemaPassword } from '@/schemas/utils/password';
+import { SchemaPasswordDefault } from '@/schemas/utils/password';
 import { SchemaRememberPassword } from '@/schemas/utils/remember-password';
 
 const SchemaAuthSignIn = z
 	.object({
 		email: SchemaEmail,
-		password: SchemaPassword,
+		password: SchemaPasswordDefault,
 		remember_password: SchemaRememberPassword,
 	})
 	.strict();
