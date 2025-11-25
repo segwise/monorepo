@@ -34,22 +34,11 @@ function FormForgotPassword() {
 	const isSubmit = isValid && isDirty;
 
 	function handler(_: ForgotPassword) {
-		const id = 'forgot-password';
-
-		const toasts = toast
-			.getToasts()
-			.flatMap((toast) => toast.id)
-			.filter((current) => current !== id);
-
-		for (const id of toasts) {
-			toast.dismiss(id);
-		}
+		toast.dismiss();
 
 		toast.success('E-mail enviado com sucesso!', {
-			id,
 			description:
 				'Verifique sua caixa de e-mail para confirmar o link de redefinição de senha.',
-			duration: Infinity,
 		});
 
 		router.push('/sign-in');

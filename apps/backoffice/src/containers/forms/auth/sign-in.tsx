@@ -38,20 +38,9 @@ function FormSignIn() {
 	const isSubmit = isValid && isDirty;
 
 	function handler(_: SignIn) {
-		const id = 'sign-in';
+		toast.dismiss();
 
-		const toasts = toast
-			.getToasts()
-			.flatMap((toast) => toast.id)
-			.filter((current) => current !== id);
-
-		for (const id of toasts) {
-			toast.dismiss(id);
-		}
-
-		toast.success('Logado com sucesso!', {
-			id,
-		});
+		toast.success('Logado com sucesso!');
 
 		router.push('/');
 	}
