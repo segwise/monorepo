@@ -1,5 +1,5 @@
 import { Indicator, Root } from '@radix-ui/react-checkbox';
-import { Check } from 'lucide-react';
+import { CheckIcon } from 'lucide-react';
 import { forwardRef } from 'react';
 import { cn } from '@/utils';
 
@@ -17,7 +17,7 @@ const Checkbox = forwardRef<
 		{...props}
 	>
 		<Indicator className='grid place-content-center text-current'>
-			<Check className='size-4' />
+			<CheckIcon className='size-4' />
 		</Indicator>
 	</Root>
 ));

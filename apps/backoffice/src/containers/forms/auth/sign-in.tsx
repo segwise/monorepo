@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import type { SignIn } from '@/@types/auth/sign-in';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -37,6 +38,21 @@ function FormSignIn() {
 	const isSubmit = isValid && isDirty;
 
 	function handler(_: SignIn) {
+		const id = 'sign-in';
+
+		const toasts = toast
+			.getToasts()
+			.flatMap((toast) => toast.id)
+			.filter((current) => current !== id);
+
+		for (const id of toasts) {
+			toast.dismiss(id);
+		}
+
+		toast.success('Logado com sucesso!', {
+			id,
+		});
+
 		router.push('/');
 	}
 
