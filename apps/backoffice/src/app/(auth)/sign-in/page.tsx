@@ -40,7 +40,7 @@ function SingnInPage() {
 						</p>
 					</div>
 					<FormSignIn />
-					<div className='mt-12 text-center text-sm text-slate-500'>
+					<div className='mt-12 text-center text-sm text-muted-foreground'>
 						<p>
 							© {new Date().getUTCFullYear()} Segwise. Todos os direitos
 							reservados.

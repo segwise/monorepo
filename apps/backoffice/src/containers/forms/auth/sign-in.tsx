@@ -49,7 +49,11 @@ function FormSignIn() {
 						<FormItem>
 							<FormLabel>Email</FormLabel>
 							<FormControl>
-								<Input {...field} />
+								<Input
+									{...field}
+									placeholder='Digite seu e-mail'
+									autoComplete='off'
+								/>
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -62,7 +66,11 @@ function FormSignIn() {
 						<FormItem>
 							<FormLabel>Senha</FormLabel>
 							<FormControl>
-								<Input {...field} />
+								<Input
+									{...field}
+									placeholder='Digite sua senha'
+									autoComplete='off'
+								/>
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -86,7 +94,10 @@ function FormSignIn() {
 							</FormItem>
 						)}
 					/>
-					<Link href='/forgot-password' className='text-sm font-normal'>
+					<Link
+						href='/forgot-password'
+						className='text-sm font-normal underline underline-offset-4'
+					>
 						Esqueceu a senha?
 					</Link>
 				</div>
