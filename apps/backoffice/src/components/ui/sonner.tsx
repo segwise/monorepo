@@ -3,12 +3,12 @@
 import {
 	CircleCheckIcon,
 	InfoIcon,
-	LoaderCircleIcon,
 	OctagonXIcon,
 	TriangleAlertIcon,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Toaster as Sonner } from 'sonner';
+import { Spinner } from './spinner';
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -24,7 +24,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 				info: <InfoIcon className='size-4' />,
 				warning: <TriangleAlertIcon className='size-4' />,
 				error: <OctagonXIcon className='size-4' />,
-				loading: <LoaderCircleIcon className='size-4 animate-spin' />,
+				loading: <Spinner />,
 			}}
 			toastOptions={{
 				classNames: {
