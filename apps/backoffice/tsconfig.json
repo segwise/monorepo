@@ -28,7 +28,9 @@
 			"@/utils": ["libraries/utils"],
 			"@/hooks/*": ["libraries/hooks/*"],
 			"@/helpers/*": ["libraries/helpers/*"],
-			"@/schemas/*": ["libraries/schemas/*"]
+			"@/schemas/*": ["libraries/schemas/*"],
+			"@/providers/*": ["providers/*"],
+			"@/auth": ["libraries/auth"]
 		}
 	},
 	"include": [

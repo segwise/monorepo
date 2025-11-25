@@ -10,7 +10,10 @@ const PUBLIC_ROUTES = new Set([
 async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
-	const session = await getCookieCache(request);
+	const session = await getCookieCache(request, {
+		cookiePrefix: 'auth',
+		isSecure: true,
+	});
 
 	if (session && PUBLIC_ROUTES.has(pathname)) {
 		return NextResponse.redirect(new URL('/', request.url));

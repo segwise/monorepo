@@ -10,8 +10,8 @@ const SchemaPasswordLengthMin = SchemaPasswordDefault.min(
 );
 
 const SchemaPasswordLengthMax = SchemaPasswordDefault.max(
-	30,
-	'Máximo 30 caracteres',
+	128,
+	'Máximo 128 caracteres',
 );
 
 const SchemaPasswordIncludeUppercase = SchemaPasswordDefault.refine(

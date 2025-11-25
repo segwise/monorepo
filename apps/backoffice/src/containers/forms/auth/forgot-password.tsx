@@ -15,10 +15,13 @@ import {
 	FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useForgotPassword } from '@/libraries/hooks/auth/forgot-password';
 import { SchemaAuthForgotPassword } from '@/libraries/schemas/auth/forgot-password';
 
 function FormForgotPassword() {
 	const router = useRouter();
+
+	const { mutate, isPending } = useForgotPassword();
 
 	const form = useForm({
 		mode: 'all',
@@ -31,17 +34,24 @@ function FormForgotPassword() {
 	});
 
 	const { isDirty, isValid } = form.formState;
-	const isSubmit = isValid && isDirty;
+	const isSubmit = !isPending && isValid && isDirty;
 
-	function handler(_: ForgotPassword) {
+	function handler({ email }: ForgotPassword) {
 		toast.dismiss();
 
-		toast.success('E-mail enviado com sucesso!', {
-			description:
-				'Verifique sua caixa de e-mail para confirmar o link de redefinição de senha.',
-		});
+		mutate(
+			{ email },
+			{
+				onSuccess() {
+					toast.success('E-mail enviado com sucesso!');
 
-		router.push('/sign-in');
+					router.push('/');
+				},
+				onError(error) {
+					toast.error(error.message);
+				},
+			},
+		);
 	}
 
 	return (

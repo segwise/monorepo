@@ -17,10 +17,13 @@ import {
 	FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useSignIn } from '@/libraries/hooks/auth/sign-in';
 import { SchemaAuthSignIn } from '@/libraries/schemas/auth/sign-in';
 
 function FormSignIn() {
 	const router = useRouter();
+
+	const { mutate, isPending } = useSignIn();
 
 	const form = useForm({
 		mode: 'all',
@@ -35,14 +38,24 @@ function FormSignIn() {
 	});
 
 	const { isDirty, isValid } = form.formState;
-	const isSubmit = isValid && isDirty;
+	const isSubmit = !isPending && isValid && isDirty;
 
-	function handler(_: SignIn) {
+	function handler({ email, password, remember_password }: SignIn) {
 		toast.dismiss();
 
-		toast.success('Logado com sucesso!');
+		mutate(
+			{ email, password, remember_password },
+			{
+				onSuccess() {
+					toast.success('Logado com sucesso!');
 
-		router.push('/');
+					router.push('/');
+				},
+				onError(error) {
+					toast.error(error.message);
+				},
+			},
+		);
 	}
 
 	return (
