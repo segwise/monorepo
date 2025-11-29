@@ -66,7 +66,7 @@ function FormResetPassword() {
 						<FormItem>
 							<FormLabel>Nova senha</FormLabel>
 							<FormControl>
-								<Input {...field} autoComplete='off' />
+								<Input {...field} autoComplete='off' type='password' />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -79,7 +79,7 @@ function FormResetPassword() {
 						<FormItem>
 							<FormLabel>Confirmar senha</FormLabel>
 							<FormControl>
-								<Input {...field} autoComplete='off' />
+								<Input {...field} autoComplete='off' type='password' />
 							</FormControl>
 							<FormMessage />
 						</FormItem>

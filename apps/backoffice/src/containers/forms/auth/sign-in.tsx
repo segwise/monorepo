@@ -89,6 +89,7 @@ function FormSignIn() {
 									{...field}
 									placeholder='Digite sua senha'
 									autoComplete='off'
+									type='password'
 								/>
 							</FormControl>
 							<FormMessage />
