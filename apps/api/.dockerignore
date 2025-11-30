@@ -1,0 +1,26 @@
+# Dependências e caches
+node_modules
+bun.lock*
+.cache
+*.log
+
+# Builds locais
+dist
+tmp
+.DS_Store
+
+# Controle de versão
+.git
+.gitignore
+
+# Ambiente local
+.env
+.env.*
+.vscode
+.idea
+
+# Certificados
+cert
+
+# Generated
+/src/generated
