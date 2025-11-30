@@ -55,6 +55,8 @@ RUN chmod +x ./entrypoint.sh
 
 RUN --mount=type=secret,id=DATABASE_URL,env=DATABASE_URL
 
+ENV DATABASE_URL=$DATABASE_URL
+
 ENV PORT=3000
 ENV NODE_ENV=production
 
