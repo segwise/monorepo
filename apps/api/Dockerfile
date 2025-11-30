@@ -19,11 +19,9 @@ RUN bun --bun install --frozen-lockfile
 
 COPY . .
 
-RUN --mount=type=secret,id=database_url,env=DATABASE_URL
-
-ENV DATABASE_URL=$DATABASE_URL
-    
-RUN bun --bun run db:generate
+RUN --mount=type=secret,id=database_url,env=DATABASE_URL \
+    DATABASE_URL=$DATABASE_URL \
+    bun --bun run db:generate
 
 RUN bun --bun run build
 
