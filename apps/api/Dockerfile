@@ -32,6 +32,8 @@ ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET \
 RUN bun --bun run db:generate
 
 # RUN bun --bun run build:seed
+RUN bun --bun run db:deploy
+
 RUN bun --bun run build
 
 FROM oven/bun:1.3.0-slim AS runner
@@ -55,12 +57,6 @@ COPY --from=builder /app/prisma/schema.prisma ./prisma/schema.prisma
 COPY --from=builder /app/prisma.config.ts ./
 
 COPY --from=builder /app/src/generated ./src/generated
-
-# COPY --from=builder /app/entrypoint.sh ./
-
-# RUN chmod +x ./entrypoint.sh
-
-RUN bun --bun run db:deploy
 
 ENV PORT=3000
 ENV NODE_ENV=production
