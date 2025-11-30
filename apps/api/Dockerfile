@@ -19,19 +19,18 @@ RUN bun --bun install --frozen-lockfile
 
 COPY . .
 
-ARG URL_APPLICATION
-ARG BETTER_AUTH_URL
-ARG BETTER_AUTH_SECRET
-ARG DATABASE_URL
-ARG CACHE_URL
-ARG RESEND_API_KEY
-
-ENV URL_APPLICATION=$URL_APPLICATION \
-    BETTER_AUTH_URL=$BETTER_AUTH_URL \
-    BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET \
-    DATABASE_URL=$DATABASE_URL \
-    CACHE_URL=$CACHE_URL \
-    RESEND_API_KEY=$RESEND_API_KEY
+RUN --mount=type=secret,id=url_application \
+    --mount=type=secret,id=better_auth_url \
+    --mount=type=secret,id=better_auth_secret \
+    --mount=type=secret,id=database_url \
+    --mount=type=secret,id=cache_url \
+    --mount=type=secret,id=resend_api_key \
+    URL_APPLICATION=$(cat /run/secrets/url_application) \
+    BETTER_AUTH_URL=$(cat /run/secrets/better_auth_url) \
+    BETTER_AUTH_SECRET=$(cat /run/secrets/better_auth_secret) \
+    DATABASE_URL=$(cat /run/secrets/database_url) \
+    CACHE_URL=$(cat /run/secrets/cache_url) \
+    RESEND_API_KEY=$(cat /run/secrets/resend_api_key)
 
 RUN bun --bun run db:generate
 
@@ -63,20 +62,20 @@ COPY --from=builder /app/entrypoint.sh ./
 
 RUN chmod +x ./entrypoint.sh
 
-ARG URL_APPLICATION
-ARG BETTER_AUTH_URL
-ARG BETTER_AUTH_SECRET
-ARG DATABASE_URL
-ARG CACHE_URL
-ARG RESEND_API_KEY
-
-ENV URL_APPLICATION=$URL_APPLICATION \
-    BETTER_AUTH_URL=$BETTER_AUTH_URL \
-    BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET \
-    DATABASE_URL=$DATABASE_URL \
-    CACHE_URL=$CACHE_URL \
-    RESEND_API_KEY=$RESEND_API_KEY \
-    PORT=3000 \
-    NODE_ENV=production
+RUN --mount=type=secret,id=url_application \
+    --mount=type=secret,id=better_auth_url \
+    --mount=type=secret,id=better_auth_secret \
+    --mount=type=secret,id=database_url \
+    --mount=type=secret,id=cache_url \
+    --mount=type=secret,id=resend_api_key \
+    URL_APPLICATION=$(cat /run/secrets/url_application) \
+    BETTER_AUTH_URL=$(cat /run/secrets/better_auth_url) \
+    BETTER_AUTH_SECRET=$(cat /run/secrets/better_auth_secret) \
+    DATABASE_URL=$(cat /run/secrets/database_url) \
+    CACHE_URL=$(cat /run/secrets/cache_url) \
+    RESEND_API_KEY=$(cat /run/secrets/resend_api_key)
+    
+ENV PORT=3000
+ENV NODE_ENV=production
 
 ENTRYPOINT ["./entrypoint.sh"]
