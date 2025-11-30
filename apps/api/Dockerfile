@@ -19,8 +19,8 @@ RUN bun --bun install --frozen-lockfile
 
 COPY . .
 
-RUN --mount=type=secret,id=url_application,env=URL_APPLICATION \
-    URL_APPLICATION=/run/secrets/url_application
+RUN --mount=type=secret,id=database_url,env=DATABASE_URL \
+    DATABASE_URL=/run/secrets/database_url
 
 RUN bun --bun run db:generate
 
@@ -54,8 +54,8 @@ COPY --from=builder /app/entrypoint.sh ./
 
 RUN chmod +x ./entrypoint.sh
 
-RUN --mount=type=secret,id=url_application,env=URL_APPLICATION \
-    URL_APPLICATION=/run/secrets/url_application
+RUN --mount=type=secret,id=database_url,env=DATABASE_URL \
+    DATABASE_URL=/run/secrets/database_url
 
 ENV PORT=3000
 ENV NODE_ENV=production
