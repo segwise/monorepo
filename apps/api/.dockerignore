@@ -14,7 +14,7 @@ tmp
 .gitignore
 
 # Ambiente local
-.env
+# .env
 .env.*
 .vscode
 .idea
