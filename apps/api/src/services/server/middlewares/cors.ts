@@ -1,13 +1,9 @@
 import { cors } from 'hono/cors';
 import type { MiddlewareHandler } from '@/@types/server';
+import { environment } from '@/libraries/environment';
 
 const corsMiddleware: MiddlewareHandler = cors({
-	origin: 'http://localhost:3000',
-	credentials: true,
-});
-
-const corsAuthMiddleware: MiddlewareHandler = cors({
-	origin: 'http://localhost:3000',
+	origin: environment.URL_APPLICATION,
 	allowHeaders: ['Content-Type', 'Authorization'],
 	allowMethods: ['POST', 'GET', 'OPTIONS'],
 	exposeHeaders: ['Content-Length'],
@@ -15,4 +11,4 @@ const corsAuthMiddleware: MiddlewareHandler = cors({
 	credentials: true,
 });
 
-export { corsMiddleware, corsAuthMiddleware };
+export { corsMiddleware };

@@ -6,7 +6,9 @@ import { database } from '@/services/database';
 import { email } from '@/services/email';
 
 const auth = betterAuth({
-	trustedOrigins: ['http://localhost:3000'],
+	baseURL: environment.BETTER_AUTH_URL[0],
+	secret: environment.BETTER_AUTH_SECRET,
+	trustedOrigins: [environment.URL_APPLICATION],
 	basePath: '/auth',
 	database: prismaAdapter(database, {
 		provider: 'postgresql',
