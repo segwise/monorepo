@@ -6,7 +6,7 @@ import { database } from '@/services/database';
 import { email } from '@/services/email';
 
 const auth = betterAuth({
-	baseURL: environment.BETTER_AUTH_URL[0],
+	baseURL: environment.BETTER_AUTH_URL,
 	secret: environment.BETTER_AUTH_SECRET,
 	trustedOrigins: [environment.URL_APPLICATION],
 	basePath: '/auth',
