@@ -81,4 +81,4 @@ ENV PORT=3000
 ENV NODE_ENV=production
 
 # ENTRYPOINT ["./entrypoint.sh"]
-CMD ["bun --bun", "run", "start"]
+CMD ["bun", "--bun run", "start"]
