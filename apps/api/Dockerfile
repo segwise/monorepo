@@ -1,4 +1,4 @@
-FROM oven/bun:1.3.0 AS base-deps
+FROM oven/bun:1.3.0 AS base
 
 RUN apt-get update && apt-get install -y \
   python3 \
@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
   libssl-dev \
   && rm -rf /var/lib/apt/lists/*
 
-FROM base-deps AS builder
+FROM base AS builder
 
 WORKDIR /app
 
@@ -30,9 +30,6 @@ ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET \
     RESEND_API_KEY=$RESEND_API_KEY
 
 RUN bun --bun run db:generate
-
-# RUN bun --bun run build:seed
-RUN bun --bun run db:deploy
 
 RUN bun --bun run build
 
@@ -58,7 +55,20 @@ COPY --from=builder /app/prisma.config.ts ./
 
 COPY --from=builder /app/src/generated ./src/generated
 
-ENV PORT=3000
-ENV NODE_ENV=production
+COPY --from=builder /app/entrypoint.sh ./
+
+RUN chmod +x ./entrypoint.sh
+
+ARG BETTER_AUTH_SECRET
+ARG DATABASE_URL
+ARG CACHE_URL
+ARG RESEND_API_KEY
+
+ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET \
+    DATABASE_URL=$DATABASE_URL \
+    CACHE_URL=$CACHE_URL \
+    RESEND_API_KEY=$RESEND_API_KEY \
+    PORT=3000 \
+    NODE_ENV=production
 
 CMD ["bun", "--bun run", "start"]
