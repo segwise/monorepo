@@ -51,11 +51,7 @@ COPY --from=builder /app/entrypoint.sh ./
 
 RUN chmod +x ./entrypoint.sh
 
-RUN --mount=type=secret,id=database_url,env=DATABASE_URL \
-    DATABASE_URL=$DATABASE_URL
-
 ENV PORT=3000
 ENV NODE_ENV=production
 
-# ENTRYPOINT ["./entrypoint.sh"]
-CMD ["bun", "--bun run", "start"]
+ENTRYPOINT ["./entrypoint.sh"]
