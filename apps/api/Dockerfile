@@ -19,6 +19,16 @@ RUN bun --bun install --frozen-lockfile
 
 COPY . .
 
+ARG BETTER_AUTH_SECRET
+ARG DATABASE_URL
+ARG CACHE_URL
+ARG RESEND_API_KEY
+
+ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET \
+    DATABASE_URL=$DATABASE_URL \
+    CACHE_URL=$CACHE_URL \
+    RESEND_API_KEY=$RESEND_API_KEY
+
 RUN bun --bun run db:generate
 
 # RUN bun --bun run build:seed
