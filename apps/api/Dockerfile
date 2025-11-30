@@ -79,4 +79,4 @@ ENV URL_APPLICATION=$URL_APPLICATION \
     PORT=3000 \
     NODE_ENV=production
 
-CMD ["bun", "--bun run", "start"]
+ENTRYPOINT ["./entrypoint.sh"]
