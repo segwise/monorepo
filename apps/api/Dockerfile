@@ -20,7 +20,7 @@ RUN bun --bun install --frozen-lockfile
 COPY . .
 
 RUN --mount=type=secret,id=url_application,env=URL_APPLICATION \
-    URL_APPLICATION=$(cat /run/secrets/url_application)
+    URL_APPLICATION=/run/secrets/url_application
 
 RUN bun --bun run db:generate
 
@@ -55,7 +55,7 @@ COPY --from=builder /app/entrypoint.sh ./
 RUN chmod +x ./entrypoint.sh
 
 RUN --mount=type=secret,id=url_application,env=URL_APPLICATION \
-    URL_APPLICATION=$(cat /run/secrets/url_application)
+    URL_APPLICATION=/run/secrets/url_application
 
 ENV PORT=3000
 ENV NODE_ENV=production
