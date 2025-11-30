@@ -17,6 +17,7 @@ import {
 	FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { useSignIn } from '@/libraries/hooks/auth/sign-in';
 import { SchemaAuthSignIn } from '@/libraries/schemas/auth/sign-in';
 
@@ -122,7 +123,13 @@ function FormSignIn() {
 					</Link>
 				</div>
 				<Button className='w-full' type='submit' disabled={!isSubmit}>
-					Acessar
+					{!isPending && 'Acessar'}
+					{isPending && (
+						<>
+							Acessando
+							<Spinner />
+						</>
+					)}
 				</Button>
 			</form>
 		</Form>

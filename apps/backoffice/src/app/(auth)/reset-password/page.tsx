@@ -1,3 +1,5 @@
+import Image from 'next/image';
+import { brand } from '@/config/brand';
 import { FormResetPassword } from '@/containers/forms/auth/reset-password';
 
 function ResetPasswordPage() {
@@ -7,28 +9,19 @@ function ResetPasswordPage() {
 				<div className='w-full max-w-md'>
 					<div className='mb-4'>
 						<div className='flex flex-row items-center justify-start gap-x-2 mb-10'>
-							<div className='inline-flex items-center justify-center size-12 rounded-sm bg-primary'>
-								<svg
-									className='size-6 text-white'
-									fill='none'
-									viewBox='0 0 24 24'
-									stroke='currentColor'
-								>
-									<title>SVG</title>
-									<path
-										strokeLinecap='round'
-										strokeLinejoin='round'
-										strokeWidth={2}
-										d='M13 10V3L4 14h7v7l9-11h-7z'
-									/>
-								</svg>
-							</div>
+							<Image
+								src={brand.icon}
+								alt={brand.name}
+								priority
+								quality={100}
+								className='aspect-square size-14 object-contain object-center rounded-sm bg-primary'
+							/>
 							<div className='leading-none'>
 								<span className='block text-lg font-bold leading-none mb-1'>
-									Segwise
+									{brand.name}
 								</span>
 								<span className='block text-sm font-medium text-muted-foreground leading-none'>
-									Gestão de corretoras de seguros
+									{brand.slogan}
 								</span>
 							</div>
 						</div>
@@ -42,7 +35,7 @@ function ResetPasswordPage() {
 					<FormResetPassword />
 					<div className='mt-12 text-center text-sm text-muted-foreground'>
 						<p>
-							© {new Date().getUTCFullYear()} Segwise. Todos os direitos
+							© {new Date().getUTCFullYear()} {brand.name}. Todos os direitos
 							reservados.
 						</p>
 					</div>

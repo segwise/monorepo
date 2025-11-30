@@ -12,7 +12,7 @@ function RootLayout({
 }>) {
 	return (
 		<html lang='pt-BR'>
-			<body className={cn('', inter.variable, inter.className)}>
+			<body className={cn(inter.variable, inter.className)}>
 				<Providers>{children}</Providers>
 				<Toaster />
 			</body>

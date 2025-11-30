@@ -1,13 +1,13 @@
 import { BASE_ERROR_CODES } from '@better-auth/core/error';
 import { useMutation } from '@tanstack/react-query';
 import type { SignIn } from '@/@types/auth/sign-in';
-import { signIn } from '@/auth';
+import { auth } from '@/auth';
 
 const useSignIn = () =>
 	useMutation<unknown, Error, SignIn>({
 		mutationKey: ['auth', 'sign-in'],
 		mutationFn: async ({ email, password, remember_password }) =>
-			await signIn.email(
+			await auth.signIn.email(
 				{
 					email,
 					password,

@@ -1,12 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 import type { ForgotPassword } from '@/@types/auth/forgot-password';
-import { requestPasswordReset } from '@/auth';
+import { auth } from '@/auth';
 
 const useForgotPassword = () =>
 	useMutation<unknown, Error, ForgotPassword>({
 		mutationKey: ['auth', 'forgot-password'],
 		mutationFn: async ({ email }) =>
-			await requestPasswordReset(
+			await auth.requestPasswordReset(
 				{
 					email,
 				},

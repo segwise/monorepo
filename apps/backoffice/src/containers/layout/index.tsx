@@ -1,15 +1,19 @@
 import { cookies } from 'next/headers';
-import { AppSidebar } from '@/components/app-sidebar';
+import { use } from 'react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { Sidebar } from './sidebar';
 
-async function Layout({ children }: React.PropsWithChildren) {
-	const cookieStore = await cookies();
-	const defaultOpen = cookieStore.get('sidebar_state')?.value === 'true';
+function Layout({ children }: React.PropsWithChildren) {
+	const cookieStore = use(cookies());
+
+	const cookie = cookieStore.get('sidebar_state')?.value;
+
+	const defaultOpen = cookie === 'true';
 
 	return (
-		<SidebarProvider defaultOpen={defaultOpen}>
-			<AppSidebar />
-			<SidebarInset>{children}</SidebarInset>
+		<SidebarProvider defaultOpen={!cookie ? true : defaultOpen}>
+			<Sidebar />
+			<SidebarInset className='light'>{children}</SidebarInset>
 		</SidebarProvider>
 	);
 }

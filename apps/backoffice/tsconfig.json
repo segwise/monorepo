@@ -21,6 +21,7 @@
 		"baseUrl": "./src",
 		"paths": {
 			"@/*": ["*"],
+			"@/public/*": ["../public/*"],
 			"@/@types/*": ["@types/*"],
 			"@/styles": ["styles/globals.css"],
 			"@/styles/*": ["styles/*"],
@@ -30,7 +31,9 @@
 			"@/helpers/*": ["libraries/helpers/*"],
 			"@/schemas/*": ["libraries/schemas/*"],
 			"@/providers/*": ["providers/*"],
-			"@/auth": ["libraries/auth"]
+			"@/auth": ["libraries/auth"],
+			"@/data/*": ["data/*"],
+			"@/config/*": ["config/*"]
 		}
 	},
 	"include": [
