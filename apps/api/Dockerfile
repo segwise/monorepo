@@ -25,7 +25,7 @@ RUN --mount=type=secret,id=url_application,target=/root/.aws/credentials \
     --mount=type=secret,id=database_url \
     --mount=type=secret,id=cache_url \
     --mount=type=secret,id=resend_api_key \
-    URL_APPLICATION=$(cat /root/.aws/credentials)
+    URL_APPLICATION=/root/.aws/credentials
 
 #  
 #      \
