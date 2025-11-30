@@ -19,13 +19,13 @@ RUN bun --bun install --frozen-lockfile
 
 COPY . .
 
-RUN --mount=type=secret,id=url_application,target=/root/.aws/credentials \
+RUN --mount=type=secret,id=url_application,target=/root/url_application/credentials \
     --mount=type=secret,id=better_auth_url \
     --mount=type=secret,id=better_auth_secret \
     --mount=type=secret,id=database_url \
     --mount=type=secret,id=cache_url \
     --mount=type=secret,id=resend_api_key \
-    URL_APPLICATION=/root/.aws/credentials
+    URL_APPLICATION=/root/url_application/credentials
 
 #  
 #      \
