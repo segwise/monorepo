@@ -1,7 +1,9 @@
 
-FROM oven/bun:1.3.0 AS base
+FROM node:22.14-alpine AS base
 
 WORKDIR /app
+
+RUN npm install -g bun@1.3.2
 
 FROM base AS builder
 
