@@ -49,6 +49,8 @@ COPY --from=builder /app/src/generated ./src/generated
 
 # RUN chmod +x ./entrypoint.sh
 
+RUN bun --bun run db:deploy
+
 ENV PORT=3000
 ENV NODE_ENV=production
 
