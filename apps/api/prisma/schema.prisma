@@ -19,9 +19,9 @@ model User {
   sessions Session[]
   accounts Account[]
 
-  role String?
+  role String
 
-  banned     Boolean?  @default(false)
+  banned     Boolean?
   banReason  String?   @map("ban_reason")
   banExpires DateTime? @map("ban_expires") @db.Date
 

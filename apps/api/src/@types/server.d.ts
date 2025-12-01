@@ -1,4 +1,3 @@
-import type { Auth } from 'better-auth';
 import type {
 	Context as HonoContext,
 	MiddlewareHandler as HonoMiddlewareHandler,
@@ -6,6 +5,7 @@ import type {
 import type { Resend } from 'resend';
 import type { Database } from '@/@types/database';
 import type { Environment } from '@/@types/environment';
+import type { auth } from '@/auth';
 import type { server } from '@/server';
 
 type Server = typeof server;
@@ -13,7 +13,7 @@ type Server = typeof server;
 type Bindings = Environment;
 
 type Variables = {
-	auth: Auth;
+	auth: typeof auth;
 	environment: Environment;
 	cache: Bun.RedisClient;
 	database: Database;
