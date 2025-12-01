@@ -98,7 +98,7 @@ const auth = betterAuth({
 		updateAge: 86400,
 		disableSessionRefresh: false,
 		storeSessionInDatabase: true,
-		preserveSessionInDatabase: true,
+		preserveSessionInDatabase: false,
 		cookieCache: {
 			enabled: false,
 		},
@@ -118,7 +118,7 @@ const auth = betterAuth({
 	},
 	secondaryStorage,
 	rateLimit: {
-		enabled: environment.NODE_ENV === 'production',
+		enabled: true,
 		modelName: 'rate_limit',
 		window: 10,
 		max: 100,
