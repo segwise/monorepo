@@ -1,10 +1,17 @@
 import { BASE_ERROR_CODES } from '@better-auth/core/error';
 import { useMutation } from '@tanstack/react-query';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 import type { SignIn } from '@/@types/auth/sign-in';
 import { auth } from '@/auth';
 
-const useSignIn = () =>
-	useMutation<unknown, Error, SignIn>({
+const useSignIn = () => {
+	const router = useRouter();
+	const searchParams = useSearchParams();
+
+	toast.dismiss();
+
+	return useMutation<unknown, Error, SignIn>({
 		mutationKey: ['auth', 'sign-in'],
 		mutationFn: async ({ email, password, remember_password }) =>
 			await auth.signIn.email(
@@ -37,6 +44,23 @@ const useSignIn = () =>
 					},
 				},
 			),
+		onSuccess() {
+			toast.success('Logado com sucesso!');
+
+			const callbackUrl = searchParams.get('callbackUrl');
+
+			if (callbackUrl) {
+				router.push(callbackUrl);
+
+				return;
+			}
+
+			router.push('/');
+		},
+		onError(error) {
+			toast.error(error.message);
+		},
 	});
+};
 
 export { useSignIn };
