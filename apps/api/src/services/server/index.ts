@@ -12,11 +12,6 @@ import { environmentMiddleware } from '@/server/middlewares/environment';
 
 const server = new Hono<AppBindings>({
 	strict: false,
-	getPath: (req) => {
-		console.log(req);
-
-		return '/';
-	},
 });
 
 server.use('/api/*', corsApiMiddleware);
@@ -28,9 +23,5 @@ server.use(environmentMiddleware);
 server.use(cacheMiddleware);
 server.use(databaseMiddleware);
 server.use(emailMiddleware);
-
-server.get('/', (ctx) => {
-	return ctx.json({});
-});
 
 export { server };
