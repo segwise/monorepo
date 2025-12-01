@@ -25,7 +25,7 @@ const auth = betterAuth({
 		autoSignIn: false,
 		async sendResetPassword({ user, url, token }) {
 			await email.emails.send({
-				from: 'Acme <onboarding@resend.dev>',
+				from: 'Acme <no-reply@segwise.com.br>',
 				to: user.email,
 				subject: 'Recuperação de senha',
 				html: `
@@ -48,7 +48,7 @@ const auth = betterAuth({
 	emailVerification: {
 		async sendVerificationEmail({ user, url, token }) {
 			await email.emails.send({
-				from: 'Acme <onboarding@resend.dev>',
+				from: 'Acme <no-reply@segwise.com.br>',
 				to: user.email,
 				subject: 'Verificação de e-mail',
 				html: `
@@ -67,7 +67,7 @@ const auth = betterAuth({
 			enabled: true,
 			async sendChangeEmailConfirmation({ newEmail, url, token }) {
 				await email.emails.send({
-					from: 'Acme <onboarding@resend.dev>',
+					from: 'Acme <no-reply@segwise.com.br>',
 					to: newEmail,
 					subject: 'Verificação de novo e-mail',
 					html: `
@@ -81,7 +81,7 @@ const auth = betterAuth({
 			enabled: true,
 			async sendDeleteAccountVerification({ user, url, token }) {
 				await email.emails.send({
-					from: 'Acme <onboarding@resend.dev>',
+					from: 'Acme <no-reply@segwise.com.br>',
 					to: user.email,
 					subject: 'Confirmação de exclusão de conta',
 					html: `

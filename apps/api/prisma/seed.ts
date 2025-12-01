@@ -29,6 +29,15 @@ async function seed() {
 				password: INIT.password,
 			},
 		});
+
+		await transaction.user.update({
+			where: {
+				email: INIT.email,
+			},
+			data: {
+				emailVerified: true,
+			},
+		});
 	});
 }
 
