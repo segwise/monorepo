@@ -8,7 +8,7 @@ const corsDefaultMiddleware: MiddlewareHandler = cors({
 });
 
 const corsAuthMiddleware: MiddlewareHandler = cors({
-	origin: environment.URL_APPLICATION,
+	origin: [environment.URL_APPLICATION, environment.BETTER_AUTH_URL],
 	allowHeaders: ['Content-Type', 'Authorization'],
 	allowMethods: ['POST', 'GET', 'OPTIONS'],
 	exposeHeaders: ['Content-Length'],
