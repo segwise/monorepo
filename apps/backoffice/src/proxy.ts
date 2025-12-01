@@ -1,5 +1,5 @@
-import { getCookieCache } from 'better-auth/cookies';
 import { type NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
 
 const PUBLIC_ROUTES = new Set([
 	'/sign-in',
@@ -10,9 +10,10 @@ const PUBLIC_ROUTES = new Set([
 async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
-	const session = await getCookieCache(request, {
-		cookiePrefix: 'auth',
-		isSecure: true,
+	const { data: session } = await auth.getSession({
+		fetchOptions: {
+			headers: request.headers,
+		},
 	});
 
 	if (session && PUBLIC_ROUTES.has(pathname)) {
