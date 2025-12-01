@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 async function getSidebarStatusCache() {
 	'use cache: private';
-	cacheLife('max');
+	cacheLife('days');
 
 	const cookieStore = await cookies();
 
