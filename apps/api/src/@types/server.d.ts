@@ -1,3 +1,4 @@
+import type { Auth } from 'better-auth';
 import type {
 	Context as HonoContext,
 	MiddlewareHandler as HonoMiddlewareHandler,
@@ -12,6 +13,7 @@ type Server = typeof server;
 type Bindings = Environment;
 
 type Variables = {
+	auth: Auth;
 	environment: Environment;
 	cache: Bun.RedisClient;
 	database: Database;

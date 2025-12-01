@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { AppBindings } from '@/@types/server';
+import { authMiddleware } from '@/server/middlewares/auth';
 import { cacheMiddleware } from '@/server/middlewares/cache';
 import {
 	corsApiMiddleware,
@@ -23,5 +24,7 @@ server.use(environmentMiddleware);
 server.use(cacheMiddleware);
 server.use(databaseMiddleware);
 server.use(emailMiddleware);
+
+server.use(authMiddleware);
 
 export { server };

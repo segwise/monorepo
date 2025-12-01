@@ -19,6 +19,12 @@ model User {
   sessions Session[]
   accounts Account[]
 
+  role String?
+
+  banned     Boolean?  @default(false)
+  banReason  String?   @map("ban_reason")
+  banExpires DateTime? @map("ban_expires") @db.Date
+
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
@@ -38,6 +44,8 @@ model Session {
 
   userId String @map("user_id") @db.Uuid
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  impersonatedBy String? @map("impersonated_by")
 
   expiresAt DateTime @map("expires_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -67,8 +75,9 @@ model Account {
 
   refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
   accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
-  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique(id)
   @@index([userId])

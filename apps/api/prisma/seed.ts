@@ -22,20 +22,15 @@ async function seed() {
 			return;
 		}
 
-		await auth.api.signUpEmail({
+		await auth.api.createUser({
 			body: {
 				name: INIT.name,
 				email: INIT.email,
 				password: INIT.password,
-			},
-		});
-
-		await transaction.user.update({
-			where: {
-				email: INIT.email,
-			},
-			data: {
-				emailVerified: true,
+				role: 'admin',
+				data: {
+					emailVerified: true,
+				},
 			},
 		});
 	});

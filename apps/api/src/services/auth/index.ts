@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { admin } from 'better-auth/plugins';
 import { secondaryStorage } from '@/auth/adapters/secondary-storage';
 import { environment } from '@/libraries/environment';
 import { database } from '@/services/database';
@@ -97,7 +98,7 @@ const auth = betterAuth({
 		updateAge: 86400,
 		disableSessionRefresh: false,
 		storeSessionInDatabase: true,
-		preserveSessionInDatabase: true,
+		preserveSessionInDatabase: false,
 		cookieCache: {
 			enabled: true,
 			maxAge: 5 * 60,
@@ -153,6 +154,7 @@ const auth = betterAuth({
 		throw: true,
 		errorURL: '/auth/error',
 	},
+	plugins: [admin()],
 });
 
 export { auth };
