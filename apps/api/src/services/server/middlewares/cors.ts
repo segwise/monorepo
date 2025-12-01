@@ -21,6 +21,7 @@ const corsApiMiddleware: MiddlewareHandler = cors({
 });
 
 const corsMiddleware: MiddlewareHandler = async (ctx, next) => {
+	console.log('ctx.req.path:', ctx.req.path);
 	if (ctx.req.path.startsWith('/api')) {
 		return await corsApiMiddleware(ctx, next);
 	}
