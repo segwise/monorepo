@@ -1,24 +1,10 @@
-import { cacheLife } from 'next/cache';
-import { cookies } from 'next/headers';
+import { use } from 'react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { getSidebarStatusCache } from '@/functions/sidebar/get-status-cache';
 import { Sidebar } from './sidebar';
 
-async function getOpenSidebar() {
-	'use cache: private';
-
-	cacheLife('max');
-
-	const cookieStore = await cookies();
-
-	const cookie = cookieStore.get('sidebar_state')?.value;
-
-	const defaultOpen = cookie === 'true';
-
-	return !cookie ? true : defaultOpen;
-}
-
-async function Layout({ children }: React.PropsWithChildren) {
-	const defaultOpen = await getOpenSidebar();
+function Layout({ children }: React.PropsWithChildren) {
+	const defaultOpen = use(getSidebarStatusCache());
 
 	return (
 		<SidebarProvider defaultOpen={defaultOpen}>

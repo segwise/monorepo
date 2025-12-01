@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { brand } from '@/config/brand';
 import { FormForgotPassword } from '@/containers/forms/auth/forgot-password';
-import { getCurrentYear } from '@/functions/get-current-year';
+import { getCurrentYear } from '@/functions/date/get-current-year-cache';
 
 function ForgotPasswordPage() {
 	return (

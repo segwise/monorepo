@@ -8,7 +8,7 @@ import { Spinner } from '../ui/spinner';
 function DropdownmenuButtonSignOut() {
 	const { mutate, isPending } = useSignOut();
 
-	async function handler() {
+	function handler() {
 		mutate();
 	}
 

@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 const PUBLIC_ROUTES = ['/sign-in', '/forgot-password', '/reset-password'];
 
-async function proxy(request: NextRequest) {
+function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
 	const session = getSessionCookie(request.headers, {

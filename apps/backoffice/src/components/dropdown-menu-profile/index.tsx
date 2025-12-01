@@ -1,7 +1,6 @@
 import { MoreHorizontalIcon } from 'lucide-react';
-import { cacheLife } from 'next/cache';
-import { headers } from 'next/headers';
 import Image from 'next/image';
+import { use } from 'react';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -10,27 +9,11 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { placeholder } from '@/config/placeholder';
-import { auth } from '@/libraries/auth';
+import { getSessionCache } from '@/functions/auth/get-session-cache';
 import { DropdownmenuButtonSignOut } from './sign-out';
 
-async function getInformation() {
-	'use cache: private';
-
-	cacheLife('hours');
-
-	const headerList = await headers();
-
-	const { data } = await auth.getSession({
-		fetchOptions: {
-			headers: headerList,
-		},
-	});
-
-	return data;
-}
-
-async function DropdownMenuProfile() {
-	const data = await getInformation();
+function DropdownMenuProfile() {
+	const data = use(getSessionCache());
 
 	return (
 		<DropdownMenu>

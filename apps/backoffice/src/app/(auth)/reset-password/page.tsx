@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { Suspense } from 'react';
 import { brand } from '@/config/brand';
 import { FormResetPassword } from '@/containers/forms/auth/reset-password';
-import { getCurrentYear } from '@/functions/get-current-year';
+import { getCurrentYear } from '@/functions/date/get-current-year-cache';
 
 function ResetPasswordPage() {
 	return (

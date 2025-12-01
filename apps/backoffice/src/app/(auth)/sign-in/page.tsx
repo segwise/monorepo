@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { Suspense } from 'react';
 import { brand } from '@/config/brand';
 import { FormSignIn } from '@/containers/forms/auth/sign-in';
-import { getCurrentYear } from '@/functions/get-current-year';
+import { getCurrentYear } from '@/functions/date/get-current-year-cache';
 
 function SignInPage() {
 	return (
