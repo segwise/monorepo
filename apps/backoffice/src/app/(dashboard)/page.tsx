@@ -1,11 +1,5 @@
-import { Layout } from '@/containers/layout';
-
 function DashboardPage() {
-	return (
-		<Layout>
-			<span>Dashboard</span>
-		</Layout>
-	);
+	return <span>Dashboard</span>;
 }
 
 export default DashboardPage;
