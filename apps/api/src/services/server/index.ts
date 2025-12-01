@@ -15,9 +15,9 @@ const server = new Hono<AppBindings>({
 	strict: false,
 });
 
+server.use(corsMiddleware);
 server.use('/api/*', corsApiMiddleware);
 server.use('/auth/*', corsAuthMiddleware);
-server.use(corsMiddleware);
 
 server.use(environmentMiddleware);
 
