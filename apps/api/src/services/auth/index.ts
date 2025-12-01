@@ -98,9 +98,10 @@ const auth = betterAuth({
 		updateAge: 86400,
 		disableSessionRefresh: false,
 		storeSessionInDatabase: true,
-		preserveSessionInDatabase: false,
+		preserveSessionInDatabase: true,
 		cookieCache: {
-			enabled: false,
+			enabled: true,
+			maxAge: 60 * 5,
 		},
 	},
 	account: {
