@@ -1,6 +1,8 @@
 import Image from 'next/image';
+import { Suspense } from 'react';
 import { brand } from '@/config/brand';
 import { FormSignIn } from '@/containers/forms/auth/sign-in';
+import { getCurrentYear } from '@/functions/get-current-year';
 
 function SignInPage() {
 	return (
@@ -32,11 +34,13 @@ function SignInPage() {
 							Informe as credenciais para acesso
 						</p>
 					</div>
-					<FormSignIn />
+					<Suspense>
+						<FormSignIn />
+					</Suspense>
 					<div className='mt-12 text-center text-sm text-muted-foreground'>
 						<p>
-							© {new Intl.DateTimeFormat('pt-BR', { year: 'numeric' }).format()}{' '}
-							{brand.name}. Todos os direitos reservados.
+							© <Suspense>{getCurrentYear()}</Suspense> {brand.name}. Todos os
+							direitos reservados.
 						</p>
 					</div>
 				</div>

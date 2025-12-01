@@ -1,8 +1,10 @@
 import { ArrowLeftIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { brand } from '@/config/brand';
 import { FormForgotPassword } from '@/containers/forms/auth/forgot-password';
+import { getCurrentYear } from '@/functions/get-current-year';
 
 function ForgotPasswordPage() {
 	return (
@@ -46,8 +48,8 @@ function ForgotPasswordPage() {
 					</div>
 					<div className='mt-12 text-center text-sm text-muted-foreground'>
 						<p>
-							© {new Intl.DateTimeFormat('pt-BR', { year: 'numeric' }).format()}{' '}
-							{brand.name}. Todos os direitos reservados.
+							© <Suspense>{getCurrentYear()}</Suspense> {brand.name}. Todos os
+							direitos reservados.
 						</p>
 					</div>
 				</div>

@@ -2,7 +2,9 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import type { SignIn } from '@/@types/auth/sign-in';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,6 +22,9 @@ import { useSignIn } from '@/libraries/hooks/auth/sign-in';
 import { SchemaAuthSignIn } from '@/libraries/schemas/auth/sign-in';
 
 function FormSignIn() {
+	const router = useRouter();
+	const searchParams = useSearchParams();
+
 	const { mutate, isPending } = useSignIn();
 
 	const form = useForm({
@@ -38,7 +43,29 @@ function FormSignIn() {
 	const isSubmit = !isPending && isValid && isDirty;
 
 	function handler({ email, password, remember_password }: SignIn) {
-		mutate({ email, password, remember_password });
+		toast.dismiss();
+
+		mutate(
+			{ email, password, remember_password },
+			{
+				onSuccess() {
+					toast.success('Logado com sucesso!');
+
+					const callbackUrl = searchParams.get('callbackUrl');
+
+					if (callbackUrl) {
+						router.push(callbackUrl);
+
+						return;
+					}
+
+					router.push('/');
+				},
+				onError(error) {
+					toast.error(error.message);
+				},
+			},
+		);
 	}
 
 	return (

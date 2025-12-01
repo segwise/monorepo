@@ -1,6 +1,8 @@
 import Image from 'next/image';
+import { Suspense } from 'react';
 import { brand } from '@/config/brand';
 import { FormResetPassword } from '@/containers/forms/auth/reset-password';
+import { getCurrentYear } from '@/functions/get-current-year';
 
 function ResetPasswordPage() {
 	return (
@@ -35,8 +37,8 @@ function ResetPasswordPage() {
 					<FormResetPassword />
 					<div className='mt-12 text-center text-sm text-muted-foreground'>
 						<p>
-							© {new Intl.DateTimeFormat('pt-BR', { year: 'numeric' }).format()}{' '}
-							{brand.name}. Todos os direitos reservados.
+							© <Suspense>{getCurrentYear()}</Suspense> {brand.name}. Todos os
+							direitos reservados.
 						</p>
 					</div>
 				</div>
