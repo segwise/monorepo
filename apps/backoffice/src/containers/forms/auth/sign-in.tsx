@@ -34,7 +34,7 @@ function FormSignIn() {
 		defaultValues: {
 			email: 'admin@segwise.com.br',
 			password: 'Segwise123!',
-			remember_password: false,
+			remember_password: true,
 		},
 	});
 
