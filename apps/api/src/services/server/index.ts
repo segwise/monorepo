@@ -12,7 +12,14 @@ const server = new Hono<AppBindings>({
 	strict: true,
 	getPath: (req) => {
 		const host = req.headers.get('host') || '';
-		const subdomain = host.split(':')[0]?.split('.').shift() || '';
+
+		const domain = host.split(':')[0]?.split('.').shift();
+
+		const subdomain = req.url.includes('/api')
+			? 'api'
+			: domain === 'localhost'
+				? 'services'
+				: domain || 'services';
 
 		if (!['api', 'services'].includes(subdomain)) {
 			return '/__invalid_host__';
@@ -21,7 +28,9 @@ const server = new Hono<AppBindings>({
 		const url = new URL(req.url);
 		const path = url.pathname === '/' ? '' : url.pathname;
 
-		return `/${subdomain}${path}`;
+		const fullPath = `/${subdomain}${path}`;
+
+		return fullPath;
 	},
 });
 
