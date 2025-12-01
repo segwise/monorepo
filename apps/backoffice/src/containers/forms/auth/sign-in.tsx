@@ -32,14 +32,14 @@ function FormSignIn() {
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaAuthSignIn),
 		defaultValues: {
-			email: 'admin@segwise.com.br',
-			password: 'Segwise123!',
-			remember_password: true,
+			email: '',
+			password: '',
+			remember_password: false,
 		},
 	});
 
 	const { isDirty, isValid } = form.formState;
-	const isSubmit = !isPending && isValid;
+	const isSubmit = !isPending && isValid && isDirty;
 
 	function handler({ email, password, remember_password }: SignIn) {
 		toast.dismiss();
