@@ -5,7 +5,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "bun --bun run --watch src/index.ts",
-		"build": "bun --bun build src/index.ts --outdir=dist --production --minify --sourcemap=inline --target=bun",
+		"build": "bun --bun build src/index.ts --outdir=dist --production --minify --sourcemap=inline --target=bun && bun --bun build prisma/seed.ts --outdir=dist --production --minify --sourcemap=inline --target=bun",
 		"start": "bun --bun run index.js",
 		"auth:generate": "bun x --bun @better-auth/cli generate --config src/services/auth/index.ts",
 		"auth:migrate": "bun x --bun @better-auth/cli migrate --config src/services/auth/index.ts",
