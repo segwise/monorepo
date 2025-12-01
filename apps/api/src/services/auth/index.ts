@@ -6,8 +6,6 @@ import { database } from '@/services/database';
 import { email } from '@/services/email';
 
 const auth = betterAuth({
-	baseURL: environment.BETTER_AUTH_URL,
-	secret: environment.BETTER_AUTH_SECRET,
 	trustedOrigins: [environment.URL_APPLICATION],
 	basePath: '/auth',
 	database: prismaAdapter(database, {
@@ -133,12 +131,10 @@ const auth = betterAuth({
 		disableCSRFCheck: false,
 		crossSubDomainCookies: {
 			enabled: true,
-			domain: environment.URL_APPLICATION,
 		},
 		defaultCookieAttributes: {
 			httpOnly: true,
 			secure: true,
-			domain: environment.URL_APPLICATION,
 		},
 		cookiePrefix: 'auth',
 		database: {
