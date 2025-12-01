@@ -39,7 +39,7 @@ function FormSignIn() {
 	});
 
 	const { isDirty, isValid } = form.formState;
-	const isSubmit = !isPending && isValid && isDirty;
+	const isSubmit = !isPending && isValid;
 
 	function handler({ email, password, remember_password }: SignIn) {
 		toast.dismiss();
