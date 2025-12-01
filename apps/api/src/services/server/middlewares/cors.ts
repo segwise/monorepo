@@ -2,13 +2,9 @@ import { cors } from 'hono/cors';
 import type { MiddlewareHandler } from '@/@types/server';
 import { environment } from '@/libraries/environment';
 
-const corsMiddleware: MiddlewareHandler = cors({
+const corsDefaultMiddleware: MiddlewareHandler = cors({
 	origin: environment.URL_APPLICATION,
 	credentials: true,
-});
-
-const corsApiMiddleware: MiddlewareHandler = cors({
-	origin: '*',
 });
 
 const corsAuthMiddleware: MiddlewareHandler = cors({
@@ -20,4 +16,20 @@ const corsAuthMiddleware: MiddlewareHandler = cors({
 	credentials: true,
 });
 
-export { corsMiddleware, corsAuthMiddleware, corsApiMiddleware };
+const corsApiMiddleware: MiddlewareHandler = cors({
+	origin: '*',
+});
+
+const corsMiddleware: MiddlewareHandler = async (ctx, next) => {
+	if (ctx.req.path.startsWith('/api')) {
+		return await corsApiMiddleware(ctx, next);
+	}
+
+	if (ctx.req.path.startsWith('/auth')) {
+		return await corsAuthMiddleware(ctx, next);
+	}
+
+	return await corsDefaultMiddleware(ctx, next);
+};
+
+export { corsMiddleware };
