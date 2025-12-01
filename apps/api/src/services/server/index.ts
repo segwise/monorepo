@@ -19,9 +19,9 @@ const server = new Hono<AppBindings>({
 			? 'api'
 			: domain === 'localhost'
 				? 'services'
-				: domain || 'services';
+				: domain;
 
-		if (!['api', 'services'].includes(subdomain)) {
+		if (!subdomain || !['api', 'services'].includes(subdomain)) {
 			return '/__invalid_host__';
 		}
 
