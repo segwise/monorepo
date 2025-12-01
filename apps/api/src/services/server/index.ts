@@ -15,13 +15,7 @@ const server = new Hono<AppBindings>({
 	strict: false,
 });
 
-server.use(async (ctx, next) => {
-	if (ctx.req.path.startsWith('/api') || ctx.req.path.startsWith('/auth')) {
-		return await next();
-	}
-
-	return await corsMiddleware(ctx, next);
-});
+server.use('/^(?!/api(/|$)|/auth(/|$)).*$/', corsMiddleware);
 server.use('/api/*', corsApiMiddleware);
 server.use('/auth/*', corsAuthMiddleware);
 
