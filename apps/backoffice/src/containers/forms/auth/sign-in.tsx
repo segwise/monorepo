@@ -32,8 +32,8 @@ function FormSignIn() {
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaAuthSignIn),
 		defaultValues: {
-			email: '',
-			password: '',
+			email: 'admin@segwise.com.br',
+			password: 'Segwise123!',
 			remember_password: false,
 		},
 	});
