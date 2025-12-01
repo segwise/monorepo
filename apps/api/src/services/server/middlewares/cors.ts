@@ -21,11 +21,11 @@ const corsApiMiddleware: MiddlewareHandler = cors({
 });
 
 const corsMiddleware: MiddlewareHandler = async (ctx, next) => {
-	if (ctx.req.path.startsWith('/api')) {
+	if (ctx.req.path.startsWith('/services/api')) {
 		return await corsApiMiddleware(ctx, next);
 	}
 
-	if (ctx.req.path.startsWith('/auth')) {
+	if (ctx.req.path.startsWith('/services/auth')) {
 		return await corsAuthMiddleware(ctx, next);
 	}
 
