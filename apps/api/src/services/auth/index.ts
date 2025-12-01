@@ -105,7 +105,7 @@ const auth = betterAuth({
 	},
 	account: {
 		encryptOAuthTokens: true,
-		storeAccountCookie: true,
+		storeAccountCookie: false,
 		accountLinking: {
 			enabled: true,
 			trustedProviders: ['email-password'],
