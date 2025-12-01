@@ -1,7 +1,6 @@
-import { LogOutIcon, MoreHorizontalIcon } from 'lucide-react';
+import { MoreHorizontalIcon } from 'lucide-react';
 import { headers } from 'next/headers';
 import Image from 'next/image';
-import { redirect } from 'next/navigation';
 import { use } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { placeholder } from '@/config/placeholder';
 import { auth } from '@/libraries/auth';
+import { ButtonSignOut } from './sign-out';
 
 function DropdownMenuProfile() {
 	const headerList = use(headers());
@@ -24,20 +24,6 @@ function DropdownMenuProfile() {
 			},
 		}),
 	);
-
-	const handleSignOut = async () => {
-		'use server';
-
-		const { data } = await auth.signOut({
-			fetchOptions: {
-				headers: headerList,
-			},
-		});
-
-		if (data?.success) {
-			redirect('/sign-in');
-		}
-	};
 
 	return (
 		<DropdownMenu>
@@ -79,14 +65,9 @@ function DropdownMenuProfile() {
 					</div>
 				</Button>
 				<DropdownMenuSeparator />
-				<form action={handleSignOut}>
-					<DropdownMenuItem variant='destructive' asChild>
-						<Button type='submit' className='w-full h-8! justify-start'>
-							<LogOutIcon />
-							<span>Deslogar</span>
-						</Button>
-					</DropdownMenuItem>
-				</form>
+				<DropdownMenuItem variant='destructive' asChild>
+					<ButtonSignOut />
+				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);
