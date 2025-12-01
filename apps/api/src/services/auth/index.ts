@@ -138,6 +138,7 @@ const auth = betterAuth({
 		defaultCookieAttributes: {
 			httpOnly: true,
 			secure: true,
+			domain: environment.URL_APPLICATION,
 		},
 		cookiePrefix: 'auth',
 		database: {
