@@ -1,7 +1,8 @@
-import { connection } from 'next/server';
+import { cacheLife } from 'next/cache';
 
 async function getCurrentYear() {
-	await connection();
+	'use cache';
+	cacheLife('days');
 
 	return new Date().getUTCFullYear();
 }
