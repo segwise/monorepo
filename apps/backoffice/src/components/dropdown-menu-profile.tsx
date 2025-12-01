@@ -28,13 +28,15 @@ function DropdownMenuProfile() {
 	const handleSignOut = async () => {
 		'use server';
 
-		await auth.signOut({
+		const { data } = await auth.signOut({
 			fetchOptions: {
 				headers: headerList,
 			},
 		});
 
-		redirect('/sign-in');
+		if (data?.success) {
+			redirect('/sign-in');
+		}
 	};
 
 	return (
