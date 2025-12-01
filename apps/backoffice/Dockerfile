@@ -12,7 +12,6 @@ WORKDIR /app
 COPY bun.lock* package.json ./
 
 RUN bun install --frozen-lockfile
-RUN bun install -D baseline-browser-mapping@latest
 
 COPY . .
 
@@ -36,7 +35,7 @@ WORKDIR /app
 
 COPY --from=pruner /app ./
 
-ENV PORT=3000
 ENV NODE_ENV=production
+ENV PORT=3000
 
 CMD ["node", "server.js"]

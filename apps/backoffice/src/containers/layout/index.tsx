@@ -5,6 +5,7 @@ import { Sidebar } from './sidebar';
 
 async function getOpenSidebar() {
 	'use cache: private';
+
 	cacheLife('max');
 
 	const cookieStore = await cookies();

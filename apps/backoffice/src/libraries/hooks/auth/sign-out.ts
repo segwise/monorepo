@@ -9,7 +9,7 @@ const useSignOut = () => {
 		mutationKey: ['auth', 'sign-out'],
 		mutationFn: async () => await auth.signOut(),
 		onSuccess() {
-			router.push('/');
+			router.push('/sign-in');
 		},
 		onError() {
 			throw new Error('Falha ao fazer login');

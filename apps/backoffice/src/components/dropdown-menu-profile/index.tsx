@@ -15,9 +15,8 @@ import { DropdownmenuButtonSignOut } from './sign-out';
 
 async function getInformation() {
 	'use cache: private';
-	cacheLife('hours');
 
-	console.log('getCurrentUser rodou!', new Date().toISOString());
+	cacheLife('hours');
 
 	const headerList = await headers();
 
