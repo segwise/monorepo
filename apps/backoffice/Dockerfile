@@ -12,6 +12,7 @@ WORKDIR /app
 COPY bun.lock* package.json ./
 
 RUN bun install --frozen-lockfile
+RUN bun install -D baseline-browser-mapping@latest
 
 COPY . .
 
