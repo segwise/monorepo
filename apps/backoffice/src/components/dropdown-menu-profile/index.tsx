@@ -1,29 +1,37 @@
 import { MoreHorizontalIcon } from 'lucide-react';
+import { cacheLife } from 'next/cache';
 import { headers } from 'next/headers';
 import Image from 'next/image';
-import { use } from 'react';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
-	DropdownMenuItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { placeholder } from '@/config/placeholder';
 import { auth } from '@/libraries/auth';
-import { ButtonSignOut } from './sign-out';
+import { DropdownmenuButtonSignOut } from './sign-out';
 
-function DropdownMenuProfile() {
-	const headerList = use(headers());
+async function getInformation() {
+	'use cache: private';
+	cacheLife('hours');
 
-	const { data } = use(
-		auth.getSession({
-			fetchOptions: {
-				headers: headerList,
-			},
-		}),
-	);
+	console.log('getCurrentUser rodou!', new Date().toISOString());
+
+	const headerList = await headers();
+
+	const { data } = await auth.getSession({
+		fetchOptions: {
+			headers: headerList,
+		},
+	});
+
+	return data;
+}
+
+async function DropdownMenuProfile() {
+	const data = await getInformation();
 
 	return (
 		<DropdownMenu>
@@ -65,9 +73,7 @@ function DropdownMenuProfile() {
 					</div>
 				</Button>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem variant='destructive' asChild>
-					<ButtonSignOut />
-				</DropdownMenuItem>
+				<DropdownmenuButtonSignOut />
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

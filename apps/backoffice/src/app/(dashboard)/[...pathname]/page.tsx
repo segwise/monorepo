@@ -1,7 +1,5 @@
-import { use } from 'react';
-
-function PathnamePage({ params }: PageProps<'/[...pathname]'>) {
-	const { pathname } = use(params);
+async function PathnamePage({ params }: PageProps<'/[...pathname]'>) {
+	const { pathname } = await params;
 
 	return <span>{pathname.join(' / ')}</span>;
 }

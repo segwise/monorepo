@@ -1,6 +1,7 @@
 import { SettingsIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { DropdownMenuProfile } from '@/components/dropdown-menu-profile';
 import {
 	SidebarContent,
@@ -96,7 +97,9 @@ function Sidebar() {
 				<SidebarMenu className='w-full mx-auto p-0'>
 					<SidebarMenuItem>
 						<SidebarMenuButton size='lg' className='w-full mx-auto' asChild>
-							<DropdownMenuProfile />
+							<Suspense>
+								<DropdownMenuProfile />
+							</Suspense>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>

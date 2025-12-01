@@ -1,34 +1,37 @@
+import { getSessionCookie } from 'better-auth/cookies';
 import { type NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
 
-const PUBLIC_ROUTES = new Set([
-	'/sign-in',
-	'/forgot-password',
-	'/reset-password',
-]);
+const PUBLIC_ROUTES = ['/sign-in', '/forgot-password', '/reset-password'];
 
 async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
-	const { data: session } = await auth.getSession({
-		fetchOptions: {
-			headers: request.headers,
-		},
+	const session = getSessionCookie(request.headers, {
+		cookiePrefix: 'auth',
 	});
 
-	if (session && PUBLIC_ROUTES.has(pathname)) {
+	const isPublicRoute = PUBLIC_ROUTES.some((route) =>
+		route.endsWith(':path*')
+			? pathname.startsWith(route.replace('/:path*', ''))
+			: pathname === route,
+	);
+
+	if (session && isPublicRoute) {
 		return NextResponse.redirect(new URL('/', request.url));
 	}
 
-	if (!session && !PUBLIC_ROUTES.has(pathname)) {
-		return NextResponse.redirect(new URL('/sign-in', request.url));
+	if (!session && !isPublicRoute) {
+		const redirectTo = new URL('/sign-in', request.url);
+		redirectTo.searchParams.set('callbackUrl', pathname);
+
+		return NextResponse.redirect(redirectTo);
 	}
 
 	return NextResponse.next();
 }
 
 export const config = {
-	matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
+	matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico).*)'],
 };
 
 export { proxy };
