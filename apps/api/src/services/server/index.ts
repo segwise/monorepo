@@ -15,7 +15,13 @@ const server = new Hono<AppBindings>({
 	strict: false,
 });
 
-server.use(corsMiddleware);
+server.use(async (ctx, next) => {
+	if (ctx.req.url.includes('/api/') || ctx.req.url.includes('/auth/')) {
+		return next();
+	}
+
+	return await corsMiddleware(ctx, next);
+});
 server.use('/api/*', corsApiMiddleware);
 server.use('/auth/*', corsAuthMiddleware);
 
