@@ -118,7 +118,7 @@ const auth = betterAuth({
 	},
 	secondaryStorage,
 	rateLimit: {
-		enabled: true,
+		enabled: environment.NODE_ENV === 'production',
 		modelName: 'rate_limit',
 		window: 10,
 		max: 100,
