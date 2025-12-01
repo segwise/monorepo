@@ -15,6 +15,7 @@ import {
 	FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { useForgotPassword } from '@/libraries/hooks/auth/forgot-password';
 import { SchemaAuthForgotPassword } from '@/libraries/schemas/auth/forgot-password';
 
@@ -75,7 +76,13 @@ function FormForgotPassword() {
 					)}
 				/>
 				<Button className='w-full' type='submit' disabled={!isSubmit}>
-					Enviar
+					{!isPending && 'Enviar'}
+					{isPending && (
+						<>
+							Enviando
+							<Spinner />
+						</>
+					)}
 				</Button>
 			</form>
 		</Form>
