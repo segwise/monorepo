@@ -4,6 +4,15 @@ import { environment } from '@/libraries/environment';
 
 const corsMiddleware: MiddlewareHandler = cors({
 	origin: environment.URL_APPLICATION,
+	credentials: true,
+});
+
+const corsApiMiddleware: MiddlewareHandler = cors({
+	origin: '*',
+});
+
+const corsAuthMiddleware: MiddlewareHandler = cors({
+	origin: environment.URL_APPLICATION,
 	allowHeaders: ['Content-Type', 'Authorization'],
 	allowMethods: ['POST', 'GET', 'OPTIONS'],
 	exposeHeaders: ['Content-Length'],
@@ -11,4 +20,4 @@ const corsMiddleware: MiddlewareHandler = cors({
 	credentials: true,
 });
 
-export { corsMiddleware };
+export { corsMiddleware, corsAuthMiddleware, corsApiMiddleware };

@@ -133,6 +133,7 @@ const auth = betterAuth({
 		disableCSRFCheck: false,
 		crossSubDomainCookies: {
 			enabled: true,
+			domain: environment.URL_APPLICATION,
 		},
 		defaultCookieAttributes: {
 			httpOnly: true,
@@ -151,7 +152,6 @@ const auth = betterAuth({
 		throw: true,
 		errorURL: '/auth/error',
 	},
-	plugins: [],
 });
 
 export { auth };

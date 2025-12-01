@@ -1,8 +1,11 @@
 import type { Server } from '@/@types/server';
-import { registerRoutersAuth } from '@/routers/auth';
+
+import { registerRoutersAPI } from '@/routers/api';
+import { registerRoutersServices } from '@/routers/services';
 
 function registerRouters(server: Server) {
-	registerRoutersAuth(server);
+	registerRoutersServices(server);
+	registerRoutersAPI(server);
 }
 
 export { registerRouters };
