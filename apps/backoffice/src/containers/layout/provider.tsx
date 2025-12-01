@@ -1,10 +1,19 @@
-import { SidebarProvider as Provider } from '@/components/ui/sidebar';
+import { Suspense } from 'react';
+import { SidebarProvider as ProviderUI } from '@/components/ui/sidebar';
 import { getSidebarStatusCache } from '@/functions/sidebar/get-status-cache';
 
-async function SidebarProvider({ children }: React.PropsWithChildren) {
+function SidebarProvider({ children }: React.PropsWithChildren) {
+	return (
+		<Suspense>
+			<Provider>{children}</Provider>
+		</Suspense>
+	);
+}
+
+async function Provider({ children }: React.PropsWithChildren) {
 	const defaultOpen = await getSidebarStatusCache();
 
-	return <Provider defaultOpen={defaultOpen}>{children}</Provider>;
+	return <ProviderUI defaultOpen={defaultOpen}>{children}</ProviderUI>;
 }
 
 export { SidebarProvider };
