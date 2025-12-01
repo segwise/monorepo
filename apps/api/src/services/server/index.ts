@@ -17,7 +17,7 @@ const server = new Hono<AppBindings>({
 
 server.use(async (ctx, next) => {
 	if (ctx.req.url.includes('/api/') || ctx.req.url.includes('/auth/')) {
-		return next();
+		return await next();
 	}
 
 	return await corsMiddleware(ctx, next);
