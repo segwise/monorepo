@@ -126,7 +126,7 @@ const auth = betterAuth({
 	},
 	advanced: {
 		ipAddress: {
-			ipAddressHeaders: ['x-client-ip', 'x-forwarded-for'],
+			ip: ['x-client-ip', 'x-forwarded-for', 'cf-connecting-ip'],
 			disableIpTracking: false,
 		},
 		useSecureCookies: true,
