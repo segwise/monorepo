@@ -16,7 +16,7 @@ const server = new Hono<AppBindings>({
 });
 
 server.use(async (ctx, next) => {
-	if (ctx.req.url.includes('/api/') || ctx.req.url.includes('/auth/')) {
+	if (ctx.req.url.includes('/api') || ctx.req.url.includes('/auth')) {
 		return await next();
 	}
 
