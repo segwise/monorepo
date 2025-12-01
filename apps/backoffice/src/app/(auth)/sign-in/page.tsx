@@ -35,8 +35,8 @@ function SignInPage() {
 					<FormSignIn />
 					<div className='mt-12 text-center text-sm text-muted-foreground'>
 						<p>
-							© {new Date().getUTCFullYear()} {brand.name}. Todos os direitos
-							reservados.
+							© {new Intl.DateTimeFormat('pt-BR', { year: 'numeric' }).format()}{' '}
+							{brand.name}. Todos os direitos reservados.
 						</p>
 					</div>
 				</div>
