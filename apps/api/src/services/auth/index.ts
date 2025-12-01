@@ -26,7 +26,7 @@ const auth = betterAuth({
 		autoSignIn: false,
 		async sendResetPassword({ user, url, token }) {
 			await email.emails.send({
-				from: 'Acme <no-reply@segwise.com.br>',
+				from: 'Segwise <no-reply@segwise.com.br>',
 				to: user.email,
 				subject: 'Recuperação de senha',
 				html: `
@@ -49,7 +49,7 @@ const auth = betterAuth({
 	emailVerification: {
 		async sendVerificationEmail({ user, url, token }) {
 			await email.emails.send({
-				from: 'Acme <no-reply@segwise.com.br>',
+				from: 'Segwise <no-reply@segwise.com.br>',
 				to: user.email,
 				subject: 'Verificação de e-mail',
 				html: `
@@ -68,7 +68,7 @@ const auth = betterAuth({
 			enabled: true,
 			async sendChangeEmailConfirmation({ newEmail, url, token }) {
 				await email.emails.send({
-					from: 'Acme <no-reply@segwise.com.br>',
+					from: 'Segwise <no-reply@segwise.com.br>',
 					to: newEmail,
 					subject: 'Verificação de novo e-mail',
 					html: `
@@ -82,7 +82,7 @@ const auth = betterAuth({
 			enabled: true,
 			async sendDeleteAccountVerification({ user, url, token }) {
 				await email.emails.send({
-					from: 'Acme <no-reply@segwise.com.br>',
+					from: 'Segwise <no-reply@segwise.com.br>',
 					to: user.email,
 					subject: 'Confirmação de exclusão de conta',
 					html: `
@@ -98,10 +98,9 @@ const auth = betterAuth({
 		updateAge: 86400,
 		disableSessionRefresh: false,
 		storeSessionInDatabase: true,
-		preserveSessionInDatabase: false,
+		preserveSessionInDatabase: true,
 		cookieCache: {
-			enabled: true,
-			maxAge: 5 * 60,
+			enabled: false,
 		},
 	},
 	account: {
