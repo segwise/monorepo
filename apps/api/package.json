@@ -13,7 +13,7 @@
 		"db:migrate": "bun x --bun prisma migrate dev",
 		"db:reset": "bun x --bun prisma migrate reset",
 		"db:deploy": "bun x --bun prisma migrate deploy",
-		"db:seed": "bun run --bun seed.js",
+		"db:seed": "bun --bun run seed.js",
 		"deploy": "git add . && git commit -m 'commit automatic' && git push && clear"
 	},
 	"devDependencies": {
