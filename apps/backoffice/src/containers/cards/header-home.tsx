@@ -39,7 +39,7 @@ function CardHeaderHome({
 			</Card>
 			<CardFooter className='pb-2 -mt-4 flex flex-row items-center justify-between'>
 				<span className='text-xs font-medium text-muted-foreground/80'>
-					From Last Month
+					Do mês passado
 				</span>
 				<Badge>
 					<ArrowUpIcon />{' '}
