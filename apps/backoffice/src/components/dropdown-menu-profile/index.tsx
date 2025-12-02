@@ -28,14 +28,14 @@ function DropdownMenuProfile() {
 						<span className='truncate font-semibold leading-none'>
 							{data?.user.name}
 						</span>
-						<span className='truncate text-xs text-muted-foreground/70 leading-none mt-px'>
+						<span className='truncate text-xs dark:text-sidebar-ring leading-none mt-px'>
 							{data?.user.email}
 						</span>
 					</div>
-					<MoreHorizontalIcon className='text-muted-foreground/70!' />
+					<MoreHorizontalIcon className='dark:text-sidebar-ring!' />
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align='start' className='w-60'>
+			<DropdownMenuContent align='start' className='w-60 dark'>
 				<Button
 					variant='ghost'
 					className='hover:bg-transparent active:bg-transparent cursor-default px-1'
@@ -49,7 +49,7 @@ function DropdownMenuProfile() {
 						<span className='truncate font-semibold leading-none'>
 							{data?.user.name}
 						</span>
-						<span className='truncate text-xs text-muted-foreground/70 leading-none mt-px'>
+						<span className='truncate text-xs dark:text-sidebar-ring leading-none mt-px'>
 							{data?.user.email}
 						</span>
 					</div>

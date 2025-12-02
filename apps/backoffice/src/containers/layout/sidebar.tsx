@@ -22,7 +22,7 @@ import { sidebar } from '@/config/sidebar';
 
 function Sidebar() {
 	return (
-		<SidebarUI side='left' variant='inset' collapsible='icon'>
+		<SidebarUI side='left' variant='inset' collapsible='icon' className='dark'>
 			<SidebarHeader>
 				<SidebarMenu>
 					<SidebarMenuItem>
@@ -40,8 +40,10 @@ function Sidebar() {
 									className='aspect-square size-10 object-contain object-center rounded-md'
 								/>
 								<div className='grid flex-1 text-left text-sm leading-tight'>
-									<span className='truncate font-semibold'>{brand.name}</span>
-									<span className='truncate text-xs font-normal opacity-70'>
+									<span className='truncate font-semibold dark:text-sidebar-foreground'>
+										{brand.name}
+									</span>
+									<span className='truncate text-xs font-normal dark:text-sidebar-ring'>
 										{brand.slogan}
 									</span>
 								</div>
@@ -55,14 +57,16 @@ function Sidebar() {
 				{sidebar.map((section, index) => (
 					<div key={section.label}>
 						<SidebarGroup>
-							<SidebarGroupLabel className='text-xs font-medium text-muted-foreground'>
-								{section.label}
-							</SidebarGroupLabel>
+							<SidebarGroupLabel>{section.label}</SidebarGroupLabel>
 							<SidebarGroupContent>
 								<SidebarMenu>
 									{section.items.map((item) => (
 										<SidebarMenuItem key={item.title}>
-											<SidebarMenuButton asChild tooltip={item.title}>
+											<SidebarMenuButton
+												asChild
+												tooltip={item.title}
+												pathname={item.pathname}
+											>
 												<Link href={item.pathname}>
 													<item.icon />
 													<span>{item.title}</span>

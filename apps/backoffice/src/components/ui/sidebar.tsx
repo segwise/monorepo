@@ -29,6 +29,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { usePathnameIsActive } from '@/hooks/use-is-pathname-active';
 import { useIsMobile } from '@/libraries/hooks/use-mobile';
 import { cn } from '@/libraries/utils';
 
@@ -276,7 +277,7 @@ const Sidebar = forwardRef<
 Sidebar.displayName = 'Sidebar';
 
 const SidebarTrigger = forwardRef<
-	React.ElementRef<typeof Button>,
+	React.ComponentRef<typeof Button>,
 	React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
 	const { toggleSidebar } = useSidebar();
@@ -337,7 +338,7 @@ const SidebarInset = forwardRef<HTMLDivElement, React.ComponentProps<'main'>>(
 				ref={ref}
 				className={cn(
 					'relative flex w-full flex-1 flex-col bg-background',
-					'md:peer-data-[variant=inset]:mt-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-tl-xl md:peer-data-[variant=inset]:shadow',
+					'md:peer-data-[variant=inset]:mt-4 md:peer-data-[variant=inset]:mb-2 md:peer-data-[variant=inset]:mr-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-t-xl md:peer-data-[variant=inset]:shadow',
 					className,
 				)}
 				{...props}
@@ -348,7 +349,7 @@ const SidebarInset = forwardRef<HTMLDivElement, React.ComponentProps<'main'>>(
 SidebarInset.displayName = 'SidebarInset';
 
 const SidebarInput = forwardRef<
-	React.ElementRef<typeof Input>,
+	React.ComponentRef<typeof Input>,
 	React.ComponentProps<typeof Input>
 >(({ className, ...props }, ref) => {
 	return (
@@ -394,7 +395,7 @@ const SidebarFooter = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
 SidebarFooter.displayName = 'SidebarFooter';
 
 const SidebarSeparator = forwardRef<
-	React.ElementRef<typeof Separator>,
+	React.ComponentRef<typeof Separator>,
 	React.ComponentProps<typeof Separator>
 >(({ className, ...props }, ref) => {
 	return (
@@ -450,7 +451,7 @@ const SidebarGroupLabel = forwardRef<
 			ref={ref}
 			data-sidebar='group-label'
 			className={cn(
-				'flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+				'flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 dark:text-sidebar-foreground/90 outline-none ring-sidebar-ring transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
 				'group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0',
 				className,
 			)}
@@ -520,7 +521,7 @@ const SidebarMenuItem = forwardRef<HTMLLIElement, React.ComponentProps<'li'>>(
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
 const sidebarMenuButtonVariants = cva(
-	'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+	'peer/menu-button flex w-full items-center gap-2 overflow-hidden dark:text-sidebar-ring rounded p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:dark:text-sidebar-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground active:dark:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[active=true]:dark:text-sidebar-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
 	{
 		variants: {
 			variant: {
@@ -547,6 +548,7 @@ const SidebarMenuButton = forwardRef<
 		asChild?: boolean;
 		isActive?: boolean;
 		tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+		pathname?: string;
 	} & VariantProps<typeof sidebarMenuButtonVariants>
 >(
 	(
@@ -556,6 +558,7 @@ const SidebarMenuButton = forwardRef<
 			variant = 'default',
 			size = 'default',
 			tooltip,
+			pathname,
 			className,
 			...props
 		},
@@ -564,12 +567,14 @@ const SidebarMenuButton = forwardRef<
 		const Comp = asChild ? Slot : 'button';
 		const { isMobile, state } = useSidebar();
 
+		const isPathnameActive = usePathnameIsActive(pathname);
+
 		const button = (
 			<Comp
 				ref={ref}
 				data-sidebar='menu-button'
 				data-size={size}
-				data-active={isActive}
+				data-active={isActive || isPathnameActive}
 				className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
 				{...props}
 			/>
