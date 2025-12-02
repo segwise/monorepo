@@ -13,7 +13,6 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarRail,
 	SidebarSeparator,
 	Sidebar as SidebarUI,
 } from '@/components/ui/sidebar';
@@ -108,7 +107,6 @@ function Sidebar() {
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarFooter>
-			<SidebarRail />
 		</SidebarUI>
 	);
 }

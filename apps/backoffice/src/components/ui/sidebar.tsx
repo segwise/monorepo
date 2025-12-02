@@ -38,7 +38,8 @@ const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = '16rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
-const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
+// const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
+const SIDEBAR_KEYBOARD_SHORTCUT = null;
 
 type SidebarContextProps = {
 	state: 'expanded' | 'collapsed';
@@ -116,6 +117,7 @@ const SidebarProvider = forwardRef<
 		useEffect(() => {
 			const handleKeyDown = (event: KeyboardEvent) => {
 				if (
+					SIDEBAR_KEYBOARD_SHORTCUT &&
 					event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
 					(event.metaKey || event.ctrlKey)
 				) {
@@ -239,7 +241,6 @@ const Sidebar = forwardRef<
 				data-variant={variant}
 				data-side={side}
 			>
-				{/* This is what handles the sidebar gap on desktop */}
 				<div
 					className={cn(
 						'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear',
