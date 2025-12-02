@@ -1,7 +1,7 @@
 import { SettingsIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Suspense } from 'react';
+import { Activity, Suspense } from 'react';
 import {
 	SidebarContent,
 	SidebarFooter,
@@ -76,7 +76,9 @@ function Sidebar() {
 								</SidebarMenu>
 							</SidebarGroupContent>
 						</SidebarGroup>
-						{index < sidebar.length - 1 && <SidebarSeparator />}
+						<Activity mode={index < sidebar.length - 1 ? 'visible' : 'hidden'}>
+							<SidebarSeparator />
+						</Activity>
 					</div>
 				))}
 			</SidebarContent>

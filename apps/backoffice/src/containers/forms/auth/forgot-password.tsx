@@ -2,6 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import { Activity } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { ForgotPassword } from '@/@types/auth/forgot-password';
@@ -16,8 +17,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { useForgotPassword } from '@/libraries/hooks/auth/forgot-password';
-import { SchemaAuthForgotPassword } from '@/libraries/schemas/auth/forgot-password';
+import { useForgotPassword } from '@/hooks/auth/forgot-password';
+import { SchemaAuthForgotPassword } from '@/schemas/auth/forgot-password';
 
 function FormForgotPassword() {
 	const router = useRouter();
@@ -76,13 +77,11 @@ function FormForgotPassword() {
 					)}
 				/>
 				<Button className='w-full' type='submit' disabled={!isSubmit}>
-					{!isPending && 'Enviar'}
-					{isPending && (
-						<>
-							Enviando
-							<Spinner />
-						</>
-					)}
+					<Activity mode={!isPending ? 'visible' : 'hidden'}>Enviar</Activity>
+					<Activity mode={isPending ? 'visible' : 'hidden'}>
+						Enviando
+						<Spinner />
+					</Activity>
 				</Button>
 			</form>
 		</Form>

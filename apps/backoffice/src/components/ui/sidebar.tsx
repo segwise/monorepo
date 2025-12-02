@@ -30,7 +30,7 @@ import {
 	TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { usePathnameIsActive } from '@/hooks/use-is-pathname-active';
-import { useIsMobile } from '@/libraries/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/utils';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';

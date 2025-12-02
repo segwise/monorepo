@@ -70,7 +70,7 @@ async function DashboardPage() {
 								</CardContent>
 							</Card>
 							<CardFooter className='pb-2 -mt-4 flex flex-row items-center justify-between'>
-								<span className='text-xs font-normal text-muted-foreground/80'>
+								<span className='text-xs font-medium text-muted-foreground/80'>
 									From Last Month
 								</span>
 								<Badge

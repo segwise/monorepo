@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Activity } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { SignIn } from '@/@types/auth/sign-in';
@@ -18,8 +19,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { useSignIn } from '@/libraries/hooks/auth/sign-in';
-import { SchemaAuthSignIn } from '@/libraries/schemas/auth/sign-in';
+import { useSignIn } from '@/hooks/auth/sign-in';
+import { SchemaAuthSignIn } from '@/schemas/auth/sign-in';
 
 function FormSignIn() {
 	const router = useRouter();
@@ -49,8 +50,6 @@ function FormSignIn() {
 			{ email, password, remember_password },
 			{
 				onSuccess() {
-					toast.success('Logado com sucesso!');
-
 					const callbackUrl = searchParams.get('callbackUrl');
 
 					if (callbackUrl) {
@@ -132,13 +131,11 @@ function FormSignIn() {
 					</Link>
 				</div>
 				<Button className='w-full' type='submit' disabled={!isSubmit}>
-					{!isPending && 'Acessar'}
-					{isPending && (
-						<>
-							Acessando
-							<Spinner />
-						</>
-					)}
+					<Activity mode={!isPending ? 'visible' : 'hidden'}>Acessar</Activity>
+					<Activity mode={isPending ? 'visible' : 'hidden'}>
+						Acessando
+						<Spinner />
+					</Activity>
 				</Button>
 			</form>
 		</Form>

@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircleIcon } from 'lucide-react';
+import { Activity, CheckCircleIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -18,17 +18,20 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { SchemaAuthResetPassword } from '@/libraries/schemas/auth/reset-password';
+import { Spinner } from '@/components/ui/spinner';
+import { SchemaAuthResetPassword } from '@/schemas/auth/reset-password';
 import {
 	SchemaPasswordIncludeNumber,
 	SchemaPasswordIncludeSpecial,
 	SchemaPasswordIncludeUppercase,
 	SchemaPasswordLengthMin,
-} from '@/libraries/schemas/utils/password';
+} from '@/schemas/utils/password';
 import { cn } from '@/utils';
 
 function FormResetPassword() {
 	const router = useRouter();
+
+	const isPending = false;
 
 	const form = useForm({
 		mode: 'all',
@@ -88,7 +91,13 @@ function FormResetPassword() {
 				<Separator />
 				<PasswordMustContain value={password} />
 				<Button className='w-full' type='submit' disabled={!isSubmit}>
-					Redefinir senha
+					<Activity mode={!isPending ? 'visible' : 'hidden'}>
+						Redefinir senha
+					</Activity>
+					<Activity mode={isPending ? 'visible' : 'hidden'}>
+						Resetando
+						<Spinner />
+					</Activity>
 				</Button>
 			</form>
 		</Form>

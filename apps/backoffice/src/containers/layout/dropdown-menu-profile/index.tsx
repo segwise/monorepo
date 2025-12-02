@@ -1,6 +1,6 @@
 import { ChevronDownIcon, MoreHorizontalIcon } from 'lucide-react';
 import Image from 'next/image';
-import { use } from 'react';
+import { Activity, use } from 'react';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -18,7 +18,7 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 
 	return (
 		<DropdownMenu>
-			{variant === 'topbar' && (
+			<Activity mode={variant === 'topbar' ? 'visible' : 'hidden'}>
 				<DropdownMenuTrigger asChild>
 					<Button variant='ghost' className='px-2'>
 						<Image
@@ -39,8 +39,8 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 						</div>
 					</Button>
 				</DropdownMenuTrigger>
-			)}
-			{variant === 'sidebar' && (
+			</Activity>
+			<Activity mode={variant === 'sidebar' ? 'visible' : 'hidden'}>
 				<DropdownMenuTrigger asChild>
 					<Button variant='ghost'>
 						<div className='bg-muted border size-8 rounded-sm overflow-hidden'>
@@ -61,8 +61,7 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 						<MoreHorizontalIcon className='size-4 dark:text-sidebar-ring peer-data-[active=false]/menu-button:text-red-500!' />
 					</Button>
 				</DropdownMenuTrigger>
-			)}
-
+			</Activity>
 			<DropdownMenuContent
 				align='start'
 				className={cn('w-60', variant === 'sidebar' && 'dark')}
