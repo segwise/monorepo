@@ -50,7 +50,7 @@ async function DashboardPage() {
 					</CardAction>
 				</CardHeader>
 			</Card>
-			<div className='grid grid-cols-4 gap-4'>
+			<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
 				{Array.from({ length: 4 }).map((_, index) => {
 					const badge = Math.floor(Math.random() * 4);
 
