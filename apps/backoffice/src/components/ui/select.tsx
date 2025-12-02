@@ -39,7 +39,7 @@ const SelectTrigger = forwardRef<
 	>
 		{children}
 		<Icon asChild>
-			<ChevronDownIcon className='size opacity-50 ml-2' />
+			<ChevronDownIcon className='size-4 opacity-50 ml-2' />
 		</Icon>
 	</Trigger>
 ));
@@ -137,7 +137,7 @@ const SelectItem = forwardRef<
 	>
 		<span className='absolute left-2 flex size-3.5 items-center justify-center'>
 			<ItemIndicator>
-				<CheckIcon className='size' />
+				<CheckIcon className='size-4' />
 			</ItemIndicator>
 		</span>
 

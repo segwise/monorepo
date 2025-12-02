@@ -24,7 +24,7 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 						<Image
 							src={data?.user.image || placeholder.user}
 							alt={data?.user.name as string}
-							className='aspect-square size-8 rounded-full object-cover object-center bg-primary'
+							className='aspect-square size-8 rounded-full object-cover object-center bg-sidebar'
 						/>
 						<div className='text-left'>
 							<span className='block text-sm font-semibold leading-none'>
@@ -58,7 +58,7 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 								{data?.user.email}
 							</span>
 						</div>
-						<MoreHorizontalIcon className='size-4 dark:text-sidebar-ring peer-data-[active=false]/menu-button:text-red-500!' />
+						<MoreHorizontalIcon className='size-4 dark:text-sidebar-ring peer-data-[active=false]/menu-button:text-muted-foreground' />
 					</Button>
 				</DropdownMenuTrigger>
 			</Activity>
@@ -79,7 +79,7 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 						<span className='truncate font-semibold leading-none'>
 							{data?.user.name}
 						</span>
-						<span className='truncate text-xs dark:text-sidebar-ring leading-none mt-px'>
+						<span className='truncate text-xs text-sidebar-ring leading-none mt-px'>
 							{data?.user.email}
 						</span>
 					</div>
