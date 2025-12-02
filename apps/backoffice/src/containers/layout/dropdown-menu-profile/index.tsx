@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { placeholder } from '@/config/placeholder';
 import { getSessionCache } from '@/functions/auth/get-session-cache';
-import { cn } from '@/libraries/utils';
+import { cn } from '@/utils';
 import { DropdownmenuButtonSignOut } from './sign-out';
 
 function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {

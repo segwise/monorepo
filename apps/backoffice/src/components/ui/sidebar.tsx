@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/tooltip';
 import { usePathnameIsActive } from '@/hooks/use-is-pathname-active';
 import { useIsMobile } from '@/libraries/hooks/use-mobile';
-import { cn } from '@/libraries/utils';
+import { cn } from '@/utils';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -289,7 +289,7 @@ const SidebarTrigger = forwardRef<
 			data-sidebar='trigger'
 			variant='ghost'
 			size='icon'
-			className={cn('h-7 w-7', className)}
+			className={cn('size-7', className)}
 			onClick={(event) => {
 				onClick?.(event);
 				toggleSidebar();

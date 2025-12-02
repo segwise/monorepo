@@ -1,5 +1,12 @@
-import { BellIcon, XIcon } from 'lucide-react';
+import { BellIcon, BellOffIcon, XCircleIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
 import {
 	Sheet,
@@ -32,11 +39,23 @@ function SheetNotification() {
 					<SheetDescription>Atualização de notificações</SheetDescription>
 				</SheetHeader>
 				<Separator />
-				<div></div>
+				<div>
+					<Empty>
+						<EmptyHeader>
+							<EmptyMedia variant='icon' className='rounded-full'>
+								<BellOffIcon />
+							</EmptyMedia>
+							<EmptyTitle>Nenhuma notificação encontrada!</EmptyTitle>
+							<EmptyDescription>
+								Você não tem nenhuma notificação registrada no momento
+							</EmptyDescription>
+						</EmptyHeader>
+					</Empty>
+				</div>
 				<SheetFooter>
 					<SheetClose asChild>
 						<Button variant='destructive'>
-							Fechar <XIcon />
+							Fechar <XCircleIcon />
 						</Button>
 					</SheetClose>
 				</SheetFooter>

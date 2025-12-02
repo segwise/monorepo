@@ -25,7 +25,7 @@ import {
 	SchemaPasswordIncludeUppercase,
 	SchemaPasswordLengthMin,
 } from '@/libraries/schemas/utils/password';
-import { cn } from '@/libraries/utils';
+import { cn } from '@/utils';
 
 function FormResetPassword() {
 	const router = useRouter();
