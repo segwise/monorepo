@@ -1,4 +1,4 @@
-import { MoreHorizontalIcon } from 'lucide-react';
+import { ChevronDownIcon, MoreHorizontalIcon } from 'lucide-react';
 import Image from 'next/image';
 import { use } from 'react';
 import { Button } from '@/components/ui/button';
@@ -13,13 +13,35 @@ import { getSessionCache } from '@/functions/auth/get-session-cache';
 import { cn } from '@/libraries/utils';
 import { DropdownmenuButtonSignOut } from './sign-out';
 
-function DropdownMenuProfile({ children }: React.PropsWithChildren) {
+function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 	const data = use(getSessionCache());
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				{children || (
+			{variant === 'topbar' && (
+				<DropdownMenuTrigger asChild>
+					<Button variant='ghost' className='px-2'>
+						<Image
+							src={data?.user.image || placeholder.user}
+							alt={data?.user.name as string}
+							className='aspect-square size-8 rounded-full object-cover object-center bg-primary'
+						/>
+						<div className='text-left'>
+							<span className='block text-sm font-semibold leading-none'>
+								{data?.user.name}
+							</span>
+							<span className='block text-xs text-muted-foreground truncate whitespace-nowrap max-w-40 leading-none mt-1'>
+								{data?.user.email}
+							</span>
+						</div>
+						<div>
+							<ChevronDownIcon className='size-4' />
+						</div>
+					</Button>
+				</DropdownMenuTrigger>
+			)}
+			{variant === 'sidebar' && (
+				<DropdownMenuTrigger asChild>
 					<Button variant='ghost'>
 						<div className='bg-muted border size-8 rounded-sm overflow-hidden'>
 							<Image
@@ -38,11 +60,12 @@ function DropdownMenuProfile({ children }: React.PropsWithChildren) {
 						</div>
 						<MoreHorizontalIcon className='size-4 dark:text-sidebar-ring peer-data-[active=false]/menu-button:text-red-500!' />
 					</Button>
-				)}
-			</DropdownMenuTrigger>
+				</DropdownMenuTrigger>
+			)}
+
 			<DropdownMenuContent
 				align='start'
-				className={cn('w-60', !children && 'dark')}
+				className={cn('w-60', variant === 'sidebar' && 'dark')}
 			>
 				<Button
 					variant='ghost'

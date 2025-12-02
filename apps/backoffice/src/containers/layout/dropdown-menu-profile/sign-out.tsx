@@ -2,8 +2,8 @@
 
 import { LogOutIcon } from 'lucide-react';
 import { useSignOut } from '@/libraries/hooks/auth/sign-out';
-import { DropdownMenuItem } from '../ui/dropdown-menu';
-import { Spinner } from '../ui/spinner';
+import { DropdownMenuItem } from '../../../components/ui/dropdown-menu';
+import { Spinner } from '../../../components/ui/spinner';
 
 function DropdownmenuButtonSignOut() {
 	const { mutate, isPending } = useSignOut();
