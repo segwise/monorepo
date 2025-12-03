@@ -1,6 +1,7 @@
 import { ViewTransition } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset } from '@/components/ui/sidebar';
+import { ChangeTheme } from './change-theme';
 import { DropdownMenuProfile } from './dropdown-menu-profile';
 import { Header } from './header';
 import { SheetNotification } from './notifications';
@@ -22,6 +23,8 @@ function Layout({ children }: React.PropsWithChildren) {
 						<div className='mr-2'>
 							<Timer />
 						</div>
+						<Separator orientation='vertical' className='h-10' />
+						<ChangeTheme />
 						<Separator orientation='vertical' className='h-10' />
 						<SheetNotification />
 						<Separator orientation='vertical' className='h-10' />

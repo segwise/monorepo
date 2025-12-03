@@ -13,7 +13,7 @@ function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang='pt-BR'>
+		<html lang='pt-BR' suppressHydrationWarning>
 			<body
 				className={cn(
 					'bg-sidebar overflow-hidden',

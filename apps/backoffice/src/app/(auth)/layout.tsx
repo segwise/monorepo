@@ -11,9 +11,9 @@ function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang='pt-BR'>
+		<html lang='pt-BR' suppressHydrationWarning>
 			<body className={cn(inter.variable, inter.className)}>
-				<Providers>{children}</Providers>
+				<Providers noTheme>{children}</Providers>
 				<Toaster />
 			</body>
 		</html>

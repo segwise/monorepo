@@ -23,7 +23,7 @@ function Timer() {
 	const time = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
 	return (
-		<Badge variant='outline' className='px-3 py-2' suppressHydrationWarning>
+		<Badge variant='outline' className='px-3 py-2 h-8' suppressHydrationWarning>
 			Horário atual: {time}
 		</Badge>
 	);
