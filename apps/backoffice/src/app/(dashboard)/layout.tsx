@@ -1,5 +1,6 @@
 import '@/styles';
 
+import { TopLoader } from '@/components/top-loader';
 import { Toaster } from '@/components/ui/sonner';
 import { Layout } from '@/containers/layout';
 import { inter } from '@/fonts/inter';
@@ -20,6 +21,7 @@ function RootLayout({
 					inter.className,
 				)}
 			>
+				<TopLoader />
 				<Providers>
 					<Layout>{children}</Layout>
 				</Providers>
