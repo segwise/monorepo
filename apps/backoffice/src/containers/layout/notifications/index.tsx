@@ -24,7 +24,7 @@ function SheetNotification() {
 		<Sheet>
 			<SheetTrigger asChild>
 				<Button
-					variant='ghost'
+					variant='outline'
 					className='size-8 relative bg-muted dark:bg-sidebar rounded-full overflow-hidden flex items-center justify-center p-0 mx-1'
 				>
 					<BellIcon className='dark:text-foreground' />
