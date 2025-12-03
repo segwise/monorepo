@@ -4,7 +4,6 @@ import { auth } from '@/libraries/auth';
 
 async function getSessionCache() {
 	'use cache: private';
-
 	cacheLife('hours');
 
 	const headerList = await headers();
