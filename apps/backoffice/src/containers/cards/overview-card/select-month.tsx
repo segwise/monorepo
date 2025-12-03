@@ -1,6 +1,7 @@
 'use client';
 
-import { useQueryState } from 'nuqs';
+import { useState } from 'react';
+// import { useQueryState } from 'nuqs';
 import {
 	Select,
 	SelectContent,
@@ -10,14 +11,7 @@ import {
 } from '@/components/ui/select';
 
 function SelectMonth() {
-	const [month, setMonth] = useQueryState('month', {
-		clearOnDefault: false,
-		defaultValue: new Intl.DateTimeFormat('en-US', {
-			month: 'long',
-		})
-			.format(new Date())
-			.replace(/^./, (c) => c.toLowerCase()),
-	});
+	const [month, setMonth] = useState('month');
 
 	return (
 		<Select value={month.toString()} onValueChange={setMonth}>
