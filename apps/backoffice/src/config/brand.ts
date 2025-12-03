@@ -1,4 +1,4 @@
-import LOGO from '@/public/images/wallpaper-auth.webp';
+import LOGO from '@/public/images/logo.png';
 import ICON from '@/public/images/wallpaper-auth.webp';
 
 const brand = {

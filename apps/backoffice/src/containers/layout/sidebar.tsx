@@ -36,16 +36,8 @@ function Sidebar() {
 									alt={brand.name}
 									priority
 									quality={100}
-									className='aspect-square size-10 object-contain object-center rounded-md'
+									className='aspect-square w-5/6 object-contain object-center'
 								/>
-								<div className='grid flex-1 text-left text-sm leading-tight'>
-									<span className='truncate font-semibold dark:text-sidebar-foreground'>
-										{brand.name}
-									</span>
-									<span className='truncate text-xs font-normal dark:text-sidebar-ring'>
-										{brand.slogan}
-									</span>
-								</div>
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>

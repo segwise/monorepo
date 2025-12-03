@@ -1,5 +1,7 @@
 function TitlePage() {
-	return <h1 className='text-2xl font-semibold'>Dashboard</h1>;
+	return (
+		<h1 className='text-2xl font-semibold dark:text-foreground'>Dashboard</h1>
+	);
 }
 
 export { TitlePage };

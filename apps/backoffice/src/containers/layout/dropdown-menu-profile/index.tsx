@@ -27,7 +27,7 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 							className='aspect-square size-8 rounded-full object-cover object-center bg-sidebar'
 						/>
 						<div className='text-left'>
-							<span className='block text-sm font-semibold leading-none'>
+							<span className='block text-sm dark:text-foreground font-semibold leading-none'>
 								{data?.user.name}
 							</span>
 							<span className='block text-xs text-muted-foreground truncate whitespace-nowrap max-w-40'>
@@ -63,7 +63,7 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 				</DropdownMenuTrigger>
 			</Activity>
 			<DropdownMenuContent
-				align='start'
+				align={variant === 'topbar' ? 'end' : 'center'}
 				className={cn('w-60', variant === 'sidebar' && 'dark')}
 			>
 				<Button

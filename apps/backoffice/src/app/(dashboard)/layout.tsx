@@ -13,7 +13,13 @@ function RootLayout({
 }>) {
 	return (
 		<html lang='pt-BR'>
-			<body className={cn('bg-sidebar', inter.variable, inter.className)}>
+			<body
+				className={cn(
+					'bg-sidebar overflow-hidden',
+					inter.variable,
+					inter.className,
+				)}
+			>
 				<Providers>
 					<Layout>{children}</Layout>
 				</Providers>

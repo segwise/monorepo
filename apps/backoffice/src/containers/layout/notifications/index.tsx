@@ -25,9 +25,9 @@ function SheetNotification() {
 			<SheetTrigger asChild>
 				<Button
 					variant='ghost'
-					className='size-8 relative bg-muted rounded-full overflow-hidden flex items-center justify-center p-0'
+					className='size-8 relative bg-muted dark:bg-sidebar rounded-full overflow-hidden flex items-center justify-center p-0 mx-1'
 				>
-					<BellIcon />
+					<BellIcon className='dark:text-foreground' />
 					{/* <div className='size-3 rounded-full absolute top-1 right-1.5 bg-destructive text-xs text-[0.60rem] text-white flex flex-row items-center justify-center'>
 						1
 					</div> */}
