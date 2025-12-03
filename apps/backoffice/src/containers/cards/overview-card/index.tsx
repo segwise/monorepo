@@ -13,7 +13,7 @@ import { CardTitle } from './title';
 function CardOverview() {
 	return (
 		<Card>
-			<CardHeader className='relative'>
+			<CardHeader>
 				<Suspense>
 					<CardTitle />
 				</Suspense>
