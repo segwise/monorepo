@@ -1,3 +1,5 @@
+'use client';
+
 import { use } from 'react';
 import { CardTitle as Title } from '@/components/ui/card';
 import { getSessionCache } from '@/functions/auth/get-session-cache';

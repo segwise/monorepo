@@ -1,3 +1,4 @@
+import { ViewTransition } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { ChangeTheme } from './change-theme';
@@ -32,8 +33,7 @@ function Layout({ children }: React.PropsWithChildren) {
 				</Header>
 				<br />
 				<main className='p-6 pt-0 -mt-4'>
-					{/* <ViewTransition>{children}</ViewTransition> */}
-					{children}
+					<ViewTransition>{children}</ViewTransition>
 				</main>
 			</SidebarInset>
 		</SidebarProvider>
