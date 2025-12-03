@@ -13,7 +13,7 @@ function RootLayout({
 	return (
 		<html lang='pt-BR' suppressHydrationWarning>
 			<body className={cn(inter.variable, inter.className)}>
-				<Providers noTheme>{children}</Providers>
+				<Providers>{children}</Providers>
 				<Toaster />
 			</body>
 		</html>
