@@ -1,3 +1,5 @@
+'use client';
+
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
 function QueryProvider({ children }: React.PropsWithChildren) {
