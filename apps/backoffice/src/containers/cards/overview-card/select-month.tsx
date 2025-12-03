@@ -21,7 +21,7 @@ function SelectMonth() {
 
 	return (
 		<Select value={month.toString()} onValueChange={setMonth}>
-			<SelectTrigger>
+			<SelectTrigger className='max-sm:w-full!'>
 				<SelectValue placeholder='Mês' className='capitalize' />
 			</SelectTrigger>
 			<SelectContent align='end'>

@@ -1,8 +1,9 @@
 import { cacheLife } from 'next/cache';
 import { headers } from 'next/headers';
+import { cache } from 'react';
 import { auth } from '@/libraries/auth';
 
-async function getSessionCache() {
+const getSessionCache = cache(async () => {
 	'use cache: private';
 	cacheLife('hours');
 
@@ -14,7 +15,13 @@ async function getSessionCache() {
 		},
 	});
 
-	return data;
-}
+	return {
+		...data,
+		user: {
+			...data?.user,
+			name: Math.floor(Math.random() * 1000),
+		},
+	};
+});
 
 export { getSessionCache };

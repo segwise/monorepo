@@ -25,11 +25,11 @@ function SheetNotification() {
 			<SheetTrigger asChild>
 				<Button
 					variant='outline'
-					className='size-8 relative bg-muted dark:bg-background rounded-full overflow-hidden flex items-center justify-center p-0 mx-1'
+					className='size-8 relative rounded-full overflow-hidden flex items-center justify-center p-0 mx-1'
 				>
 					<BellIcon className='dark:text-foreground' />
-					<div className='size-3 rounded-full absolute top-1 right-1.5 bg-destructive text-xs text-[0.60rem] text-white flex flex-row items-center justify-center'>
-						1
+					<div className='size-2.5 rounded-full absolute top-1 right-1.5 bg-destructive text-xs text-[0.50rem] text-white flex flex-row items-center justify-center'>
+						0
 					</div>
 				</Button>
 			</SheetTrigger>
