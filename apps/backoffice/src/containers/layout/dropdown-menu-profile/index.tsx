@@ -1,6 +1,6 @@
 import { ChevronDownIcon, MoreHorizontalIcon } from 'lucide-react';
 import Image from 'next/image';
-import { Activity, use } from 'react';
+import { Activity } from 'react';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -13,8 +13,12 @@ import { getSessionCache } from '@/functions/auth/get-session-cache';
 import { cn } from '@/utils';
 import { DropdownmenuButtonSignOut } from './sign-out';
 
-function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
-	const data = use(getSessionCache());
+async function DropdownMenuProfile({
+	variant,
+}: {
+	variant: 'sidebar' | 'topbar';
+}) {
+	const data = await getSessionCache();
 
 	return (
 		<DropdownMenu>

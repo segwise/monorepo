@@ -4,7 +4,7 @@ import { TopLoader } from '@/components/top-loader';
 import { Toaster } from '@/components/ui/sonner';
 import { Layout } from '@/containers/layout';
 import { inter } from '@/fonts/inter';
-// import { Providers } from '@/providers/contexts';
+import { Providers } from '@/providers/contexts';
 import { cn } from '@/utils';
 
 function RootLayout({
@@ -22,9 +22,9 @@ function RootLayout({
 				)}
 			>
 				<TopLoader />
-				{/* <Providers> */}
-				<Layout>{children}</Layout>
-				{/* </Providers> */}
+				<Providers>
+					<Layout>{children}</Layout>
+				</Providers>
 				<Toaster />
 			</body>
 		</html>
