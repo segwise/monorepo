@@ -30,7 +30,7 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 							<span className='block text-sm font-semibold leading-none'>
 								{data?.user.name}
 							</span>
-							<span className='block text-xs text-muted-foreground truncate whitespace-nowrap max-w-40 leading-none mt-1'>
+							<span className='block text-xs text-muted-foreground truncate whitespace-nowrap max-w-40'>
 								{data?.user.email}
 							</span>
 						</div>
@@ -54,7 +54,7 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 							<span className='truncate font-semibold leading-none'>
 								{data?.user.name}
 							</span>
-							<span className='truncate text-xs dark:text-sidebar-ring leading-none mt-px'>
+							<span className='truncate text-xs dark:text-sidebar-ring'>
 								{data?.user.email}
 							</span>
 						</div>
@@ -79,7 +79,7 @@ function DropdownMenuProfile({ variant }: { variant: 'sidebar' | 'topbar' }) {
 						<span className='truncate font-semibold leading-none'>
 							{data?.user.name}
 						</span>
-						<span className='truncate text-xs text-sidebar-ring leading-none mt-px'>
+						<span className='truncate text-xs text-sidebar-ring mt-px'>
 							{data?.user.email}
 						</span>
 					</div>

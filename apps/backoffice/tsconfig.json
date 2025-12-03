@@ -33,7 +33,9 @@
 			"@/providers/*": ["providers/*"],
 			"@/auth": ["libraries/auth"],
 			"@/data/*": ["data/*"],
-			"@/config/*": ["config/*"]
+			"@/config/*": ["config/*"],
+			"@/cards/*": ["containers/cards/*"],
+			"@/charts/*": ["containers/charts/*"]
 		}
 	},
 	"include": [

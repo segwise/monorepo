@@ -30,7 +30,7 @@ function CardHeaderHome({
 						<Icon className='size-5' /> {title}
 					</CardTitle>
 					<CardAction>
-						<ArrowUpRightIcon className='text-primary' />
+						<ArrowUpRightIcon className='text-active' />
 					</CardAction>
 				</CardHeader>
 				<CardContent>

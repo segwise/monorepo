@@ -28,9 +28,9 @@ function SheetNotification() {
 					className='size-8 relative bg-muted rounded-full overflow-hidden flex items-center justify-center p-0'
 				>
 					<BellIcon />
-					<div className='size-3 rounded-full absolute top-1 right-1.5 bg-destructive text-xs text-[0.60rem] text-white flex flex-row items-center justify-center'>
+					{/* <div className='size-3 rounded-full absolute top-1 right-1.5 bg-destructive text-xs text-[0.60rem] text-white flex flex-row items-center justify-center'>
 						1
-					</div>
+					</div> */}
 				</Button>
 			</SheetTrigger>
 			<SheetContent>

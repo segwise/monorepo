@@ -1,10 +1,10 @@
-import { Building2Icon } from 'lucide-react';
+import { FileTextIcon } from 'lucide-react';
 import { CardHeaderHome } from './header-home';
 
 function CardPendingQuotes() {
 	return (
 		<CardHeaderHome
-			icon={Building2Icon}
+			icon={FileTextIcon}
 			title='Cotações Pendentes'
 			value='0'
 			percent={0}

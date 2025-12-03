@@ -11,12 +11,16 @@ import {
 
 function SelectMonth() {
 	const [month, setMonth] = useQueryState('month', {
-		clearOnDefault: true,
-		defaultValue: new Date().getUTCMonth().toString(),
+		clearOnDefault: false,
+		defaultValue: new Intl.DateTimeFormat('en-US', {
+			month: 'long',
+		})
+			.format(new Date())
+			.replace(/^./, (c) => c.toLowerCase()),
 	});
 
 	return (
-		<Select defaultValue={month.toString()} onValueChange={setMonth}>
+		<Select value={month.toString()} onValueChange={setMonth}>
 			<SelectTrigger>
 				<SelectValue placeholder='Mês' className='capitalize' />
 			</SelectTrigger>
