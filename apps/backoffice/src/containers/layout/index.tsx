@@ -1,13 +1,13 @@
 import { ViewTransition } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset } from '@/components/ui/sidebar';
-import { ChangeTheme } from './change-theme';
+// import { ChangeTheme } from './change-theme';
 import { DropdownMenuProfile } from './dropdown-menu-profile';
 import { Header } from './header';
 import { SheetNotification } from './notifications';
 import { SidebarProvider } from './provider';
 import { Sidebar } from './sidebar';
-import { Timer } from './timer';
+// import { Timer } from './timer';
 import { TitlePage } from './title-page';
 
 function Layout({ children }: React.PropsWithChildren) {
@@ -20,11 +20,11 @@ function Layout({ children }: React.PropsWithChildren) {
 						<TitlePage />
 					</div>
 					<div className='flex flex-row items-center justify-end gap-x-2'>
-						<div className='mr-2'>
+						{/* <div className='mr-2'>
 							<Timer />
-						</div>
+						</div> */}
 						<Separator orientation='vertical' className='h-10' />
-						<ChangeTheme />
+						{/* <ChangeTheme /> */}
 						<Separator orientation='vertical' className='h-10' />
 						<SheetNotification />
 						<Separator orientation='vertical' className='h-10' />
