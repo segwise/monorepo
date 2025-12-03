@@ -12,15 +12,15 @@ import { Separator } from '@/components/ui/separator';
 
 function CardInsuranceAnalysisAndQuotes() {
 	return (
-		<Card>
+		<Card className='pb-4 md:pb-4'>
 			<CardHeader className='-mb-4'>
 				<CardTitle>Análise de seguros e cotações</CardTitle>
 				<CardAction>
-					<div className='flex flex-row items-center justify-end gap-x-4'>
-						<div className='flex flex-row items-center justify-start gap-x-2 text-sm font-medium text-muted-foreground/70'>
+					<div className='flex flex-col md:flex-row items-end md:items-center justify-end gap-x-4'>
+						<div className='flex flex-row-reverse md:flex-row items-center justify-start gap-x-2 text-sm font-medium text-muted-foreground/70'>
 							<div className='size-2.5 bg-active rounded-full' /> Seguros
 						</div>
-						<div className='flex flex-row items-center justify-start gap-x-2 text-sm font-medium text-muted-foreground/70'>
+						<div className='flex flex-row-reverse md:flex-row items-center justify-start gap-x-2 text-sm font-medium text-muted-foreground/70'>
 							<div className='size-2.5 bg-active/70 rounded-full' /> Cotações
 						</div>
 					</div>

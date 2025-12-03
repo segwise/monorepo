@@ -19,12 +19,12 @@ const chartData = [
 
 function CardInsuranceThroughInsuranceCompanies() {
 	return (
-		<Card>
+		<Card className='pb-3 md:pb-4'>
 			<CardHeader className='z-1'>
 				<CardTitle>Seguros por seguradoras</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<div className='-mt-37 z-0'>
+				<div className='-mt-42 md:-mt-37 z-0'>
 					<ChartInsuranceThroughInsuranceCompanies />
 				</div>
 				<Table className='mt-1'>

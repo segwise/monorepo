@@ -35,7 +35,10 @@ function ChartInsuranceAnalysisAndQuotes() {
 				accessibilityLayer
 				data={chartData}
 				margin={{
-					right: 12,
+					left: 0,
+					top: 0,
+					right: 0,
+					bottom: 0,
 				}}
 			>
 				<CartesianGrid vertical={false} />
