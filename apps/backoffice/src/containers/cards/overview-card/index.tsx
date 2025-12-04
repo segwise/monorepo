@@ -1,5 +1,4 @@
 import { FilterIcon } from 'lucide-react';
-import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import {
 	Card,
@@ -14,9 +13,7 @@ function CardOverview() {
 	return (
 		<Card>
 			<CardHeader className='max-sm:grid-cols-1!'>
-				<Suspense>
-					<CardTitle />
-				</Suspense>
+				<CardTitle />
 				<CardDescription>
 					Relatórios e atividades registradas no sistema de controle.
 				</CardDescription>
