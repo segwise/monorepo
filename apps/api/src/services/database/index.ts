@@ -1,5 +1,4 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { readReplicas } from '@prisma/extension-read-replicas';
 import { PrismaClient } from '@/generated/prisma/client';
 import { environment } from '@/libraries/environment';
 
@@ -24,15 +23,11 @@ const prismaClient = () => {
 		adapter: mainAdapter,
 	});
 
-	const replica1Client = new PrismaClient({ adapter: replica1Adapter });
-	const replica2Client = new PrismaClient({ adapter: replica2Adapter });
-	const replica3Client = new PrismaClient({ adapter: replica3Adapter });
+	const _replica1Client = new PrismaClient({ adapter: replica1Adapter });
+	const _replica2Client = new PrismaClient({ adapter: replica2Adapter });
+	const _replica3Client = new PrismaClient({ adapter: replica3Adapter });
 
-	return prismaClient.$extends(
-		readReplicas({
-			replicas: [replica1Client, replica2Client, replica3Client],
-		}),
-	);
+	return prismaClient;
 };
 
 // biome-ignore lint/suspicious/noShadowRestrictedNames: globalThis
