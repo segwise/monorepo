@@ -1,8 +1,10 @@
-import { CardTitle as Title } from '@/components/ui/card';
-import { getSessionCache } from '@/functions/auth/get-session-cache';
+'use client';
 
-async function CardTitle() {
-	const profile = await getSessionCache();
+import { CardTitle as Title } from '@/components/ui/card';
+import { auth } from '@/libraries/auth';
+
+function CardTitle() {
+	const { data: profile } = auth.useSession();
 
 	return (
 		<Title className='text-2xl'>Seja bem-vindo, {profile?.user.name}</Title>
