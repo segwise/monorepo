@@ -7,13 +7,14 @@ import {
 	CardHeader,
 } from '@/components/ui/card';
 import { SelectMonth } from './select-month';
-import { CardTitle } from './title';
+
+// import { CardTitle } from './title';
 
 function CardOverview() {
 	return (
 		<Card>
 			<CardHeader className='max-sm:grid-cols-1!'>
-				<CardTitle />
+				{/* <CardTitle /> */}
 				<CardDescription>
 					Relatórios e atividades registradas no sistema de controle.
 				</CardDescription>
