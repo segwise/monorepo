@@ -1,5 +1,5 @@
+import ICON from '@/public/images/icon.png';
 import LOGO from '@/public/images/logo.png';
-import ICON from '@/public/images/wallpaper-auth.webp';
 
 const brand = {
 	name: 'Segwise',
