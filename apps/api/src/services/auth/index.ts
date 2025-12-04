@@ -11,7 +11,7 @@ const auth = betterAuth({
 	secret: environment.BETTER_AUTH_SECRET,
 	trustedOrigins: [environment.URL_APPLICATION],
 	basePath: '/auth',
-	database: prismaAdapter(database, {
+	database: prismaAdapter(database.$primary(), {
 		provider: 'postgresql',
 		transaction: true,
 		usePlural: false,
