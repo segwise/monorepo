@@ -6,9 +6,8 @@ import { useSession } from '@/hooks/auth/use-session';
 function CardTitle() {
 	const { data: profile } = useSession();
 
-	return (
-		<Title className='text-2xl'>Seja bem-vindo, {profile?.user.name}</Title>
-	);
+	console.log(profile);
+	return <Title className='text-2xl'>Seja bem-vindo, {}</Title>;
 }
 
 export { CardTitle };
