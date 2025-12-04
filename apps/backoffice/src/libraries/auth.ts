@@ -8,6 +8,16 @@ const auth = createAuthClient({
 	fetchOptions: {
 		credentials: 'include',
 	},
+	$InferAuth: {
+		basePath: '/auth',
+		advanced: {
+			cookiePrefix: 'auth',
+			crossSubDomainCookies: {
+				enabled: true,
+			},
+			useSecureCookies: true,
+		},
+	},
 });
 
 export { auth };
