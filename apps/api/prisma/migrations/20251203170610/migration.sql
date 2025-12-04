@@ -5,6 +5,10 @@ CREATE TABLE "users" (
     "image" TEXT,
     "email" TEXT NOT NULL,
     "email_verified" BOOLEAN,
+    "role" TEXT NOT NULL,
+    "banned" BOOLEAN,
+    "ban_reason" TEXT,
+    "ban_expires" DATE,
     "updated_at" TIMESTAMPTZ NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -18,6 +22,7 @@ CREATE TABLE "sessions" (
     "ip_address" TEXT,
     "user_agent" TEXT,
     "user_id" UUID NOT NULL,
+    "impersonated_by" TEXT,
     "expires_at" TIMESTAMPTZ NOT NULL,
     "updated_at" TIMESTAMPTZ NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

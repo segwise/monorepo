@@ -8,8 +8,8 @@ const INIT = {
 };
 
 async function seed() {
-	await database.$transaction(async (transaction) => {
-		const isInit = await transaction.user.findUnique({
+	try {
+		const isInit = await database.user.findUnique({
 			where: {
 				email: INIT.email,
 			},
@@ -22,18 +22,22 @@ async function seed() {
 			return;
 		}
 
-		await auth.api.createUser({
-			body: {
-				name: INIT.name,
-				email: INIT.email,
-				password: INIT.password,
-				role: 'admin',
-				data: {
-					emailVerified: true,
+		await database.$transaction(async (_transaction) => {
+			await auth.api.createUser({
+				body: {
+					name: INIT.name,
+					email: INIT.email,
+					password: INIT.password,
+					role: 'admin',
+					data: {
+						emailVerified: true,
+					},
 				},
-			},
+			});
 		});
-	});
+	} catch (error) {
+		console.error(error);
+	}
 }
 
 await seed().finally(() => database.$disconnect());

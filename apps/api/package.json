@@ -13,7 +13,7 @@
 		"db:migrate": "bun x --bun prisma migrate dev",
 		"db:reset": "bun x --bun prisma migrate reset",
 		"db:deploy": "bun x --bun prisma migrate deploy",
-		"db:seed": "bun --bun run seed.js",
+		"db:seed": "bun --bun prisma db seed",
 		"deploy": "git add . && git commit -m 'commit automatic' && git push && clear"
 	},
 	"devDependencies": {
@@ -27,6 +27,7 @@
 	"dependencies": {
 		"@prisma/adapter-pg": "^7.0.1",
 		"@prisma/client": "7.0.1",
+		"@prisma/extension-read-replicas": "^0.5.0",
 		"better-auth": "^1.4.1",
 		"hono": "^4.10.6",
 		"resend": "^6.5.2",
