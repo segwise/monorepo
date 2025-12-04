@@ -4,7 +4,12 @@ import { auth } from '@/auth';
 const useSession = () =>
 	useQuery<unknown, Error, typeof auth.$Infer.Session>({
 		queryKey: ['auth', 'session'],
-		queryFn: async () => await auth.getSession(),
+		queryFn: async ({ signal }) =>
+			await auth.getSession({
+				fetchOptions: {
+					signal,
+				},
+			}),
 	});
 
 export { useSession };
