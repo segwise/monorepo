@@ -45,7 +45,7 @@ COPY --from=builder /app/prisma/migrations ./prisma/migrations
 COPY --from=builder /app/prisma/schema.prisma ./prisma/schema.prisma
 COPY --from=builder /app/prisma.config.ts ./
 
-COPY --from=builder /app/src/generated ./src/generated
+COPY --from=builder /app/generated ./generated
 
 COPY --from=builder /app/entrypoint.sh ./
 
