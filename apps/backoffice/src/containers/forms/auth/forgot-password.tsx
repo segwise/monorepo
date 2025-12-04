@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { useForgotPassword } from '@/hooks/auth/forgot-password';
+import { useForgotPassword } from '@/hooks/auth/use-forgot-password';
 import { SchemaAuthForgotPassword } from '@/schemas/auth/forgot-password';
 
 function FormForgotPassword() {

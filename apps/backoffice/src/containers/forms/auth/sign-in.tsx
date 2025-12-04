@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { useSignIn } from '@/hooks/auth/sign-in';
+import { useSignIn } from '@/hooks/auth/use-sign-in';
 import { SchemaAuthSignIn } from '@/schemas/auth/sign-in';
 
 function FormSignIn() {

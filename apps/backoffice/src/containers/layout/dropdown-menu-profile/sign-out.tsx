@@ -6,7 +6,7 @@ import { Activity } from 'react';
 import { toast } from 'sonner';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/ui/spinner';
-import { useSignOut } from '@/hooks/auth/sign-out';
+import { useSignOut } from '@/hooks/auth/use-sign-out';
 
 function DropdownmenuButtonSignOut() {
 	const router = useRouter();
