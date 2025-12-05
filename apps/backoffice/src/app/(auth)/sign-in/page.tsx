@@ -34,9 +34,7 @@ function SignInPage() {
 							Informe as credenciais para acesso
 						</p>
 					</div>
-					<Suspense>
-						<FormSignIn />
-					</Suspense>
+					<FormSignIn />
 					<div className='mt-12 text-center text-sm text-muted-foreground'>
 						<p>
 							© <Suspense>{getCurrentYear()}</Suspense> {brand.name}. Todos os

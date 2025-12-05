@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Activity } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -24,7 +24,6 @@ import { SchemaAuthSignIn } from '@/schemas/auth/sign-in';
 
 function FormSignIn() {
 	const router = useRouter();
-	const searchParams = useSearchParams();
 
 	const { mutate, isPending } = useSignIn();
 
@@ -50,7 +49,9 @@ function FormSignIn() {
 			{ email, password, remember_password },
 			{
 				onSuccess() {
-					const callbackUrl = searchParams.get('callbackUrl');
+					const callbackUrl = new URL(window.location.href).searchParams.get(
+						'callbackUrl',
+					);
 
 					if (callbackUrl) {
 						router.push(callbackUrl);
