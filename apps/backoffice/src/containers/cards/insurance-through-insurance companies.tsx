@@ -21,7 +21,7 @@ function CardInsuranceThroughInsuranceCompanies() {
 	return (
 		<Card className='pb-3 md:pb-4'>
 			<CardHeader className='z-1'>
-				<CardTitle>Seguros por seguradoras</CardTitle>
+				<CardTitle>Seguros por Seguradoras</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<div className='-mt-42 md:-mt-37 z-0'>

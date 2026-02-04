@@ -27,7 +27,7 @@ async function DropdownMenuProfile({
 					<Button variant='ghost' className='px-2'>
 						<Image
 							src={data?.user.image || placeholder.user}
-							alt={data?.user.name as string}
+							alt={data?.user.name || 'Imagem de perfil'}
 							className='aspect-square size-8 rounded-full object-cover object-center bg-sidebar'
 						/>
 						<div className='text-left'>
@@ -50,7 +50,7 @@ async function DropdownMenuProfile({
 						<div className='bg-muted border size-8 rounded-sm overflow-hidden'>
 							<Image
 								src={data?.user.image || placeholder.user}
-								alt={data?.user.name as string}
+								alt={data?.user.name || 'Imagem de perfil'}
 								className='aspect-square size-full object-cover object-center'
 							/>
 						</div>
@@ -76,7 +76,7 @@ async function DropdownMenuProfile({
 				>
 					<Image
 						src={data?.user.image || placeholder.user}
-						alt={data?.user.name as string}
+						alt={data?.user.name || 'Imagem de perfil'}
 						className='bg-muted border aspect-square size-8 rounded-sm object-cover object-center'
 					/>
 					<div className='grid flex-1 text-left text-sm leading-normal'>

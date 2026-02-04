@@ -1,0 +1,352 @@
+import { fakerPT_BR as faker } from '@faker-js/faker';
+import { formatDistanceToNow } from 'date-fns';
+import {
+	CarIcon,
+	FilterIcon,
+	HomeIcon,
+	MoreHorizontalIcon,
+	PlusIcon,
+	SearchIcon,
+	Trash2Icon,
+	XIcon,
+} from 'lucide-react';
+import Link from 'next/link';
+import { connection } from 'next/server';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from '@/components/ui/input-group';
+import {
+	Pagination,
+	PaginationContent,
+	PaginationEllipsis,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table';
+import { placeholder } from '@/config/placeholder';
+import { CardHeaderHome } from '@/containers/cards/header-home';
+import { conditionalCapitalize } from '@/libraries/conditional-capitalize';
+
+async function QuotesPage() {
+	await connection();
+
+	const data = Array.from({ length: 10 }).map(() => ({
+		id: faker.string.uuid(),
+		type: faker.helpers.arrayElement(['veichle']),
+		image: faker.image.avatar(),
+		name: faker.person.fullName(),
+		phone: faker.phone.number({ style: 'human' }),
+		status: faker.helpers.arrayElement([
+			'waiting',
+			'quoting',
+			'quoted',
+			'sent',
+			'recused',
+			'confirmed',
+		]),
+		created_at: faker.date.recent().toISOString(),
+	}));
+
+	return (
+		<main className='grid grid-cols-1 gap-6'>
+			<div className='flex flex-row items-center justify-between'>
+				<div className='flex flex-row items-center justify-start gap-x-2'>
+					<InputGroup className='w-60'>
+						<InputGroupInput placeholder='Pesquisar...' />
+						<InputGroupAddon align='inline-end'>
+							<InputGroupButton
+								variant='default'
+								size='icon-sm'
+								className='size-10 -mr-2 rounded-l-none text-white'
+							>
+								<SearchIcon />
+							</InputGroupButton>
+						</InputGroupAddon>
+					</InputGroup>
+					<Separator orientation='vertical' className='h-7 mx-2' />
+					<div className='flex flex-row items-center justify-start gap-x-4 divide-x divide-border/50 *:[&_div]:mr-10'>
+						<div className='text-xs flex flex-row items-center justify-start gap-x-1'>
+							<span>Produtor:</span>
+							<span className='text-muted-foreground'>Nome do produtor</span>
+						</div>
+						<div className='text-xs flex flex-row items-center justify-start gap-x-1'>
+							<span>Seguradoras:</span>
+							<div className='flex flex-row items-center justify-start -gap-x-3'>
+								{Array.from({ length: 4 }).map((_, index) => (
+									<Avatar key={index.toString()} className='size-4'>
+										<AvatarImage
+											src={placeholder.user}
+											width={52}
+											height={52}
+											alt='Seguradora'
+										/>
+										<AvatarFallback>AA</AvatarFallback>
+									</Avatar>
+								))}
+							</div>
+						</div>
+						<div className='text-xs flex flex-row items-center justify-start gap-x-1'>
+							<span>Período:</span>
+							<span className='text-muted-foreground'>
+								00/00/0000 - 00/00/0000
+							</span>
+						</div>
+					</div>
+				</div>
+				<div className='space-x-2'>
+					<Button variant='link'>
+						<XIcon /> Limpar
+					</Button>
+					<Button variant='outline'>
+						<FilterIcon /> Filtrar
+					</Button>
+					<Button asChild>
+						<Link href='/quotes/register'>
+							<PlusIcon /> Cadastrar
+						</Link>
+					</Button>
+				</div>
+			</div>
+			<Separator className='-mt-2' />
+			<div className='grid grid-cols-5 gap-x-3'>
+				<CardHeaderHome
+					icon={HomeIcon}
+					title='Total Geral'
+					value='0'
+					percent={0}
+				/>
+				<CardHeaderHome
+					icon={HomeIcon}
+					title='Pendentes'
+					value='0'
+					percent={0}
+				/>
+				<CardHeaderHome
+					icon={HomeIcon}
+					title='Em Andamento'
+					value='0'
+					percent={0}
+				/>
+				<CardHeaderHome
+					icon={HomeIcon}
+					title='Recusados'
+					value='0'
+					percent={0}
+				/>
+				<CardHeaderHome
+					icon={HomeIcon}
+					title='Confirmados'
+					value='0'
+					percent={0}
+				/>
+			</div>
+			<div className='space-y-3'>
+				<Card className='p-0 overflow-hidden'>
+					<CardContent className='p-0'>
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead className='text-left w-60'>Segurado</TableHead>
+									<TableHead className='text-left flex-1'>Dados</TableHead>
+									<TableHead className='text-center w-40'>Tipo</TableHead>
+									<TableHead className='text-center w-40'>Status</TableHead>
+									<TableHead className='text-center w-40'>
+										Solicitado Em
+									</TableHead>
+									<TableHead className='text-right w-20'>Ações</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{data.map(
+									({ id, type, image, name, phone, status, created_at }) => (
+										<TableRow key={id}>
+											<TableCell className='text-left w-60'>
+												<div className='flex flex-row items-center justify-start gap-x-2'>
+													<Avatar className='size-8 border'>
+														<AvatarImage
+															src={image}
+															width={52}
+															height={52}
+															alt='Image do usuário'
+															priority
+														/>
+														<AvatarFallback>
+															{name.slice(0, 2).toUpperCase()}
+														</AvatarFallback>
+													</Avatar>
+													<div>
+														<span className='block text-sm font-medium truncate line-clamp-1'>
+															{conditionalCapitalize(name)}
+														</span>
+														<span className='block text-xs text-muted-foreground font-normal leading-none'>
+															{phone}
+														</span>
+													</div>
+												</div>
+											</TableCell>
+											<TableCell className='text-left flex-1'>
+												<div className='flex flex-row items-center justify-start gap-x-2'>
+													<Avatar className='size-8 rounded-none'>
+														<AvatarImage
+															src='https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Fapiplacas.com.br%2Flogos%2FlogosMarcas%2Fchevrolet.png&w=64&q=75'
+															width={52}
+															height={52}
+															alt='Marca do veículo'
+															priority
+														/>
+														<AvatarFallback>
+															{name.slice(0, 2).toUpperCase()}
+														</AvatarFallback>
+													</Avatar>
+													<div>
+														<span className='block text-sm font-medium truncate line-clamp-1 uppercase'>
+															CHEVROLET/ONIX 1.0MT LT
+														</span>
+														<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
+															PCW-5776
+														</span>
+													</div>
+												</div>
+											</TableCell>
+											<TableCell className='text-center w-40'>
+												<Badge>
+													{type === 'veichle' && <CarIcon className='size-4' />}
+													{type === 'veichle' && 'Veicular'}
+												</Badge>
+											</TableCell>
+											<TableCell className='text-center w-40'>
+												<Badge
+													className='w-25 truncate line-clamp-1 mx-auto'
+													variant={
+														status === 'confirmed'
+															? 'success'
+															: status === 'recused'
+																? 'destructive'
+																: status === 'waiting'
+																	? 'warning'
+																	: 'default'
+													}
+												>
+													{status === 'waiting' && 'Aguardando'}
+													{status === 'quoting' && 'Cotando'}
+													{status === 'quoted' && 'Cotado'}
+													{status === 'sent' && 'Enviado'}
+													{status === 'recused' && 'Recusado'}
+													{status === 'confirmed' && 'Aceito'}
+												</Badge>
+											</TableCell>
+											<TableCell className='text-center w-40'>
+												<Badge className='w-20 truncate line-clamp-1 mx-auto'>
+													{formatDistanceToNow(created_at)
+														.replace('cerca de', '')
+														.trimStart()}
+												</Badge>
+											</TableCell>
+											<TableCell className='text-right w-20'>
+												<DropdownMenu>
+													<DropdownMenuTrigger asChild>
+														<Button variant='outline' size='icon-sm'>
+															<MoreHorizontalIcon />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent align='end'>
+														<DropdownMenuItem>
+															<HomeIcon /> Nome da ação
+														</DropdownMenuItem>
+														<DropdownMenuItem>
+															<HomeIcon /> Nome da ação
+														</DropdownMenuItem>
+														<DropdownMenuItem>
+															<HomeIcon /> Nome da ação
+														</DropdownMenuItem>
+														<DropdownMenuItem>
+															<HomeIcon /> Nome da ação
+														</DropdownMenuItem>
+														<DropdownMenuSeparator />
+														<DropdownMenuItem variant='destructive'>
+															<Trash2Icon /> Apagar
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
+											</TableCell>
+										</TableRow>
+									),
+								)}
+							</TableBody>
+						</Table>
+					</CardContent>
+				</Card>
+				<div className='flex flex-row items-center justify-between **:gap-x-2'>
+					<div>
+						<span className='text-sm px-2 text-muted-foreground'>
+							Total: 10 registros
+						</span>
+					</div>
+					<div className='flex flex-row items-center justify-end'>
+						<div className='flex flex-row items-center justify-end gap-x-1'>
+							<span className='text-sm font-normal leading-none text-muted-foreground'>
+								Registros:
+							</span>
+							<Select defaultValue='10'>
+								<SelectTrigger>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent align='center'>
+									<SelectItem value='10'>10</SelectItem>
+									<SelectItem value='20'>20</SelectItem>
+									<SelectItem value='30'>30</SelectItem>
+									<SelectItem value='50'>50</SelectItem>
+									<SelectItem value='100'>100</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<Separator orientation='vertical' className='h-7 mx-2' />
+						<Pagination>
+							<PaginationContent>
+								<PaginationPrevious />
+								<PaginationEllipsis />
+								<PaginationLink>1</PaginationLink>
+								<PaginationLink>2</PaginationLink>
+								<PaginationLink>3</PaginationLink>
+								<PaginationEllipsis />
+								<PaginationNext />
+							</PaginationContent>
+						</Pagination>
+					</div>
+				</div>
+			</div>
+		</main>
+	);
+}
+
+export default QuotesPage;

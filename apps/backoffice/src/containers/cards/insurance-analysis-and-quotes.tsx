@@ -14,7 +14,7 @@ function CardInsuranceAnalysisAndQuotes() {
 	return (
 		<Card className='pb-4 md:pb-4'>
 			<CardHeader className='-mb-4'>
-				<CardTitle>Análise de seguros e cotações</CardTitle>
+				<CardTitle>Análise de Seguros e Cotações</CardTitle>
 				<CardAction>
 					<div className='flex flex-col md:flex-row items-end md:items-center justify-end gap-x-4'>
 						<div className='flex flex-row-reverse md:flex-row items-center justify-start gap-x-2 text-sm font-medium text-muted-foreground/70'>

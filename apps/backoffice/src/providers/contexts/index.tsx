@@ -1,7 +1,14 @@
+import { setDefaultOptions } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Fragment } from 'react';
+import { ProviderDateFns } from './date-fns';
 import { ProviderFetch } from './fetch';
 import { QueryProvider } from './query';
 import { ThemeProvider } from './theme';
+
+setDefaultOptions({
+	locale: ptBR,
+});
 
 function Providers({
 	noTheme = false,
@@ -13,6 +20,7 @@ function Providers({
 
 	return (
 		<QueryProvider>
+			<ProviderDateFns />
 			<ProviderFetch>
 				<Comp>{children}</Comp>
 			</ProviderFetch>

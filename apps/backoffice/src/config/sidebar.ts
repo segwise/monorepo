@@ -4,6 +4,7 @@ import {
 	BriefcaseBusinessIcon,
 	Building2Icon,
 	FileChartColumnIcon,
+	FileJsonIcon,
 	FileTextIcon,
 	FileUserIcon,
 	FileXIcon,
@@ -19,6 +20,7 @@ const sidebar: Array<{
 		title: string;
 		pathname: string;
 		icon: typeof LayoutDashboardIcon;
+		disabled?: boolean;
 	}>;
 }> = [
 	{
@@ -38,6 +40,7 @@ const sidebar: Array<{
 				title: 'Gestão de Leads',
 				pathname: '/leads',
 				icon: FileUserIcon,
+				disabled: true,
 			},
 			{
 				title: 'Cotações',
@@ -45,14 +48,22 @@ const sidebar: Array<{
 				icon: FileTextIcon,
 			},
 			{
+				title: 'Propostas',
+				pathname: '/proposals',
+				icon: FileJsonIcon,
+				disabled: true,
+			},
+			{
 				title: 'Apólices',
 				pathname: '/policies',
 				icon: FileChartColumnIcon,
+				disabled: true,
 			},
 			{
 				title: 'Sinistros',
 				pathname: '/accidents',
 				icon: FileXIcon,
+				disabled: true,
 			},
 		],
 	},
@@ -63,16 +74,19 @@ const sidebar: Array<{
 				title: 'Segurados',
 				pathname: '/insureds',
 				icon: UsersRoundIcon,
+				disabled: true,
 			},
 			{
 				title: 'Corretoras',
 				pathname: '/brokers',
 				icon: BriefcaseBusinessIcon,
+				disabled: true,
 			},
 			{
 				title: 'Seguradoras',
 				pathname: '/insurances',
 				icon: Building2Icon,
+				disabled: true,
 			},
 		],
 	},
@@ -83,21 +97,25 @@ const sidebar: Array<{
 				title: 'Fluxo de Caixa',
 				pathname: '/finance',
 				icon: LandmarkIcon,
+				disabled: true,
 			},
 			{
 				title: 'Receitas',
 				pathname: '/finance/revenues',
 				icon: BanknoteArrowUpIcon,
+				disabled: true,
 			},
 			{
 				title: 'Despesas',
 				pathname: '/finance/expenses',
 				icon: BanknoteArrowDownIcon,
+				disabled: true,
 			},
 			{
 				title: 'Comissões',
 				pathname: '/finance/commissions',
 				icon: HandCoinsIcon,
+				disabled: true,
 			},
 		],
 	},

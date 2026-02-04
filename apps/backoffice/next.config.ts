@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
 	cacheComponents: true,
 	images: {
 		qualities: [100],
+		remotePatterns: [
+			{
+				hostname: '**',
+			},
+		],
 	},
 	devIndicators: false,
 };

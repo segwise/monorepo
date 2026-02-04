@@ -1,4 +1,4 @@
-import { SettingsIcon } from 'lucide-react';
+import { LockIcon, SettingsIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Activity, Suspense } from 'react';
@@ -10,6 +10,7 @@ import {
 	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
+	SidebarMenuAction,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarSeparator,
@@ -18,6 +19,7 @@ import {
 import { brand } from '@/config/brand';
 import { sidebar } from '@/config/sidebar';
 import { DropdownMenuProfile } from '@/containers/layout/dropdown-menu-profile';
+import { cn } from '@/utils';
 
 function Sidebar() {
 	return (
@@ -52,17 +54,32 @@ function Sidebar() {
 							<SidebarGroupContent>
 								<SidebarMenu>
 									{section.items.map((item) => (
-										<SidebarMenuItem key={item.title}>
+										<SidebarMenuItem
+											key={item.title}
+											aria-disabled={item.disabled}
+										>
 											<SidebarMenuButton
 												asChild
 												tooltip={item.title}
 												pathname={item.pathname}
+												disabled={item.disabled}
 											>
-												<Link href={item.pathname}>
+												<Link
+													href={item.pathname}
+													className={cn(
+														'',
+														item.disabled && 'pointer-events-none',
+													)}
+												>
 													<item.icon />
 													<span>{item.title}</span>
 												</Link>
 											</SidebarMenuButton>
+											{item.disabled && (
+												<SidebarMenuAction className='[&>svg]:size-3 [&>svg]:opacity-50 pointer-events-none'>
+													<LockIcon />
+												</SidebarMenuAction>
+											)}
 										</SidebarMenuItem>
 									))}
 								</SidebarMenu>

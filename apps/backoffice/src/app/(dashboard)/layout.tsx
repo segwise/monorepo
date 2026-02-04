@@ -1,11 +1,16 @@
 import '@/styles';
 
+import type { Metadata } from 'next';
 import { TopLoader } from '@/components/top-loader';
 import { Toaster } from '@/components/ui/sonner';
 import { Layout } from '@/containers/layout';
 import { inter } from '@/fonts/inter';
 import { Providers } from '@/providers/contexts';
 import { cn } from '@/utils';
+
+export const metadata: Metadata = {
+	title: 'Dashboard - Segwise',
+};
 
 function RootLayout({
 	children,
