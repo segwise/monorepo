@@ -10,8 +10,8 @@
 		"auth:generate": "bun x --bun @better-auth/cli generate --config src/services/auth/index.ts",
 		"auth:migrate": "bun x --bun @better-auth/cli migrate --config src/services/auth/index.ts",
 		"db:generate": "bun x --bun prisma generate",
-		"db:migrate": "bun x --bun prisma migrate dev",
-		"db:reset": "bun x --bun prisma migrate reset",
+		"db:migrate:dev": "bun x --bun prisma migrate dev",
+		"db:migrate:reset": "bun x --bun prisma migrate reset",
 		"db:deploy": "bun x --bun prisma migrate deploy",
 		"db:seed": "bun --bun prisma db seed",
 		"deploy": "git add . && git commit -m 'commit automatic' && git push && clear"
