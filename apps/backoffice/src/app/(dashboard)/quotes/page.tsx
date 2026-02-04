@@ -8,6 +8,7 @@ import {
 	PlusIcon,
 	SearchIcon,
 	Trash2Icon,
+	XCircleIcon,
 	XIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -78,7 +79,7 @@ async function QuotesPage() {
 	}));
 
 	return (
-		<main className='grid grid-cols-1 gap-6'>
+		<main className='grid grid-cols-1 gap-6 mt-1'>
 			<div className='flex flex-row items-center justify-between'>
 				<div className='flex flex-row items-center justify-start gap-x-2'>
 					<InputGroup className='w-60'>
@@ -94,14 +95,22 @@ async function QuotesPage() {
 						</InputGroupAddon>
 					</InputGroup>
 					<Separator orientation='vertical' className='h-7 mx-2' />
-					<div className='flex flex-row items-center justify-start gap-x-4 divide-x divide-border/50 *:[&_div]:mr-10'>
-						<div className='text-xs flex flex-row items-center justify-start gap-x-1'>
-							<span>Produtor:</span>
-							<span className='text-muted-foreground'>Nome do produtor</span>
+					<div className='flex flex-row items-center justify-start gap-x-4 divide-x divide-border/50 *:pr-4'>
+						<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
+							<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
+								Produtor:{' '}
+								<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
+							</span>
+							<span className='text-muted-foreground truncate'>
+								Nome do produtor
+							</span>
 						</div>
-						<div className='text-xs flex flex-row items-center justify-start gap-x-1'>
-							<span>Seguradoras:</span>
-							<div className='flex flex-row items-center justify-start -gap-x-3'>
+						<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
+							<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
+								Seguradoras:
+								<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
+							</span>
+							<div className='flex flex-row items-center justify-start -space-x-1.5'>
 								{Array.from({ length: 4 }).map((_, index) => (
 									<Avatar key={index.toString()} className='size-4'>
 										<AvatarImage
@@ -115,20 +124,50 @@ async function QuotesPage() {
 								))}
 							</div>
 						</div>
-						<div className='text-xs flex flex-row items-center justify-start gap-x-1'>
-							<span>Período:</span>
-							<span className='text-muted-foreground'>
+						<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
+							<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
+								Período:
+								<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
+							</span>
+							<span className='text-muted-foreground truncate'>
 								00/00/0000 - 00/00/0000
 							</span>
+						</div>
+						<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
+							<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
+								Tipo:
+								<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
+							</span>
+							<Badge>
+								<CarIcon className='size-4' />
+								Veicular
+							</Badge>
+						</div>
+						<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
+							<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
+								Stauts:
+								<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
+							</span>
+							<Badge variant='default'>Aguardando</Badge>
+						</div>
+						<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
+							<Button
+								variant='link'
+								size='sm'
+								className='text-xs [&_svg]:size-3 text-destructive'
+							>
+								<XCircleIcon />
+								Limpar tudo
+							</Button>
 						</div>
 					</div>
 				</div>
 				<div className='space-x-2'>
-					<Button variant='link'>
-						<XIcon /> Limpar
-					</Button>
 					<Button variant='outline'>
-						<FilterIcon /> Filtrar
+						<FilterIcon /> Filtrar{' '}
+						<Badge className='size-4 text-[0.6rem] items-center justify-center'>
+							1
+						</Badge>
 					</Button>
 					<Button asChild>
 						<Link href='/quotes/register'>
@@ -137,7 +176,7 @@ async function QuotesPage() {
 					</Button>
 				</div>
 			</div>
-			<Separator className='-mt-2' />
+			<Separator className='' />
 			<div className='grid grid-cols-5 gap-x-3'>
 				<CardHeaderHome
 					icon={HomeIcon}
