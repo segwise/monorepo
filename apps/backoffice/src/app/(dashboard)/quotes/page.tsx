@@ -9,7 +9,6 @@ import {
 	SearchIcon,
 	Trash2Icon,
 	XCircleIcon,
-	XIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { connection } from 'next/server';
@@ -165,7 +164,10 @@ async function QuotesPage() {
 				<div className='space-x-2'>
 					<Button variant='outline'>
 						<FilterIcon /> Filtrar{' '}
-						<Badge className='size-4 text-[0.6rem] items-center justify-center'>
+						<Badge
+							variant='active'
+							className='size-4 text-[0.6rem] items-center justify-center pointer-events-none'
+						>
 							1
 						</Badge>
 					</Button>
@@ -293,7 +295,9 @@ async function QuotesPage() {
 																? 'destructive'
 																: status === 'waiting'
 																	? 'warning'
-																	: 'default'
+																	: status === 'sent'
+																		? 'active'
+																		: 'default'
 													}
 												>
 													{status === 'waiting' && 'Aguardando'}

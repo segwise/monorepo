@@ -23,7 +23,7 @@ function CardHeaderHome({
 	percent,
 }: CardHeaderHomeProps) {
 	return (
-		<Card className='p-0 bg-muted'>
+		<Card className='p-0 bg-muted/50'>
 			<Card className='border-0 border-b py-4'>
 				<CardHeader className='relative -mb-5'>
 					<CardTitle className='flex flex-row items-center justify-start gap-x-2 text-sm text-muted-foreground font-medium'>
