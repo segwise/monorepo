@@ -1,9 +1,14 @@
 import { MessageCircleIcon } from 'lucide-react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CONE from '@/public/images/cone.png';
+
+export const metadata: Metadata = {
+	title: 'Página em Contrução',
+};
 
 function Pathnames() {
 	return (
@@ -33,7 +38,7 @@ function Pathnames() {
 					<CardTitle>Fale com o suporte ou redirecione</CardTitle>
 				</CardHeader>
 				<CardContent className='md:flex gap-x-4 -mt-4'>
-					<Link href='/'>
+					<Link href='/dashboard'>
 						<Button variant='active' className='w-full md:w-fit'>
 							Voltar para o Dashboard
 						</Button>

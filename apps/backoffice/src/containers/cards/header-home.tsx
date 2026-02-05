@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 
 interface CardHeaderHomeProps {
-	icon: typeof HomeIcon;
+	icon?: typeof HomeIcon;
 	title: string;
 	value: string;
 	percent: number;
@@ -27,7 +27,8 @@ function CardHeaderHome({
 			<Card className='border-0 border-b py-4'>
 				<CardHeader className='relative -mb-5'>
 					<CardTitle className='flex flex-row items-center justify-start gap-x-2 text-sm text-muted-foreground font-medium'>
-						<Icon className='size-5' /> {title}
+						{Icon && <Icon className='size-5' />}
+						{title}
 					</CardTitle>
 					<CardAction>
 						<ArrowUpRightIcon className='text-active' />

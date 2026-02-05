@@ -9,7 +9,10 @@ import { Providers } from '@/providers/contexts';
 import { cn } from '@/utils';
 
 export const metadata: Metadata = {
-	title: 'Dashboard - Segwise',
+	title: {
+		default: 'Segwise',
+		template: '%s - Segwise',
+	},
 };
 
 function RootLayout({

@@ -28,7 +28,7 @@ const sidebar: Array<{
 		items: [
 			{
 				title: 'Dashboard',
-				pathname: '/',
+				pathname: '/dashboard',
 				icon: LayoutDashboardIcon,
 			},
 		],
@@ -57,7 +57,6 @@ const sidebar: Array<{
 				title: 'Apólices',
 				pathname: '/policies',
 				icon: FileChartColumnIcon,
-				disabled: true,
 			},
 			{
 				title: 'Sinistros',

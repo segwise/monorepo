@@ -10,6 +10,10 @@ function proxy(request: NextRequest) {
 		cookiePrefix: 'auth',
 	});
 
+	if (session && pathname === '/') {
+		return NextResponse.redirect(new URL('/dashboard', request.url));
+	}
+
 	const isPublicRoute = PUBLIC_ROUTES.some((route) =>
 		route.endsWith(':path*')
 			? pathname.startsWith(route.replace('/:path*', ''))
@@ -17,7 +21,7 @@ function proxy(request: NextRequest) {
 	);
 
 	if (session && isPublicRoute) {
-		return NextResponse.redirect(new URL('/', request.url));
+		return NextResponse.redirect(new URL('/dashboard', request.url));
 	}
 
 	if (!session && !isPublicRoute) {

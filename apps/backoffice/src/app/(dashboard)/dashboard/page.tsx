@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { CardActiveBrokers } from '@/cards/active-brokers';
 import { CardActiveInsurance } from '@/cards/active-insurance';
 import { CardInsuranceAnalysisAndQuotes } from '@/cards/insurance-analysis-and-quotes';
@@ -5,6 +6,10 @@ import { CardInsuranceThroughInsuranceCompanies } from '@/cards/insurance-throug
 import { CardLeadsCaptured } from '@/cards/leads-captured';
 import { CardOverview } from '@/cards/overview-card';
 import { CardPendingQuotes } from '@/cards/pending-quotes';
+
+export const metadata: Metadata = {
+	title: 'Dashboard',
+};
 
 function DashboardPage() {
 	return (

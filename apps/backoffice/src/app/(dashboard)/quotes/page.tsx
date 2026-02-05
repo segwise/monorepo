@@ -6,15 +6,18 @@ import {
 	HomeIcon,
 	MoreHorizontalIcon,
 	PlusIcon,
+	PrinterIcon,
 	SearchIcon,
 	Trash2Icon,
 	XCircleIcon,
 } from 'lucide-react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { connection } from 'next/server';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ButtonGroup } from '@/components/ui/button-group';
 import { Card, CardContent } from '@/components/ui/card';
 import {
 	DropdownMenu,
@@ -53,29 +56,34 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
-import { placeholder } from '@/config/placeholder';
 import { CardHeaderHome } from '@/containers/cards/header-home';
 import { conditionalCapitalize } from '@/libraries/conditional-capitalize';
 
-async function QuotesPage() {
-	await connection();
-
-	const data = Array.from({ length: 10 }).map(() => ({
-		id: faker.string.uuid(),
-		type: faker.helpers.arrayElement(['veichle']),
+const data = Array.from({ length: 10 }).map(() => ({
+	id: faker.string.uuid(),
+	type: faker.helpers.arrayElement(['veichle']),
+	insured: {
 		image: faker.image.avatar(),
 		name: faker.person.fullName(),
 		phone: faker.phone.number({ style: 'human' }),
-		status: faker.helpers.arrayElement([
-			'waiting',
-			'quoting',
-			'quoted',
-			'sent',
-			'recused',
-			'confirmed',
-		]),
-		created_at: faker.date.recent().toISOString(),
-	}));
+	},
+	status: faker.helpers.arrayElement([
+		'waiting',
+		'quoting',
+		'quoted',
+		'sent',
+		'recused',
+		'confirmed',
+	]),
+	created_at: faker.date.recent().toISOString(),
+}));
+
+export const metadata: Metadata = {
+	title: 'Cotações',
+};
+
+async function QuotesPage() {
+	await connection();
 
 	return (
 		<main className='grid grid-cols-1 gap-6 mt-1'>
@@ -111,12 +119,16 @@ async function QuotesPage() {
 							</span>
 							<div className='flex flex-row items-center justify-start -space-x-1.5'>
 								{Array.from({ length: 4 }).map((_, index) => (
-									<Avatar key={index.toString()} className='size-4'>
+									<Avatar
+										key={index.toString()}
+										className='size-5 bg-muted not-dark:border not-dark:border-foreground/30 dark:bg-white'
+									>
 										<AvatarImage
-											src={placeholder.user}
+											src='https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Feerbunnlzzosgfxsuskw.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Finsurers%2F79c00f92-05e3-4569-8ad8-f3f31b24fbe8%2Flogo&w=64&q=75'
 											width={52}
 											height={52}
 											alt='Seguradora'
+											priority
 										/>
 										<AvatarFallback>AA</AvatarFallback>
 									</Avatar>
@@ -137,8 +149,8 @@ async function QuotesPage() {
 								Tipo:
 								<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
 							</span>
-							<Badge>
-								<CarIcon className='size-4' />
+							<Badge className='font-medium'>
+								<CarIcon className='size-4 stroke-[1.4]' />
 								Veicular
 							</Badge>
 						</div>
@@ -147,7 +159,9 @@ async function QuotesPage() {
 								Stauts:
 								<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
 							</span>
-							<Badge variant='default'>Aguardando</Badge>
+							<Badge variant='default' className='font-medium'>
+								Aguardando
+							</Badge>
 						</div>
 						<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
 							<Button
@@ -161,8 +175,8 @@ async function QuotesPage() {
 						</div>
 					</div>
 				</div>
-				<div className='space-x-2'>
-					<Button variant='outline'>
+				<div className='flex flex-row items-center justify-end gap-x-2'>
+					<Button variant='outline' className='dark:bg-primary'>
 						<FilterIcon /> Filtrar{' '}
 						<Badge
 							variant='active'
@@ -171,11 +185,29 @@ async function QuotesPage() {
 							1
 						</Badge>
 					</Button>
-					<Button asChild>
-						<Link href='/quotes/register'>
-							<PlusIcon /> Cadastrar
-						</Link>
-					</Button>
+					<ButtonGroup>
+						<Button asChild variant='outline' className='dark:bg-primary'>
+							<Link href='/quotes/register'>
+								<PlusIcon /> Cadastrar
+							</Link>
+						</Button>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button
+									variant='outline'
+									size='icon'
+									className='dark:bg-primary'
+								>
+									<MoreHorizontalIcon />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align='end'>
+								<DropdownMenuItem>
+									<PrinterIcon /> Imprimir
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</ButtonGroup>
 				</div>
 			</div>
 			<Separator className='' />
@@ -229,7 +261,13 @@ async function QuotesPage() {
 							</TableHeader>
 							<TableBody>
 								{data.map(
-									({ id, type, image, name, phone, status, created_at }) => (
+									({
+										id,
+										type,
+										insured: { image, name, phone },
+										status,
+										created_at,
+									}) => (
 										<TableRow key={id}>
 											<TableCell className='text-left w-60'>
 												<div className='flex flex-row items-center justify-start gap-x-2'>
@@ -256,7 +294,7 @@ async function QuotesPage() {
 												</div>
 											</TableCell>
 											<TableCell className='text-left flex-1'>
-												<div className='flex flex-row items-center justify-start gap-x-2'>
+												<div className='flex flex-row items-center justify-start gap-x-3'>
 													<Avatar className='size-8 rounded-none'>
 														<AvatarImage
 															src='https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Fapiplacas.com.br%2Flogos%2FlogosMarcas%2Fchevrolet.png&w=64&q=75'
@@ -280,14 +318,14 @@ async function QuotesPage() {
 												</div>
 											</TableCell>
 											<TableCell className='text-center w-40'>
-												<Badge>
+												<Badge className='dark:border-input'>
 													{type === 'veichle' && <CarIcon className='size-4' />}
 													{type === 'veichle' && 'Veicular'}
 												</Badge>
 											</TableCell>
 											<TableCell className='text-center w-40'>
 												<Badge
-													className='w-25 truncate line-clamp-1 mx-auto'
+													className='w-25 truncate line-clamp-1 mx-auto dark:border dark:border-input'
 													variant={
 														status === 'confirmed'
 															? 'success'
@@ -309,7 +347,7 @@ async function QuotesPage() {
 												</Badge>
 											</TableCell>
 											<TableCell className='text-center w-40'>
-												<Badge className='w-20 truncate line-clamp-1 mx-auto'>
+												<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
 													{formatDistanceToNow(created_at)
 														.replace('cerca de', '')
 														.trimStart()}
@@ -318,7 +356,11 @@ async function QuotesPage() {
 											<TableCell className='text-right w-20'>
 												<DropdownMenu>
 													<DropdownMenuTrigger asChild>
-														<Button variant='outline' size='icon-sm'>
+														<Button
+															variant='outline'
+															size='icon-sm'
+															className='dark:bg-foreground/5 dark:border-input'
+														>
 															<MoreHorizontalIcon />
 														</Button>
 													</DropdownMenuTrigger>
