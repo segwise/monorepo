@@ -1,6 +1,6 @@
 {
 	"name": "@segwise/core",
-	"version": "1.0.24",
+	"version": "1.0.25",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"module": "./dist/index.js",
@@ -16,8 +16,8 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"deploy": "git add . && git commit -m 'commit automatic' && git push && clear",
-		"prepublishOnly": "bun run build && bun run deploy"
+		"deploy": "git add . && git commit -m 'commit automatic' && git push",
+		"prepublishOnly": "bun run build && bun run deploy && clear"
 	},
 	"publishConfig": {
 		"registry": "https://npm.pkg.github.com"
