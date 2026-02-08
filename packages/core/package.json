@@ -1,6 +1,6 @@
 {
 	"name": "@segwise/core",
-	"version": "1.0.26",
+	"version": "1.0.27",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"module": "./dist/index.js",
@@ -12,10 +12,11 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.14",
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"tsc-alias": "^1.8.16"
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "tsc && tsc-alias",
 		"deploy": "git add . && git commit -m 'commit automatic' && git push",
 		"prepublishOnly": "bun run build && bun run deploy && clear"
 	},
@@ -26,7 +27,6 @@
 		"dist"
 	],
 	"exports": {
-		".": "./dist/index.js",
 		"./schemas": "./dist/schemas/index.js",
 		"./types": "./dist/types/index.js"
 	}
