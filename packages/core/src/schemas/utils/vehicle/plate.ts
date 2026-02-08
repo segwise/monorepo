@@ -1,6 +1,5 @@
 import z from 'zod';
-
-import { isPlate } from '@/valids/plate';
+import { isPlate } from '../../../valids';
 
 const SchemaPlate = z
 	.string('Placa inválida')

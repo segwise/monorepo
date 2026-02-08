@@ -1,6 +1,5 @@
 import z from 'zod';
-
-import { SchemaPostalCode } from '@/schemas/utils/postal-code';
+import { SchemaPostalCode } from './postal-code';
 
 const SchemaAddress = z.object({
 	street: z.string('Rua inválida').min(1, 'Rua inválida'),

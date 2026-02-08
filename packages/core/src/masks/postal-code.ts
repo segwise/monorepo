@@ -1,4 +1,4 @@
-import { maskNumber } from '@/masks/number';
+import { maskNumber } from '../masks/number';
 
 function maskPostalCode(postalCode: string) {
 	postalCode = maskNumber(postalCode);

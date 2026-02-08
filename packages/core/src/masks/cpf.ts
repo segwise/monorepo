@@ -1,4 +1,4 @@
-import { maskNumber } from '@/masks/number';
+import { maskNumber } from './number';
 
 function maskCPF(value: string): string {
 	return maskNumber(value)

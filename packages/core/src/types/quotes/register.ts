@@ -1,6 +1,5 @@
 import type z from 'zod';
-
-import type { SchemaQuoteRegister } from '@/schemas/quotes/register';
+import type { SchemaQuoteRegister } from '../../schemas';
 
 type QuoteRegister = z.infer<typeof SchemaQuoteRegister>;
 

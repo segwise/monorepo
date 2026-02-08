@@ -1,6 +1,5 @@
 import type z from 'zod';
-
-import type { SchemaResponseDataCursor } from '@/schemas/utils/response-data-cursor';
+import type { SchemaResponseDataCursor } from '../../schemas';
 
 type ResponseDataCursor = z.infer<typeof SchemaResponseDataCursor>;
 

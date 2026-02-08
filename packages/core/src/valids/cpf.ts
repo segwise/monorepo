@@ -1,4 +1,4 @@
-import { maskNumber } from '@/masks/number';
+import { maskNumber } from '../masks';
 
 function isCPF(cpf: string): boolean {
 	cpf = maskNumber(cpf);

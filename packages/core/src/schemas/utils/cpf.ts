@@ -1,8 +1,6 @@
 import z from 'zod';
-
-import { maskNumber } from '@/masks/number';
-
-import { isCPF } from '@/valids/cpf';
+import { maskNumber } from '../../masks';
+import { isCPF } from '../../valids';
 
 const SchemaCPF = z
 	.string('CPF inválido')

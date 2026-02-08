@@ -1,4 +1,4 @@
-import { maskNumber } from '@/masks/number';
+import { maskNumber } from '../masks';
 
 function validPostalCode(postalCode: string) {
 	const cleaned = maskNumber(postalCode);
