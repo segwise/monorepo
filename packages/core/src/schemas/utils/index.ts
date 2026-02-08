@@ -1,6 +1,7 @@
 export * from './address';
 export * from './birth';
 export * from './cpf';
+export * from './email';
 export * from './garage';
 export * from './marital-status';
 export * from './name';

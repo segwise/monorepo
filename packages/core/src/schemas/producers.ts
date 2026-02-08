@@ -1,5 +1,6 @@
 import z from 'zod';
 
+import { SchemaEmail } from '@/schemas/utils/email';
 import { SchemaName } from '@/schemas/utils/name';
 import { SchemaPhone } from '@/schemas/utils/phone';
 
@@ -8,7 +9,7 @@ const SchemaProducerSimple = z.object({
 	name: SchemaName,
 	avatar: z.url('Avatar inválido').nullish(),
 	contact: z.object({
-		email: z.email('E-mail inválido'),
+		email: SchemaEmail,
 		phone: SchemaPhone,
 	}),
 });

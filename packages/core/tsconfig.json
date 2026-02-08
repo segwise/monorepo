@@ -23,13 +23,9 @@
 		"forceConsistentCasingInFileNames": true,
 		"baseUrl": "./src",
 		"paths": {
-			"@/schemas": ["schemas"],
 			"@/schemas/*": ["schemas/*"],
-			"@/types": ["types"],
 			"@/types/*": ["types/*"],
-			"@/valids": ["valids"],
 			"@/valids/*": ["valids/*"],
-			"@/masks": ["masks"],
 			"@/masks/*": ["masks/*"]
 		}
 	},

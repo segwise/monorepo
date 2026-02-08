@@ -1,6 +1,6 @@
 {
 	"name": "@segwise/core",
-	"version": "1.0.38",
+	"version": "1.0.39",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"module": "./dist/index.js",
@@ -34,40 +34,20 @@
 			"import": "./dist/schemas/index.js",
 			"default": "./dist/schemas/index.js"
 		},
-		"./schemas/*": {
-			"types": "./dist/schemas/*.d.ts",
-			"import": "./dist/schemas/*.js",
-			"default": "./dist/schemas/*.js"
-		},
 		"./types": {
 			"types": "./dist/types/index.d.ts",
 			"import": "./dist/types/index.js",
 			"default": "./dist/types/index.js"
-		},
-		"./types/*": {
-			"types": "./dist/types/*.d.ts",
-			"import": "./dist/types/*.js",
-			"default": "./dist/types/*.js"
 		},
 		"./masks": {
 			"types": "./dist/masks/index.d.ts",
 			"import": "./dist/masks/index.js",
 			"default": "./dist/masks/index.js"
 		},
-		"./masks/*": {
-			"types": "./dist/masks/*.d.ts",
-			"import": "./dist/masks/*.js",
-			"default": "./dist/masks/*.js"
-		},
 		"./valids": {
 			"types": "./dist/valids/index.d.ts",
 			"import": "./dist/valids/index.js",
 			"default": "./dist/valids/index.js"
-		},
-		"./valids/*": {
-			"types": "./dist/valids/*.d.ts",
-			"import": "./dist/valids/*.js",
-			"default": "./dist/valids/*.js"
 		}
 	},
 	"publishConfig": {
