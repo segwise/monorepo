@@ -1,2 +1,2 @@
 export * from './marital-status';
-export * from './plate';
+export * from './response-data-cursor';

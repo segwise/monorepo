@@ -1,6 +1,4 @@
 import z from 'zod';
-
-import { SchemaPlate } from '@/@types/utils/plate';
 import { SchemaQuoteStatus } from '@/schemas/quotes/status';
 import { SchemaQuoteType } from '@/schemas/quotes/type';
 import { SchemaBirth } from '@/schemas/utils/birth';
@@ -13,6 +11,7 @@ import { SchemaPostalCode } from '@/schemas/utils/postal-code';
 import { SchemaQualificationTime } from '@/schemas/utils/qualification-time';
 import { SchemaResidence } from '@/schemas/utils/residence';
 import { SchemaVehicleExchange } from '@/schemas/utils/vehicle';
+import { SchemaPlate } from '@/schemas/utils/vehicle/plate';
 import { SchemaVehicleUsage } from '@/schemas/utils/vehicle/use';
 
 const SchemaQuoteRegister = z

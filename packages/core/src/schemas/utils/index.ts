@@ -8,4 +8,5 @@ export * from './phone';
 export * from './postal-code';
 export * from './qualification-time';
 export * from './residence';
+export * from './response-data-cursor';
 export * from './vehicle';
