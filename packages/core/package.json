@@ -1,6 +1,6 @@
 {
 	"name": "@segwise/core",
-	"version": "1.0.37",
+	"version": "1.0.38",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"module": "./dist/index.js",
@@ -48,6 +48,26 @@
 			"types": "./dist/types/*.d.ts",
 			"import": "./dist/types/*.js",
 			"default": "./dist/types/*.js"
+		},
+		"./masks": {
+			"types": "./dist/masks/index.d.ts",
+			"import": "./dist/masks/index.js",
+			"default": "./dist/masks/index.js"
+		},
+		"./masks/*": {
+			"types": "./dist/masks/*.d.ts",
+			"import": "./dist/masks/*.js",
+			"default": "./dist/masks/*.js"
+		},
+		"./valids": {
+			"types": "./dist/valids/index.d.ts",
+			"import": "./dist/valids/index.js",
+			"default": "./dist/valids/index.js"
+		},
+		"./valids/*": {
+			"types": "./dist/valids/*.d.ts",
+			"import": "./dist/valids/*.js",
+			"default": "./dist/valids/*.js"
 		}
 	},
 	"publishConfig": {
