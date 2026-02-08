@@ -1,6 +1,6 @@
 import z from 'zod';
-import { maskNumber } from '../../masks';
-import { isPhone } from '../../valids';
+import { maskNumber } from '@/masks/number';
+import { isPhone } from '@/valids/phone';
 
 const SchemaPhone = z
 	.string('Celular inválido')

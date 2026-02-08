@@ -1,6 +1,6 @@
 import z from 'zod';
-import { maskNumber } from '../../masks';
-import { validPostalCode } from '../../valids';
+import { maskNumber } from '@/masks/number';
+import { validPostalCode } from '@/valids/postal-code';
 
 const SchemaPostalCode = z
 	.string('CEP inválido')

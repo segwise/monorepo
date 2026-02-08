@@ -1,4 +1,4 @@
-import { maskNumber } from '../masks';
+import { maskNumber } from '@/masks/number';
 
 function isPhone(phone: string): boolean {
 	const apenasNumeros = maskNumber(phone);

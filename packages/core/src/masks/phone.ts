@@ -1,4 +1,4 @@
-import { maskNumber } from '../masks/number';
+import { maskNumber } from '@/masks/number';
 
 function maskPhone(phone: string): string {
 	const value = maskNumber(phone);
