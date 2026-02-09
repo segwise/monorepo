@@ -3,7 +3,7 @@ FROM oven/bun:1.3.5-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
-COPY package.json bun.lock* ./
+COPY package.json bun.lock* .npmrc ./
 RUN bun install --frozen-lockfile
 
 FROM base AS builder
