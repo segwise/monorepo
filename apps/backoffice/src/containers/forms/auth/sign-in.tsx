@@ -35,18 +35,18 @@ function FormSignIn() {
 		defaultValues: {
 			email: '',
 			password: '',
-			remember_password: false,
+			rememberPassword: false,
 		},
 	});
 
 	const { isDirty, isValid } = form.formState;
 	const isSubmit = !isPending && isValid && isDirty;
 
-	function handler({ email, password, remember_password }: SignIn) {
+	function handler({ email, password, rememberPassword }: SignIn) {
 		toast.dismiss();
 
 		mutate(
-			{ email, password, remember_password },
+			{ email, password, rememberPassword },
 			{
 				onSuccess() {
 					const callbackUrl = new URL(window.location.href).searchParams.get(
@@ -109,7 +109,7 @@ function FormSignIn() {
 				<div className='flex items-center justify-between'>
 					<FormField
 						control={form.control}
-						name='remember_password'
+						name='rememberPassword'
 						render={({ field }) => (
 							<FormItem className='flex flex-row items-center justify-start gap-x-2'>
 								<FormControl>

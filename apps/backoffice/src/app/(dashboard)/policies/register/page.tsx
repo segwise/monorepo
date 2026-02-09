@@ -1,8 +1,11 @@
 import {
+	Building2Icon,
 	CarIcon,
 	ChevronLeftIcon,
+	CircleDollarSignIcon,
 	ClipboardIcon,
 	SaveIcon,
+	User2Icon,
 	UserCircle2Icon,
 } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -13,10 +16,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
 	Field,
 	FieldContent,
-	FieldDescription,
 	FieldGroup,
 	FieldLabel,
-	FieldLegend,
 	FieldSet,
 	FieldTitle,
 } from '@/components/ui/field';
@@ -27,7 +28,13 @@ import {
 	InputGroupInput,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
-import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 
 export const metadata: Metadata = {
@@ -87,17 +94,29 @@ function QuotesRegisterPage() {
 									</Select>
 								</Field>
 								<Field>
-									<FieldLabel>Status:</FieldLabel>
+									<FieldLabel>Seguradora:</FieldLabel>
 									<Select>
 										<SelectTrigger>
 											<SelectValue placeholder='Selecionar' />
 										</SelectTrigger>
 									</Select>
 								</Field>
-								<Field>
-									<FieldLabel>Data da Solicitação:</FieldLabel>
-									<Input placeholder='00/00/0000' />
-								</Field>
+								<FieldGroup className='flex flex-row items-center justify-between gap-x-0!'>
+									<Field>
+										<FieldLabel>Início da Vigência:</FieldLabel>
+										<Input
+											placeholder='00/00/0000'
+											className='rounded-r-none border-r-0'
+										/>
+									</Field>
+									<Field>
+										<FieldLabel>Final da Vigência:</FieldLabel>
+										<Input
+											placeholder='00/00/0000'
+											className='rounded-l-none'
+										/>
+									</Field>
+								</FieldGroup>
 							</FieldGroup>
 						</FieldGroup>
 						<Separator />
@@ -138,7 +157,7 @@ function QuotesRegisterPage() {
 									</Select>
 								</Field>
 								<Field>
-									<FieldLabel>Tempo de Experiência:</FieldLabel>
+									<FieldLabel>Tempo de Habilitação:</FieldLabel>
 									<Select>
 										<SelectTrigger>
 											<SelectValue placeholder='Selecionar' />
@@ -168,7 +187,7 @@ function QuotesRegisterPage() {
 										<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
 											<CarIcon />
 										</div>
-										Dados do Seguro
+										Dados do Veículo
 									</FieldTitle>
 								</FieldContent>
 							</FieldSet>
@@ -236,100 +255,6 @@ function QuotesRegisterPage() {
 									<FieldLabel>CEP de Pernoite:</FieldLabel>
 									<Input placeholder='00000-000' />
 								</Field>
-								<FieldGroup className='flex flex-row gap-x-0!'>
-									<Field>
-										<FieldLabel>Reside Em:</FieldLabel>
-										<Select>
-											<SelectTrigger className='rounded-r-none border-r-0'>
-												<SelectValue placeholder='Selecionar' />
-											</SelectTrigger>
-										</Select>
-									</Field>
-									<Field>
-										<FieldLabel>Tipo de Garagem:</FieldLabel>
-										<Select>
-											<SelectTrigger className='rounded-l-none'>
-												<SelectValue placeholder='Selecionar' />
-											</SelectTrigger>
-										</Select>
-									</Field>
-								</FieldGroup>
-								<FieldGroup className='flex flex-row gap-x-0!'>
-									<Field>
-										<FieldLabel>Trabalho:</FieldLabel>
-										<Select>
-											<SelectTrigger className='rounded-r-none border-r-0'>
-												<SelectValue placeholder='Selecionar' />
-											</SelectTrigger>
-										</Select>
-									</Field>
-									<Field>
-										<FieldLabel>Tipo de Garagem:</FieldLabel>
-										<Select>
-											<SelectTrigger className='rounded-l-none'>
-												<SelectValue placeholder='Selecionar' />
-											</SelectTrigger>
-										</Select>
-									</Field>
-								</FieldGroup>
-								<FieldGroup className='flex flex-row gap-x-0!'>
-									<Field>
-										<FieldLabel>Estuda:</FieldLabel>
-										<Select>
-											<SelectTrigger className='rounded-r-none border-r-0'>
-												<SelectValue placeholder='Selecionar' />
-											</SelectTrigger>
-										</Select>
-									</Field>
-									<Field>
-										<FieldLabel>Tipo de Garagem:</FieldLabel>
-										<Select>
-											<SelectTrigger className='rounded-l-none'>
-												<SelectValue placeholder='Selecionar' />
-											</SelectTrigger>
-										</Select>
-									</Field>
-								</FieldGroup>
-							</FieldGroup>
-							<FieldGroup className='mt-3'>
-								<FieldSet className='gap-0!'>
-									<FieldLegend className='mb-1'>Mais Informações</FieldLegend>
-									<FieldDescription className='text-xs'>
-										Para uma cotação mais eficiente
-									</FieldDescription>
-								</FieldSet>
-								<FieldGroup className='gap-1.5!'>
-									<Field orientation='horizontal' className='gap-1.5'>
-										<Checkbox />
-										<Label className='font-normal text-xs text-[0.8rem]'>
-											Blindado
-										</Label>
-									</Field>
-									<Field orientation='horizontal' className='gap-1.5'>
-										<Checkbox />
-										<Label className='font-normal text-xs text-[0.8rem]'>
-											Kit Gás
-										</Label>
-									</Field>
-									<Field orientation='horizontal' className='gap-1.5'>
-										<Checkbox />
-										<Label className='font-normal text-xs text-[0.8rem]'>
-											Segurado é o proprietário do veículo
-										</Label>
-									</Field>
-									<Field orientation='horizontal' className='gap-1.5'>
-										<Checkbox />
-										<Label className='font-normal text-xs text-[0.8rem]'>
-											Financiado
-										</Label>
-									</Field>
-									<Field orientation='horizontal' className='gap-1.5'>
-										<Checkbox />
-										<Label className='font-normal text-xs text-[0.8rem]'>
-											Pessoas entre 18 a 26 anos utilizam o veículo
-										</Label>
-									</Field>
-								</FieldGroup>
 							</FieldGroup>
 						</FieldGroup>
 						<Separator />
@@ -375,6 +300,188 @@ function QuotesRegisterPage() {
 									<FieldLabel>Celular:</FieldLabel>
 									<Input placeholder='(00) 00000-0000' />
 								</Field>
+							</FieldGroup>
+						</FieldGroup>
+						<Separator />
+						<FieldGroup>
+							<FieldSet>
+								<FieldContent>
+									<FieldTitle className='text-base'>
+										<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+											<CircleDollarSignIcon />
+										</div>
+										Valores
+									</FieldTitle>
+								</FieldContent>
+							</FieldSet>
+							<FieldGroup className='grid grid-cols-4'>
+								<Field>
+									<FieldLabel>Parcelas:</FieldLabel>
+									<Input placeholder='X vezes' />
+								</Field>
+								<Field>
+									<FieldLabel>Prêmio Líquido:</FieldLabel>
+									<Input placeholder='R$ 000,00' />
+								</Field>
+								<Field>
+									<FieldLabel>Frânquia:</FieldLabel>
+									<Input placeholder='R$ 000,00' />
+								</Field>
+								<Field>
+									<FieldLabel>Comissão:</FieldLabel>
+									<Input placeholder='R$ 000,00' />
+								</Field>
+							</FieldGroup>
+						</FieldGroup>
+						<div className='bg-muted-foreground/10 flex flex-col gap-4 -mx-4 p-4'>
+							<FieldSet>
+								<FieldContent>
+									<FieldTitle className='text-base'>
+										<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+											<User2Icon />
+										</div>
+										Comissionamento
+									</FieldTitle>
+								</FieldContent>
+							</FieldSet>
+							<FieldGroup className='grid grid-cols-4'>
+								<Field>
+									<FieldLabel>Tipo de Comissão:</FieldLabel>
+									<Select>
+										<SelectTrigger>
+											<SelectValue placeholder='Selecionar' />
+										</SelectTrigger>
+									</Select>
+								</Field>
+								<Field>
+									<FieldLabel>Percentual:</FieldLabel>
+									<Input placeholder='%' />
+								</Field>
+								<Field>
+									<FieldLabel>Desconto:</FieldLabel>
+									<InputGroup>
+										<InputGroupAddon align='inline-start'>
+											<Select>
+												<SelectTrigger className='-ml-3 rounded-r-none border-0 border-r w-20 pl-4'>
+													<SelectValue placeholder='%' />
+												</SelectTrigger>
+												<SelectContent align='start'>
+													<SelectItem value='percent'>%</SelectItem>
+													<SelectItem value='fixed'>R$</SelectItem>
+												</SelectContent>
+											</Select>
+										</InputGroupAddon>
+										<InputGroupInput
+											placeholder='0'
+											className='bg-background'
+										/>
+									</InputGroup>
+								</Field>
+								<Field>
+									<FieldLabel>Pagar em X Parcelas:</FieldLabel>
+									<Input placeholder='X vezes' />
+								</Field>
+								<Field>
+									<FieldLabel>Juros ao Mês:</FieldLabel>
+									<Input placeholder='%' />
+								</Field>
+								<Field>
+									<FieldLabel>Juros Pago a Partir do Mês:</FieldLabel>
+									<Input placeholder='Mês' />
+								</Field>
+								<Field>
+									<FieldLabel>Tipo de Juros:</FieldLabel>
+									<Select>
+										<SelectTrigger>
+											<SelectValue placeholder='Selecionar' />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value='simple'>Simples</SelectItem>
+											<SelectItem value='compound'>Composto</SelectItem>
+										</SelectContent>
+									</Select>
+								</Field>
+								<Field>
+									<FieldLabel>Data de Pagamento:</FieldLabel>
+									<Input placeholder='00/00/0000' />
+								</Field>
+							</FieldGroup>
+						</div>
+						<Separator />
+						<FieldGroup className='grid grid-cols-4'>
+							<FieldGroup>
+								<FieldSet>
+									<FieldContent>
+										<FieldTitle className='text-base'>
+											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+												<Building2Icon />
+											</div>
+											Corretora
+										</FieldTitle>
+									</FieldContent>
+								</FieldSet>
+								<FieldGroup className='gap-0! space-y-1'>
+									<Field orientation='horizontal'>
+										<FieldLabel>Parcelas</FieldLabel>
+										<FieldLabel className='text-right'>---------</FieldLabel>
+									</Field>
+									<Field orientation='horizontal'>
+										<FieldLabel>Prêmio Líquido</FieldLabel>
+										<FieldLabel className='text-right'>---------</FieldLabel>
+									</Field>
+									<Field orientation='horizontal'>
+										<FieldLabel>Comissão sobre a venda</FieldLabel>
+										<FieldLabel className='text-right'>---------</FieldLabel>
+									</Field>
+								</FieldGroup>
+							</FieldGroup>
+							<FieldGroup>
+								<FieldSet>
+									<FieldContent>
+										<FieldTitle className='text-base'>
+											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+												<User2Icon />
+											</div>
+											Produtor
+										</FieldTitle>
+									</FieldContent>
+								</FieldSet>
+								<FieldGroup className='gap-0! space-y-1'>
+									<Field orientation='horizontal'>
+										<FieldLabel>Parcelas de Comissão</FieldLabel>
+										<FieldLabel className='text-right'>---------</FieldLabel>
+									</Field>
+									<Field orientation='horizontal'>
+										<FieldLabel>Comissão do Produtor</FieldLabel>
+										<FieldLabel className='text-right'>---------</FieldLabel>
+									</Field>
+									<Field orientation='horizontal'>
+										<FieldLabel>Subtotal</FieldLabel>
+										<FieldLabel className='text-right'>---------</FieldLabel>
+									</Field>
+									<Field orientation='horizontal'>
+										<FieldLabel>Total</FieldLabel>
+										<FieldLabel className='text-right'>---------</FieldLabel>
+									</Field>
+								</FieldGroup>
+							</FieldGroup>
+							<FieldGroup className='col-start-4'>
+								<FieldSet className='opacity-0 pointer-events-auto'>
+									<FieldContent>
+										<FieldTitle className='text-base'>
+											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+												<Building2Icon />
+											</div>
+											Corretora
+										</FieldTitle>
+									</FieldContent>
+								</FieldSet>
+								<FieldGroup className='gap-0! space-y-1'>
+									<Field orientation='horizontal'>
+										<FieldLabel>Total</FieldLabel>
+										<FieldLabel className='text-right'>---------</FieldLabel>
+									</Field>
+								</FieldGroup>
 							</FieldGroup>
 						</FieldGroup>
 					</FieldGroup>

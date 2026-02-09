@@ -32,7 +32,7 @@ const SelectTrigger = forwardRef<
 	<Trigger
 		ref={ref}
 		className={cn(
-			'flex h-10 w-full items-center justify-between rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background data-placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
+			'flex h-10 w-full items-center justify-between rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background data-placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 [&_svg]:size-5',
 			className,
 		)}
 		{...props}
@@ -100,7 +100,7 @@ const SelectContent = forwardRef<
 				className={cn(
 					'p-1',
 					position === 'popper' &&
-						'h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width)',
+						'w-full min-w-(--radix-select-trigger-width) h-(--radix-select-trigger-height)',
 				)}
 			>
 				{children}
@@ -125,12 +125,16 @@ SelectLabel.displayName = Label.displayName;
 
 const SelectItem = forwardRef<
 	React.ComponentRef<typeof Item>,
-	React.ComponentPropsWithoutRef<typeof Item>
->(({ className, children, ...props }, ref) => (
+	React.ComponentPropsWithoutRef<typeof Item> & {
+		variant?: 'default' | 'destructive';
+	}
+>(({ className, children, variant = 'default', ...props }, ref) => (
 	<Item
 		ref={ref}
 		className={cn(
-			'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50',
+			'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent/50 focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:size-4',
+			variant === 'destructive' &&
+				'focus:bg-destructive/5 focus:text-destructive focus:cursor-pointer',
 			className,
 		)}
 		{...props}
@@ -140,7 +144,6 @@ const SelectItem = forwardRef<
 				<CheckIcon className='size-4' />
 			</ItemIndicator>
 		</span>
-
 		<ItemText>{children}</ItemText>
 	</Item>
 ));

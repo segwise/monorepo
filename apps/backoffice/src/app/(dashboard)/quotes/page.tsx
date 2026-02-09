@@ -1,4 +1,5 @@
 import { fakerPT_BR as faker } from '@faker-js/faker';
+import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { formatDistanceToNow } from 'date-fns';
 import {
 	CarIcon,
@@ -57,15 +58,19 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { CardHeaderHome } from '@/containers/cards/header-home';
-import { conditionalCapitalize } from '@/libraries/conditional-capitalize';
 
 const data = Array.from({ length: 10 }).map(() => ({
 	id: faker.string.uuid(),
-	type: faker.helpers.arrayElement(['veichle']),
+	type: faker.helpers.arrayElement(['car']),
 	insured: {
 		image: faker.image.avatar(),
 		name: faker.person.fullName(),
 		phone: faker.phone.number({ style: 'human' }),
+	},
+	vehicle: {
+		manufacturer: `${faker.vehicle.manufacturer()}`,
+		model: `${faker.vehicle.model()}`,
+		plate: faker.vehicle.vrm(),
 	},
 	status: faker.helpers.arrayElement([
 		'waiting',
@@ -124,7 +129,7 @@ async function QuotesPage() {
 										className='size-5 bg-muted not-dark:border not-dark:border-foreground/30 dark:bg-white'
 									>
 										<AvatarImage
-											src='https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Feerbunnlzzosgfxsuskw.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Finsurers%2F79c00f92-05e3-4569-8ad8-f3f31b24fbe8%2Flogo&w=64&q=75'
+											src='https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Feerbunnlzzosgfxsuskw.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Finsurers%2F79c00f92-05e3-4569-8ad8-f3f31b24fbe8%2Flogo&w=64&q=100'
 											width={52}
 											height={52}
 											alt='Seguradora'
@@ -210,7 +215,7 @@ async function QuotesPage() {
 					</ButtonGroup>
 				</div>
 			</div>
-			<Separator className='' />
+			<Separator />
 			<div className='grid grid-cols-5 gap-x-3'>
 				<CardHeaderHome
 					icon={HomeIcon}
@@ -261,66 +266,60 @@ async function QuotesPage() {
 							</TableHeader>
 							<TableBody>
 								{data.map(
-									({
-										id,
-										type,
-										insured: { image, name, phone },
-										status,
-										created_at,
-									}) => (
+									({ id, type, insured, vehicle, status, created_at }) => (
 										<TableRow key={id}>
 											<TableCell className='text-left w-60'>
 												<div className='flex flex-row items-center justify-start gap-x-2'>
-													<Avatar className='size-8 border'>
+													<Avatar className='size-8 border bg-background'>
 														<AvatarImage
-															src={image}
+															src={insured.image}
 															width={52}
 															height={52}
 															alt='Image do usuário'
 															priority
 														/>
 														<AvatarFallback>
-															{name.slice(0, 2).toUpperCase()}
+															{insured.name.slice(0, 2).toUpperCase()}
 														</AvatarFallback>
 													</Avatar>
 													<div>
 														<span className='block text-sm font-medium truncate line-clamp-1'>
-															{conditionalCapitalize(name)}
+															{capitalizeFirstLetters(insured.name)}
 														</span>
 														<span className='block text-xs text-muted-foreground font-normal leading-none'>
-															{phone}
+															{insured.phone}
 														</span>
 													</div>
 												</div>
 											</TableCell>
 											<TableCell className='text-left flex-1'>
 												<div className='flex flex-row items-center justify-start gap-x-3'>
-													<Avatar className='size-8 rounded-none'>
+													<Avatar className='size-8 rounded-none bg-background'>
 														<AvatarImage
-															src='https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Fapiplacas.com.br%2Flogos%2FlogosMarcas%2Fchevrolet.png&w=64&q=75'
+															src={`https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Fapiplacas.com.br%2Flogos%2FlogosMarcas%2F${vehicle.manufacturer.toLowerCase()}.png&w=64&q=100`}
 															width={52}
 															height={52}
 															alt='Marca do veículo'
 															priority
 														/>
 														<AvatarFallback>
-															{name.slice(0, 2).toUpperCase()}
+															{insured.name.slice(0, 2).toUpperCase()}
 														</AvatarFallback>
 													</Avatar>
 													<div>
-														<span className='block text-sm font-medium truncate line-clamp-1 uppercase'>
-															CHEVROLET/ONIX 1.0MT LT
+														<span className='block text-sm font-medium truncate line-clamp-1 capitalize'>
+															{vehicle.model}
 														</span>
 														<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
-															PCW-5776
+															{vehicle.plate}
 														</span>
 													</div>
 												</div>
 											</TableCell>
 											<TableCell className='text-center w-40'>
 												<Badge className='dark:border-input'>
-													{type === 'veichle' && <CarIcon className='size-4' />}
-													{type === 'veichle' && 'Veicular'}
+													{type === 'car' && <CarIcon className='size-4' />}
+													{type === 'car' && 'Veicular'}
 												</Badge>
 											</TableCell>
 											<TableCell className='text-center w-40'>

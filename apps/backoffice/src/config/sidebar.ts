@@ -73,7 +73,6 @@ const sidebar: Array<{
 				title: 'Segurados',
 				pathname: '/insureds',
 				icon: UsersRoundIcon,
-				disabled: true,
 			},
 			{
 				title: 'Corretoras',
@@ -83,9 +82,8 @@ const sidebar: Array<{
 			},
 			{
 				title: 'Seguradoras',
-				pathname: '/insurances',
+				pathname: '/insurance-company',
 				icon: Building2Icon,
-				disabled: true,
 			},
 		],
 	},

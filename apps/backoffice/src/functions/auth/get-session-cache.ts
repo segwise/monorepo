@@ -1,6 +1,6 @@
 import { cacheLife } from 'next/cache';
 import { headers } from 'next/headers';
-
+import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 
 async function getSessionCache() {
@@ -14,6 +14,16 @@ async function getSessionCache() {
 			headers: headerList,
 		},
 	});
+
+	if (!data) {
+		await auth.signOut({
+			fetchOptions: {
+				headers: headerList,
+			},
+		});
+
+		return redirect('/');
+	}
 
 	return data;
 }

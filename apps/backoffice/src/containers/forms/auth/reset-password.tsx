@@ -40,7 +40,7 @@ function FormResetPassword() {
 		resolver: zodResolver(SchemaAuthResetPassword),
 		defaultValues: {
 			password: '',
-			password_confirm: '',
+			passwordConfirm: '',
 		},
 	});
 
@@ -77,7 +77,7 @@ function FormResetPassword() {
 				/>
 				<FormField
 					control={form.control}
-					name='password_confirm'
+					name='passwordConfirm'
 					render={({ field }) => (
 						<FormItem>
 							<FormLabel>Confirmar senha</FormLabel>

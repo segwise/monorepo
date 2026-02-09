@@ -40,9 +40,8 @@ function Header({ children }: React.PropsWithChildren) {
 			className={cn(
 				'sticky top-0 left-0 right-0 z-50 px-6 pt-5 pb-3 flex items-center justify-between transition-all ease-out',
 				!scrolled &&
-					'bg-transparent backdrop-blur-none border border-transparent shadow-none',
-				scrolled &&
-					'bg-white/40 dark:bg-black/50 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg py-3',
+					'bg-transparent backdrop-blur-none border-b border-transparent shadow-none',
+				scrolled && 'bg-background backdrop-blur-md border-b border-input py-3',
 			)}
 		>
 			{children}

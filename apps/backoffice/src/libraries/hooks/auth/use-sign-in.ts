@@ -6,12 +6,12 @@ import { auth } from '@/auth';
 const useSignIn = () =>
 	useMutation<unknown, Error, SignIn>({
 		mutationKey: ['auth', 'sign-in'],
-		mutationFn: async ({ email, password, remember_password }) =>
+		mutationFn: async ({ email, password, rememberPassword }) =>
 			await auth.signIn.email(
 				{
 					email,
 					password,
-					rememberMe: remember_password,
+					rememberMe: rememberPassword,
 				},
 				{
 					onError(ctx) {

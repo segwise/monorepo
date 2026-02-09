@@ -7,11 +7,11 @@ import {
 const SchemaAuthResetPassword = z
 	.object({
 		password: SchemaPassword,
-		password_confirm: SchemaPasswordConfirm,
+		passwordConfirm: SchemaPasswordConfirm,
 	})
-	.refine((values) => values.password === values.password_confirm, {
+	.refine((values) => values.password === values.passwordConfirm, {
 		error: 'Senhas não conferem',
-		path: ['password_confirm'],
+		path: ['passwordConfirm'],
 	})
 	.strict();
 

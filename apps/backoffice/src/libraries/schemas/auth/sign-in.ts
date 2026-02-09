@@ -7,7 +7,7 @@ const SchemaAuthSignIn = z
 	.object({
 		email: SchemaEmail,
 		password: SchemaPasswordDefault,
-		remember_password: SchemaRememberPassword,
+		rememberPassword: SchemaRememberPassword,
 	})
 	.strict();
 
