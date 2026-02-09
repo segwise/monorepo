@@ -142,6 +142,10 @@ const auth = betterAuth({
 			httpOnly: true,
 			secure: true,
 			sameSite: 'Lax',
+			domain: environment.APPLICATION_URL.replace('https://', '').replace(
+				'http://',
+				'',
+			),
 		},
 		cookiePrefix: 'auth',
 		database: {
