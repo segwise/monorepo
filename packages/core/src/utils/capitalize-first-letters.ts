@@ -1,4 +1,4 @@
-const excludeWords = ['da', 'de', 'do', 'dos'];
+const excludeWords = ['a', 'e', 'i', 'o', 'u', 'da', 'de', 'do', 'dos'];
 
 function capitalizeFirstLetters(text: string) {
 	const words = text.split(' ');
