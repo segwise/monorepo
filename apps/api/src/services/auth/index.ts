@@ -133,7 +133,7 @@ const auth = betterAuth({
 		disableCSRFCheck: false,
 		crossSubDomainCookies: {
 			enabled: true,
-			domain: 'segwise.com.br',
+			domain: environment.APPLICATION_URL.split('.').slice(-3).join('.'),
 		},
 		defaultCookieAttributes: {
 			httpOnly: true,
