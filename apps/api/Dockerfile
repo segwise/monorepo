@@ -3,8 +3,15 @@ FROM oven/bun:1.3.5-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
-COPY package.json bun.lock* .npmrc ./
-RUN bun install --frozen-lockfile
+COPY package.json bun.lock* ./
+
+ARG GITHUB_TOKEN
+
+RUN echo "@segwise:registry=https://npm.pkg.github.com" > .npmrc && \
+    echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" >> .npmrc && \
+    bun install --frozen-lockfile && \
+    rm -f .npmrc
+# RUN bun install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
