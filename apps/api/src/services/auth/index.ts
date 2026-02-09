@@ -133,7 +133,10 @@ const auth = betterAuth({
 		disableCSRFCheck: false,
 		crossSubDomainCookies: {
 			enabled: true,
-			domain: environment.APPLICATION_URL,
+			domain: environment.APPLICATION_URL.replace('https://', '').replace(
+				'http://',
+				'',
+			),
 		},
 		defaultCookieAttributes: {
 			httpOnly: true,
