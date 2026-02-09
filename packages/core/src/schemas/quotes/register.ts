@@ -59,10 +59,9 @@ const SchemaQuoteRegister = z
 						.min(1, 'Modelo inválido')
 						.trim()
 						.toLowerCase(),
-					yearOfManufacture: z.coerce
-						.number('Ano de fabricação inválida')
-						.positive(),
-					modelYear: z.coerce.number('Ano do modelo inválido'),
+					modelYear: z.coerce
+						.number('Ano do modelo inválido')
+						.positive('Ano do modelo inválido'),
 					chassi: z.string('Chassi inválido').nullish(),
 					use: SchemaVehicleUsage,
 					exchange: SchemaVehicleExchange,
