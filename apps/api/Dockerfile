@@ -8,7 +8,7 @@ COPY package.json bun.lock* ./
 ARG GITHUB_TOKEN
 
 RUN echo "@segwise:registry=https://npm.pkg.github.com" > .npmrc && \
-    echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" >> .npmrc && \
+    echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc && \
     bun install --frozen-lockfile && \
     rm -f .npmrc
 # RUN bun install --frozen-lockfile
