@@ -20,6 +20,7 @@ WORKDIR /app
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock* ./
+COPY --from=builder /app/.npmrc ./
 
 RUN bun --bun install --frozen-lockfile --production
 
