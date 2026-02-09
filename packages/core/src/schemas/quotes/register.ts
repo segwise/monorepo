@@ -35,7 +35,13 @@ const SchemaQuoteRegister = z
 				phone: SchemaPhone,
 				maritalStatus: SchemaMaritalStatus,
 				qualificationTime: SchemaQualificationTime,
-				profession: z.uuidv7('Profissão inválida').nullish(),
+				profession: z
+					.string('Profissão inválida')
+					.min(4, 'Profissão inválida')
+					.trim()
+					.toLowerCase()
+					.nullish(),
+				// profession: z.uuidv7('Profissão inválida').nullish(),
 			},
 			'Segurado inválido',
 		),
