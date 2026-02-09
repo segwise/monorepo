@@ -131,10 +131,13 @@ const auth = betterAuth({
 		},
 		useSecureCookies: true,
 		disableCSRFCheck: false,
+		crossSubDomainCookies: {
+			enabled: false,
+			domain: '.backoffice.segwise.com.br',
+		},
 		defaultCookieAttributes: {
 			httpOnly: true,
 			secure: true,
-			domain: 'backoffice.segwise.com.br',
 		},
 		cookiePrefix: 'auth',
 		database: {
