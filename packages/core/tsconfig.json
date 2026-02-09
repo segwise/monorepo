@@ -26,7 +26,8 @@
 			"@/schemas/*": ["schemas/*"],
 			"@/types/*": ["types/*"],
 			"@/valids/*": ["valids/*"],
-			"@/masks/*": ["masks/*"]
+			"@/masks/*": ["masks/*"],
+			"@/translate/*": ["translate/*"]
 		}
 	},
 	"include": ["src/**/*"],

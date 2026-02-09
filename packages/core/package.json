@@ -1,6 +1,6 @@
 {
 	"name": "@segwise/core",
-	"version": "1.0.41",
+	"version": "1.0.42",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"module": "./dist/index.js",
@@ -48,6 +48,11 @@
 			"types": "./dist/valids/index.d.ts",
 			"import": "./dist/valids/index.js",
 			"default": "./dist/valids/index.js"
+		},
+		"./translate": {
+			"types": "./dist/translate/index.d.ts",
+			"import": "./dist/translate/index.js",
+			"default": "./dist/translate/index.js"
 		}
 	},
 	"publishConfig": {
