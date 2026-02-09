@@ -48,7 +48,7 @@ const SchemaQuoteRegister = z
 		vehicle: z
 			.object(
 				{
-					plate: SchemaPlate,
+					plate: SchemaPlate.nullish(),
 					manufacturer: z
 						.string('Fabricante inválido')
 						.min(1, 'Fabricante inválido')
