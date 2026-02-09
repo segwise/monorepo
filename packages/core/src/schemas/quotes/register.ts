@@ -16,7 +16,7 @@ import { SchemaVehicleUsage } from '@/schemas/utils/vehicle/use';
 
 const SchemaQuoteRegister = z
 	.object({
-		producer: z.uuidv7('Produtor inválido'),
+		producer: z.uuidv7('Produtor inválido').nullish(),
 		type: SchemaQuoteType,
 		renewal: z.boolean('Marcador de renovação inválido'),
 		status: SchemaQuoteStatus,
