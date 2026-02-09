@@ -12,7 +12,7 @@ import { SchemaQualificationTime } from '@/schemas/utils/qualification-time';
 import { SchemaResidence } from '@/schemas/utils/residence';
 import { SchemaVehicleExchange } from '@/schemas/utils/vehicle';
 import { SchemaPlate } from '@/schemas/utils/vehicle/plate';
-import { SchemaVehicleUsage } from '@/schemas/utils/vehicle/use';
+import { SchemaVehicleUsage } from '@/schemas/utils/vehicle/usage';
 
 const SchemaQuoteRegister = z
 	.object({
