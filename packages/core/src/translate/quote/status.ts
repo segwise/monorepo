@@ -1,28 +1,21 @@
 import type { QuoteStatus } from '@/types/quotes';
 
 function translateQuoteStatus(status: QuoteStatus) {
-	if (status === 'waiting') {
-		return 'Aguardando';
-	}
-
-	if (status === 'quoting') {
-		return 'Cotando';
-	}
-
-	if (status === 'quoted') {
-		return 'Cotado';
-	}
-
-	if (status === 'sent') {
-		return 'Enviado';
-	}
-
-	if (status === 'confirmed') {
-		return 'Confirmado';
-	}
-
-	if (status === 'recused') {
-		return 'Recusado';
+	switch (status) {
+		case 'waiting':
+			return 'Aguardando';
+		case 'quoting':
+			return 'Cotando';
+		case 'quoted':
+			return 'Cotado';
+		case 'sent':
+			return 'Enviado';
+		case 'confirmed':
+			return 'Confirmado';
+		case 'recused':
+			return 'Recusado';
+		default:
+			return status;
 	}
 }
 
