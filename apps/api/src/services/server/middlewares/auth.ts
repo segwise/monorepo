@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from '@/@types/server';
+import type { MiddlewareHandler } from '@/@types/server.d';
 import { auth } from '@/services/auth';
 
 const authMiddleware: MiddlewareHandler = async (ctx, next) => {

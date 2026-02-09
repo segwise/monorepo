@@ -1,38 +1,22 @@
-FROM oven/bun:1.3.2 AS base
+FROM oven/bun:1.3.5-alpine AS base
 
-RUN apt-get update && apt-get install -y \
-  python3 \
-  python3-pip \
-  python3-venv \
-  build-essential \
-  pkg-config \
-  libssl-dev \
-  && rm -rf /var/lib/apt/lists/*
-
-FROM base AS builder
-
+FROM base AS deps
 WORKDIR /app
 
 COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile
 
-RUN bun --bun install --frozen-lockfile
-
-COPY . .
-
-RUN bun --bun run db:generate
-
-RUN bun --bun run build
-
-FROM oven/bun:1.3.2-slim AS runner
-
+FROM base AS builder
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-  openssl \
-  python3 \
-  python3-pip \
-  python3-venv \
-  && rm -rf /var/lib/apt/lists/*
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+RUN bun run db:generate
+RUN bun run build
+
+FROM base AS runner
+WORKDIR /app
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock* ./
@@ -42,16 +26,18 @@ RUN bun --bun install --frozen-lockfile --production
 COPY --from=builder /app/dist ./
 
 COPY --from=builder /app/prisma/migrations ./prisma/migrations
-COPY --from=builder /app/prisma/schema.prisma ./prisma/schema.prisma
+COPY --from=builder /app/prisma/schema.prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./
 
 COPY --from=builder /app/generated ./generated
 
 COPY --from=builder /app/entrypoint.sh ./
 
-RUN chmod +x ./entrypoint.sh
-
-ENV PORT=3000
 ENV NODE_ENV=production
+ENV PORT=3000
+
+EXPOSE 3000
+
+RUN chmod +x ./entrypoint.sh
 
 ENTRYPOINT ["./entrypoint.sh"]

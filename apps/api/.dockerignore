@@ -1,26 +1,33 @@
-# Dependências e caches
+README.md
+LICENSE
+
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun-debug.log*
+
 node_modules
 bun.lock*
 .cache
 *.log
 
-# Builds locais
 dist
 tmp
 .DS_Store
 
-# Controle de versão
 .git
 .gitignore
+.gitattributes
 
-# Ambiente local
 !.env
 .env.*
 .vscode
 .idea
 
-# Certificados
 cert
 
-# Generated
 /src/generated

@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from '@/@types/server';
+import type { MiddlewareHandler } from '@/@types/server.d';
 import { email } from '@/services/email';
 
 const emailMiddleware: MiddlewareHandler = async (ctx, next) => {

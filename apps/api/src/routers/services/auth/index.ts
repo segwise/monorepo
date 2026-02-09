@@ -1,4 +1,4 @@
-import type { Server } from '@/@types/server';
+import type { Server } from '@/@types/server.d';
 import { auth } from '@/auth';
 
 function registerRoutersAuth(server: Server) {

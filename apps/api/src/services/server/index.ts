@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { trimTrailingSlash } from 'hono/trailing-slash';
-import type { AppBindings } from '@/@types/server';
+import type { AppBindings } from '@/@types/server.d';
 import { authMiddleware } from '@/server/middlewares/auth';
 import { cacheMiddleware } from '@/server/middlewares/cache';
 import { corsMiddleware } from '@/server/middlewares/cors';
@@ -16,11 +16,7 @@ const server = new Hono<AppBindings>({
 
 		const domain = host.split(':')[0]?.split('.').shift();
 
-		const subdomain = req.url.includes('/api')
-			? 'api'
-			: domain === 'localhost'
-				? 'services'
-				: domain;
+		const subdomain = domain === 'localhost' ? 'services' : domain;
 
 		if (!subdomain || !['api', 'services'].includes(subdomain)) {
 			return '/__invalid_host__';

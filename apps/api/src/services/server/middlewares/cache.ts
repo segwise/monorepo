@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from '@/@types/server';
+import type { MiddlewareHandler } from '@/@types/server.d';
 import { cache } from '@/services/cache';
 
 const cacheMiddleware: MiddlewareHandler = async (ctx, next) => {

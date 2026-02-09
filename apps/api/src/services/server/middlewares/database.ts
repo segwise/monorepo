@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from '@/@types/server';
+import type { MiddlewareHandler } from '@/@types/server.d';
 import { database } from '@/services/database';
 
 const databaseMiddleware: MiddlewareHandler = async (ctx, next) => {
