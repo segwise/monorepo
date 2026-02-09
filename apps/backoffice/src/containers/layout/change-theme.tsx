@@ -12,7 +12,12 @@ function ChangeTheme() {
 	}
 
 	return (
-		<Button size='icon' variant='outline' onClick={handler} className='size-8'>
+		<Button
+			size='icon'
+			variant='outline'
+			onClick={handler}
+			className='size-8 rounded-full'
+		>
 			<SunIcon className='rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0' />
 			<MoonIcon className='absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100' />
 		</Button>
