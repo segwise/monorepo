@@ -27,7 +27,8 @@
 			"@/types/*": ["types/*"],
 			"@/valids/*": ["valids/*"],
 			"@/masks/*": ["masks/*"],
-			"@/translate/*": ["translate/*"]
+			"@/translate/*": ["translate/*"],
+			"@/utils/*": ["utils/*"]
 		}
 	},
 	"include": ["src/**/*"],
