@@ -9,7 +9,7 @@ FROM base AS builder
 
 WORKDIR /app
 
-COPY bun.lock* package.json ./
+COPY package.json bun.lock* .npmrc ./
 
 RUN bun install --frozen-lockfile
 
@@ -21,7 +21,9 @@ FROM base AS pruner
 
 WORKDIR /app
 
-COPY bun.lock* package.json ./
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/bun.lock* ./
+COPY --from=builder /app/.npmrc ./
 
 RUN bun install --production --frozen-lockfile
 
