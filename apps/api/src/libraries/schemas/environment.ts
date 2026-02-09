@@ -8,7 +8,7 @@ const SchemaEnvironment = z.object({
 	BETTER_AUTH_URL: z.url('BETTER_AUTH_URL inválido'),
 	BETTER_AUTH_SECRET: z.string('BETTER_AUTH_SECRET inválido'),
 	RESEND_API_KEY: z.string('RESEND_API_KEY inválido'),
-	URL_APPLICATION: z.url('URL_APPLICATION inválida'),
+	APPLICATION_URL: z.url('APPLICATION_URL inválida'),
 });
 
 export { SchemaEnvironment };

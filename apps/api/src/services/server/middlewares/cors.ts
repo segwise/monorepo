@@ -3,12 +3,12 @@ import type { MiddlewareHandler } from '@/@types/server.d';
 import { environment } from '@/libraries/environment';
 
 const corsDefaultMiddleware: MiddlewareHandler = cors({
-	origin: environment.URL_APPLICATION,
+	origin: environment.APPLICATION_URL,
 	credentials: true,
 });
 
 const corsAuthMiddleware: MiddlewareHandler = cors({
-	origin: environment.URL_APPLICATION,
+	origin: environment.APPLICATION_URL,
 	allowHeaders: ['Content-Type', 'Authorization'],
 	allowMethods: ['POST', 'GET', 'OPTIONS'],
 	exposeHeaders: ['Content-Length'],
