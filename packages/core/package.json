@@ -1,6 +1,6 @@
 {
   "name": "@segwise/core",
-  "version": "1.0.70",
+  "version": "1.0.71",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "module": "./dist/index.js",
@@ -17,7 +17,7 @@
   },
   "scripts": {
     "build": "tsc && tsc-alias",
-    "update-external": "(cd .. && cd backend && bun update @segiwse/core) && (cd .. && cd  backoffice && bun update @segiwse/core)",
+    "update-external": "(cd .. && cd backend && bun update @segwise/core) && (cd .. && cd  backoffice && bun update @segwise/core)",
     "bump:patch": "bun src/scripts/bump-version.ts patch",
     "bump:minor": "bun src/scripts/bump-version.ts minor",
     "bump:major": "bun src/scripts/bump-version.ts major",
