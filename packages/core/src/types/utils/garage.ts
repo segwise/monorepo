@@ -1,7 +1,7 @@
 import type z from 'zod';
 
-import type { SchemaGarage } from '@/schemas/utils';
+import type { SchemaGarage } from '@/schemas/utils/garage';
 
-type Gaarage = z.infer<typeof SchemaGarage>;
+type Garage = z.infer<typeof SchemaGarage>;
 
-export type { Gaarage };
+export type { Garage };

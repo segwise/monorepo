@@ -1,6 +1,6 @@
-import type { Gaarage } from '@/types/utils/garage';
+import type { Garage } from '@/types/utils/garage';
 
-function translateGarage(garage: Gaarage) {
+function translateGarage(garage: Garage) {
 	switch (garage) {
 		case 'manual_gate':
 			return 'Portão Manual';
