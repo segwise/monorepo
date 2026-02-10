@@ -127,26 +127,41 @@ const SelectItem = forwardRef<
 	React.ComponentRef<typeof Item>,
 	React.ComponentPropsWithoutRef<typeof Item> & {
 		variant?: 'default' | 'destructive';
+		showIndicator?: boolean;
 	}
->(({ className, children, variant = 'default', ...props }, ref) => (
-	<Item
-		ref={ref}
-		className={cn(
-			'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent/50 focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:size-4',
-			variant === 'destructive' &&
-				'focus:bg-destructive/5 focus:text-destructive focus:cursor-pointer',
+>(
+	(
+		{
 			className,
-		)}
-		{...props}
-	>
-		<span className='absolute left-2 flex size-3.5 items-center justify-center'>
-			<ItemIndicator>
-				<CheckIcon className='size-4' />
-			</ItemIndicator>
-		</span>
-		<ItemText>{children}</ItemText>
-	</Item>
-));
+			children,
+			variant = 'default',
+			showIndicator = true,
+			...props
+		},
+		ref,
+	) => (
+		<Item
+			ref={ref}
+			className={cn(
+				'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent/50 focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:size-4',
+				variant === 'destructive' &&
+					'focus:bg-destructive/5 focus:text-destructive focus:cursor-pointer',
+				className,
+				!showIndicator && 'pl-2',
+			)}
+			{...props}
+		>
+			{showIndicator && (
+				<span className='absolute left-2 flex size-3.5 items-center justify-center'>
+					<ItemIndicator>
+						<CheckIcon className='size-4' />
+					</ItemIndicator>
+				</span>
+			)}
+			<ItemText>{children}</ItemText>
+		</Item>
+	),
+);
 SelectItem.displayName = Item.displayName;
 
 const SelectSeparator = forwardRef<

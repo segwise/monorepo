@@ -1,6 +1,6 @@
 import { cacheLife } from 'next/cache';
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { RedirectType, redirect } from 'next/navigation';
 import { auth } from '@/auth';
 
 async function getSessionCache() {
@@ -22,7 +22,7 @@ async function getSessionCache() {
 			},
 		});
 
-		return redirect('/');
+		return redirect('/sign-in', RedirectType.replace);
 	}
 
 	return data;

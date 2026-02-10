@@ -11,14 +11,14 @@ const useProducers = ({ simple }: { simple?: boolean } = {}) =>
 			},
 		],
 		queryFn: async ({ signal }) =>
-			await api
-				.get<Array<ProducerSimple>>(
+			(
+				await api.get<Array<ProducerSimple>>(
 					!simple ? '/producers' : '/producers/simple',
 					{
 						signal,
 					},
 				)
-				.then(({ data }) => data),
+			).data,
 	});
 
 export { useProducers };
