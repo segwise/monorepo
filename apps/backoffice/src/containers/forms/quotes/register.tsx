@@ -12,6 +12,8 @@ import {
 import { SchemaQuoteRegister } from '@segwise/core/schemas';
 import {
 	translateGarage,
+	translateGarageSchool,
+	translateGarageWork,
 	translateMaritalStatus,
 	translateQuoteStatus,
 	translateResidence,
@@ -21,7 +23,7 @@ import {
 import type { QuoteRegister } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { isDateString } from '@segwise/core/valids';
-import { format, parse } from 'date-fns';
+import { differenceInYears, format, isDate, parse } from 'date-fns';
 import {
 	CarIcon,
 	ClipboardIcon,
@@ -29,8 +31,10 @@ import {
 	Trash2Icon,
 	UserCircle2Icon,
 } from 'lucide-react';
-import { Fragment } from 'react';
+import { useRouter } from 'next/navigation';
+import { Fragment, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -59,6 +63,7 @@ import {
 	InputGroup,
 	InputGroupAddon,
 	InputGroupInput,
+	InputGroupText,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import {
@@ -72,10 +77,18 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { placeholder } from '@/config/placeholder';
 import { useProducers } from '@/libraries/hooks/producers/use-producers';
+import { useQuotesRegister } from '@/libraries/hooks/quotes/use-quote-register';
 import { useProfessions } from '@/libraries/hooks/use-professions';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicle-manufacturers';
 
 function FormQuoteRegister() {
+	const { push } = useRouter();
+
+	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
+		useState<boolean>(false);
+
+	const { mutate, isPending } = useQuotesRegister();
+
 	const { data: producers } = useProducers({
 		simple: true,
 	});
@@ -90,7 +103,9 @@ function FormQuoteRegister() {
 		control,
 		handleSubmit,
 		setValue,
-		watch,
+		clearErrors,
+		getValues,
+		reset,
 		formState: { isDirty },
 	} = useForm({
 		mode: 'all',
@@ -100,12 +115,14 @@ function FormQuoteRegister() {
 		defaultValues: {
 			status: 'waiting',
 			type: 'car',
-			requestAt: '',
+			requestAt: new Date(),
 			insured: {
 				cpf: '',
 				name: '',
 				birth: '',
 				phone: '',
+				profession: null,
+				maritalStatus: undefined,
 			},
 			vehicle: {
 				plate: '',
@@ -114,8 +131,13 @@ function FormQuoteRegister() {
 				overnightPostalCode: '',
 				additional: {
 					residence: {},
-					work: {},
-					school: {},
+					work: undefined,
+					school: undefined,
+					armored: false,
+					gasKit: false,
+					theInsuredIsTheOwner: false,
+					funded: false,
+					driversUnder26: false,
 				},
 			},
 			driver: {
@@ -127,7 +149,19 @@ function FormQuoteRegister() {
 		},
 	});
 
-	function onSubmit(_props: QuoteRegister) {}
+	function onSubmit(props: QuoteRegister) {
+		mutate(props, {
+			onSuccess(data) {
+				toast.success(data.message || 'Cadastrado com sucesso');
+
+				reset();
+				push('/quotes');
+			},
+			onError(error) {
+				toast.error(error.message || 'Falha ao registrar interesse de cotação');
+			},
+		});
+	}
 
 	return (
 		<Fragment>
@@ -348,7 +382,10 @@ function FormQuoteRegister() {
 																		'dd/MM/yyyy',
 																	)
 																: maskDateString(field.value)
-															: undefined
+															: typeof field.value === 'object' &&
+																	isDate(field.value)
+																? format(field.value, 'dd/MM/yyyy')
+																: undefined
 													}
 													onChange={({ target: { value } }) =>
 														field.onChange(
@@ -391,9 +428,12 @@ function FormQuoteRegister() {
 													id='insured-cpf'
 													aria-invalid={fieldState.invalid}
 													placeholder='000.000.000-00'
-													onChange={({ target: { value } }) =>
-														field.onChange(maskCPF(value))
-													}
+													onChange={({ target: { value } }) => [
+														field.onChange(maskCPF(value)),
+														theInsuredPartyIsTheDriver
+															? setValue('driver.cpf', maskCPF(value))
+															: undefined,
+													]}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -414,9 +454,15 @@ function FormQuoteRegister() {
 													id='insured-name'
 													aria-invalid={fieldState.invalid}
 													placeholder='Nome Completo'
-													onChange={({ target: { value } }) =>
-														field.onChange(capitalizeFirstLetters(value))
-													}
+													onChange={({ target: { value } }) => [
+														field.onChange(capitalizeFirstLetters(value)),
+														theInsuredPartyIsTheDriver
+															? setValue(
+																	'driver.name',
+																	capitalizeFirstLetters(value),
+																)
+															: undefined,
+													]}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -432,34 +478,52 @@ function FormQuoteRegister() {
 												<FieldLabel htmlFor='insured-birth'>
 													Nascimento:
 												</FieldLabel>
-												<Input
-													{...field}
-													id='insured-birth'
-													aria-invalid={fieldState.invalid}
-													placeholder='00/00/0000'
-													value={
-														typeof field.value === 'string'
-															? isDateString(field.value)
-																? format(
-																		parse(
-																			field.value,
+												<InputGroup>
+													<InputGroupInput
+														{...field}
+														id='insured-birth'
+														aria-invalid={fieldState.invalid}
+														placeholder='00/00/0000'
+														value={
+															typeof field.value === 'string'
+																? isDateString(field.value)
+																	? format(
+																			parse(
+																				field.value,
+																				'dd/MM/yyyy',
+																				new Date(),
+																			),
 																			'dd/MM/yyyy',
-																			new Date(),
-																		),
-																		'dd/MM/yyyy',
+																		)
+																	: maskDateString(field.value)
+																: undefined
+														}
+														onChange={({ target: { value } }) => [
+															field.onChange(
+																isDateString(value)
+																	? parse(value, 'dd/MM/yyyy', new Date())
+																	: maskDateString(value),
+															),
+															theInsuredPartyIsTheDriver
+																? setValue(
+																		'driver.birth',
+																		isDateString(value)
+																			? parse(value, 'dd/MM/yyyy', new Date())
+																			: maskDateString(value),
 																	)
-																: maskDateString(field.value)
-															: undefined
-													}
-													onChange={({ target: { value } }) =>
-														field.onChange(
-															isDateString(value)
-																? parse(value, 'dd/MM/yyyy', new Date())
-																: maskDateString(value),
-														)
-													}
-													maxLength={10}
-												/>
+																: undefined,
+														]}
+														maxLength={10}
+													/>
+													{!!field.value && isDate(field.value) && (
+														<InputGroupAddon>
+															<InputGroupText>
+																{differenceInYears(new Date(), field.value)}{' '}
+																anos
+															</InputGroupText>
+														</InputGroupAddon>
+													)}
+												</InputGroup>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}
@@ -479,9 +543,12 @@ function FormQuoteRegister() {
 													id='insured-phone'
 													aria-invalid={fieldState.invalid}
 													placeholder='(00) 00000-0000'
-													onChange={({ target: { value } }) =>
-														field.onChange(maskPhone(value))
-													}
+													onChange={({ target: { value } }) => [
+														field.onChange(maskPhone(value)),
+														theInsuredPartyIsTheDriver
+															? setValue('driver.phone', maskPhone(value))
+															: undefined,
+													]}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -551,6 +618,10 @@ function FormQuoteRegister() {
 														<SelectValue placeholder='Selecionar' />
 													</SelectTrigger>
 													<SelectContent>
+														<SelectItem value='0'>
+															Permissão Provisória
+														</SelectItem>
+														<SelectSeparator />
 														<SelectItem value='1'>1 anos</SelectItem>
 														<SelectItem value='2'>2 anos</SelectItem>
 														<SelectItem value='3'>3 anos</SelectItem>
@@ -665,9 +736,13 @@ function FormQuoteRegister() {
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='vehicle-manufacturer'>
 													Fabricante:
+													<sup className='text-muted-foreground ml-2'>
+														( Opcional )
+													</sup>
 												</FieldLabel>
 												<Combobox
 													{...field}
+													inputValue={field.value}
 													items={manufacturers}
 													itemToStringValue={(item) =>
 														// @ts-expect-error
@@ -677,6 +752,7 @@ function FormQuoteRegister() {
 														// @ts-expect-error
 														item.name
 													}
+													onInputValueChange={field.onChange}
 												>
 													<ComboboxInput placeholder='Selecionar' />
 													<ComboboxContent
@@ -689,7 +765,7 @@ function FormQuoteRegister() {
 														</ComboboxEmpty>
 														<ComboboxList>
 															{(item) => (
-																<ComboboxItem key={item.name} value={item}>
+																<ComboboxItem key={item.code} value={item}>
 																	{item.name}
 																</ComboboxItem>
 															)}
@@ -776,15 +852,15 @@ function FormQuoteRegister() {
 									/>
 									<Controller
 										control={control}
-										name='vehicle.use'
+										name='vehicle.usage'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='vehicle-use'>
+												<FieldLabel htmlFor='vehicle-usage'>
 													Uso do Veículo:
 												</FieldLabel>
 												<Select {...field} onValueChange={field.onChange}>
 													<SelectTrigger
-														id='vehicle-use'
+														id='vehicle-usage'
 														aria-invalid={fieldState.invalid}
 													>
 														<SelectValue placeholder='Selecionar' />
@@ -961,62 +1037,11 @@ function FormQuoteRegister() {
 									<FieldGroup className='flex flex-row gap-x-0!'>
 										<Controller
 											control={control}
-											name='vehicle.additional.work.active'
-											render={({ field, fieldState }) => (
-												<Field data-invalid={fieldState.invalid}>
-													<FieldLabel htmlFor='vehicle-additional-work-active'>
-														Trabalho:
-													</FieldLabel>
-													<Select
-														{...field}
-														value={
-															field.value === true
-																? 'yes'
-																: field.value === false
-																	? 'no'
-																	: undefined
-														}
-														onValueChange={(value) => [
-															field.onChange(
-																value === 'yes'
-																	? true
-																	: value === 'no'
-																		? false
-																		: null,
-															),
-															value === 'no'
-																? setValue(
-																		'vehicle.additional.work.garage',
-																		null,
-																	)
-																: undefined,
-														]}
-													>
-														<SelectTrigger
-															id='vehicle-additional-work-active'
-															aria-invalid={fieldState.invalid}
-															className='rounded-r-none border-r-0'
-														>
-															<SelectValue placeholder='Selecionar' />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value='yes'>Sim</SelectItem>
-															<SelectItem value='no'>Não</SelectItem>
-														</SelectContent>
-													</Select>
-													{fieldState.invalid && (
-														<FieldError errors={[fieldState.error]} />
-													)}
-												</Field>
-											)}
-										/>
-										<Controller
-											control={control}
-											name='vehicle.additional.work.garage'
+											name='vehicle.additional.work'
 											render={({ field, fieldState }) => (
 												<Field data-invalid={fieldState.invalid}>
 													<FieldLabel htmlFor='vehicle-additional-work-garage'>
-														Tipo de Garagem:
+														Garagem no Trabalho:
 													</FieldLabel>
 													<Select
 														{...field}
@@ -1024,28 +1049,26 @@ function FormQuoteRegister() {
 														onValueChange={(value) =>
 															field.onChange(value === 'clear' ? null : value)
 														}
-														disabled={!watch('vehicle.additional.work.active')}
 													>
 														<SelectTrigger
 															id='vehicle-additional-work-garage'
 															aria-invalid={fieldState.invalid}
-															className='rounded-l-none'
 														>
 															<SelectValue placeholder='Selecionar' />
 														</SelectTrigger>
 														<SelectContent>
-															<SelectItem value='no_garage'>
-																{translateGarage('no_garage')}
+															<SelectItem value='does_not_work'>
+																{translateGarageWork('does_not_work')}
 															</SelectItem>
 															<SelectSeparator />
-															<SelectItem value='automatic_gate'>
-																{translateGarage('automatic_gate')}
+															<SelectItem value='yes'>
+																{translateGarageWork('yes')}
 															</SelectItem>
-															<SelectItem value='manual_gate'>
-																{translateGarage('manual_gate')}
+															<SelectItem value='no'>
+																{translateGarageWork('no')}
 															</SelectItem>
-															<SelectItem value='private'>
-																{translateGarage('private')}
+															<SelectItem value='does_not_use'>
+																{translateGarageWork('does_not_use')}
 															</SelectItem>
 														</SelectContent>
 													</Select>
@@ -1059,62 +1082,11 @@ function FormQuoteRegister() {
 									<FieldGroup className='flex flex-row gap-x-0!'>
 										<Controller
 											control={control}
-											name='vehicle.additional.school.active'
-											render={({ field, fieldState }) => (
-												<Field data-invalid={fieldState.invalid}>
-													<FieldLabel htmlFor='vehicle-additional-school-active'>
-														Estuda:
-													</FieldLabel>
-													<Select
-														{...field}
-														value={
-															field.value === true
-																? 'yes'
-																: field.value === false
-																	? 'no'
-																	: undefined
-														}
-														onValueChange={(value) => [
-															field.onChange(
-																value === 'yes'
-																	? true
-																	: value === 'no'
-																		? false
-																		: null,
-															),
-															value === 'no'
-																? setValue(
-																		'vehicle.additional.school.garage',
-																		null,
-																	)
-																: undefined,
-														]}
-													>
-														<SelectTrigger
-															id='vehicle-additional-school-active'
-															aria-invalid={fieldState.invalid}
-															className='rounded-r-none border-r-0'
-														>
-															<SelectValue placeholder='Selecionar' />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value='yes'>Sim</SelectItem>
-															<SelectItem value='no'>Não</SelectItem>
-														</SelectContent>
-													</Select>
-													{fieldState.invalid && (
-														<FieldError errors={[fieldState.error]} />
-													)}
-												</Field>
-											)}
-										/>
-										<Controller
-											control={control}
-											name='vehicle.additional.school.garage'
+											name='vehicle.additional.school'
 											render={({ field, fieldState }) => (
 												<Field data-invalid={fieldState.invalid}>
 													<FieldLabel htmlFor='vehicle-additional-school-garage'>
-														Tipo de Garagem:
+														Garagem na Escola:
 													</FieldLabel>
 													<Select
 														{...field}
@@ -1122,30 +1094,26 @@ function FormQuoteRegister() {
 														onValueChange={(value) =>
 															field.onChange(value === 'clear' ? null : value)
 														}
-														disabled={
-															!watch('vehicle.additional.school.active')
-														}
 													>
 														<SelectTrigger
 															id='vehicle-additional-school-garage'
 															aria-invalid={fieldState.invalid}
-															className='rounded-l-none'
 														>
 															<SelectValue placeholder='Selecionar' />
 														</SelectTrigger>
 														<SelectContent>
-															<SelectItem value='no_garage'>
-																{translateGarage('no_garage')}
+															<SelectItem value='does_not_study'>
+																{translateGarageSchool('does_not_study')}
 															</SelectItem>
 															<SelectSeparator />
-															<SelectItem value='automatic_gate'>
-																{translateGarage('automatic_gate')}
+															<SelectItem value='yes'>
+																{translateGarageSchool('yes')}
 															</SelectItem>
-															<SelectItem value='manual_gate'>
-																{translateGarage('manual_gate')}
+															<SelectItem value='no'>
+																{translateGarageSchool('no')}
 															</SelectItem>
-															<SelectItem value='private'>
-																{translateGarage('private')}
+															<SelectItem value='does_not_use'>
+																{translateGarageSchool('does_not_use')}
 															</SelectItem>
 														</SelectContent>
 													</Select>
@@ -1165,36 +1133,136 @@ function FormQuoteRegister() {
 										</FieldDescription>
 									</FieldSet>
 									<FieldGroup className='gap-1.5!'>
-										<Field orientation='horizontal' className='gap-1.5'>
-											<Checkbox />
-											<Label className='font-normal text-xs text-[0.8rem]'>
-												Blindado
-											</Label>
-										</Field>
-										<Field orientation='horizontal' className='gap-1.5'>
-											<Checkbox />
-											<Label className='font-normal text-xs text-[0.8rem]'>
-												Kit Gás
-											</Label>
-										</Field>
-										<Field orientation='horizontal' className='gap-1.5'>
-											<Checkbox />
-											<Label className='font-normal text-xs text-[0.8rem]'>
-												Segurado é o proprietário do veículo
-											</Label>
-										</Field>
-										<Field orientation='horizontal' className='gap-1.5'>
-											<Checkbox />
-											<Label className='font-normal text-xs text-[0.8rem]'>
-												Financiado
-											</Label>
-										</Field>
-										<Field orientation='horizontal' className='gap-1.5'>
-											<Checkbox />
-											<Label className='font-normal text-xs text-[0.8rem]'>
-												Pessoas entre 18 a 26 anos utilizam o veículo
-											</Label>
-										</Field>
+										<Controller
+											control={control}
+											name='vehicle.additional.armored'
+											render={({ field, fieldState }) => (
+												<Field
+													orientation='horizontal'
+													data-invalid={fieldState.invalid}
+													className='gap-1.5'
+												>
+													<Checkbox
+														{...field}
+														id='vehicle-additional-armored'
+														aria-invalid={fieldState.invalid}
+														value={undefined}
+														checked={Boolean(field.value)}
+														onCheckedChange={field.onChange}
+													/>
+													<Label
+														htmlFor='vehicle-additional-armored'
+														className='font-normal text-xs text-[0.8rem] cursor-pointer'
+													>
+														Blindado
+													</Label>
+												</Field>
+											)}
+										/>
+										<Controller
+											control={control}
+											name='vehicle.additional.gasKit'
+											render={({ field, fieldState }) => (
+												<Field
+													orientation='horizontal'
+													data-invalid={fieldState.invalid}
+													className='gap-1.5'
+												>
+													<Checkbox
+														{...field}
+														id='vehicle-additional-gas-kit'
+														aria-invalid={fieldState.invalid}
+														value={undefined}
+														checked={Boolean(field.value)}
+														onCheckedChange={field.onChange}
+													/>
+													<Label
+														htmlFor='vehicle-additional-gas-kit'
+														className='font-normal text-xs text-[0.8rem] cursor-pointer'
+													>
+														Kit Gás
+													</Label>
+												</Field>
+											)}
+										/>
+										<Controller
+											control={control}
+											name='vehicle.additional.theInsuredIsTheOwner'
+											render={({ field, fieldState }) => (
+												<Field
+													orientation='horizontal'
+													data-invalid={fieldState.invalid}
+													className='gap-1.5'
+												>
+													<Checkbox
+														{...field}
+														id='vehicle-additional-the-insured-is-the-owner'
+														aria-invalid={fieldState.invalid}
+														value={undefined}
+														checked={Boolean(field.value)}
+														onCheckedChange={field.onChange}
+													/>
+													<Label
+														htmlFor='vehicle-additional-the-insured-is-the-owner'
+														className='font-normal text-xs text-[0.8rem] cursor-pointer'
+													>
+														Segurado é o proprietário do veículo
+													</Label>
+												</Field>
+											)}
+										/>
+										<Controller
+											control={control}
+											name='vehicle.additional.funded'
+											render={({ field, fieldState }) => (
+												<Field
+													orientation='horizontal'
+													data-invalid={fieldState.invalid}
+													className='gap-1.5'
+												>
+													<Checkbox
+														{...field}
+														id='vehicle-additional-funded'
+														aria-invalid={fieldState.invalid}
+														value={undefined}
+														checked={Boolean(field.value)}
+														onCheckedChange={field.onChange}
+													/>
+													<Label
+														htmlFor='vehicle-additional-funded'
+														className='font-normal text-xs text-[0.8rem] cursor-pointer'
+													>
+														Financiado
+													</Label>
+												</Field>
+											)}
+										/>
+										<Controller
+											control={control}
+											name='vehicle.additional.driversUnder26'
+											render={({ field, fieldState }) => (
+												<Field
+													orientation='horizontal'
+													data-invalid={fieldState.invalid}
+													className='gap-1.5'
+												>
+													<Checkbox
+														{...field}
+														id='vehicle-additional-drivers-under-26'
+														aria-invalid={fieldState.invalid}
+														value={undefined}
+														checked={Boolean(field.value)}
+														onCheckedChange={field.onChange}
+													/>
+													<Label
+														htmlFor='vehicle-additional-drivers-under-26'
+														className='font-normal text-xs text-[0.8rem] cursor-pointer'
+													>
+														Pessoas entre 18 a 26 anos utilizam o veículo
+													</Label>
+												</Field>
+											)}
+										/>
 									</FieldGroup>
 								</FieldGroup>
 							</FieldGroup>
@@ -1206,35 +1274,162 @@ function FormQuoteRegister() {
 											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
 												<UserCircle2Icon />
 											</div>
-											Principal Condutor
+											Principal Condutor |{' '}
+											<div className='flex flex-row items-center justify-start gap-x-2 pr-3'>
+												<Checkbox
+													id='the-same-driver'
+													value={undefined}
+													checked={theInsuredPartyIsTheDriver}
+													onCheckedChange={(value) => [
+														setTheInsuredPartyIsTheDriver(Boolean(value)),
+														Boolean(value) === true
+															? [
+																	setValue('driver', {
+																		cpf: getValues('insured.cpf'),
+																		name: getValues('insured.name'),
+																		phone: getValues('insured.phone'),
+																		birth: getValues('insured.birth'),
+																	}),
+																	clearErrors('driver'),
+																]
+															: undefined,
+													]}
+												/>
+												<Label
+													htmlFor='the-same-driver'
+													className='font-normal text-xs'
+												>
+													O segurado é o condutor
+												</Label>
+											</div>
 										</FieldTitle>
 									</FieldContent>
 								</FieldSet>
 								<FieldGroup className='grid grid-cols-4'>
-									<Field>
-										<FieldLabel>CPF:</FieldLabel>
-										<InputGroup>
-											<InputGroupAddon
-												align='inline-start'
-												className=' border-r pr-3 mr-1 h-full'
-											>
-												<Label className='z-1'>O mesmo</Label> <Checkbox />
-											</InputGroupAddon>
-											<InputGroupInput placeholder='000.000.000-00' />
-										</InputGroup>
-									</Field>
-									<Field>
-										<FieldLabel>Nome Completo:</FieldLabel>
-										<Input placeholder='Nome Completo' />
-									</Field>
-									<Field>
-										<FieldLabel>Nascimento:</FieldLabel>
-										<Input placeholder='00/00/0000' />
-									</Field>
-									<Field>
-										<FieldLabel>Celular:</FieldLabel>
-										<Input placeholder='(00) 00000-0000' />
-									</Field>
+									<Controller
+										control={control}
+										name='driver.cpf'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='driver-cpf'>CPF:</FieldLabel>
+												<Input
+													{...field}
+													id='driver-cpf'
+													aria-invalid={fieldState.invalid}
+													disabled={theInsuredPartyIsTheDriver}
+													placeholder='000.000.000-00'
+													onChange={({ target: { value } }) =>
+														field.onChange(maskCPF(value))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='driver.name'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='driver-name'>
+													Nome Completo:
+												</FieldLabel>
+												<Input
+													{...field}
+													id='driver-name'
+													aria-invalid={fieldState.invalid}
+													disabled={theInsuredPartyIsTheDriver}
+													placeholder='Nome Completo'
+													onChange={({ target: { value } }) =>
+														field.onChange(capitalizeFirstLetters(value))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='driver.birth'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='driver-birth'>
+													Nascimento:
+												</FieldLabel>
+												<InputGroup>
+													<InputGroupInput
+														{...field}
+														id='driver-birth'
+														aria-invalid={fieldState.invalid}
+														disabled={theInsuredPartyIsTheDriver}
+														placeholder='00/00/0000'
+														value={
+															typeof field.value === 'string'
+																? isDateString(field.value)
+																	? format(
+																			parse(
+																				field.value,
+																				'dd/MM/yyyy',
+																				new Date(),
+																			),
+																			'dd/MM/yyyy',
+																		)
+																	: maskDateString(field.value)
+																: typeof field.value === 'object' &&
+																		isDate(field.value)
+																	? format(field.value, 'dd/MM/yyyy')
+																	: undefined
+														}
+														onChange={({ target: { value } }) =>
+															field.onChange(
+																isDateString(value)
+																	? parse(value, 'dd/MM/yyyy', new Date())
+																	: maskDateString(value),
+															)
+														}
+														maxLength={10}
+													/>
+													{!!field.value && isDate(field.value) && (
+														<InputGroupAddon>
+															<InputGroupText>
+																{differenceInYears(new Date(), field.value)}{' '}
+																anos
+															</InputGroupText>
+														</InputGroupAddon>
+													)}
+												</InputGroup>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='driver.phone'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='driver-phone'>Celular:</FieldLabel>
+												<Input
+													{...field}
+													id='driver-phone'
+													aria-invalid={fieldState.invalid}
+													disabled={theInsuredPartyIsTheDriver}
+													placeholder='(00) 00000-0000'
+													onChange={({ target: { value } }) =>
+														field.onChange(maskPhone(value))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
 								</FieldGroup>
 							</FieldGroup>
 						</FieldGroup>
@@ -1242,10 +1437,10 @@ function FormQuoteRegister() {
 				</CardContent>
 			</Card>
 			<Button
-				type='button'
-				onClick={handleSubmit(onSubmit)}
+				type='submit'
+				form='form-quote-register'
 				className='w-full'
-				disabled={!isDirty}
+				disabled={isPending || !isDirty}
 			>
 				<SaveIcon /> Salvar Registro
 			</Button>
