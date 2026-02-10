@@ -1,4 +1,4 @@
-import type { VehicleUsage } from '@/types/vehicles';
+import type { VehicleUsage } from '@/types/vehicles/usage';
 
 function translateVehicleUsage(usage: VehicleUsage) {
 	switch (usage) {
