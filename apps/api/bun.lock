@@ -6,9 +6,10 @@
       "name": "backend",
       "dependencies": {
         "@faker-js/faker": "^10.3.0",
+        "@hono/zod-validator": "^0.7.6",
         "@prisma/adapter-pg": "^7.0.1",
         "@prisma/client": "7.0.1",
-        "@segwise/core": "^1.0.52",
+        "@segwise/core": "^1.0.65",
         "better-auth": "^1.4.1",
         "hono": "^4.10.6",
         "resend": "^6.5.2",
@@ -69,6 +70,8 @@
 
     "@hono/node-server": ["@hono/node-server@1.14.2", "", { "peerDependencies": { "hono": "^4" } }, "sha512-GHjpOeHYbr9d1vkID2sNUYkl5IxumyhDrUJB7wBp7jvqYwPFt+oNKsAPBRcdSbV7kIrXhouLE199ks1QcK4r7A=="],
 
+    "@hono/zod-validator": ["@hono/zod-validator@0.7.6", "", { "peerDependencies": { "hono": ">=3.9.0", "zod": "^3.25.0 || ^4.0.0" } }, "sha512-Io1B6d011Gj1KknV4rXYz4le5+5EubcWEU/speUjuw9XMMIaP3n78yXLhjd2A3PXaXaUwEAluOiAyLqhBEJgsw=="],
+
     "@mrleebo/prisma-ast": ["@mrleebo/prisma-ast@0.12.1", "", { "dependencies": { "chevrotain": "^10.5.0", "lilconfig": "^2.1.0" } }, "sha512-JwqeCQ1U3fvccttHZq7Tk0m/TMC6WcFAQZdukypW3AzlJYKYTGNVd1ANU2GuhKnv4UQuOFj3oAl0LLG/gxFN1w=="],
 
     "@noble/ciphers": ["@noble/ciphers@2.0.1", "", {}, "sha512-xHK3XHPUW8DTAobU+G0XT+/w+JLM7/8k1UFdB5xg/zTFPnFCobhftzw8wl4Lw2aq/Rvir5pxfZV5fEazmeCJ2g=="],
@@ -101,7 +104,7 @@
 
     "@prisma/studio-core": ["@prisma/studio-core@0.8.2", "", { "peerDependencies": { "@types/react": "^18.0.0 || ^19.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" } }, "sha512-/iAEWEUpTja+7gVMu1LtR2pPlvDmveAwMHdTWbDeGlT7yiv0ZTCPpmeAGdq/Y9aJ9Zj1cEGBXGRbmmNPj022PQ=="],
 
-    "@segwise/core": ["@segwise/core@1.0.52", "https://npm.pkg.github.com/download/@segwise/core/1.0.52/c1ded9a0e168674533adf2d9b861205825e61f6c", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-WreCmRbA6QI/GMJdUUphgmtcdGt9n2SJ44F5i2aFArhiSCjOF2SH6/UOCRrOo52j19PnkYRTAQFW/54BvCEq4Q=="],
+    "@segwise/core": ["@segwise/core@1.0.65", "https://npm.pkg.github.com/download/@segwise/core/1.0.65/0545eeda97bb7e021d0665bf9c5f6fd1b81c7b4c", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-fpziODhvp1aBNQMMGkTbraCOpW4LS1BNnsAl3nIzUU3mIaOapPsmE1/gFfW59j0Za9m6SS1I56Lkni6LMpEAnQ=="],
 
     "@stablelib/base64": ["@stablelib/base64@1.0.1", "", {}, "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ=="],
 

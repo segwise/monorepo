@@ -1,8 +1,7 @@
+import { SchemaName } from '@segwise/core/schemas';
+import { capitalizeFirstLetters, sortArray } from '@segwise/core/utils';
+import z from 'zod';
 import type { Server } from '@/@types/server.d';
-
-function sortArray<T>(array: T[], compareFn?: (a: T, b: T) => number): T[] {
-	return [...array].sort(compareFn);
-}
 
 function registerRoutersProfessionsListining(server: Server) {
 	server.get('/simple', async (ctx) => {
@@ -31,10 +30,19 @@ function registerRoutersProfessionsListining(server: Server) {
 					display: string;
 				}>;
 			}
-		).concept.map(({ code, display }) => ({
-			code,
-			name: display,
-		}));
+		).concept
+			.map(({ code, display }) => ({
+				code,
+				name: capitalizeFirstLetters(display),
+			}))
+			.map((value) =>
+				z
+					.object({
+						code: z.string('Código inválido').min(1, 'Código inválido'),
+						name: SchemaName,
+					})
+					.parse(value),
+			);
 
 		const collator = new Intl.Collator('pt-BR', {
 			sensitivity: 'base',

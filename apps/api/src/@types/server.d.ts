@@ -1,3 +1,4 @@
+import type { S3Client } from 'bun';
 import type {
 	Context as HonoContext,
 	MiddlewareHandler as HonoMiddlewareHandler,
@@ -18,6 +19,10 @@ type Variables = {
 	cache: Bun.RedisClient;
 	database: Database;
 	email: Resend;
+	storage: {
+		images: S3Client;
+		documents: S3Client;
+	};
 };
 
 type AppBindings = {
