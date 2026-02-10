@@ -75,48 +75,20 @@ const SchemaQuoteRegister = z
 								},
 								'Residência inválido',
 							),
-							work: z
-								.object(
-									{
-										active: z.coerce.boolean(
-											'Marcador de trabalhador inválido',
-										),
-										garage: SchemaGarage.nullish(),
-									},
-									'Trabalho inválido',
-								)
-								.refine(
-									({ active, garage }) =>
-										active === false && !garage
-											? true
-											: active === true && !garage
-												? false
-												: active === true && !!garage,
-									{
-										error: 'Marcador de trabalhador inválido',
-										path: ['active'],
-									},
-								),
-							school: z
-								.object(
-									{
-										active: z.coerce.boolean('Marcador de estudante inválido'),
-										garage: SchemaGarage.nullish(),
-									},
-									'Escola inválida',
-								)
-								.refine(
-									({ active, garage }) =>
-										active === false && !garage
-											? true
-											: active === true && !garage
-												? false
-												: active === true && !!garage,
-									{
-										error: 'Marcador de estudante inválido',
-										path: ['active'],
-									},
-								),
+							work: z.object(
+								{
+									active: z.coerce.boolean('Marcador de trabalhador inválido'),
+									garage: SchemaGarage.nullish(),
+								},
+								'Trabalho inválido',
+							),
+							school: z.object(
+								{
+									active: z.coerce.boolean('Marcador de estudante inválido'),
+									garage: SchemaGarage.nullish(),
+								},
+								'Escola inválida',
+							),
 							armored: z.coerce.boolean('Marcado de blindado inválido'),
 							gasKit: z.coerce.boolean('Marcado de kit gás inválido'),
 							theInsuredIsTheOwner: z.coerce.boolean(
