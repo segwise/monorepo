@@ -17,7 +17,7 @@
 	},
 	"scripts": {
 		"build": "tsc && tsc-alias",
-		"deploy": "bun run build && git add . && git commit -m 'commit automatic' && git push && bun publish && clear"
+		"deploy": "bun run build && git add . && git commit -m 'commit automatic' && git push && bun publish && (cd backend && bun update @segiwse/core) && (cd backoffice && bun update @segiwse/core) && clear"
 	},
 	"files": [
 		"dist"
