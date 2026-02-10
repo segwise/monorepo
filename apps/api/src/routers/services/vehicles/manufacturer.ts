@@ -1,7 +1,7 @@
 import { capitalizeFirstLetters, sortArray } from '@segwise/core/utils';
 import type { Server } from '@/@types/server.d';
 
-function registerRoutersVehiclesManufacturers(server: Server) {
+function registerRoutersServicesVehiclesManufacturers(server: Server) {
 	server.get('/manufacturers', async (ctx) => {
 		const manufacturers = `
       10418;CFMOTO
@@ -1890,4 +1890,4 @@ function registerRoutersVehiclesManufacturers(server: Server) {
 	});
 }
 
-export { registerRoutersVehiclesManufacturers };
+export { registerRoutersServicesVehiclesManufacturers };

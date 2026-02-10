@@ -1,11 +1,11 @@
 import type { Server } from '@/@types/server.d';
 
-import { registerRoutersProfessionsListining } from '@/routers/services/professions/listinig';
+import { registerRoutersServicesProfessionsListining } from '@/routers/services/professions/listinig';
 
-function registerRoutersProfessions(server: Server) {
+function registerRoutersServicesProfessions(server: Server) {
 	const base = server.basePath('/professions');
 
-	registerRoutersProfessionsListining(base);
+	registerRoutersServicesProfessionsListining(base);
 }
 
-export { registerRoutersProfessions };
+export { registerRoutersServicesProfessions };

@@ -1,11 +1,11 @@
 import type { Server } from '@/@types/server.d';
 
-import { registerRoutersProducersListiningSimple } from '@/routers/services/producers/listinig';
+import { registerRoutersServicesProducersListiningSimple } from '@/routers/services/producers/listinig';
 
-function registerRoutersProducers(server: Server) {
+function registerRoutersServicesProducers(server: Server) {
 	const base = server.basePath('/producers');
 
-	registerRoutersProducersListiningSimple(base);
+	registerRoutersServicesProducersListiningSimple(base);
 }
 
-export { registerRoutersProducers };
+export { registerRoutersServicesProducers };

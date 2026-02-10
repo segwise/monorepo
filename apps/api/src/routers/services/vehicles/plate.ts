@@ -4,7 +4,7 @@ import { SchemaPlate } from '@segwise/core/schemas';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
 
-function registerRoutersVehiclesPlate(server: Server) {
+function registerRoutersServicesVehiclesPlate(server: Server) {
 	server.get(
 		'/:plate{^[A-Za-z]{3}[0-9][A-Za-z0-9][0-9]{2}$}',
 		zValidator(
@@ -33,4 +33,4 @@ function registerRoutersVehiclesPlate(server: Server) {
 	);
 }
 
-export { registerRoutersVehiclesPlate };
+export { registerRoutersServicesVehiclesPlate };

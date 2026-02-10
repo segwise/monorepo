@@ -2,7 +2,7 @@ import { fakerPT_BR as faker } from '@faker-js/faker';
 import { SchemaProducerSimple } from '@segwise/core/schemas';
 import type { Server } from '@/@types/server.d';
 
-function registerRoutersProducersListiningSimple(server: Server) {
+function registerRoutersServicesProducersListiningSimple(server: Server) {
 	server.get('/simple', async (ctx) => {
 		const data = Array(faker.number.int({ min: 5, max: 10 }))
 			.fill(null)
@@ -21,4 +21,4 @@ function registerRoutersProducersListiningSimple(server: Server) {
 	});
 }
 
-export { registerRoutersProducersListiningSimple };
+export { registerRoutersServicesProducersListiningSimple };

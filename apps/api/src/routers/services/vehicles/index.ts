@@ -1,13 +1,13 @@
 import type { Server } from '@/@types/server.d';
 
-import { registerRoutersVehiclesManufacturers } from '@/routers/services/vehicles/manufacturer';
-import { registerRoutersVehiclesPlate } from '@/routers/services/vehicles/plate';
+import { registerRoutersServicesVehiclesManufacturers } from '@/routers/services/vehicles/manufacturer';
+import { registerRoutersServicesVehiclesPlate } from '@/routers/services/vehicles/plate';
 
-function registerRoutersVehicles(server: Server) {
+function registerRoutersServicesVehicles(server: Server) {
 	const base = server.basePath('/vehicles');
 
-	registerRoutersVehiclesPlate(base);
-	registerRoutersVehiclesManufacturers(base);
+	registerRoutersServicesVehiclesPlate(base);
+	registerRoutersServicesVehiclesManufacturers(base);
 }
 
-export { registerRoutersVehicles };
+export { registerRoutersServicesVehicles };

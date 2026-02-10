@@ -1,7 +1,7 @@
 import type { Server } from '@/@types/server.d';
 import { auth } from '@/auth';
 
-function registerRoutersAuth(server: Server) {
+function registerRoutersServicesAuth(server: Server) {
 	server.on(
 		['POST', 'GET'],
 		'/auth/*',
@@ -9,4 +9,4 @@ function registerRoutersAuth(server: Server) {
 	);
 }
 
-export { registerRoutersAuth };
+export { registerRoutersServicesAuth };

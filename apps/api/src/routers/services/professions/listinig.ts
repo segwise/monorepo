@@ -3,7 +3,7 @@ import { capitalizeFirstLetters, sortArray } from '@segwise/core/utils';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
 
-function registerRoutersProfessionsListining(server: Server) {
+function registerRoutersServicesProfessionsListining(server: Server) {
 	server.get('/simple', async (ctx) => {
 		const response = await fetch(
 			'https://rnds-fhir.saude.gov.br/CodeSystem-BRCBO.json',
@@ -33,7 +33,7 @@ function registerRoutersProfessionsListining(server: Server) {
 		).concept
 			.map(({ code, display }) => ({
 				code,
-				name: capitalizeFirstLetters(display),
+				name: display,
 			}))
 			.map((value) =>
 				z
@@ -42,7 +42,11 @@ function registerRoutersProfessionsListining(server: Server) {
 						name: SchemaName,
 					})
 					.parse(value),
-			);
+			)
+			.map((response) => ({
+				...response,
+				name: capitalizeFirstLetters(response.name),
+			}));
 
 		const collator = new Intl.Collator('pt-BR', {
 			sensitivity: 'base',
@@ -58,4 +62,4 @@ function registerRoutersProfessionsListining(server: Server) {
 	});
 }
 
-export { registerRoutersProfessionsListining };
+export { registerRoutersServicesProfessionsListining };
