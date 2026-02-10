@@ -8,6 +8,8 @@ function translateGarage(garage: Garage) {
 			return 'Portão Automático';
 		case 'private':
 			return 'Garagem Privada';
+		case 'no_garage':
+			return 'Sem Garagem';
 		default:
 			return garage;
 	}

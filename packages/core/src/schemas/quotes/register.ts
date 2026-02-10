@@ -71,7 +71,7 @@ const SchemaQuoteRegister = z
 							residence: z.object(
 								{
 									type: SchemaResidence,
-									garage: SchemaGarage.nullish(),
+									garage: SchemaGarage,
 								},
 								'Residência inválido',
 							),
