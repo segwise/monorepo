@@ -1,5 +1,4 @@
 import type { Server } from '@/@types/server.d';
-
 import { registerRoutersServicesAuth } from '@/routers/services/auth';
 import { registerRoutersServicesProducers } from '@/routers/services/producers';
 import { registerRoutersServicesProfessions } from '@/routers/services/professions';

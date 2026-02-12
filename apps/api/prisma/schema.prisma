@@ -1,6 +1,11 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider               = "prisma-client"
+  output                 = "../generated/prisma"
+  runtime                = "bun"
+  importFileExtension    = "ts"
+  generatedFileExtension = "ts"
+  moduleFormat           = "esm"
+  previewFeatures        = ["relationJoins", "nativeDistinct", "fullTextSearchPostgres"]
 }
 
 datasource db {

@@ -31,7 +31,9 @@
 			"@/routers": ["routers"],
 			"@/auth": ["services/auth"],
 			"@/auth/*": ["services/auth/*"],
-			"@/generated/*": ["../generated/*"]
+			"@/generated/*": ["../generated/*"],
+			"@/db-adapters/*": ["libraries/database/adapters/*"],
+			"@/db-serializers/*": ["libraries/database/serializers/*"]
 		}
 	}
 }
