@@ -329,7 +329,7 @@ async function InsuredsPage() {
 													addSuffix: true,
 												})
 													.replace('em', '')
-													.trimStart()}
+													.trim()}
 											</span>
 										</TableCell>
 										<TableCell className='text-right w-20'>

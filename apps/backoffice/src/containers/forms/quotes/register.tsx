@@ -26,6 +26,7 @@ import { isDateString } from '@segwise/core/valids';
 import { differenceInYears, format, isDate, parse } from 'date-fns';
 import {
 	CarIcon,
+	ChevronLeftIcon,
 	ClipboardIcon,
 	SaveIcon,
 	Trash2Icon,
@@ -37,6 +38,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { ButtonBack } from '@/components/ui/button/back';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -77,9 +79,9 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { placeholder } from '@/config/placeholder';
 import { useProducers } from '@/libraries/hooks/producers/use-producers';
-import { useQuotesRegister } from '@/libraries/hooks/quotes/use-quote-register';
+import { useQuotesRegister } from '@/libraries/hooks/quotes/use-quotes-register';
 import { useProfessions } from '@/libraries/hooks/use-professions';
-import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicle-manufacturers';
+import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 
 function FormQuoteRegister() {
 	const { push } = useRouter();
@@ -113,6 +115,7 @@ function FormQuoteRegister() {
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaQuoteRegister),
 		defaultValues: {
+			producer: null,
 			status: 'waiting',
 			type: 'car',
 			requestAt: new Date(),
@@ -121,18 +124,13 @@ function FormQuoteRegister() {
 				name: '',
 				birth: '',
 				phone: '',
-				profession: null,
-				maritalStatus: undefined,
 			},
 			vehicle: {
-				plate: '',
+				plate: null,
 				model: '',
 				modelYear: '',
 				overnightPostalCode: '',
 				additional: {
-					residence: {},
-					work: undefined,
-					school: undefined,
 					armored: false,
 					gasKit: false,
 					theInsuredIsTheOwner: false,
@@ -154,7 +152,57 @@ function FormQuoteRegister() {
 			onSuccess(data) {
 				toast.success(data.message || 'Cadastrado com sucesso');
 
-				reset();
+				setTheInsuredPartyIsTheDriver(false);
+				// @ts-expect-error
+				reset({
+					producer: null,
+					renewal: null,
+					status: 'waiting',
+					type: 'car',
+					requestAt: new Date(),
+					insured: {
+						cpf: '',
+						name: '',
+						birth: '',
+						phone: '',
+						profession: null,
+						maritalStatus: null,
+					},
+					vehicle: {
+						plate: null,
+						model: '',
+						modelYear: '',
+						manufacturer: null,
+						overnightPostalCode: '',
+						usage: '',
+						exchange: '',
+						additional: {
+							residence: {
+								type: null,
+								garage: null,
+							},
+							work: null,
+							school: null,
+							armored: false,
+							gasKit: false,
+							theInsuredIsTheOwner: false,
+							funded: false,
+							driversUnder26: false,
+						},
+						chassi: null,
+					},
+					driver: {
+						cpf: '',
+						name: '',
+						birth: '',
+						phone: '',
+					},
+				});
+
+				setTimeout(() => {
+					clearErrors();
+				}, 100);
+
 				push('/quotes');
 			},
 			onError(error) {
@@ -165,30 +213,23 @@ function FormQuoteRegister() {
 
 	return (
 		<Fragment>
-			<Card className='overflow-hidden'>
-				<CardContent className='relative'>
+			<div className='flex flex-row items-center justify-between **:gap-x-2'>
+				<div />
+				<div className='flex flex-row items-center justify-end'>
 					<Controller
 						control={control}
 						name='producer'
 						render={({ field, fieldState }) => (
-							<Field
-								data-invalid={fieldState.invalid}
-								className='w-fit flex flex-row items-center justify-end gap-x-2 absolute -top-6 right-0'
-							>
-								<FieldLabel className='text-sm font-medium w-fit!'>
-									Produtor:
-								</FieldLabel>
+							<Field data-invalid={fieldState.invalid} orientation='horizontal'>
+								<FieldLabel>Produtor:</FieldLabel>
 								<Select
 									{...field}
-									value={!field.value ? '' : field.value}
+									value={!field.value ? '' : field.value || ''}
 									onValueChange={(value) =>
 										field.onChange(value === 'clear' ? null : value)
 									}
 								>
-									<SelectTrigger
-										aria-invalid={fieldState.invalid}
-										className='rounded-none rounded-bl-sm border-0 border-l border-b text-left'
-									>
+									<SelectTrigger aria-invalid={fieldState.invalid}>
 										<SelectValue placeholder='Nenhum produtor' />
 									</SelectTrigger>
 									<SelectContent align='end' side='bottom'>
@@ -205,10 +246,10 @@ function FormQuoteRegister() {
 														<AvatarFallback>{name.slice(0, 2)}</AvatarFallback>
 													</Avatar>
 													<div className='leading-none'>
-														<span className='text-xs/tight font-medium block'>
+														<span className='text-xs/tight font-medium block text-left'>
 															{capitalizeFirstLetters(name)}
 														</span>
-														<span className='text-xs/tight text-muted-foreground block'>
+														<span className='text-xs/tight text-muted-foreground block text-left'>
 															{maskPhone(contact.phone)}
 														</span>
 													</div>
@@ -234,6 +275,15 @@ function FormQuoteRegister() {
 							</Field>
 						)}
 					/>
+					<ButtonBack>
+						<Button>
+							<ChevronLeftIcon /> Voltar
+						</Button>
+					</ButtonBack>
+				</div>
+			</div>
+			<Card>
+				<CardContent>
 					<form id='form-quote-register' onSubmit={handleSubmit(onSubmit)}>
 						<FieldGroup>
 							<FieldGroup>
@@ -291,7 +341,7 @@ function FormQuoteRegister() {
 															? 'renewal'
 															: field.value === false
 																? 'no_renewal'
-																: undefined
+																: ''
 													}
 													onValueChange={(value) =>
 														field.onChange(value === 'renewal')
@@ -646,36 +696,24 @@ function FormQuoteRegister() {
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='insured-profession'>
-													Profissão:
-													<sup className='text-muted-foreground ml-2'>
-														( Opcional )
-													</sup>
+													Profissões:
 												</FieldLabel>
 												<Combobox
 													{...field}
-													items={professions}
-													itemToStringValue={(item) =>
-														// @ts-expect-error
-														item.name
-													}
-													itemToStringLabel={(item) =>
-														// @ts-expect-error
-														item.name
-													}
+													id='insured-profession'
+													value={field.value || null}
+													items={professions?.flatMap((e) => e.name)}
+													onValueChange={field.onChange}
 												>
 													<ComboboxInput placeholder='Selecionar' />
-													<ComboboxContent
-														align='end'
-														side='bottom'
-														alignOffset={-22}
-													>
+													<ComboboxContent>
 														<ComboboxEmpty>
 															Nenhum registro encontrado.
 														</ComboboxEmpty>
 														<ComboboxList>
-															{(item) => (
-																<ComboboxItem key={item.code} value={item}>
-																	{item.name}
+															{(item, key) => (
+																<ComboboxItem key={key.toString()} value={item}>
+																	{item}
 																</ComboboxItem>
 															)}
 														</ComboboxList>
@@ -736,37 +774,23 @@ function FormQuoteRegister() {
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='vehicle-manufacturer'>
 													Fabricante:
-													<sup className='text-muted-foreground ml-2'>
-														( Opcional )
-													</sup>
 												</FieldLabel>
 												<Combobox
 													{...field}
-													inputValue={field.value}
-													items={manufacturers}
-													itemToStringValue={(item) =>
-														// @ts-expect-error
-														item.name
-													}
-													itemToStringLabel={(item) =>
-														// @ts-expect-error
-														item.name
-													}
-													onInputValueChange={field.onChange}
+													id='vehicle-manufacturer'
+													value={field.value || null}
+													items={manufacturers?.flatMap((e) => e.name)}
+													onValueChange={field.onChange}
 												>
 													<ComboboxInput placeholder='Selecionar' />
-													<ComboboxContent
-														align='end'
-														side='bottom'
-														alignOffset={-22}
-													>
+													<ComboboxContent>
 														<ComboboxEmpty>
 															Nenhum registro encontrado.
 														</ComboboxEmpty>
 														<ComboboxList>
-															{(item) => (
-																<ComboboxItem key={item.code} value={item}>
-																	{item.name}
+															{(item, key) => (
+																<ComboboxItem key={key.toString()} value={item}>
+																	{item}
 																</ComboboxItem>
 															)}
 														</ComboboxList>
@@ -1382,7 +1406,7 @@ function FormQuoteRegister() {
 																: typeof field.value === 'object' &&
 																		isDate(field.value)
 																	? format(field.value, 'dd/MM/yyyy')
-																	: undefined
+																	: ''
 														}
 														onChange={({ target: { value } }) =>
 															field.onChange(

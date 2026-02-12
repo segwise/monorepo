@@ -1,6 +1,3 @@
-import { fakerPT_BR as faker } from '@faker-js/faker';
-import { capitalizeFirstLetters } from '@segwise/core/utils';
-import { formatDistanceToNow } from 'date-fns';
 import {
 	CarIcon,
 	FilterIcon,
@@ -9,7 +6,6 @@ import {
 	PlusIcon,
 	PrinterIcon,
 	SearchIcon,
-	Trash2Icon,
 	XCircleIcon,
 } from 'lucide-react';
 import type { Metadata } from 'next';
@@ -24,7 +20,6 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -49,39 +44,8 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '@/components/ui/table';
 import { CardHeaderHome } from '@/containers/cards/header-home';
-
-const data = Array.from({ length: 10 }).map(() => ({
-	id: faker.string.uuid(),
-	type: faker.helpers.arrayElement(['car']),
-	insured: {
-		image: faker.image.avatar(),
-		name: faker.person.fullName(),
-		phone: faker.phone.number({ style: 'human' }),
-	},
-	vehicle: {
-		manufacturer: `${faker.vehicle.manufacturer()}`,
-		model: `${faker.vehicle.model()}`,
-		plate: faker.vehicle.vrm(),
-	},
-	status: faker.helpers.arrayElement([
-		'waiting',
-		'quoting',
-		'quoted',
-		'sent',
-		'recused',
-		'confirmed',
-	]),
-	created_at: faker.date.recent().toISOString(),
-}));
+import { TableQuotesSimple } from '@/containers/tables/quotes/simple';
 
 export const metadata: Metadata = {
 	title: 'Cotações',
@@ -251,143 +215,7 @@ async function QuotesPage() {
 			<div className='space-y-3'>
 				<Card className='p-0 overflow-hidden'>
 					<CardContent className='p-0'>
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead className='text-left w-60'>Segurado</TableHead>
-									<TableHead className='text-left flex-1'>Dados</TableHead>
-									<TableHead className='text-center w-40'>Tipo</TableHead>
-									<TableHead className='text-center w-40'>Status</TableHead>
-									<TableHead className='text-center w-40'>
-										Solicitado Em
-									</TableHead>
-									<TableHead className='text-right w-20'>Ações</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{data.map(
-									({ id, type, insured, vehicle, status, created_at }) => (
-										<TableRow key={id}>
-											<TableCell className='text-left w-60'>
-												<div className='flex flex-row items-center justify-start gap-x-2'>
-													<Avatar className='size-8 border bg-background'>
-														<AvatarImage
-															src={insured.image}
-															width={52}
-															height={52}
-															alt='Image do usuário'
-															priority
-														/>
-														<AvatarFallback>
-															{insured.name.slice(0, 2).toUpperCase()}
-														</AvatarFallback>
-													</Avatar>
-													<div>
-														<span className='block text-sm font-medium truncate line-clamp-1'>
-															{capitalizeFirstLetters(insured.name)}
-														</span>
-														<span className='block text-xs text-muted-foreground font-normal leading-none'>
-															{insured.phone}
-														</span>
-													</div>
-												</div>
-											</TableCell>
-											<TableCell className='text-left flex-1'>
-												<div className='flex flex-row items-center justify-start gap-x-3'>
-													<Avatar className='size-8 rounded-none bg-background'>
-														<AvatarImage
-															src={`https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Fapiplacas.com.br%2Flogos%2FlogosMarcas%2F${vehicle.manufacturer.toLowerCase()}.png&w=64&q=100`}
-															width={52}
-															height={52}
-															alt='Marca do veículo'
-															priority
-														/>
-														<AvatarFallback>
-															{insured.name.slice(0, 2).toUpperCase()}
-														</AvatarFallback>
-													</Avatar>
-													<div>
-														<span className='block text-sm font-medium truncate line-clamp-1 capitalize'>
-															{vehicle.model}
-														</span>
-														<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
-															{vehicle.plate}
-														</span>
-													</div>
-												</div>
-											</TableCell>
-											<TableCell className='text-center w-40'>
-												<Badge className='dark:border-input'>
-													{type === 'car' && <CarIcon className='size-4' />}
-													{type === 'car' && 'Veicular'}
-												</Badge>
-											</TableCell>
-											<TableCell className='text-center w-40'>
-												<Badge
-													className='w-25 truncate line-clamp-1 mx-auto dark:border dark:border-input'
-													variant={
-														status === 'confirmed'
-															? 'success'
-															: status === 'recused'
-																? 'destructive'
-																: status === 'waiting'
-																	? 'warning'
-																	: status === 'sent'
-																		? 'active'
-																		: 'default'
-													}
-												>
-													{status === 'waiting' && 'Aguardando'}
-													{status === 'quoting' && 'Cotando'}
-													{status === 'quoted' && 'Cotado'}
-													{status === 'sent' && 'Enviado'}
-													{status === 'recused' && 'Recusado'}
-													{status === 'confirmed' && 'Aceito'}
-												</Badge>
-											</TableCell>
-											<TableCell className='text-center w-40'>
-												<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
-													{formatDistanceToNow(created_at)
-														.replace('cerca de', '')
-														.trimStart()}
-												</Badge>
-											</TableCell>
-											<TableCell className='text-right w-20'>
-												<DropdownMenu>
-													<DropdownMenuTrigger asChild>
-														<Button
-															variant='outline'
-															size='icon-sm'
-															className='dark:bg-foreground/5 dark:border-input'
-														>
-															<MoreHorizontalIcon />
-														</Button>
-													</DropdownMenuTrigger>
-													<DropdownMenuContent align='end'>
-														<DropdownMenuItem>
-															<HomeIcon /> Nome da ação
-														</DropdownMenuItem>
-														<DropdownMenuItem>
-															<HomeIcon /> Nome da ação
-														</DropdownMenuItem>
-														<DropdownMenuItem>
-															<HomeIcon /> Nome da ação
-														</DropdownMenuItem>
-														<DropdownMenuItem>
-															<HomeIcon /> Nome da ação
-														</DropdownMenuItem>
-														<DropdownMenuSeparator />
-														<DropdownMenuItem variant='destructive'>
-															<Trash2Icon /> Apagar
-														</DropdownMenuItem>
-													</DropdownMenuContent>
-												</DropdownMenu>
-											</TableCell>
-										</TableRow>
-									),
-								)}
-							</TableBody>
-						</Table>
+						<TableQuotesSimple />
 					</CardContent>
 				</Card>
 				<div className='flex flex-row items-center justify-between **:gap-x-2'>
