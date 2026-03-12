@@ -1,5 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
 import { Input, InputError } from '@/components/ui/input';
 import {
 	Select,
@@ -25,8 +32,9 @@ import {
 } from '@segwise/core/schemas';
 import { isDateString } from '@segwise/core/valids';
 import { startOfDay } from 'date-fns';
+import { useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
 	ScrollView,
@@ -36,6 +44,7 @@ import {
 	View,
 } from 'react-native';
 import CurrencyInput from 'react-native-currency-input';
+import Svg, { Path } from 'react-native-svg';
 import z from 'zod';
 
 interface LabelProps {
@@ -156,6 +165,10 @@ const Schema = z
 	});
 
 function RequestQuote() {
+	const [openDialog, setOpenDialog] = useState<boolean>(false);
+
+	const { back, replace: _replace } = useRouter();
+
 	const { width } = useWindowDimensions();
 
 	const {
@@ -494,6 +507,81 @@ function RequestQuote() {
 					</View>
 				</Button>
 			</View>
+			<Dialog open={openDialog} onOpenChange={setOpenDialog}>
+				<DialogContent showClose={false}>
+					<DialogHeader className='gap-1'>
+						<DialogTitle className='text-xl text-center font-bold leading-none'>
+							Cotação enviada com sucesso!
+						</DialogTitle>
+						<DialogDescription className='text-sm font-semibold text-center leading-none px-6 text-gray-500'>
+							O seguro que você enviou está vigente e foi adicionado ao
+							aplicativo.
+						</DialogDescription>
+						<View className=' items-center justify-center my-4'>
+							<Svg width={100} height={100} viewBox='0 0 76 76' fill='none'>
+								<Path
+									d='M69.6666 35.1046V38.018C69.6628 44.8466 67.4516 51.4912 63.3628 56.9603C59.2743 62.4298 53.5271 66.4309 46.9787 68.367C40.4301 70.3031 33.4314 70.0707 27.0258 67.7042C20.6203 65.3378 15.1514 60.964 11.4347 55.2355C7.71799 49.507 5.95264 42.7303 6.40196 35.9163C6.85125 29.1025 9.49114 22.6164 13.9279 17.4255C18.3646 12.2345 24.3605 8.61677 31.0212 7.11185C37.682 5.60692 44.6509 6.29545 50.8883 9.0747M69.6666 12.6666L38 44.3649L28.5 34.8649'
+									stroke='#00B10F'
+									strokeWidth={5}
+									strokeLinecap='round'
+									strokeLinejoin='round'
+								/>
+							</Svg>
+						</View>
+						<Text
+							allowFontScaling={false}
+							accessible={false}
+							className='text-sm font-semibold text-center leading-none px-6 text-gray-500'
+						>
+							Agora ele fica armazenado aqui para facilitar o seu acesso sempre
+							que precisar.
+						</Text>
+						<Text
+							allowFontScaling={false}
+							accessible={false}
+							className='text-sm font-semibold text-center leading-none px-6 text-gray-500 mt-4'
+						>
+							Você pode consultar todos os detalhes e informações importantes a
+							qualquer momento na página{' '}
+							<Text
+								allowFontScaling={false}
+								accessible={false}
+								className='font-extrabold text-primary'
+							>
+								Meus Seguros
+							</Text>
+							.
+						</Text>
+						<View className='mt-4 gap-y-2'>
+							<Button
+								variant='outline'
+								className='border-primary'
+								onPress={back}
+							>
+								<Text
+									allowFontScaling={false}
+									accessible={false}
+									className='text-sm leading-tight font-semibold text-primary'
+								>
+									FECHAR
+								</Text>
+							</Button>
+							<Button
+								className='border-primary'
+								// onPress={() => replace('/(stacks)/insurances')}
+							>
+								<Text
+									allowFontScaling={false}
+									accessible={false}
+									className='text-sm leading-tight font-semibold text-white'
+								>
+									VER MEUS SEGUROS
+								</Text>
+							</Button>
+						</View>
+					</DialogHeader>
+				</DialogContent>
+			</Dialog>
 		</ScrollView>
 	);
 }

@@ -60,6 +60,7 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 				backgroundColor: '#232323',
 			},
 		],
+		'expo-font',
 		'expo-image',
 	],
 	experiments: {

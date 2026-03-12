@@ -108,7 +108,7 @@ function SelectContent({
 			<FullWindowOverlay>
 				<SelectPrimitive.Overlay
 					style={Platform.select({ native: StyleSheet.absoluteFill })}
-					className='bg-primary/20'
+					className='bg-black/50'
 				>
 					<TextClassContext.Provider value='text-popover-foreground'>
 						<NativeOnlyAnimatedView
