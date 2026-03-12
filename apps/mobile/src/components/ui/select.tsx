@@ -35,9 +35,8 @@ function SelectValue({
 		<SelectPrimitive.Value
 			ref={ref}
 			className={cn(
-				'text-foreground line-clamp-1 flex flex-row items-center gap-2 text-xl leading-tight font-semibold px-1.5',
-				!value &&
-					'text-muted-foreground/40 text-xl leading-tight font-semibold',
+				'text-foreground line-clamp-1 flex flex-row items-center gap-2 text-base leading-tight font-semibold px-1.5',
+				!value && 'text-muted-foreground/40',
 				className,
 			)}
 			{...props}
@@ -58,6 +57,7 @@ function SelectTrigger({
 		size?: 'default' | 'sm';
 		label?: string;
 	}) {
+	const id = React.useId();
 	const { width } = useWindowDimensions();
 
 	return (
@@ -71,9 +71,10 @@ function SelectTrigger({
 				</Label>
 			)}
 			<SelectPrimitive.Trigger
+				id={id}
 				ref={ref}
 				className={cn(
-					'border-input dark:bg-input/30 dark:active:bg-input/50 bg-background flex h-[3.25rem] flex-row items-center justify-between gap-2 rounded-sm border px-3 py-2 shadow-sm shadow-black/5 sm:h-9',
+					'border-input dark:bg-input/30 dark:active:bg-input/50 bg-background flex h-12 flex-row items-center justify-between gap-2 rounded-sm border px-3 py-2 shadow-sm shadow-black/5 sm:h-9',
 					Platform.select({
 						web: 'focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:hover:bg-input/50 w-fit whitespace-nowrap text-sm outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0',
 					}),
@@ -328,7 +329,13 @@ function NativeSelectScrollView({
 	if (Platform.OS === 'web') {
 		return <>{props.children}</>;
 	}
-	return <ScrollView className={cn('max-h-52', className)} {...props} />;
+	return (
+		<ScrollView
+			className={cn('max-h-52', className)}
+			showsVerticalScrollIndicator={false}
+			{...props}
+		/>
+	);
 }
 
 export {

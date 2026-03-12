@@ -11,7 +11,7 @@ function Advertisement() {
 				paddingBottom: bottom,
 			}}
 		>
-			<View className='w-full h-20 bg-gray-300 items-center justify-center'>
+			<View className='w-full h-[4.5rem] bg-gray-300 items-center justify-center'>
 				<Text
 					allowFontScaling={false}
 					accessible={false}

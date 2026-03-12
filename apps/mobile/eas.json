@@ -22,8 +22,6 @@
 		}
 	},
 	"submit": {
-		"production": {
-			"bun": "1.3.10"
-		}
+		"production": {}
 	}
 }

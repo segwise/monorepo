@@ -3,6 +3,7 @@ import '@/styles/globals.css';
 import 'react-native-reanimated';
 
 import { Toasts } from '@/components/ui/toast';
+import { Providers } from '@/contexts/providers';
 import { NAV_THEME } from '@/libraries/theme';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
@@ -32,23 +33,25 @@ function RootLayout() {
 	return (
 		<KeyboardProvider>
 			<GestureHandlerRootView>
-				<ThemeProvider value={NAV_THEME.light}>
-					<StatusBar style='light' />
-					<Tabs
-						initialRouteName='index'
-						screenOptions={{
-							headerShown: false,
-							tabBarStyle: {
-								display: 'none',
-							},
-						}}
-					>
-						<Tabs.Screen name='index' />
-						<Tabs.Screen name='(stacks)' />
-					</Tabs>
-					<Toasts />
-					<PortalHost />
-				</ThemeProvider>
+				<Providers>
+					<ThemeProvider value={NAV_THEME.light}>
+						<StatusBar style='light' />
+						<Tabs
+							initialRouteName='index'
+							screenOptions={{
+								headerShown: false,
+								tabBarStyle: {
+									display: 'none',
+								},
+							}}
+						>
+							<Tabs.Screen name='index' />
+							<Tabs.Screen name='(stacks)' />
+						</Tabs>
+						<Toasts />
+						<PortalHost />
+					</ThemeProvider>
+				</Providers>
 			</GestureHandlerRootView>
 		</KeyboardProvider>
 	);

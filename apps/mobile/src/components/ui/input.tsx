@@ -28,7 +28,7 @@ function Input({
 			)}
 			<TextInput
 				className={cn(
-					'dark:bg-input/30 border-input bg-background text-foreground flex h-[3.25rem] w-full min-w-0 flex-row items-center rounded-sm border px-4 py-1 text-base leading-5 sm:h-9',
+					'dark:bg-input/30 border-input bg-background text-foreground flex h-12 w-full min-w-0 flex-row items-center rounded-sm border px-4 py-1 text-base leading-5 sm:h-9',
 					props.editable === false &&
 						cn(
 							'opacity-50',
@@ -43,7 +43,7 @@ function Input({
 							'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
 						),
 						native:
-							'placeholder:text-muted-foreground/40 placeholder:text-xl placeholder:leading-tight placeholder:font-semibold',
+							'placeholder:text-muted-foreground/40 placeholder:text-base placeholder:leading-tight placeholder:font-semibold',
 					}),
 					className,
 				)}

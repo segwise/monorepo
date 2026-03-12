@@ -30,14 +30,12 @@ function Header({
 
 	return (
 		<View>
+			<View className='bg-primary' style={{ height: top }} />
 			<View
 				className={cn(
-					'bg-primary flex flex-row items-center justify-center py-1 px-4',
+					'bg-primary flex-row items-center justify-center py-2 px-4',
 					showReturn && 'justify-between',
 				)}
-				style={{
-					paddingTop: top,
-				}}
 			>
 				{showReturn && (
 					<TouchableOpacity
@@ -76,7 +74,7 @@ function Header({
 			</View>
 			<View
 				className={cn(
-					'bg-primary py-3 border-t border-t-white px-4 flex flex-row items-center justify-between',
+					'bg-primary py-2 border-t border-t-white px-4 flex flex-row items-center justify-between',
 					showReturn && 'justify-center',
 				)}
 			>
