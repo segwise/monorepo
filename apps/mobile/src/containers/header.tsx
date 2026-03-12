@@ -5,7 +5,12 @@ import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { Text, TouchableOpacity, View } from 'react-native';
+import {
+	Text,
+	TouchableOpacity,
+	useWindowDimensions,
+	View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface HeaderProps extends NativeStackHeaderProps {
@@ -18,6 +23,7 @@ function Header({
 	showReturn = true,
 	options: { title },
 }: HeaderProps) {
+	const { width } = useWindowDimensions();
 	const { top } = useSafeAreaInsets();
 
 	const { back } = useRouter();
@@ -34,8 +40,19 @@ function Header({
 				}}
 			>
 				{showReturn && (
-					<TouchableOpacity onPress={back} hitSlop={14}>
-						<SymbolView name='chevron.left' size={24} tintColor='#FFFFFF' />
+					<TouchableOpacity
+						onPress={back}
+						hitSlop={14}
+						className={cn('size-6', width <= 400 && 'size-8')}
+					>
+						<SymbolView
+							name={{
+								ios: 'chevron.left',
+								android: 'chevron_left',
+							}}
+							size={width <= 400 ? 32 : 24}
+							tintColor='#FFFFFF'
+						/>
 					</TouchableOpacity>
 				)}
 				<Image
@@ -53,7 +70,9 @@ function Header({
 					allowDownscaling={false}
 					accessible={false}
 				/>
-				{showReturn && <View className='size-6' />}
+				{showReturn && (
+					<View className={cn('size-6', width <= 400 && 'size-8')} />
+				)}
 			</View>
 			<View
 				className={cn(
@@ -76,7 +95,7 @@ function Header({
 					<View className='flex flex-row items-center justify-end gap-x-2'>
 						<Text
 							allowFontScaling={false}
-							className='text-white font-medium text-sm'
+							className='text-white font-medium text-xs'
 						>
 							Operado por:
 						</Text>

@@ -11,6 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,25 +30,27 @@ function RootLayout() {
 	}, []);
 
 	return (
-		<GestureHandlerRootView>
-			<ThemeProvider value={NAV_THEME.light}>
-				<StatusBar style='light' />
-				<Tabs
-					initialRouteName='index'
-					screenOptions={{
-						headerShown: false,
-						tabBarStyle: {
-							display: 'none',
-						},
-					}}
-				>
-					<Tabs.Screen name='index' />
-					<Tabs.Screen name='(stacks)' />
-				</Tabs>
-				<Toasts />
-				<PortalHost />
-			</ThemeProvider>
-		</GestureHandlerRootView>
+		<KeyboardProvider>
+			<GestureHandlerRootView>
+				<ThemeProvider value={NAV_THEME.light}>
+					<StatusBar style='light' />
+					<Tabs
+						initialRouteName='index'
+						screenOptions={{
+							headerShown: false,
+							tabBarStyle: {
+								display: 'none',
+							},
+						}}
+					>
+						<Tabs.Screen name='index' />
+						<Tabs.Screen name='(stacks)' />
+					</Tabs>
+					<Toasts />
+					<PortalHost />
+				</ThemeProvider>
+			</GestureHandlerRootView>
+		</KeyboardProvider>
 	);
 }
 

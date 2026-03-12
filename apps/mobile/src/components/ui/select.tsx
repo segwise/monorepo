@@ -5,7 +5,13 @@ import * as SelectPrimitive from '@rn-primitives/select';
 import { Image } from 'expo-image';
 import { SymbolView } from 'expo-symbols';
 import * as React from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import {
+	Platform,
+	ScrollView,
+	StyleSheet,
+	useWindowDimensions,
+	View,
+} from 'react-native';
 import { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 import { Label } from './label';
@@ -52,6 +58,8 @@ function SelectTrigger({
 		size?: 'default' | 'sm';
 		label?: string;
 	}) {
+	const { width } = useWindowDimensions();
+
 	return (
 		<View className='relative'>
 			{label && (
@@ -79,10 +87,10 @@ function SelectTrigger({
 				<SymbolView
 					name={{
 						ios: 'chevron.down',
-						android: 'chevron_backward',
+						android: 'arrow_drop_down',
 					}}
 					tintColor='#000000'
-					size={16}
+					size={width <= 400 ? 24 : 16}
 				/>
 			</SelectPrimitive.Trigger>
 		</View>
