@@ -2,6 +2,7 @@ import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-vie
 import { TextClassContext } from '@/components/ui/text';
 import { cn } from '@/libraries/classname';
 import * as SelectPrimitive from '@rn-primitives/select';
+import { Image } from 'expo-image';
 import { SymbolView } from 'expo-symbols';
 import * as React from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
@@ -117,7 +118,7 @@ function SelectContent({
 						>
 							<SelectPrimitive.Content
 								className={cn(
-									'bg-popover border border-border relative z-50 min-w-[8rem] rounded-md',
+									'bg-popover border border-border relative z-50 min-w-[8rem] rounded-sm',
 									Platform.select({
 										web: cn(
 											'animate-in fade-in-0 zoom-in-95 origin-(--radix-select-content-transform-origin) max-h-52 overflow-y-auto overflow-x-hidden',
@@ -181,11 +182,13 @@ function SelectLabel({
 function SelectItem({
 	className,
 	classNameText,
+	image,
 	children,
 	...props
 }: SelectPrimitive.ItemProps &
 	React.RefAttributes<SelectPrimitive.ItemRef> & {
 		classNameText?: string;
+		image?: string;
 	}) {
 	return (
 		<SelectPrimitive.Item
@@ -199,6 +202,20 @@ function SelectItem({
 			)}
 			{...props}
 		>
+			{!!image && (
+				<Image
+					source={image}
+					contentFit='cover'
+					contentPosition='center'
+					allowDownscaling={false}
+					accessible={false}
+					style={{
+						width: 24,
+						height: 24,
+						borderRadius: 3,
+					}}
+				/>
+			)}
 			<SelectPrimitive.ItemText
 				className={cn(
 					'text-foreground group-active:text-accent-foreground select-none text-base font-semibold',
