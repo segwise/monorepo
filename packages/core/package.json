@@ -1,71 +1,71 @@
 {
-  "name": "@segwise/core",
-  "version": "1.1.2",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "module": "./dist/index.js",
-  "type": "module",
-  "peerDependencies": {
-    "zod": "^4.3.6",
-    "date-fns": "^4.1.0",
-    "typescript": "^5.9.3"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.3.14",
-    "@types/bun": "latest",
-    "tsc-alias": "^1.8.16"
-  },
-  "scripts": {
-    "build": "tsc && tsc-alias",
-    "update-external": "(cd .. && cd backend && bun update @segwise/core) && (cd .. && cd  backoffice && bun update @segwise/core) && (cd .. && cd  application && bun update @segwise/core)",
-    "bump:patch": "bun src/scripts/bump-version.ts patch",
-    "bump:minor": "bun src/scripts/bump-version.ts minor",
-    "bump:major": "bun src/scripts/bump-version.ts major",
-    "deploy:patch": "bun run build && bun run bump:patch && git add package.json && git commit -m \"chore: release v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\")\" && git tag v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\") && git push && git push && bun publish && bun run update-external && clear",
-    "deploy:minor": "bun run build && bun run bump:minor && git add package.json && git commit -m \"chore: release v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\")\" && git tag v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\") && git push && git push && bun publish && bun run update-external && clear",
-    "deploy:major": "bun run build && bun run bump:major && git add package.json && git commit -m \"chore: release v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\")\" && git tag v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\") && git push && git push && bun publish && bun run update-external && clear"
-  },
-  "files": [
-    "dist"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./schemas": {
-      "types": "./dist/schemas/index.d.ts",
-      "import": "./dist/schemas/index.js",
-      "default": "./dist/schemas/index.js"
-    },
-    "./types": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/types/index.js",
-      "default": "./dist/types/index.js"
-    },
-    "./masks": {
-      "types": "./dist/masks/index.d.ts",
-      "import": "./dist/masks/index.js",
-      "default": "./dist/masks/index.js"
-    },
-    "./valids": {
-      "types": "./dist/valids/index.d.ts",
-      "import": "./dist/valids/index.js",
-      "default": "./dist/valids/index.js"
-    },
-    "./translate": {
-      "types": "./dist/translate/index.d.ts",
-      "import": "./dist/translate/index.js",
-      "default": "./dist/translate/index.js"
-    },
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "import": "./dist/utils/index.js",
-      "default": "./dist/utils/index.js"
-    }
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  }
+	"name": "@segwise/core",
+	"version": "1.1.1",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"module": "./dist/index.js",
+	"type": "module",
+	"peerDependencies": {
+		"zod": "^4.3.6",
+		"date-fns": "^4.1.0",
+		"typescript": "^5.9.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.14",
+		"@types/bun": "latest",
+		"tsc-alias": "^1.8.16"
+	},
+	"scripts": {
+		"build": "tsc && tsc-alias",
+		"update-external": "(cd .. && cd backend && bun update @segwise/core) && (cd .. && cd  backoffice && bun update @segwise/core) && (cd .. && cd  application && bun update @segwise/core)",
+		"bump:patch": "bun src/scripts/bump-version.ts patch",
+		"bump:minor": "bun src/scripts/bump-version.ts minor",
+		"bump:major": "bun src/scripts/bump-version.ts major",
+		"deploy:patch": "bun run build && bun run bump:patch && git add package.json && git commit -m \"chore: release v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\")\" && git tag v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\") && git push && git push --tags && bun publish && bun run update-external && clear",
+		"deploy:minor": "bun run build && bun run bump:minor && git add package.json && git commit -m \"chore: release v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\")\" && git tag v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\") && git push && git push --tags && bun publish && bun run update-external && clear",
+		"deploy:major": "bun run build && bun run bump:major && git add package.json && git commit -m \"chore: release v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\")\" && git tag v$(bun -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('package.json','utf-8')).version)\") && git push && git push --tags && bun publish && bun run update-external && clear"
+	},
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./schemas": {
+			"types": "./dist/schemas/index.d.ts",
+			"import": "./dist/schemas/index.js",
+			"default": "./dist/schemas/index.js"
+		},
+		"./types": {
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/types/index.js",
+			"default": "./dist/types/index.js"
+		},
+		"./masks": {
+			"types": "./dist/masks/index.d.ts",
+			"import": "./dist/masks/index.js",
+			"default": "./dist/masks/index.js"
+		},
+		"./valids": {
+			"types": "./dist/valids/index.d.ts",
+			"import": "./dist/valids/index.js",
+			"default": "./dist/valids/index.js"
+		},
+		"./translate": {
+			"types": "./dist/translate/index.d.ts",
+			"import": "./dist/translate/index.js",
+			"default": "./dist/translate/index.js"
+		},
+		"./utils": {
+			"types": "./dist/utils/index.d.ts",
+			"import": "./dist/utils/index.js",
+			"default": "./dist/utils/index.js"
+		}
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	}
 }
