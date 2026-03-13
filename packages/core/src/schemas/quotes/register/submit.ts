@@ -3,7 +3,11 @@ import { SchemaQuoteStatus } from '@/schemas/quotes/status';
 import { SchemaQuoteType } from '@/schemas/quotes/type';
 import { SchemaBirth } from '@/schemas/utils/birth';
 import { SchemaCPF } from '@/schemas/utils/cpf';
-import { SchemaGarage } from '@/schemas/utils/garage';
+import {
+	SchemaGarage,
+	SchemaGarageSchool,
+	SchemaGarageWork,
+} from '@/schemas/utils/garage';
 import { SchemaMaritalStatus } from '@/schemas/utils/marital-status';
 import { SchemaName } from '@/schemas/utils/name';
 import { SchemaPhone } from '@/schemas/utils/phone';
@@ -20,13 +24,7 @@ const SchemaQuoteRegister = z
 		type: SchemaQuoteType,
 		renewal: z.boolean('Marcador de renovação inválido'),
 		status: SchemaQuoteStatus,
-		statusAt: z.coerce.date('Data de alteração de status inválida'),
-		statusMessage: z
-			.string('Mensagem de status inválido')
-			.trim()
-			.toLowerCase()
-			.nullish(),
-		requestAt: z.coerce.date('Data de solicitação inválida'),
+		requestAt: z.coerce.date('Data da solicitação inválida'),
 		insured: z.object(
 			{
 				name: SchemaName,
@@ -41,7 +39,6 @@ const SchemaQuoteRegister = z
 					.trim()
 					.toLowerCase()
 					.nullish(),
-				// profession: z.uuidv7('Profissão inválida').nullish(),
 			},
 			'Segurado inválido',
 		),
@@ -63,7 +60,7 @@ const SchemaQuoteRegister = z
 						.number('Ano do modelo inválido')
 						.positive('Ano do modelo inválido'),
 					chassi: z.string('Chassi inválido').nullish(),
-					use: SchemaVehicleUsage,
+					usage: SchemaVehicleUsage,
 					exchange: SchemaVehicleExchange,
 					overnightPostalCode: SchemaPostalCode,
 					additional: z.object(
@@ -75,20 +72,8 @@ const SchemaQuoteRegister = z
 								},
 								'Residência inválido',
 							),
-							work: z.object(
-								{
-									active: z.coerce.boolean('Marcador de trabalhador inválido'),
-									garage: SchemaGarage.nullish(),
-								},
-								'Trabalho inválido',
-							),
-							school: z.object(
-								{
-									active: z.coerce.boolean('Marcador de estudante inválido'),
-									garage: SchemaGarage.nullish(),
-								},
-								'Escola inválida',
-							),
+							work: SchemaGarageWork,
+							school: SchemaGarageSchool,
 							armored: z.coerce.boolean('Marcado de blindado inválido'),
 							gasKit: z.coerce.boolean('Marcado de kit gás inválido'),
 							theInsuredIsTheOwner: z.coerce.boolean(
@@ -105,16 +90,14 @@ const SchemaQuoteRegister = z
 				'Veículo inválido',
 			)
 			.nullish(),
-		driver: z.literal(true, 'Condutor inválido').or(
-			z.object(
-				{
-					name: SchemaName,
-					cpf: SchemaCPF,
-					birth: SchemaBirth,
-					phone: SchemaPhone,
-				},
-				'Condutor inválido',
-			),
+		driver: z.object(
+			{
+				name: SchemaName,
+				cpf: SchemaCPF,
+				birth: SchemaBirth,
+				phone: SchemaPhone,
+			},
+			'Condutor inválido',
 		),
 	})
 	.refine(({ type, vehicle }) => (type === 'car' ? !!vehicle : true));

@@ -1,5 +1,7 @@
 import z from 'zod';
 
+export * from './referral';
+
 import { SchemaEmail } from '@/schemas/utils/email';
 import { SchemaName } from '@/schemas/utils/name';
 import { SchemaPhone } from '@/schemas/utils/phone';

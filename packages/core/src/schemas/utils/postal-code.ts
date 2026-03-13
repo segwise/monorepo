@@ -1,10 +1,10 @@
 import z from 'zod';
 import { maskNumber } from '@/masks/number';
-import { validPostalCode } from '@/valids/postal-code';
+import { isPostalCode } from '@/valids/postal-code';
 
 const SchemaPostalCode = z
 	.string('CEP inválido')
-	.refine(validPostalCode, 'CEP inválido')
+	.refine(isPostalCode, 'CEP inválido')
 	.transform(maskNumber);
 
 export { SchemaPostalCode };

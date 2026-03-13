@@ -1,6 +1,6 @@
 import { maskNumber } from '@/masks/number';
 
-function validPostalCode(postalCode: string) {
+function isPostalCode(postalCode: string) {
 	const cleaned = maskNumber(postalCode);
 
 	if (cleaned.length !== 8) {
@@ -23,4 +23,4 @@ function validPostalCode(postalCode: string) {
 	return !invalidPatterns.some((pattern) => pattern.test(cleaned));
 }
 
-export { validPostalCode };
+export { isPostalCode };

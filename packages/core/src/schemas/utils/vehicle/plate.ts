@@ -5,6 +5,7 @@ const SchemaPlate = z
 	.string('Placa inválida')
 	.refine(isPlate, 'Placa inválida')
 	.trim()
-	.toLowerCase();
+	.toLowerCase()
+	.transform((value) => value.replace('-', ''));
 
 export { SchemaPlate };
