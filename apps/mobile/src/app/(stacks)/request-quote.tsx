@@ -21,6 +21,7 @@ import { toast } from '@/components/ui/toast';
 import { cn } from '@/libraries/classname';
 import { useSubmitQuoteSimple } from '@/libraries/hooks/api/quotes/submit/simple';
 import { SchemaQuoteSimpleSubmit } from '@/libraries/schemas/quotes/submit-simple';
+import { store } from '@/libraries/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { TriggerRef } from '@rn-primitives/select';
 import {
@@ -29,7 +30,7 @@ import {
 	maskPlate,
 	maskPostalCode,
 } from '@segwise/core/masks';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Fragment, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -69,12 +70,17 @@ function RequestQuote() {
 	const selectTriggerRefType = useRef<TriggerRef>(null);
 	const selectTriggerRefInsuranceCompany = useRef<TriggerRef>(null);
 
-	const { back, replace } = useRouter();
+	const { push, back, replace } = useRouter();
 
 	const { width } = useWindowDimensions();
 	const { bottom } = useSafeAreaInsets();
 
 	const { mutate, isPending } = useSubmitQuoteSimple();
+
+	const searchParams = useLocalSearchParams();
+
+	const firstInit = !!searchParams['first-init'];
+	const storeFirstQuote = store.getBoolean('first-quote');
 
 	const {
 		control,
@@ -101,11 +107,10 @@ function RequestQuote() {
 		mutate(props, {
 			onSuccess() {
 				setOpenDialog(true);
+				store.set('first-quote', true);
 			},
 			onError(error) {
-				toast.error(error.message, {
-					id: 'submit-quote-simple',
-				});
+				toast.error(error.message);
 			},
 		});
 	}
@@ -591,7 +596,7 @@ function RequestQuote() {
 					disabled={isPending || !isDirty || !isValid}
 				>
 					<Text className='text-base text-white font-semibold'>
-						ENVIAR SOLICITAÇÃO
+						{!storeFirstQuote ? 'INCLUIR DADOS' : 'ENVIAR SOLICITAÇÃO'}
 					</Text>
 					<View className={cn('absolute right-10', width <= 400 && 'right-6')}>
 						<SymbolView
@@ -659,7 +664,15 @@ function RequestQuote() {
 							<Button
 								variant='outline'
 								className='border-primary'
-								onPress={back}
+								onPress={() => {
+									if (firstInit) {
+										replace('/(stacks)/home');
+
+										return;
+									}
+
+									back();
+								}}
 							>
 								<Text
 									allowFontScaling={false}
@@ -671,7 +684,17 @@ function RequestQuote() {
 							</Button>
 							<Button
 								className='border-primary'
-								onPress={() => replace('/(stacks)/insurances')}
+								onPress={() => {
+									if (firstInit) {
+										replace('/(stacks)/home');
+
+										push('/(stacks)/insurances');
+
+										return;
+									}
+
+									replace('/(stacks)/insurances');
+								}}
 							>
 								<Text
 									allowFontScaling={false}

@@ -1,6 +1,7 @@
 import LOGO from '@/assets/images/logo/segwise.png';
 import BACKGROUND_MAP from '@/assets/images/splash-screen/background-map.png';
 import { cn } from '@/libraries/classname';
+import { store } from '@/libraries/store';
 import { Image, ImageBackground } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
@@ -13,7 +14,16 @@ function IndexScreen() {
 	const { replace } = useRouter();
 
 	const navigation = useCallback(() => {
-		replace('/(stacks)/home');
+		const storeReferral = store.getString('referral');
+		const storeFirstQuote = store.getBoolean('first-quote');
+
+		replace(
+			!storeReferral
+				? '/(stacks)/request-referral'
+				: !storeFirstQuote
+					? '/(stacks)/request-quote?first-init=true'
+					: '/(stacks)/home',
+		);
 	}, [replace]);
 
 	useEffect(() => {

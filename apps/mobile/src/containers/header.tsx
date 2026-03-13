@@ -22,9 +22,13 @@ function Header({
 	titlePosition = 'center',
 	showReturn = true,
 	options: { title },
+	...props
 }: HeaderProps) {
 	const { width } = useWindowDimensions();
 	const { top } = useSafeAreaInsets();
+
+	// @ts-expect-error
+	const firstInit = props.route.params?.['first-init'];
 
 	const { back } = useRouter();
 
@@ -37,7 +41,9 @@ function Header({
 					showReturn && 'justify-between',
 				)}
 			>
-				{showReturn && (
+				{props.route.name === 'request-referral' ? (
+					<View className={cn('size-6', width <= 400 && 'size-8')} />
+				) : !firstInit && showReturn ? (
 					<TouchableOpacity
 						onPress={back}
 						hitSlop={14}
@@ -52,6 +58,8 @@ function Header({
 							tintColor='#FFFFFF'
 						/>
 					</TouchableOpacity>
+				) : (
+					<View className={cn('size-6', width <= 400 && 'size-8')} />
 				)}
 				<Image
 					source={LOGO}
