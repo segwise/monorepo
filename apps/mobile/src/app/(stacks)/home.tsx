@@ -1,4 +1,3 @@
-import { Advertisement } from '@/containers/advertisement';
 import { ButtonGrid } from '@/containers/home/button-grid';
 import { ButtonLink } from '@/containers/home/button-link';
 import { ShareApp } from '@/functions/share-app';
@@ -10,7 +9,7 @@ function HomeScreen() {
 		<View className='flex-1'>
 			<View className='py-4 gap-y-3'>
 				<View className='px-4 gap-y-2'>
-					<ButtonLink title='MEUS SEGUROS' href='/home' />
+					<ButtonLink title='MEUS SEGUROS' href='/insurances' />
 					<ButtonLink title='FAÇA SUA COTAÇÃO' href='/request-quote' />
 					<ButtonLink
 						title='QUAIS SEGUROS TENHO?'
@@ -51,7 +50,7 @@ function HomeScreen() {
 									/>
 								</Svg>
 							)}
-							href='/home'
+							href='/(stacks)/(required-reading)'
 						/>
 					</View>
 					<View className='flex-1 min-w-[28%]'>
@@ -93,11 +92,12 @@ function HomeScreen() {
 									/>
 								</Svg>
 							)}
-							href='/home'
+							href='/(stacks)/(what-to-do)'
 						/>
 					</View>
 					<View className='flex-1 min-w-[28%]'>
 						<ButtonGrid
+							disabled
 							title='Financiar Veículo'
 							icon={({ width, height, className, style }) => (
 								<Svg
@@ -129,7 +129,7 @@ function HomeScreen() {
 									</Defs>
 								</Svg>
 							)}
-							href='/home'
+							href='/#'
 						/>
 					</View>
 					<View className='flex-1 min-w-[28%]'>
@@ -152,11 +152,12 @@ function HomeScreen() {
 									/>
 								</Svg>
 							)}
-							href='/home'
+							href='https://www.usezapay.com.br'
 						/>
 					</View>
 					<View className='flex-1 min-w-[28%]'>
 						<ButtonGrid
+							disabled
 							title='Compra & Vendas'
 							icon={({ width, height, className, style }) => (
 								<Svg
@@ -175,7 +176,7 @@ function HomeScreen() {
 									/>
 								</Svg>
 							)}
-							href='/home'
+							href='/#'
 						/>
 					</View>
 					<View className='flex-1 min-w-[28%]'>
@@ -199,12 +200,12 @@ function HomeScreen() {
 									/>
 								</Svg>
 							)}
-							href='/home'
+							href='/(useful-contacts)'
 						/>
 					</View>
 				</View>
 			</View>
-			<Advertisement />
+			{/* <Advertisement /> */}
 		</View>
 	);
 }

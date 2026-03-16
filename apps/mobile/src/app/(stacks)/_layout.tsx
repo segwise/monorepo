@@ -39,6 +39,24 @@ function StackLayout() {
 					title: !storeFirstQuote ? 'Inclua seus Dados' : 'Faça sua Cotação',
 				}}
 			/>
+			<Stack.Screen
+				name='(required-reading)'
+				options={{
+					headerShown: false,
+				}}
+			/>
+			<Stack.Screen
+				name='(what-to-do)'
+				options={{
+					headerShown: false,
+				}}
+			/>
+			<Stack.Screen
+				name='(useful-contacts)'
+				options={{
+					headerShown: false,
+				}}
+			/>
 		</Stack>
 	);
 }

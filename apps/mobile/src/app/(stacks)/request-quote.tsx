@@ -1,4 +1,3 @@
-import type { QuoteSimpleSubmit } from '@/@types/quote/simple';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -19,8 +18,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/libraries/classname';
-import { useSubmitQuoteSimple } from '@/libraries/hooks/api/quotes/submit/simple';
-import { SchemaQuoteSimpleSubmit } from '@/libraries/schemas/quotes/submit-simple';
+import { useQuoteSimpleRegister } from '@/libraries/hooks/api/quotes/register/simple';
 import { store } from '@/libraries/store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { TriggerRef } from '@rn-primitives/select';
@@ -30,11 +28,14 @@ import {
 	maskPlate,
 	maskPostalCode,
 } from '@segwise/core/masks';
+import { SchemaQuoteSimpleRegister } from '@segwise/core/schemas';
+import type { QuoteSimpleRegister } from '@segwise/core/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Fragment, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
+	ActivityIndicator,
 	Text,
 	TouchableOpacity,
 	useWindowDimensions,
@@ -75,7 +76,7 @@ function RequestQuote() {
 	const { width } = useWindowDimensions();
 	const { bottom } = useSafeAreaInsets();
 
-	const { mutate, isPending } = useSubmitQuoteSimple();
+	const { mutate, isPending } = useQuoteSimpleRegister();
 
 	const searchParams = useLocalSearchParams();
 
@@ -93,8 +94,9 @@ function RequestQuote() {
 		mode: 'all',
 		criteriaMode: 'all',
 		reValidateMode: 'onChange',
-		resolver: zodResolver(SchemaQuoteSimpleSubmit),
+		resolver: zodResolver(SchemaQuoteSimpleRegister),
 		defaultValues: {
+			type: 'car',
 			vehicleWithLicensePlate: true,
 		},
 	});
@@ -103,14 +105,17 @@ function RequestQuote() {
 
 	const isRenewal = watch('renewal');
 
-	function onSubmit(props: QuoteSimpleSubmit) {
+	function onSubmit(props: QuoteSimpleRegister) {
 		mutate(props, {
 			onSuccess() {
-				setOpenDialog(true);
 				store.set('first-quote', true);
+
+				setOpenDialog(true);
 			},
 			onError(error) {
-				toast.error(error.message);
+				toast.error(error.message, {
+					id: 'request-quote',
+				});
 			},
 		});
 	}
@@ -219,7 +224,7 @@ function RequestQuote() {
 												return;
 											}
 
-											const { invalid, isDirty } = getFieldState('use');
+											const { invalid, isDirty } = getFieldState('usage');
 
 											if (!isDirty || invalid) {
 												selectTriggerRefUse.current?.open();
@@ -235,9 +240,10 @@ function RequestQuote() {
 					)}
 					<Controller
 						control={control}
-						name='use'
+						name='usage'
 						render={({ field, fieldState }) => (
 							<View>
+								{/* @ts-ignore */}
 								<Select
 									{...field}
 									onValueChange={(value) => {
@@ -427,6 +433,7 @@ function RequestQuote() {
 						control={control}
 						name='renewal'
 						render={({ field }) => (
+							// @ts-expect-error
 							<Select
 								{...field}
 								onValueChange={(value) => {
@@ -457,6 +464,7 @@ function RequestQuote() {
 							</Select>
 						)}
 					/>
+					{/* @ts-expect-error */}
 					{isRenewal?.value === 'renewal' && (
 						<Fragment>
 							<Controller
@@ -466,6 +474,7 @@ function RequestQuote() {
 									<View>
 										<Select
 											{...field}
+											// @ts-expect-error
 											value={field.value || undefined}
 											onValueChange={(value) => {
 												field.onChange(value);
@@ -548,7 +557,7 @@ function RequestQuote() {
 								name='franchise'
 								render={({ field, fieldState }) => (
 									<View>
-										{/* @ts-ignore */}
+										{/* @ts-expect-error */}
 										<CurrencyInput
 											{...field}
 											prefix='R$ '
@@ -596,17 +605,26 @@ function RequestQuote() {
 					disabled={isPending || !isDirty || !isValid}
 				>
 					<Text className='text-base text-white font-semibold'>
-						{!storeFirstQuote ? 'INCLUIR DADOS' : 'ENVIAR SOLICITAÇÃO'}
+						{isPending
+							? !storeFirstQuote
+								? 'INCLUINDO DADOS'
+								: 'ENVIANDO SOLICITAÇÃO'
+							: !storeFirstQuote
+								? 'INCLUIR DADOS'
+								: 'ENVIAR SOLICITAÇÃO'}
 					</Text>
 					<View className={cn('absolute right-10', width <= 400 && 'right-6')}>
-						<SymbolView
-							name={{
-								ios: 'paperplane',
-								android: 'send',
-							}}
-							size={24}
-							tintColor='#FFFFFF'
-						/>
+						{isPending && <ActivityIndicator />}
+						{!isPending && (
+							<SymbolView
+								name={{
+									ios: 'paperplane',
+									android: 'send',
+								}}
+								size={24}
+								tintColor='#FFFFFF'
+							/>
+						)}
 					</View>
 				</Button>
 			</View>

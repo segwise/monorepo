@@ -16,6 +16,7 @@ type ButtonGridVariant =
 	| { href?: never; onPress: () => void };
 
 type ButtonGridProps = {
+	disabled?: boolean;
 	title: string;
 	invert?: boolean;
 	icon: (props: {
@@ -27,6 +28,7 @@ type ButtonGridProps = {
 } & ButtonGridVariant;
 
 function ButtonGrid({
+	disabled,
 	title,
 	invert = false,
 	icon: Icon,
@@ -55,11 +57,13 @@ function ButtonGrid({
 
 	return (
 		<TouchableOpacity
+			disabled={disabled}
 			onPress={navigation}
 			className={cn(
 				'w-full h-40 rounded-md border flex flex-col items-center justify-between p-3',
 				invert && 'border-0 bg-primary',
 				width <= 400 && 'h-32',
+				disabled && 'opacity-40',
 			)}
 		>
 			<View />

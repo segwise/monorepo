@@ -1,7 +1,7 @@
-import { submitQuoteSimple } from './submit/simple';
+import { submitQuoteSimple } from './register/simple';
 
 const quotes = {
-	submit: {
+	register: {
 		simple: submitQuoteSimple,
 	},
 };

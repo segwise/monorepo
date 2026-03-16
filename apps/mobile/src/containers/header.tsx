@@ -89,7 +89,7 @@ function Header({
 				<Text
 					allowFontScaling={false}
 					className={cn(
-						'text-lg font-semibold text-white uppercase',
+						'text-lg font-semibold text-white uppercase line-clamp-1',
 						titlePosition === 'left' && 'text-left',
 						titlePosition === 'center' && 'text-center',
 						titlePosition === 'right' && 'text-right',

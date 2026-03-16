@@ -14,7 +14,7 @@ function Toasts(props: React.ComponentProps<typeof Toast>) {
 			defaultStyle={{
 				view: {
 					backgroundColor: colors.primary,
-					borderRadius: 12,
+					borderRadius: 4,
 					paddingHorizontal: 16,
 					paddingVertical: 12,
 				},
@@ -22,6 +22,7 @@ function Toasts(props: React.ComponentProps<typeof Toast>) {
 					color: '#fff',
 					fontSize: 14,
 					fontWeight: '600',
+					textAlign: 'center',
 				},
 				indicator: {
 					backgroundColor: colors.notification,
