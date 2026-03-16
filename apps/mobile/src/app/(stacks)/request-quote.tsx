@@ -84,7 +84,7 @@ function RequestQuote() {
 
 	const { mutate, isPending } = useQuoteSimpleRegister();
 
-	const { data } = useInsuranceCompaniesSimple();
+	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
 
 	const searchParams = useLocalSearchParams();
 
@@ -509,7 +509,7 @@ function RequestQuote() {
 												<SelectValue placeholder='Selecionar' />
 											</SelectTrigger>
 											<SelectContent style={{ width: width - 32 }}>
-												{data?.map(({ id, name, icon }) => (
+												{insuranceCompanies?.map(({ id, name, icon }) => (
 													<SelectItem
 														key={id}
 														value={id}
