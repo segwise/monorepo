@@ -9,11 +9,12 @@
         "@hono/zod-validator": "^0.7.6",
         "@prisma/adapter-pg": "^7.0.1",
         "@prisma/client": "7.0.1",
-        "@segwise/core": "^1.0.91",
+        "@segwise/core": "^1.1.34",
         "better-auth": "^1.4.1",
         "date-fns": "^4.1.0",
         "hono": "^4.10.6",
         "resend": "^6.5.2",
+        "xior": "^0.8.3",
         "zod": "^4.1.13",
       },
       "devDependencies": {
@@ -105,7 +106,7 @@
 
     "@prisma/studio-core": ["@prisma/studio-core@0.8.2", "", { "peerDependencies": { "@types/react": "^18.0.0 || ^19.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" } }, "sha512-/iAEWEUpTja+7gVMu1LtR2pPlvDmveAwMHdTWbDeGlT7yiv0ZTCPpmeAGdq/Y9aJ9Zj1cEGBXGRbmmNPj022PQ=="],
 
-    "@segwise/core": ["@segwise/core@1.0.91", "https://npm.pkg.github.com/download/@segwise/core/1.0.91/bf8c056c26ce99247b16338f8c9b8bab722f1053", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-oQ3irftgC79jRT86oLD3yEGNqqORWsSnY4lpEyXKK5h1Rqb2545+IV4E9dTQ76G7cDTUBDD0iy3dJHM0YhS0rA=="],
+    "@segwise/core": ["@segwise/core@1.1.34", "https://npm.pkg.github.com/download/@segwise/core/1.1.34/43d8204f38aa9815310d37d83aa3ac64a4362c4d", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-JrTrXZ7a8XgPw5iiEQ9SpeP2I9VJA8Hv41miOWEIsf81IrltoDNjO+FCD83JGPt/GF4IU7L2cf+TigTlVcpK7Q=="],
 
     "@stablelib/base64": ["@stablelib/base64@1.0.1", "", {}, "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ=="],
 
@@ -369,6 +370,8 @@
 
     "tar-stream": ["tar-stream@2.2.0", "", { "dependencies": { "bl": "^4.0.3", "end-of-stream": "^1.4.1", "fs-constants": "^1.0.0", "inherits": "^2.0.3", "readable-stream": "^3.1.1" } }, "sha512-ujeqbceABgwMZxEJnk2HDY2DlnUZ+9oEcb1KzTVfYHio0UE6dG71n60d8D2I4qNvleWrrXpmjpt7vZeF1LnMZQ=="],
 
+    "tiny-lru": ["tiny-lru@11.4.7", "", {}, "sha512-w/Te7uMUVeH0CR8vZIjr+XiN41V+30lkDdK+NRIDCUYKKuL9VcmaUEmaPISuwGhLlrTGh5yu18lENtR9axSxYw=="],
+
     "tinyexec": ["tinyexec@1.0.2", "", {}, "sha512-W/KYk+NFhkmsYpuHq5JykngiOCnxeVL8v8dFnqxSD8qEEdRfXk1SDM6JzNqcERbcGYj9tMrDQBYV9cjgnunFIg=="],
 
     "tunnel-agent": ["tunnel-agent@0.6.0", "", { "dependencies": { "safe-buffer": "^5.0.1" } }, "sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w=="],
@@ -390,6 +393,8 @@
     "which": ["which@2.0.2", "", { "dependencies": { "isexe": "^2.0.0" }, "bin": { "node-which": "./bin/node-which" } }, "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA=="],
 
     "wrappy": ["wrappy@1.0.2", "", {}, "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ=="],
+
+    "xior": ["xior@0.8.3", "", { "dependencies": { "tiny-lru": "^11.2.11" } }, "sha512-yHzIBnpGS3qhSjGnvi5IvLQVPlWXDYmvtaO6TfOaIUMes/6lFnoHL02cdHo5xPj3JUSfEts9Q3hTiVGfnHAh5w=="],
 
     "xtend": ["xtend@4.0.2", "", {}, "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ=="],
 

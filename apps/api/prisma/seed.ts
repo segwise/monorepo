@@ -1,3 +1,5 @@
+import { generateReferral } from 'functions/generate-referral';
+import { Role } from '@/generated/prisma/enums';
 import { auth } from '@/services/auth';
 import { database } from '@/services/database';
 
@@ -22,18 +24,24 @@ async function seed() {
 			return;
 		}
 
-		await database.$transaction(async (_transaction) => {
-			await auth.api.createUser({
-				body: {
-					name: INIT.name,
-					email: INIT.email,
-					password: INIT.password,
-					role: 'admin',
-					data: {
-						emailVerified: true,
-					},
+		await auth.api.createUser({
+			body: {
+				name: INIT.name,
+				email: INIT.email,
+				password: INIT.password,
+				role: Role.admin,
+				data: {
+					emailVerified: true,
+					referral: generateReferral(),
 				},
-			});
+			},
+		});
+
+		await database.insuranceCompany.create({
+			data: {
+				name: 'porto seguro',
+				icon: '',
+			},
 		});
 	} catch (error) {
 		console.error(error);

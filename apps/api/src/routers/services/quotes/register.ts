@@ -1,16 +1,14 @@
 import { zValidator } from '@hono/zod-validator';
-import { SchemaQuoteRegister } from '@segwise/core';
+import { SchemaQuoteRegister, SchemaQuoteSimpleRegister } from '@segwise/core';
 import { differenceInYears } from 'date-fns';
 import type { Server } from '@/@types/server';
+import { vehicleByPlate } from '@/functions/vehicle/by-plate';
+import { Prisma } from '@/generated/prisma/browser';
 
 function registerRoutersServicesQuotesRegister(server: Server) {
 	server.post('/', zValidator('json', SchemaQuoteRegister), async (ctx) => {
 		const { type, renewal, status, requestAt, insured, vehicle, driver } =
 			ctx.req.valid('json');
-
-		if (!vehicle) {
-			throw new Error('Dados do veículo não preenchidos');
-		}
 
 		await ctx.database.$transaction(async (transaction) => {
 			const temporaryInsured = await transaction.temporaryInsured.create({
@@ -42,48 +40,191 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 							id: temporaryInsured.id,
 						},
 					},
-					temporaryVehicle: {
-						create: {
-							plate: vehicle.plate,
-							manufacturer: vehicle.manufacturer,
-							model: vehicle.model,
-							modelYear: vehicle.modelYear,
-							chassi: vehicle.chassi,
-							usage: vehicle.usage,
-							exchange: vehicle.exchange,
-							overnightPostalCode: vehicle.overnightPostalCode,
-							residesIn: vehicle.additional.residence.type,
-							garageOfTheResidence: vehicle.additional.residence.garage,
-							garageAtWork: vehicle.additional.work,
-							garageAtSchool: vehicle.additional.school,
-							armored: vehicle.additional.armored,
-							gasKit: vehicle.additional.gasKit,
-							theInsuredIsTheOwner: vehicle.additional.theInsuredIsTheOwner,
-							funded: vehicle.additional.funded,
-							driversUnder26: vehicle.additional.driversUnder26,
-							driverCPF: driver.cpf,
-							driverName: driver.name,
-							driverBirth: driver.birth,
-							driverAge: differenceInYears(new Date(), driver.birth),
-							driverPhone: driver.phone,
+					...(vehicle && {
+						quoteVehicle: {
+							create: {
+								...(vehicle.plate && {
+									vehicle: {
+										connectOrCreate: {
+											where: {
+												plate: vehicle.plate,
+											},
+											create: {
+												plate: vehicle.plate,
+												plateAlternative: vehicle.plate,
+												manufacturer: {
+													connect: {
+														id: vehicle.manufacturer,
+													},
+												},
+												model: vehicle.model,
+												modelYear: vehicle.modelYear,
+												exchange: vehicle.exchange,
+												chassi: vehicle.chassi,
+											},
+										},
+									},
+								}),
+								...(!vehicle.plate && {
+									vehicleWithoutPlate: {
+										create: {
+											manufacturer: {
+												connect: {
+													id: vehicle.manufacturer,
+												},
+											},
+											model: vehicle.model,
+											modelYear: vehicle.modelYear,
+											exchange: vehicle.exchange,
+										},
+									},
+								}),
+								usage: vehicle.usage,
+								overnightPostalCode: vehicle.overnightPostalCode,
+								residesIn: vehicle.additional.residence.type,
+								garageOfTheResidence: vehicle.additional.residence.garage,
+								garageAtWork: vehicle.additional.work,
+								garageAtSchool: vehicle.additional.school,
+								armored: vehicle.additional.armored,
+								gasKit: vehicle.additional.gasKit,
+								theInsuredIsTheOwner: vehicle.additional.theInsuredIsTheOwner,
+								funded: vehicle.additional.funded,
+								driversUnder26: vehicle.additional.driversUnder26,
+								driverCPF: driver.cpf,
+								driverName: driver.name,
+								driverBirth: driver.birth,
+								driverAge: differenceInYears(new Date(), driver.birth),
+								driverPhone: driver.phone,
+							},
+						},
+					}),
+				},
+			});
+		});
+
+		return ctx.json(
+			{
+				message: 'Cadastrado com sucesso',
+			},
+			200,
+		);
+	});
+
+	server.post(
+		'/simple',
+		zValidator('json', SchemaQuoteSimpleRegister),
+		async (ctx) => {
+			try {
+				const {
+					type,
+					renewal,
+					insured,
+					plate,
+					usage,
+					postalCode,
+					insuranceCompany,
+					expiration,
+					franchise,
+				} = ctx.req.valid('json');
+
+				await ctx.database.$transaction(async (transaction) => {
+					const temporaryInsured = await transaction.temporaryInsured.create({
+						data: {
+							name: insured.name,
+							phone: insured.phone,
+						},
+						select: {
+							id: true,
+						},
+					});
+
+					const vehicle = plate ? await vehicleByPlate(plate) : null;
+
+					if (plate && !vehicle) {
+						throw new Error('Falha ao consultar dados do veículo');
+					}
+
+					await transaction.quote.create({
+						data: {
+							type,
+							renewal,
 							temporaryInsured: {
 								connect: {
 									id: temporaryInsured.id,
 								},
 							},
+							quoteVehicle: {
+								create: {
+									...(vehicle && {
+										vehicle: {
+											connectOrCreate: {
+												where: {
+													plate: vehicle.plate,
+												},
+												create: {
+													plate: vehicle.plate,
+													plateAlternative: vehicle.plate,
+													manufacturer: {
+														connect: {
+															id: vehicle.manufacturer.id,
+														},
+													},
+													model: vehicle.model,
+													modelYear: vehicle.modelYear,
+													exchange: vehicle.exchange,
+													chassi: vehicle.chassi,
+												},
+											},
+										},
+									}),
+									...(!vehicle && {
+										vehicleWithoutPlate: {
+											create: {},
+										},
+									}),
+									usage,
+									overnightPostalCode: postalCode,
+								},
+							},
+							...(insuranceCompany && {
+								insuranceCompany: {
+									connect: {
+										id: insuranceCompany,
+									},
+								},
+							}),
+							...(expiration && {
+								expiration,
+							}),
+							...(franchise && {
+								franchise: new Prisma.Decimal(franchise).toDecimalPlaces(2),
+							}),
 						},
-					},
-				},
-			});
-		});
+					});
+				});
 
-		return ctx.newResponse(
-			JSON.stringify({
-				message: 'Cadastrado com sucesso',
-			}),
-			204,
-		);
-	});
+				return ctx.json(
+					{
+						message: 'Cadastrado com sucesso',
+					},
+					200,
+				);
+			} catch (error) {
+				let message = 'Falha ao registrar';
+
+				if (error instanceof Error) {
+					message = error.message;
+				}
+
+				return ctx.json(
+					{
+						message,
+					},
+					500,
+				);
+			}
+		},
+	);
 }
 
 export { registerRoutersServicesQuotesRegister };

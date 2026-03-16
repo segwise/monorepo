@@ -26,6 +26,7 @@
 			"@/server/*": ["services/server/*"],
 			"@/server": ["services/server"],
 			"@/libraries/*": ["libraries/*"],
+			"@/functions/*": ["functions/*"],
 			"@/environment": ["libraries/environment"],
 			"@/routers/*": ["routers/*"],
 			"@/routers": ["routers"],

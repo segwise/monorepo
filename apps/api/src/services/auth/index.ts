@@ -64,6 +64,14 @@ const auth = betterAuth({
 		expiresIn: 60 * 60,
 	},
 	user: {
+		additionalFields: {
+			referral: {
+				type: 'string',
+				required: true,
+				index: true,
+				unique: true,
+			},
+		},
 		changeEmail: {
 			enabled: true,
 			async sendChangeEmailConfirmation({ newEmail, url, token }) {

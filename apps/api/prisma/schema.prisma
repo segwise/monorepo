@@ -21,8 +21,7 @@ model User {
   email         String
   emailVerified Boolean? @map("email_verified")
 
-  sessions Session[]
-  accounts Account[]
+  referral String
 
   role String
 
@@ -30,12 +29,14 @@ model User {
   banReason  String?   @map("ban_reason")
   banExpires DateTime? @map("ban_expires") @db.Date
 
+  sessions Session[] @relation("session_to_user")
+  accounts Account[] @relation("account_to_user")
+
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  @@unique([id])
+  @@unique([referral])
   @@unique([email])
-  @@index([email])
   @@map("users")
 }
 
@@ -48,7 +49,7 @@ model Session {
   userAgent String? @map("user_agent")
 
   userId String @map("user_id") @db.Uuid
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation("session_to_user", fields: [userId], references: [id], onDelete: Cascade)
 
   impersonatedBy String? @map("impersonated_by")
 
@@ -56,9 +57,7 @@ model Session {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  @@unique([id])
   @@unique([token])
-  @@index([userId])
   @@map("sessions")
 }
 
@@ -76,7 +75,7 @@ model Account {
   providerId String @map("provider_id")
 
   userId String @map("user_id") @db.Uuid
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation("account_to_user", fields: [userId], references: [id], onDelete: Cascade)
 
   refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
   accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
@@ -85,7 +84,6 @@ model Account {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique(id)
-  @@index([userId])
   @@map("accounts")
 }
 
@@ -99,113 +97,189 @@ model Verification {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@unique([id])
-  @@index([identifier])
   @@map("verifications")
-}
-
-model Quote {
-  id String @id @default(uuid(7)) @db.Uuid
-
-  type    TypeInsurance
-  renewal Boolean
-
-  temporaryInsuredId String           @map("insured_id") @db.Uuid
-  temporaryInsured   TemporaryInsured @relation(fields: [temporaryInsuredId], references: [id], onDelete: Cascade)
-
-  temporaryVehicleId String?           @map("temporary_vehicle_id") @db.Uuid
-  temporaryVehicle   TemporaryVehicle? @relation(fields: [temporaryVehicleId], references: [id], onDelete: Cascade)
-
-  status        StatusQuote @default(waiting)
-  statusAt      DateTime    @default(now()) @map("status_at") @db.Timestamptz
-  statusMessage String?     @map("status_message")
-
-  requestAt DateTime @map("request_at") @db.Timestamptz
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@unique([id])
-  @@index([type])
-  @@index([type, status])
-  @@index([type, renewal])
-  @@index([type, renewal, status])
-  @@map("quotes")
 }
 
 model TemporaryInsured {
   id String @id @default(uuid(7)) @db.Uuid
 
-  cpf               String        @db.VarChar(11)
-  name              String
-  birth             DateTime      @db.Date
-  age               Int
-  phone             String        @db.VarChar(13)
-  maritalStatus     MaritalStatus @map("marital_status")
-  qualificationTime Int           @map("qualification_time")
+  name  String
+  phone String @db.VarChar(13)
+
+  cpf               String?        @db.VarChar(11)
+  birth             DateTime?      @db.Date
+  age               Int?
+  maritalStatus     MaritalStatus? @map("marital_status")
+  qualificationTime Int?           @map("qualification_time")
   profession        String?
 
-  quotes Quote[]
+  quotes Quote[] @relation("quote_to_temporary_insured")
 
-  temporaryVehicles TemporaryVehicle[] @relation(map: "temporary_vehicle")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@unique([id])
   @@map("temporary_insureds")
 }
 
-model TemporaryVehicle {
+model Insured {
   id String @id @default(uuid(7)) @db.Uuid
 
-  temporaryInsuredId String           @map("insured_id") @db.Uuid
-  temporaryInsured   TemporaryInsured @relation(fields: [temporaryInsuredId], references: [id], onDelete: Cascade)
+  quotes Quote[] @relation("insured_to_quote")
 
-  plate String? @db.VarChar(7)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  manufacturer String
+  @@map("insureds")
+}
+
+model Vehicle {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  plate            String @db.VarChar(7)
+  plateAlternative String @map("plate_alternative") @db.VarChar(7)
+
+  manufacturerId String              @map("manufacturer_id") @db.Uuid
+  manufacturer   ManufacturerVehicle @relation("manufacturer_vehicle_to_vehicle", fields: [manufacturerId], references: [id], onDelete: Restrict)
 
   model     String
   modelYear Int    @map("model_year")
 
+  exchange VehicleExchange?
+
   chassi String?
 
-  usage    VehicleUsage
-  exchange VehicleExchange
+  image String?
+
+  quoteVehicles QuoteVehicle[] @relation("quote_vehicle_to_vehicle", map: "quote_vehicles")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([plate])
+  @@unique([plateAlternative])
+  @@unique([plate, plateAlternative])
+  @@map("vehicles")
+}
+
+model VehicleWithoutPlate {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  manufacturerId String?              @map("manufacturer_id") @db.Uuid
+  manufacturer   ManufacturerVehicle? @relation("manufacturer_vehicle_to_vehicle_without_plate", fields: [manufacturerId], references: [id], onDelete: Restrict)
+
+  model     String?
+  modelYear Int?    @map("model_year")
+
+  exchange VehicleExchange?
+
+  quoteVehicles QuoteVehicle[] @relation("quote_vehicle_to_vehicle_without_plate", map: "quote_vehicles")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("vehicles_without_plate")
+}
+
+model Quote {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  temporaryInsuredId String?           @map("temporary_insured_id") @db.Uuid
+  temporaryInsured   TemporaryInsured? @relation("quote_to_temporary_insured", fields: [temporaryInsuredId], references: [id], onDelete: Restrict, map: "temporary_insured")
+
+  insuredId String?  @map("insured_id") @db.Uuid
+  insured   Insured? @relation("insured_to_quote", fields: [insuredId], references: [id], onDelete: Restrict)
+
+  type    TypeInsurance
+  renewal Boolean
+
+  insuranceCompanyId String?           @map("insurance_company_id") @db.Uuid
+  insuranceCompany   InsuranceCompany? @relation("insurance_company_to_quote", fields: [insuranceCompanyId], references: [id], onDelete: SetNull, map: "insurance_company")
+  expiration         DateTime?         @db.Date
+  franchise          Decimal?          @db.Decimal(10, 2)
+
+  quoteVehicle QuoteVehicle? @relation("quote_to_quote_vehicle", map: "quote_vehicle")
+
+  status        StatusQuote @default(waiting)
+  statusAt      DateTime    @default(now()) @map("status_at") @db.Timestamptz
+  statusMessage String?     @map("status_message")
+
+  requestAt DateTime @default(now()) @map("request_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("quotes")
+}
+
+model QuoteVehicle {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  quoteId String @map("quote_id") @db.Uuid
+  quote   Quote  @relation("quote_to_quote_vehicle", fields: [quoteId], references: [id], onDelete: Cascade)
+
+  vehicleId String?  @map("vehicle_id") @db.Uuid
+  vehicle   Vehicle? @relation("quote_vehicle_to_vehicle", fields: [vehicleId], references: [id])
+
+  vehicleWithoutPlateId String?              @map("vehicle_without_plate_id") @db.Uuid
+  vehicleWithoutPlate   VehicleWithoutPlate? @relation("quote_vehicle_to_vehicle_without_plate", fields: [vehicleWithoutPlateId], references: [id], map: "vehicle_without_plate")
+
+  usage VehicleUsage
 
   overnightPostalCode String @map("overnight_postal_code") @db.VarChar(8)
 
-  residesIn            Residence @map("resides_in")
-  garageOfTheResidence Garage    @map("garage_of_the_residence")
+  residesIn            Residence? @map("resides_in")
+  garageOfTheResidence Garage?    @map("garage_of_the_residence")
 
-  garageAtWork   GarageWork   @map("garage_at_work")
-  garageAtSchool GarageSchool @map("garage_at_school")
+  garageAtWork   GarageWork?   @map("garage_at_work")
+  garageAtSchool GarageSchool? @map("garage_at_school")
 
-  armored              Boolean
-  gasKit               Boolean @map("gas_kit")
-  theInsuredIsTheOwner Boolean @map("the_insured_is_the_owner")
-  funded               Boolean
-  driversUnder26       Boolean @map("drivers_under_26")
+  armored              Boolean?
+  gasKit               Boolean? @map("gas_kit")
+  theInsuredIsTheOwner Boolean? @map("the_insured_is_the_owner")
+  funded               Boolean?
+  driversUnder26       Boolean? @map("drivers_under_26")
 
-  driverCPF   String   @map("driver_cpf") @db.VarChar(11)
-  driverName  String   @map("driver_name")
-  driverBirth DateTime @map("driver_birth") @db.Date
-  driverAge   Int      @map("driver_age")
-  driverPhone String   @map("driver_phone") @db.VarChar(13)
+  driverCPF   String?   @map("driver_cpf") @db.VarChar(11)
+  driverName  String?   @map("driver_name")
+  driverBirth DateTime? @map("driver_birth") @db.Date
+  driverAge   Int?      @map("driver_age")
+  driverPhone String?   @map("driver_phone") @db.VarChar(13)
 
-  quotes Quote[]
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@unique([plate, temporaryInsuredId])
-  @@map("temporary_vehicles")
+  @@unique([vehicleWithoutPlateId])
+  @@unique([quoteId])
+  @@map("quote_vehicles")
 }
 
-model Manufacturer {
+model ManufacturerVehicle {
   id String @id @default(uuid(7)) @db.Uuid
 
   name  String
-  image String
   icon  String
+  image String?
 
-  @@unique([id])
-  @@index([name])
-  @@map("manufacturers")
+  slugs String[]
+
+  vehicles              Vehicle[]             @relation("manufacturer_vehicle_to_vehicle")
+  vehiclesWithoutPlates VehicleWithoutPlate[] @relation("manufacturer_vehicle_to_vehicle_without_plate", map: "vehicles_without_plate")
+
+  @@map("manufacturer_vehicles")
+}
+
+model InsuranceCompany {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  name  String
+  icon  String
+  image String?
+
+  quotes Quote[] @relation("insurance_company_to_quote")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("insurance_companies")
 }
 
 enum Role {
