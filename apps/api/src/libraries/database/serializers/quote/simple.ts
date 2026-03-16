@@ -7,6 +7,10 @@ function serializer(
 		select: typeof selectPrisma;
 	}>,
 ): QuoteSimple {
+	if (!props.temporaryInsured) {
+		throw new Error(`Segurado não registrado na cotação: ${props.id}`);
+	}
+
 	return {
 		id: props.id,
 		type: props.type,
@@ -18,12 +22,21 @@ function serializer(
 				phone: props.temporaryInsured.phone,
 			},
 		},
-		...(props.temporaryVehicle && {
+		...(!!props.quoteVehicle && {
 			vehicle: {
-				plate: props.temporaryVehicle?.plate,
-				manufacturer: props.temporaryVehicle.manufacturer,
-				model: props.temporaryVehicle.model,
-				modelYear: props.temporaryVehicle.modelYear,
+				plate: props.quoteVehicle.vehicle?.plate,
+				manufacturer:
+					props.quoteVehicle.vehicle?.manufacturerId ||
+					props.quoteVehicle.vehicleWithoutPlate?.manufacturerId ||
+					'',
+				model:
+					props.quoteVehicle.vehicle?.model ||
+					props.quoteVehicle.vehicleWithoutPlate?.model ||
+					'',
+				modelYear:
+					props.quoteVehicle.vehicle?.modelYear ||
+					props.quoteVehicle.vehicleWithoutPlate?.modelYear ||
+					0,
 			},
 		}),
 		requestAt: props.requestAt,

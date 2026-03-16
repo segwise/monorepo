@@ -1,9 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
-import {
-	type QuoteSimple,
-	type ResponseDataCursor,
-	SchemaSearchQueriesQuoteSimple,
-} from '@segwise/core';
+import { SchemaSearchQueriesQuoteSimple } from '@segwise/core/schemas';
+import type { QuoteSimple, ResponseDataCursor } from '@segwise/core/types';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/quote/simple';
 import { serializer } from '@/db-serializers/quote/simple';

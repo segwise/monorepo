@@ -1,18 +1,20 @@
 import type { Server } from '@/@types/server.d';
 import { registerRoutersServicesAuth } from '@/routers/services/auth';
+import { registerRoutersServicesInsuranceCompanies } from '@/routers/services/insurance-companies';
 import { registerRoutersServicesProducers } from '@/routers/services/producers';
 import { registerRoutersServicesProfessions } from '@/routers/services/professions';
 import { registerRoutersServicesQuotes } from '@/routers/services/quotes';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
 
 function registerRoutersServices(server: Server) {
-	const baseURL = server.basePath('/services');
+	const base = server.basePath('/services');
 
-	registerRoutersServicesAuth(baseURL);
-	registerRoutersServicesProducers(baseURL);
-	registerRoutersServicesProfessions(baseURL);
-	registerRoutersServicesVehicles(baseURL);
-	registerRoutersServicesQuotes(baseURL);
+	registerRoutersServicesAuth(base);
+	registerRoutersServicesProducers(base);
+	registerRoutersServicesProfessions(base);
+	registerRoutersServicesVehicles(base);
+	registerRoutersServicesQuotes(base);
+	registerRoutersServicesInsuranceCompanies(base);
 }
 
 export { registerRoutersServices };

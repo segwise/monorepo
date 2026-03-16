@@ -1,7 +1,9 @@
 import { generateReferral } from 'functions/generate-referral';
+import xior from 'xior';
 import { Role } from '@/generated/prisma/enums';
 import { auth } from '@/services/auth';
 import { database } from '@/services/database';
+import { storage } from '@/services/storage/images';
 
 const INIT = {
 	name: 'Administrador Master',
@@ -37,10 +39,49 @@ async function seed() {
 			},
 		});
 
+		const idInsurance = Bun.randomUUIDv7();
+
+		const pathInsurance = `/insurance-companies/${idInsurance}`;
+
+		const { data } = await xior.get(
+			'https://play-lh.googleusercontent.com/9AXivDxUm2lyogDCW9BIe5E3sMm_jqT6T_kCTJQxZ5A6AXI1dfjOwfpu-p6jH_i9ja4',
+			{
+				responseType: 'blob',
+			},
+		);
+
+		await storage.write(pathInsurance, data);
+
 		await database.insuranceCompany.create({
 			data: {
+				id: idInsurance,
 				name: 'porto seguro',
-				icon: '',
+				icon: pathInsurance,
+				cnpj: '61198164000160',
+				contacts: {
+					create: {
+						index: 0,
+						label: 'GUincho / fdsfds',
+						contacts: {
+							createMany: {
+								data: [
+									{
+										index: 0,
+										coverage: 'all_regions',
+										isWhatsapp: true,
+										value: '81996473649',
+									},
+									{
+										index: 1,
+										coverage: 'capitals_and_metropolitan_regions',
+										value: '3440404040',
+									},
+								],
+								skipDuplicates: true,
+							},
+						},
+					},
+				},
 			},
 		});
 	} catch (error) {

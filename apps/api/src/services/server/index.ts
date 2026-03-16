@@ -8,6 +8,7 @@ import { corsMiddleware } from '@/server/middlewares/cors';
 import { databaseMiddleware } from '@/server/middlewares/database';
 import { emailMiddleware } from '@/server/middlewares/email';
 import { environmentMiddleware } from '@/server/middlewares/environment';
+import { storageMiddleware } from './middlewares/storage';
 
 const server = new Hono<AppBindings>({
 	strict: true,
@@ -40,6 +41,8 @@ server.use(environmentMiddleware);
 server.use(cacheMiddleware);
 server.use(databaseMiddleware);
 server.use(emailMiddleware);
+
+server.use(storageMiddleware);
 
 server.use(authMiddleware);
 

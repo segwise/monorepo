@@ -9,10 +9,11 @@
         "@hono/zod-validator": "^0.7.6",
         "@prisma/adapter-pg": "^7.0.1",
         "@prisma/client": "7.0.1",
-        "@segwise/core": "^1.1.34",
+        "@segwise/core": "^1.1.48",
         "better-auth": "^1.4.1",
         "date-fns": "^4.1.0",
         "hono": "^4.10.6",
+        "quick-lru": "^7.3.0",
         "resend": "^6.5.2",
         "xior": "^0.8.3",
         "zod": "^4.1.13",
@@ -106,7 +107,7 @@
 
     "@prisma/studio-core": ["@prisma/studio-core@0.8.2", "", { "peerDependencies": { "@types/react": "^18.0.0 || ^19.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" } }, "sha512-/iAEWEUpTja+7gVMu1LtR2pPlvDmveAwMHdTWbDeGlT7yiv0ZTCPpmeAGdq/Y9aJ9Zj1cEGBXGRbmmNPj022PQ=="],
 
-    "@segwise/core": ["@segwise/core@1.1.34", "https://npm.pkg.github.com/download/@segwise/core/1.1.34/43d8204f38aa9815310d37d83aa3ac64a4362c4d", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-JrTrXZ7a8XgPw5iiEQ9SpeP2I9VJA8Hv41miOWEIsf81IrltoDNjO+FCD83JGPt/GF4IU7L2cf+TigTlVcpK7Q=="],
+    "@segwise/core": ["@segwise/core@1.1.48", "https://npm.pkg.github.com/download/@segwise/core/1.1.48/f61b6c197be73b42434c72ebd9b8a4c8ade93782", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-YMUkdiXrr3VEF41sBSVorFEzt1tFOvu8bDoWs8nxXYPnF2Nm9QOq3i0FNfbsF/DgHQ6euWlPhPKJXLL6JwB4fw=="],
 
     "@stablelib/base64": ["@stablelib/base64@1.0.1", "", {}, "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ=="],
 
@@ -307,6 +308,8 @@
     "pure-rand": ["pure-rand@6.1.0", "", {}, "sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA=="],
 
     "querystringify": ["querystringify@2.2.0", "", {}, "sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ=="],
+
+    "quick-lru": ["quick-lru@7.3.0", "", {}, "sha512-k9lSsjl36EJdK7I06v7APZCbyGT2vMTsYSRX1Q2nbYmnkBqgUhRkAuzH08Ciotteu/PLJmIF2+tti7o3C/ts2g=="],
 
     "rc": ["rc@1.2.8", "", { "dependencies": { "deep-extend": "^0.6.0", "ini": "~1.3.0", "minimist": "^1.2.0", "strip-json-comments": "~2.0.1" }, "bin": { "rc": "./cli.js" } }, "sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw=="],
 

@@ -11,12 +11,24 @@ const selectPrisma = {
 			phone: true,
 		},
 	},
-	temporaryVehicle: {
+	quoteVehicle: {
 		select: {
-			plate: true,
-			manufacturer: true,
-			model: true,
-			modelYear: true,
+			vehicle: {
+				select: {
+					plate: true,
+					plateAlternative: true,
+					manufacturerId: true,
+					model: true,
+					modelYear: true,
+				},
+			},
+			vehicleWithoutPlate: {
+				select: {
+					manufacturerId: true,
+					model: true,
+					modelYear: true,
+				},
+			},
 		},
 	},
 	requestAt: true,

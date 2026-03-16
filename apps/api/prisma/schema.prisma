@@ -274,12 +274,58 @@ model InsuranceCompany {
   icon  String
   image String?
 
+  cnpj String @db.VarChar(14)
+
   quotes Quote[] @relation("insurance_company_to_quote")
+
+  contacts InsuranceCompanyCategoryContact[] @relation("insurance_company_to_insurance_company_category_contact")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@unique([cnpj])
   @@map("insurance_companies")
+}
+
+model InsuranceCompanyCategoryContact {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  index Int
+
+  label String
+
+  insuranceCompanyId String           @map("insurance_company_id") @db.Uuid
+  insuranceCompany   InsuranceCompany @relation("insurance_company_to_insurance_company_category_contact", fields: [insuranceCompanyId], references: [id], onDelete: Cascade, map: "insurance_company")
+
+  contacts InsuranceCompanyContact[] @relation("insurance_company_category_contact_to_insurance_company_contact", map: "insurance_company_contacts")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([insuranceCompanyId])
+  @@unique([index])
+  @@map("insurance_companies_categories_contacts")
+}
+
+model InsuranceCompanyContact {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  index Int
+
+  coverage InsuranceCompanyContactCoverage
+
+  value      String   @db.VarChar(13)
+  isWhatsapp Boolean? @map("is_whatsapp")
+
+  categoryId String                          @map("category_id") @db.Uuid
+  category   InsuranceCompanyCategoryContact @relation("insurance_company_category_contact_to_insurance_company_contact", fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([categoryId, value])
+  @@unique([index])
+  @@map("insurance_companies_contacts")
 }
 
 enum Role {
@@ -356,4 +402,9 @@ enum GarageSchool {
   no
   does_not_study
   does_not_use
+}
+
+enum InsuranceCompanyContactCoverage {
+  all_regions
+  capitals_and_metropolitan_regions
 }

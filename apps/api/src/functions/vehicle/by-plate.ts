@@ -262,7 +262,6 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 			};
 		});
 	} catch (error) {
-		console.log(error);
 		let message = 'Falha ao consultar a placa';
 
 		if (error instanceof XiorError) {
