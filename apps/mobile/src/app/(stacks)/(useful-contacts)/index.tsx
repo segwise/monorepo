@@ -40,7 +40,7 @@ function UsefulContactsScreen() {
 							/>
 						</Svg>
 					)}
-					href='/(stacks)/(useful-contacts)/insurance-companies'
+					href='/(stacks)/(useful-contacts)/(insurance-companies)'
 				/>
 			</View>
 			<View className='flex-1 min-w-[28%]'>

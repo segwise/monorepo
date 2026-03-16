@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 function UsefulContactsRoot() {
 	return (
 		<Stack
+			initialRouteName='index'
 			screenOptions={{
 				title: 'Contatos Úteis',
 				header: (props) => <Header {...props} />,
@@ -11,9 +12,9 @@ function UsefulContactsRoot() {
 		>
 			<Stack.Screen name='index' />
 			<Stack.Screen
-				name='insurance-companies'
+				name='(insurance-companies)'
 				options={{
-					title: 'Contatos de Seguradoras',
+					headerShown: false,
 				}}
 			/>
 			<Stack.Screen

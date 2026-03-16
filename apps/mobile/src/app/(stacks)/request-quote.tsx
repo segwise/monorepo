@@ -18,6 +18,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/libraries/classname';
+import { useInsuranceCompaniesSimple } from '@/libraries/hooks/api/insurance-companies/simple';
 import { useQuoteSimpleRegister } from '@/libraries/hooks/api/quotes/register/simple';
 import { store } from '@/libraries/store';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -42,7 +43,10 @@ import {
 	View,
 } from 'react-native';
 import CurrencyInput from 'react-native-currency-input';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import {
+	KeyboardAwareScrollView,
+	type KeyboardAwareScrollViewRef,
+} from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -67,6 +71,8 @@ function Label({ title, icon }: LabelProps) {
 function RequestQuote() {
 	const [openDialog, setOpenDialog] = useState<boolean>(false);
 
+	const scrollViewRef = useRef<KeyboardAwareScrollViewRef>(null);
+
 	const selectTriggerRefUse = useRef<TriggerRef>(null);
 	const selectTriggerRefType = useRef<TriggerRef>(null);
 	const selectTriggerRefInsuranceCompany = useRef<TriggerRef>(null);
@@ -77,6 +83,8 @@ function RequestQuote() {
 	const { bottom } = useSafeAreaInsets();
 
 	const { mutate, isPending } = useQuoteSimpleRegister();
+
+	const { data } = useInsuranceCompaniesSimple();
 
 	const searchParams = useLocalSearchParams();
 
@@ -122,6 +130,7 @@ function RequestQuote() {
 
 	return (
 		<KeyboardAwareScrollView
+			ref={scrollViewRef}
 			bottomOffset={bottom + 62}
 			showsVerticalScrollIndicator={false}
 		>
@@ -445,8 +454,14 @@ function RequestQuote() {
 
 										if (!isDirty || invalid) {
 											setTimeout(() => {
+												scrollViewRef.current?.scrollToEnd({
+													animated: true,
+												});
+											}, 100);
+
+											setTimeout(() => {
 												selectTriggerRefInsuranceCompany.current?.open();
-											}, 300);
+											}, 500);
 										}
 									}
 								}}
@@ -494,11 +509,14 @@ function RequestQuote() {
 												<SelectValue placeholder='Selecionar' />
 											</SelectTrigger>
 											<SelectContent style={{ width: width - 32 }}>
-												<SelectItem
-													value='019cdf6d-39b1-79b4-a679-7d872ebafc34'
-													label='PORTO SEGURO'
-													image='https://play-lh.googleusercontent.com/o2LsthtON1hku1FRjca4YzKbJJuJucWY6Y-WbiVnsTkiHJXN-Dt6Lvd-cE9BpCgE6Cw'
-												/>
+												{data?.map(({ id, name, icon }) => (
+													<SelectItem
+														key={id}
+														value={id}
+														label={name.toUpperCase()}
+														image={icon}
+													/>
+												))}
 											</SelectContent>
 										</Select>
 										{fieldState.error?.message && (
@@ -514,6 +532,7 @@ function RequestQuote() {
 									<View>
 										<Input
 											{...field}
+											// @ts-expect-error
 											value={field.value || undefined}
 											onChangeText={(value) =>
 												field.onChange(maskDateString(value))
