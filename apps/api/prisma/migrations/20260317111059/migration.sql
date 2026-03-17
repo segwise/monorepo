@@ -28,6 +28,9 @@ CREATE TYPE "GarageWork" AS ENUM ('yes', 'no', 'does_not_work', 'does_not_use');
 -- CreateEnum
 CREATE TYPE "GarageSchool" AS ENUM ('yes', 'no', 'does_not_study', 'does_not_use');
 
+-- CreateEnum
+CREATE TYPE "InsuranceCompanyContactCoverage" AS ENUM ('all_regions', 'capitals_and_metropolitan_regions');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL,
@@ -126,8 +129,9 @@ CREATE TABLE "vehicles" (
     "manufacturer_id" UUID NOT NULL,
     "model" TEXT NOT NULL,
     "model_year" INTEGER NOT NULL,
-    "exchange" "VehicleExchange" NOT NULL,
+    "exchange" "VehicleExchange",
     "chassi" TEXT,
+    "image" TEXT,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -137,10 +141,10 @@ CREATE TABLE "vehicles" (
 -- CreateTable
 CREATE TABLE "vehicles_without_plate" (
     "id" UUID NOT NULL,
-    "manufacturer_id" UUID NOT NULL,
-    "model" TEXT NOT NULL,
-    "model_year" INTEGER NOT NULL,
-    "exchange" "VehicleExchange" NOT NULL,
+    "manufacturer_id" UUID,
+    "model" TEXT,
+    "model_year" INTEGER,
+    "exchange" "VehicleExchange",
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -154,6 +158,9 @@ CREATE TABLE "quotes" (
     "insured_id" UUID,
     "type" "TypeInsurance" NOT NULL,
     "renewal" BOOLEAN NOT NULL,
+    "insurance_company_id" UUID,
+    "expiration" DATE,
+    "franchise" DECIMAL(10,2),
     "status" "StatusQuote" NOT NULL DEFAULT 'waiting',
     "status_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status_message" TEXT,
@@ -196,11 +203,50 @@ CREATE TABLE "quote_vehicles" (
 CREATE TABLE "manufacturer_vehicles" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
-    "image" TEXT NOT NULL,
     "icon" TEXT NOT NULL,
+    "image" TEXT,
     "slugs" TEXT[],
 
     CONSTRAINT "manufacturer_vehicles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "insurance_companies" (
+    "id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "icon" TEXT NOT NULL,
+    "image" TEXT,
+    "cnpj" VARCHAR(14) NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "insurance_companies_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "insurance_companies_categories_contacts" (
+    "id" UUID NOT NULL,
+    "index" INTEGER NOT NULL,
+    "label" TEXT NOT NULL,
+    "insurance_company_id" UUID NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "insurance_companies_categories_contacts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "insurance_companies_contacts" (
+    "id" UUID NOT NULL,
+    "index" INTEGER NOT NULL,
+    "coverage" "InsuranceCompanyContactCoverage" NOT NULL,
+    "value" VARCHAR(13) NOT NULL,
+    "is_whatsapp" BOOLEAN,
+    "category_id" UUID NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "insurance_companies_contacts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -230,6 +276,21 @@ CREATE UNIQUE INDEX "quote_vehicles_vehicle_without_plate_id_key" ON "quote_vehi
 -- CreateIndex
 CREATE UNIQUE INDEX "quote_vehicles_quote_id_key" ON "quote_vehicles"("quote_id");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "insurance_companies_cnpj_key" ON "insurance_companies"("cnpj");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "insurance_companies_categories_contacts_insurance_company_i_key" ON "insurance_companies_categories_contacts"("insurance_company_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "insurance_companies_categories_contacts_index_key" ON "insurance_companies_categories_contacts"("index");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "insurance_companies_contacts_category_id_value_key" ON "insurance_companies_contacts"("category_id", "value");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "insurance_companies_contacts_index_key" ON "insurance_companies_contacts"("index");
+
 -- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -249,6 +310,9 @@ ALTER TABLE "quotes" ADD CONSTRAINT "temporary_insured" FOREIGN KEY ("temporary_
 ALTER TABLE "quotes" ADD CONSTRAINT "quotes_insured_id_fkey" FOREIGN KEY ("insured_id") REFERENCES "insureds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "quotes" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "quote_vehicles" ADD CONSTRAINT "quote_vehicles_quote_id_fkey" FOREIGN KEY ("quote_id") REFERENCES "quotes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -256,3 +320,9 @@ ALTER TABLE "quote_vehicles" ADD CONSTRAINT "quote_vehicles_vehicle_id_fkey" FOR
 
 -- AddForeignKey
 ALTER TABLE "quote_vehicles" ADD CONSTRAINT "vehicle_without_plate" FOREIGN KEY ("vehicle_without_plate_id") REFERENCES "vehicles_without_plate"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "insurance_companies_categories_contacts" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "insurance_companies_contacts" ADD CONSTRAINT "insurance_companies_contacts_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "insurance_companies_categories_contacts"("id") ON DELETE CASCADE ON UPDATE CASCADE;

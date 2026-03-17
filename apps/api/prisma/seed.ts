@@ -61,7 +61,7 @@ async function seed() {
 				contacts: {
 					create: {
 						index: 0,
-						label: 'GUincho / fdsfds',
+						label: 'Guincho 24 horas',
 						contacts: {
 							createMany: {
 								data: [
