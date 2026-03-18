@@ -125,59 +125,12 @@ model Insured {
   id String @id @default(uuid(7)) @db.Uuid
 
   quotes Quote[] @relation("insured_to_quote")
+  safes  Safe[]  @relation("insured_to_safe")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("insureds")
-}
-
-model Vehicle {
-  id String @id @default(uuid(7)) @db.Uuid
-
-  plate            String @db.VarChar(7)
-  plateAlternative String @map("plate_alternative") @db.VarChar(7)
-
-  manufacturerId String              @map("manufacturer_id") @db.Uuid
-  manufacturer   ManufacturerVehicle @relation("manufacturer_vehicle_to_vehicle", fields: [manufacturerId], references: [id], onDelete: Restrict)
-
-  model     String
-  modelYear Int    @map("model_year")
-
-  exchange VehicleExchange?
-
-  chassi String?
-
-  image String?
-
-  quoteVehicles QuoteVehicle[] @relation("quote_vehicle_to_vehicle", map: "quote_vehicles")
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@unique([plate])
-  @@unique([plateAlternative])
-  @@unique([plate, plateAlternative])
-  @@map("vehicles")
-}
-
-model VehicleWithoutPlate {
-  id String @id @default(uuid(7)) @db.Uuid
-
-  manufacturerId String?              @map("manufacturer_id") @db.Uuid
-  manufacturer   ManufacturerVehicle? @relation("manufacturer_vehicle_to_vehicle_without_plate", fields: [manufacturerId], references: [id], onDelete: Restrict)
-
-  model     String?
-  modelYear Int?    @map("model_year")
-
-  exchange VehicleExchange?
-
-  quoteVehicles QuoteVehicle[] @relation("quote_vehicle_to_vehicle_without_plate", map: "quote_vehicles")
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@map("vehicles_without_plate")
 }
 
 model Quote {
@@ -195,7 +148,7 @@ model Quote {
   association Boolean?
 
   insuranceCompanyId String?           @map("insurance_company_id") @db.Uuid
-  insuranceCompany   InsuranceCompany? @relation("insurance_company_to_quote", fields: [insuranceCompanyId], references: [id], onDelete: SetNull, map: "insurance_company")
+  insuranceCompany   InsuranceCompany? @relation("insurance_company_to_quote", fields: [insuranceCompanyId], references: [id], onDelete: Restrict, map: "insurance_company")
 
   expiration DateTime? @db.Date
   franchise  Decimal?  @db.Decimal(10, 2)
@@ -213,6 +166,31 @@ model Quote {
   @@map("quotes")
 }
 
+model Safe {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  insuredId String  @map("insured_id") @db.Uuid
+  insured   Insured @relation("insured_to_safe", fields: [insuredId], references: [id], onDelete: Restrict)
+
+  modality ModalityInsurance
+
+  insuranceCompanyId String           @map("insurance_company_id") @db.Uuid
+  insuranceCompany   InsuranceCompany @relation("insurance_company_to_safe", fields: [insuranceCompanyId], references: [id], onDelete: Restrict, map: "insurance_company")
+
+  expiration DateTime @db.Date
+
+  safeVehicle SafeVehicle? @relation("safe_to_safe_vehicle", map: "safe_vehicle")
+
+  status        StatusSafe @default(waiting)
+  statusAt      DateTime   @default(now()) @map("status_at") @db.Timestamptz
+  statusMessage String?    @map("status_message")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("safes")
+}
+
 model QuoteVehicle {
   id String @id @default(uuid(7)) @db.Uuid
 
@@ -220,10 +198,10 @@ model QuoteVehicle {
   quote   Quote  @relation("quote_to_quote_vehicle", fields: [quoteId], references: [id], onDelete: Cascade)
 
   vehicleId String?  @map("vehicle_id") @db.Uuid
-  vehicle   Vehicle? @relation("quote_vehicle_to_vehicle", fields: [vehicleId], references: [id])
+  vehicle   Vehicle? @relation("quote_vehicle_to_vehicle", fields: [vehicleId], references: [id], onDelete: Restrict)
 
   vehicleWithoutPlateId String?              @map("vehicle_without_plate_id") @db.Uuid
-  vehicleWithoutPlate   VehicleWithoutPlate? @relation("quote_vehicle_to_vehicle_without_plate", fields: [vehicleWithoutPlateId], references: [id], map: "vehicle_without_plate")
+  vehicleWithoutPlate   VehicleWithoutPlate? @relation("quote_vehicle_to_vehicle_without_plate", fields: [vehicleWithoutPlateId], references: [id], map: "vehicle_without_plate", onDelete: Restrict)
 
   usage VehicleUsage
 
@@ -255,6 +233,76 @@ model QuoteVehicle {
   @@map("quote_vehicles")
 }
 
+model SafeVehicle {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  safeId String @map("safe_id") @db.Uuid
+  safe   Safe   @relation("safe_to_safe_vehicle", fields: [safeId], references: [id], onDelete: Cascade)
+
+  vehicleId String  @map("vehicle_id") @db.Uuid
+  vehicle   Vehicle @relation("safe_vehicle_to_vehicle", fields: [vehicleId], references: [id], onDelete: Restrict)
+
+  vehicleWithoutPlateId String?              @map("vehicle_without_plate_id") @db.Uuid
+  vehicleWithoutPlate   VehicleWithoutPlate? @relation("safe_vehicle_to_vehicle_without_plate", fields: [vehicleWithoutPlateId], references: [id], map: "vehicle_without_plate", onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([vehicleWithoutPlateId])
+  @@unique([safeId])
+  @@map("safe_vehicles")
+}
+
+model Vehicle {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  plate            String @db.VarChar(7)
+  plateAlternative String @map("plate_alternative") @db.VarChar(7)
+
+  manufacturerId String              @map("manufacturer_id") @db.Uuid
+  manufacturer   ManufacturerVehicle @relation("manufacturer_vehicle_to_vehicle", fields: [manufacturerId], references: [id], onDelete: Restrict)
+
+  model     String
+  modelYear Int    @map("model_year")
+
+  exchange VehicleExchange?
+
+  chassi String?
+
+  image String?
+
+  quoteVehicles QuoteVehicle[] @relation("quote_vehicle_to_vehicle", map: "quote_vehicles")
+  safeVehicles  SafeVehicle[]  @relation("safe_vehicle_to_vehicle", map: "safe_vehicles")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([plate])
+  @@unique([plateAlternative])
+  @@unique([plate, plateAlternative])
+  @@map("vehicles")
+}
+
+model VehicleWithoutPlate {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  manufacturerId String?              @map("manufacturer_id") @db.Uuid
+  manufacturer   ManufacturerVehicle? @relation("manufacturer_vehicle_to_vehicle_without_plate", fields: [manufacturerId], references: [id], onDelete: Restrict)
+
+  model     String?
+  modelYear Int?    @map("model_year")
+
+  exchange VehicleExchange?
+
+  quoteVehicles QuoteVehicle[] @relation("quote_vehicle_to_vehicle_without_plate", map: "quote_vehicles")
+  safeVehicles  SafeVehicle[]  @relation("safe_vehicle_to_vehicle_without_plate", map: "safe_vehicles")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("vehicles_without_plate")
+}
+
 model ManufacturerVehicle {
   id String @id @default(uuid(7)) @db.Uuid
 
@@ -280,6 +328,7 @@ model InsuranceCompany {
   cnpj String @db.VarChar(14)
 
   quotes Quote[] @relation("insurance_company_to_quote")
+  safes  Safe[]  @relation("insurance_company_to_safe")
 
   contacts InsuranceCompanyCategoryContact[] @relation("insurance_company_to_insurance_company_category_contact")
 
@@ -346,6 +395,15 @@ enum ModalityInsurance {
 }
 
 enum StatusQuote {
+  waiting
+  quoting
+  quoted
+  sent
+  recused
+  confirmed
+}
+
+enum StatusSafe {
   waiting
   quoting
   quoted
