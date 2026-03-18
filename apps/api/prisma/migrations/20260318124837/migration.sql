@@ -2,7 +2,7 @@
 CREATE TYPE "Role" AS ENUM ('owner', 'admin', 'user', 'broker', 'producer', 'finance', 'counter');
 
 -- CreateEnum
-CREATE TYPE "TypeInsurance" AS ENUM ('car');
+CREATE TYPE "ModalityInsurance" AS ENUM ('car');
 
 -- CreateEnum
 CREATE TYPE "StatusQuote" AS ENUM ('waiting', 'quoting', 'quoted', 'sent', 'recused', 'confirmed');
@@ -156,8 +156,9 @@ CREATE TABLE "quotes" (
     "id" UUID NOT NULL,
     "temporary_insured_id" UUID,
     "insured_id" UUID,
-    "type" "TypeInsurance" NOT NULL,
-    "renewal" BOOLEAN NOT NULL,
+    "modality" "ModalityInsurance" NOT NULL,
+    "renewal" BOOLEAN,
+    "association" BOOLEAN,
     "insurance_company_id" UUID,
     "expiration" DATE,
     "franchise" DECIMAL(10,2),

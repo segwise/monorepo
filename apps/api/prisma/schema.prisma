@@ -189,13 +189,16 @@ model Quote {
   insuredId String?  @map("insured_id") @db.Uuid
   insured   Insured? @relation("insured_to_quote", fields: [insuredId], references: [id], onDelete: Restrict)
 
-  type    TypeInsurance
-  renewal Boolean
+  modality ModalityInsurance
+
+  renewal     Boolean?
+  association Boolean?
 
   insuranceCompanyId String?           @map("insurance_company_id") @db.Uuid
   insuranceCompany   InsuranceCompany? @relation("insurance_company_to_quote", fields: [insuranceCompanyId], references: [id], onDelete: SetNull, map: "insurance_company")
-  expiration         DateTime?         @db.Date
-  franchise          Decimal?          @db.Decimal(10, 2)
+
+  expiration DateTime? @db.Date
+  franchise  Decimal?  @db.Decimal(10, 2)
 
   quoteVehicle QuoteVehicle? @relation("quote_to_quote_vehicle", map: "quote_vehicle")
 
@@ -338,7 +341,7 @@ enum Role {
   counter
 }
 
-enum TypeInsurance {
+enum ModalityInsurance {
   car
 }
 

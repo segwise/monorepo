@@ -7,7 +7,7 @@ import { Prisma } from '@/generated/prisma/browser';
 
 function registerRoutersServicesQuotesRegister(server: Server) {
 	server.post('/', zValidator('json', SchemaQuoteRegister), async (ctx) => {
-		const { type, renewal, status, requestAt, insured, vehicle, driver } =
+		const { modality, renewal, status, requestAt, insured, vehicle, driver } =
 			ctx.req.valid('json');
 
 		await ctx.database.$transaction(async (transaction) => {
@@ -31,7 +31,7 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 
 			await transaction.quote.create({
 				data: {
-					type,
+					modality,
 					renewal,
 					status,
 					requestAt,
@@ -116,8 +116,9 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 		async (ctx) => {
 			try {
 				const {
-					type,
+					modality,
 					renewal,
+					association,
 					insured,
 					plate,
 					usage,
@@ -146,8 +147,13 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 
 					await transaction.quote.create({
 						data: {
-							type,
-							renewal,
+							modality,
+							...(!!renewal && {
+								renewal,
+							}),
+							...(!!association && {
+								association,
+							}),
 							temporaryInsured: {
 								connect: {
 									id: temporaryInsured.id,
