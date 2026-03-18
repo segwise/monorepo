@@ -9,8 +9,8 @@ function HomeScreen() {
 		<View className='flex-1'>
 			<View className='py-4 gap-y-3'>
 				<View className='px-4 gap-y-2'>
-					<ButtonLink title='MEUS SEGUROS' href='/insurances' />
-					<ButtonLink title='FAÇA SUA COTAÇÃO' href='/request-quote' />
+					<ButtonLink title='MEUS SEGUROS' href='/(stacks)/(insurances)' />
+					<ButtonLink title='FAÇA SUA COTAÇÃO' href='/(stacks)/request-quote' />
 					<ButtonLink
 						title='QUAIS SEGUROS TENHO?'
 						href='https://www2.susep.gov.br/safe/apolices/app'
@@ -200,7 +200,7 @@ function HomeScreen() {
 									/>
 								</Svg>
 							)}
-							href='/(useful-contacts)'
+							href='/(stacks)/(useful-contacts)'
 						/>
 					</View>
 				</View>

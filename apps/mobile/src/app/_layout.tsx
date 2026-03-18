@@ -17,7 +17,8 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 SplashScreen.preventAutoHideAsync();
 
 SplashScreen.setOptions({
-	fade: false,
+	fade: true,
+	duration: 500,
 });
 
 export const unstable_settings = {

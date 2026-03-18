@@ -31,7 +31,7 @@ import {
 } from '@segwise/core/masks';
 import { SchemaQuoteSimpleRegister } from '@segwise/core/schemas';
 import type { QuoteSimpleRegister } from '@segwise/core/types';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Fragment, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -88,6 +88,7 @@ function RequestQuote() {
 
 	const searchParams = useLocalSearchParams();
 
+	const iHaveInsurance = !!searchParams['i-have-insurance'];
 	const firstInit = !!searchParams['first-init'];
 	const storeFirstQuote = store.getBoolean('first-quote');
 
@@ -134,6 +135,13 @@ function RequestQuote() {
 			bottomOffset={bottom + 62}
 			showsVerticalScrollIndicator={false}
 		>
+			{(iHaveInsurance || !storeFirstQuote) && (
+				<Stack.Screen
+					options={{
+						title: 'Inclua seus Dados',
+					}}
+				/>
+			)}
 			<View className='pt-4 pb-6 px-4 gap-6'>
 				<View className='gap-y-5'>
 					<View className='gap-y-2'>
@@ -625,10 +633,10 @@ function RequestQuote() {
 				>
 					<Text className='text-base text-white font-semibold'>
 						{isPending
-							? !storeFirstQuote
+							? iHaveInsurance || !storeFirstQuote
 								? 'INCLUINDO DADOS'
 								: 'ENVIANDO SOLICITAÇÃO'
-							: !storeFirstQuote
+							: iHaveInsurance || !storeFirstQuote
 								? 'INCLUIR DADOS'
 								: 'ENVIAR SOLICITAÇÃO'}
 					</Text>
@@ -725,12 +733,12 @@ function RequestQuote() {
 									if (firstInit) {
 										replace('/(stacks)/home');
 
-										push('/(stacks)/insurances');
+										push('/(stacks)/(insurances)');
 
 										return;
 									}
 
-									replace('/(stacks)/insurances');
+									replace('/(stacks)/(insurances)');
 								}}
 							>
 								<Text

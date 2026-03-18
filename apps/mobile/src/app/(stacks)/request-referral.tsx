@@ -10,7 +10,7 @@ import type { ProducerReferral } from '@segwise/core/types';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -122,8 +122,9 @@ function RequestReferralScreen() {
 								accessible={false}
 								className='text-white text-xl font-semibold'
 							>
-								INSERIR CÓDIGO
+								{!isPending ? 'ENVIAR' : 'ENVIANDO'}
 							</Text>
+							{isPending && <ActivityIndicator color='#FFFFFF' />}
 						</Button>
 					</View>
 				</View>

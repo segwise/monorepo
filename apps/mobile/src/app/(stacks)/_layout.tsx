@@ -8,7 +8,6 @@ export const unstable_settings = {
 
 function StackLayout() {
 	const isReferral = !!store.getString('referral');
-	const storeFirstQuote = store.getBoolean('first-quote');
 
 	return (
 		<Stack
@@ -34,9 +33,15 @@ function StackLayout() {
 				}}
 			/>
 			<Stack.Screen
+				name='(insurances)'
+				options={{
+					headerShown: false,
+				}}
+			/>
+			<Stack.Screen
 				name='request-quote'
 				options={{
-					title: !storeFirstQuote ? 'Inclua seus Dados' : 'Faça sua Cotação',
+					title: 'Faça sua Cotação',
 				}}
 			/>
 			<Stack.Screen
