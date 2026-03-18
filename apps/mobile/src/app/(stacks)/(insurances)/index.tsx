@@ -36,7 +36,7 @@ function InsurancesScreen() {
 					accessible={false}
 					className='text-center text-xl font-bold leading-none -mb-2'
 				>
-					SOU CLIENTE DA SEGWISE
+					SOU CLIENTE DA CORRETORA
 				</Text>
 				<Input label='CPF' placeholder='000.000.000-00' />
 				<Input label='DATA DE NASCIMENTO' placeholder='00/00/0000' />

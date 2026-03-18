@@ -7,6 +7,7 @@ function UsefulContactsScreen() {
 		<View className='p-4 flex-row flex-wrap gap-2'>
 			<View className='flex-1 min-w-[28%]'>
 				<ButtonGrid
+					borderLight
 					title='Seguradoras'
 					icon={({ width, height, className, style }) => (
 						<Svg
@@ -45,6 +46,7 @@ function UsefulContactsScreen() {
 			</View>
 			<View className='flex-1 min-w-[28%]'>
 				<ButtonGrid
+					borderLight
 					title='Emergência'
 					icon={({ width, height, className, style }) => (
 						<Svg

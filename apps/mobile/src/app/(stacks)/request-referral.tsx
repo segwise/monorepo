@@ -9,8 +9,9 @@ import { SchemaProducerReferral } from '@segwise/core/schemas';
 import type { ProducerReferral } from '@segwise/core/types';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { Controller, useForm } from 'react-hook-form';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -32,6 +33,8 @@ function RequestReferralScreen() {
 	});
 
 	function onSubmit(props: ProducerReferral) {
+		Keyboard.dismiss();
+
 		mutate(props, {
 			onSuccess(_, { referral }) {
 				store.set('referral', referral);
@@ -48,6 +51,7 @@ function RequestReferralScreen() {
 
 	return (
 		<KeyboardAwareScrollView
+			keyboardShouldPersistTaps='handled'
 			bottomOffset={bottom + 62}
 			showsVerticalScrollIndicator={false}
 		>
@@ -120,10 +124,20 @@ function RequestReferralScreen() {
 							<Text
 								allowFontScaling={false}
 								accessible={false}
-								className='text-white text-xl font-semibold'
+								className='text-white text-lg font-semibold'
 							>
-								{!isPending ? 'ENVIAR' : 'ENVIANDO'}
+								{!isPending ? 'APROVEITE OS BENEFÍCIOS' : 'ENVIANDO'}
 							</Text>
+							{!isPending && (
+								<SymbolView
+									name={{
+										ios: 'link',
+										android: 'link',
+									}}
+									size={20}
+									tintColor='#FFFFFF'
+								/>
+							)}
 							{isPending && <ActivityIndicator color='#FFFFFF' />}
 						</Button>
 					</View>

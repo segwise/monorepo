@@ -105,14 +105,14 @@ function RequestQuote() {
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaQuoteSimpleRegister),
 		defaultValues: {
-			type: 'car',
+			modality: 'car',
 			vehicleWithLicensePlate: true,
 		},
 	});
 
 	const vehicleWithLicensePlate = watch('vehicleWithLicensePlate');
 
-	const isRenewal = watch('renewal');
+	const isRenewal = watch('type.value') === 'renewal';
 
 	function onSubmit(props: QuoteSimpleRegister) {
 		mutate(props, {
@@ -432,7 +432,7 @@ function RequestQuote() {
 											return;
 										}
 
-										const { invalid, isDirty } = getFieldState('renewal');
+										const { invalid, isDirty } = getFieldState('type.value');
 
 										if (!isDirty || invalid) {
 											selectTriggerRefType.current?.open();
@@ -448,7 +448,7 @@ function RequestQuote() {
 					<Separator />
 					<Controller
 						control={control}
-						name='renewal'
+						name='type'
 						render={({ field }) => (
 							// @ts-expect-error
 							<Select
@@ -483,12 +483,12 @@ function RequestQuote() {
 								<SelectContent style={{ width: width - 32 }}>
 									<SelectItem value='new' label='SEGURO NOVO' />
 									<SelectItem value='renewal' label='RENOVAÇÃO' />
+									<SelectItem value='association' label='ASSOCIAÇÃO' />
 								</SelectContent>
 							</Select>
 						)}
 					/>
-					{/* @ts-expect-error */}
-					{isRenewal?.value === 'renewal' && (
+					{isRenewal && (
 						<Fragment>
 							<Controller
 								control={control}

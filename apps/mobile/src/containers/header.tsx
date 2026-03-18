@@ -59,7 +59,9 @@ function Header({
 						/>
 					</TouchableOpacity>
 				) : (
-					<View className={cn('size-6', width <= 400 && 'size-8')} />
+					showReturn && (
+						<View className={cn('size-6', width <= 400 && 'size-8')} />
+					)
 				)}
 				<Image
 					source={LOGO}
