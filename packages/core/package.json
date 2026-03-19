@@ -1,6 +1,6 @@
 {
   "name": "@segwise/core",
-  "version": "1.1.78",
+  "version": "1.1.79",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "module": "./dist/index.js",
