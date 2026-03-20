@@ -1,6 +1,5 @@
 import CAR from '@/assets/images/car-insurances.png';
 import { Input, InputError } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/toast';
 import { useSafesRegistration } from '@/libraries/hooks/api/safe';
 import { storage } from '@/libraries/storage';
@@ -39,18 +38,20 @@ function InsurancesScreen() {
 
 	function onSubmit(props: SafeRegistration) {
 		mutate(props, {
-			async onSuccess() {
-				const keyStorage = 'filters:insurances:registrations';
+			async onSuccess(data) {
+				const keyStorage = 'filters:insurances:ids';
 
-				const myFiltersRegistrationResponse = storage.getString(keyStorage);
+				const myFiltersIdsResponse = storage.getString(keyStorage);
 
-				const myFiltersRegistration = myFiltersRegistrationResponse
-					? (JSON.parse(myFiltersRegistrationResponse) as Array<string>)
+				const myFiltersIds = myFiltersIdsResponse
+					? (JSON.parse(myFiltersIdsResponse) as Array<string>)
 					: [];
 
-				myFiltersRegistration.push(props.registration);
+				for (const id of data.data.flatMap((props) => props.id)) {
+					myFiltersIds.push(id);
+				}
 
-				storage.set(keyStorage, JSON.stringify(myFiltersRegistration));
+				storage.set(keyStorage, JSON.stringify(myFiltersIds));
 
 				await queryClient.refetchQueries({
 					queryKey: ['safes'],
@@ -74,7 +75,42 @@ function InsurancesScreen() {
 			showsVerticalScrollIndicator={false}
 			keyboardShouldPersistTaps='handled'
 		>
-			<View className='w-full h-[20rem] overflow-hidden -ml-3'>
+			<View className='gap-y-6 mx-4 mt-6 mb-4'>
+				<View>
+					<Text
+						allowFontScaling={false}
+						accessible={false}
+						className='text-base font-medium leading-none mb-2 text-center'
+					>
+						Cliente de outra seguradora ou banco acesse:
+					</Text>
+					<TouchableOpacity
+						className='py-2 bg-transparent border border-primary rounded-sm'
+						onPress={() =>
+							push('/(stacks)/request-quote?i-have-insurance=true')
+						}
+					>
+						<View className='flex-row text-center items-center justify-center'>
+							<Text
+								allowFontScaling={false}
+								accessible={false}
+								className='text-base font-bold leading-none mr-2'
+							>
+								JÁ TENHO SEGURO
+							</Text>
+							<SymbolView
+								name={{
+									ios: 'arrow.right',
+									android: 'arrow_right',
+								}}
+								size={20}
+								tintColor='#232323'
+							/>
+						</View>
+					</TouchableOpacity>
+				</View>
+			</View>
+			<View className='w-full h-[15rem] overflow-hidden -ml-3'>
 				<Image
 					source={CAR}
 					style={{
@@ -82,7 +118,7 @@ function InsurancesScreen() {
 						height: '100%',
 						transform: [
 							{
-								scale: 1.5,
+								scale: 1.6,
 							},
 						],
 					}}
@@ -147,8 +183,8 @@ function InsurancesScreen() {
 							accessible={false}
 							className='text-xl text-white font-bold leading-none mr-2'
 						>
-							{!isPending && 'PESQUISAR'}
-							{isPending && 'PESQUISANDO'}
+							{!isPending && 'BUSCAR'}
+							{isPending && 'BUSCANDO'}
 						</Text>
 						{!isPending && (
 							<SymbolView
@@ -163,44 +199,6 @@ function InsurancesScreen() {
 						{isPending && <ActivityIndicator size={24} color='#FFFFFF' />}
 					</View>
 				</TouchableOpacity>
-			</View>
-			<View className='mx-4 my-6'>
-				<Separator />
-			</View>
-			<View className='gap-y-6 mx-4'>
-				<View>
-					<Text
-						allowFontScaling={false}
-						accessible={false}
-						className='text-base font-medium leading-none mb-2 text-center'
-					>
-						Cliente de outra seguradora ou banco acesse:
-					</Text>
-					<TouchableOpacity
-						className='py-2 bg-transparent border border-primary rounded-sm'
-						onPress={() =>
-							push('/(stacks)/request-quote?i-have-insurance=true')
-						}
-					>
-						<View className='flex-row text-center items-center justify-center'>
-							<Text
-								allowFontScaling={false}
-								accessible={false}
-								className='text-base font-bold leading-none mr-2'
-							>
-								JÁ TENHO SEGURO
-							</Text>
-							<SymbolView
-								name={{
-									ios: 'arrow.right',
-									android: 'arrow_right',
-								}}
-								size={20}
-								tintColor='#232323'
-							/>
-						</View>
-					</TouchableOpacity>
-				</View>
 			</View>
 		</KeyboardAwareScrollView>
 	);

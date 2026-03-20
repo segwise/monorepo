@@ -9,16 +9,12 @@ import { format } from 'date-fns';
 import { XiorError } from 'xior';
 
 async function safesListining({ signal }: { signal: AbortSignal }) {
-	const myFiltersRegistration = storage.getString(
-		'filters:insurances:registrations',
-	);
-
 	const myFiltersIds = storage.getString('filters:insurances:ids');
 	const myFiltersIdsExcludes = storage.getString(
 		'filters:insurances:ids:excludes',
 	);
 
-	if (!myFiltersRegistration && !myFiltersIds) {
+	if (!myFiltersIds) {
 		return {
 			data: [],
 		};
@@ -31,14 +27,6 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 
 		for (const item of items) {
 			url.searchParams.append('ids', item);
-		}
-	}
-
-	if (myFiltersRegistration) {
-		const items = JSON.parse(myFiltersRegistration);
-
-		for (const item of items) {
-			url.searchParams.append('registrations', item);
 		}
 	}
 
