@@ -8,20 +8,28 @@ function serializer(
 	}>,
 ): QuoteSimple {
 	if (!props.temporaryInsured) {
-		throw new Error(`Segurado não registrado na cotação: ${props.id}`);
+		throw new Error(`Segurado não registrado na cotação`);
 	}
 
 	return {
 		id: props.id,
-		type: props.type,
+		modality: props.modality,
 		status: props.status,
-		renewal: props.renewal,
+		...(props.renewal && {
+			renewal: props.renewal,
+		}),
+		...(props.association && {
+			association: props.association,
+		}),
 		insured: {
 			name: props.temporaryInsured.name,
 			contact: {
 				phone: props.temporaryInsured.phone,
 			},
 		},
+		...(props.insuranceCompanyId && {
+			insuranceCompany: props.insuranceCompanyId,
+		}),
 		...(!!props.quoteVehicle && {
 			vehicle: {
 				plate: props.quoteVehicle.vehicle?.plate,

@@ -4,6 +4,7 @@ import { registerRoutersServicesInsuranceCompanies } from '@/routers/services/in
 import { registerRoutersServicesProducers } from '@/routers/services/producers';
 import { registerRoutersServicesProfessions } from '@/routers/services/professions';
 import { registerRoutersServicesQuotes } from '@/routers/services/quotes';
+import { registerRoutersServicesSafes } from '@/routers/services/safes';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
 
 function registerRoutersServices(server: Server) {
@@ -14,6 +15,7 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesProfessions(base);
 	registerRoutersServicesVehicles(base);
 	registerRoutersServicesQuotes(base);
+	registerRoutersServicesSafes(base);
 	registerRoutersServicesInsuranceCompanies(base);
 }
 

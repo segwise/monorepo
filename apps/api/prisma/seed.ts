@@ -1,4 +1,3 @@
-import { generateReferral } from 'functions/generate-referral';
 import xior from 'xior';
 import { Role } from '@/generated/prisma/enums';
 import { auth } from '@/services/auth';
@@ -34,7 +33,8 @@ async function seed() {
 				role: Role.admin,
 				data: {
 					emailVerified: true,
-					referral: generateReferral(),
+					// referral: generateReferral(),
+					referral: 'admin123',
 				},
 			},
 		});

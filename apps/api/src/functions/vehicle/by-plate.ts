@@ -103,6 +103,7 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 					],
 				},
 				select: {
+					id: true,
 					plate: true,
 					plateAlternative: true,
 					model: true,
@@ -123,6 +124,7 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 
 			if (vehicle) {
 				return {
+					id: vehicle.id,
 					plate: vehicle.plate,
 					plateAlternative: vehicle.plateAlternative,
 					model: vehicle.model,
@@ -219,6 +221,7 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 					}),
 				},
 				select: {
+					id: true,
 					plate: true,
 					plateAlternative: true,
 					model: true,
@@ -238,6 +241,7 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 			});
 
 			return {
+				id: response.id,
 				plate: response.plate,
 				plateAlternative: response.plateAlternative,
 				model: response.model,

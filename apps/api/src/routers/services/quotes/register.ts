@@ -1,9 +1,10 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaQuoteRegister, SchemaQuoteSimpleRegister } from '@segwise/core';
-import { differenceInYears } from 'date-fns';
+import { differenceInYears, endOfDay, endOfMonth } from 'date-fns';
+import z from 'zod';
 import type { Server } from '@/@types/server';
 import { vehicleByPlate } from '@/functions/vehicle/by-plate';
-import { Prisma } from '@/generated/prisma/browser';
+import { ModalityInsurance } from '@/generated/prisma/browser';
 
 function registerRoutersServicesQuotesRegister(server: Server) {
 	server.post('/', zValidator('json', SchemaQuoteRegister), async (ctx) => {
@@ -113,20 +114,36 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 	server.post(
 		'/simple',
 		zValidator('json', SchemaQuoteSimpleRegister),
+		zValidator(
+			'query',
+			z.object({
+				asResponse: z
+					.boolean()
+					.or(
+						z.literal(['true', 'false']).transform((value) => value === 'true'),
+					)
+					.nullish(),
+			}),
+		),
 		async (ctx) => {
+			const { asResponse } = ctx.req.valid('query');
+
+			const {
+				modality,
+				renewal,
+				association,
+				insured,
+				plate,
+				usage,
+				postalCode,
+				insuranceCompany,
+				expiration,
+				franchise,
+			} = ctx.req.valid('json');
+
 			try {
-				const {
-					modality,
-					renewal,
-					association,
-					insured,
-					plate,
-					usage,
-					postalCode,
-					insuranceCompany,
-					expiration,
-					franchise,
-				} = ctx.req.valid('json');
+				let quote = null;
+				let safe = null;
 
 				await ctx.database.$transaction(async (transaction) => {
 					const temporaryInsured = await transaction.temporaryInsured.create({
@@ -145,7 +162,7 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 						throw new Error('Falha ao consultar dados do veículo');
 					}
 
-					await transaction.quote.create({
+					const response = await transaction.quote.create({
 						data: {
 							modality,
 							...(!!renewal && {
@@ -161,11 +178,11 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 							},
 							quoteVehicle: {
 								create: {
-									...(vehicle && {
+									...(!!vehicle && {
 										vehicle: {
 											connectOrCreate: {
 												where: {
-													plate: vehicle.plate,
+													id: vehicle.id,
 												},
 												create: {
 													plate: vehicle.plate,
@@ -202,17 +219,98 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 							...(expiration && {
 								expiration,
 							}),
-							...(franchise && {
-								franchise: new Prisma.Decimal(franchise).toDecimalPlaces(2),
-							}),
+							franchise,
 						},
+						select: {
+							id: true,
+						},
+						relationLoadStrategy: 'join',
 					});
+
+					quote = response.id;
+
+					if (renewal) {
+						const response = await transaction.safe.create({
+							data: {
+								isExternal: true,
+								temporaryInsured: {
+									connect: {
+										id: temporaryInsured.id,
+									},
+								},
+								modality: ModalityInsurance.car,
+								...(!!insuranceCompany && {
+									insuranceCompany: {
+										connect: {
+											id: insuranceCompany,
+										},
+									},
+								}),
+								safeVehicle: {
+									create: {
+										...(!!vehicle && {
+											vehicle: {
+												connectOrCreate: {
+													where: {
+														id: vehicle.id,
+													},
+													create: {
+														plate: vehicle.plate,
+														plateAlternative: vehicle.plate,
+														manufacturer: {
+															connect: {
+																id: vehicle.manufacturer.id,
+															},
+														},
+														model: vehicle.model,
+														modelYear: vehicle.modelYear,
+														exchange: vehicle.exchange,
+														chassi: vehicle.chassi,
+													},
+												},
+											},
+										}),
+										...(!vehicle && {
+											vehicleWithoutPlate: {
+												create: {},
+											},
+										}),
+										usage,
+										overnightPostalCode: postalCode,
+									},
+								},
+								...(expiration
+									? {
+											expiration: endOfDay(expiration),
+										}
+									: {
+											expiration: endOfMonth(new Date()),
+										}),
+								franchise,
+							},
+							select: {
+								id: true,
+							},
+							relationLoadStrategy: 'join',
+						});
+
+						safe = response.id;
+					}
 				});
 
 				return ctx.json(
-					{
-						message: 'Cadastrado com sucesso',
-					},
+					!asResponse
+						? {
+								message: 'Cadastrado com sucesso',
+							}
+						: !safe
+							? {
+									quote,
+								}
+							: {
+									quote,
+									safe,
+								},
 					200,
 				);
 			} catch (error) {

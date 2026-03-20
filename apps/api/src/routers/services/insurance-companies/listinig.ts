@@ -1,5 +1,6 @@
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
+import type { InsuranceCompanyWhereUniqueInput } from '@/generated/prisma/models';
 import { selectPrisma as selectPrismaDetails } from '@/libraries/database/adapters/insurance-company/details';
 import { selectPrisma as selectPrismaSimple } from '@/libraries/database/adapters/insurance-company/simple';
 import { serializer as serializerDetails } from '@/libraries/database/serializers/insurance-company/details';
@@ -9,10 +10,12 @@ function registerRoutersServicesInsuranceCompaniesListining(server: Server) {
 	server.get(`/:id{${z.regexes.uuid7.source.slice(1)}}`, async (ctx) => {
 		const id = ctx.req.param('id');
 
+		const where: InsuranceCompanyWhereUniqueInput = {
+			id,
+		};
+
 		const insuranceCompany = await ctx.database.insuranceCompany.findUnique({
-			where: {
-				id,
-			},
+			where,
 			select: selectPrismaDetails,
 		});
 

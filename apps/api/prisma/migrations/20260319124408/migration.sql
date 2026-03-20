@@ -8,6 +8,9 @@ CREATE TYPE "ModalityInsurance" AS ENUM ('car');
 CREATE TYPE "StatusQuote" AS ENUM ('waiting', 'quoting', 'quoted', 'sent', 'recused', 'confirmed');
 
 -- CreateEnum
+CREATE TYPE "StatusSafe" AS ENUM ('waiting', 'quoting', 'quoted', 'sent', 'recused', 'confirmed');
+
+-- CreateEnum
 CREATE TYPE "MaritalStatus" AS ENUM ('single', 'married', 'divorced', 'widowed', 'separated', 'common_law_marriage');
 
 -- CreateEnum
@@ -122,36 +125,6 @@ CREATE TABLE "insureds" (
 );
 
 -- CreateTable
-CREATE TABLE "vehicles" (
-    "id" UUID NOT NULL,
-    "plate" VARCHAR(7) NOT NULL,
-    "plate_alternative" VARCHAR(7) NOT NULL,
-    "manufacturer_id" UUID NOT NULL,
-    "model" TEXT NOT NULL,
-    "model_year" INTEGER NOT NULL,
-    "exchange" "VehicleExchange",
-    "chassi" TEXT,
-    "image" TEXT,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
-
-    CONSTRAINT "vehicles_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "vehicles_without_plate" (
-    "id" UUID NOT NULL,
-    "manufacturer_id" UUID,
-    "model" TEXT,
-    "model_year" INTEGER,
-    "exchange" "VehicleExchange",
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
-
-    CONSTRAINT "vehicles_without_plate_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "quotes" (
     "id" UUID NOT NULL,
     "temporary_insured_id" UUID,
@@ -170,6 +143,25 @@ CREATE TABLE "quotes" (
     "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "quotes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "safes" (
+    "id" UUID NOT NULL,
+    "temporary_insured_id" UUID,
+    "insured_id" UUID NOT NULL,
+    "modality" "ModalityInsurance" NOT NULL,
+    "insurance_company_id" UUID NOT NULL,
+    "is_external" BOOLEAN,
+    "expiration" DATE NOT NULL,
+    "franchise" DECIMAL(10,2),
+    "status" "StatusSafe" NOT NULL DEFAULT 'waiting',
+    "status_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "status_message" TEXT,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "safes_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -198,6 +190,50 @@ CREATE TABLE "quote_vehicles" (
     "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "quote_vehicles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "safe_vehicles" (
+    "id" UUID NOT NULL,
+    "safe_id" UUID NOT NULL,
+    "vehicle_id" UUID NOT NULL,
+    "vehicle_without_plate_id" UUID,
+    "usage" "VehicleUsage" NOT NULL,
+    "overnight_postal_code" VARCHAR(8) NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "safe_vehicles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "vehicles" (
+    "id" UUID NOT NULL,
+    "plate" VARCHAR(7) NOT NULL,
+    "plate_alternative" VARCHAR(7) NOT NULL,
+    "manufacturer_id" UUID NOT NULL,
+    "model" TEXT NOT NULL,
+    "model_year" INTEGER NOT NULL,
+    "exchange" "VehicleExchange",
+    "chassi" TEXT,
+    "image" TEXT,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "vehicles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "vehicles_without_plate" (
+    "id" UUID NOT NULL,
+    "manufacturer_id" UUID,
+    "model" TEXT,
+    "model_year" INTEGER,
+    "exchange" "VehicleExchange",
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "vehicles_without_plate_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -263,6 +299,18 @@ CREATE UNIQUE INDEX "sessions_token_key" ON "sessions"("token");
 CREATE UNIQUE INDEX "accounts_id_key" ON "accounts"("id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "quote_vehicles_vehicle_without_plate_id_key" ON "quote_vehicles"("vehicle_without_plate_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "quote_vehicles_quote_id_key" ON "quote_vehicles"("quote_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "safe_vehicles_vehicle_without_plate_id_key" ON "safe_vehicles"("vehicle_without_plate_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "safe_vehicles_safe_id_key" ON "safe_vehicles"("safe_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "vehicles_plate_key" ON "vehicles"("plate");
 
 -- CreateIndex
@@ -270,12 +318,6 @@ CREATE UNIQUE INDEX "vehicles_plate_alternative_key" ON "vehicles"("plate_altern
 
 -- CreateIndex
 CREATE UNIQUE INDEX "vehicles_plate_plate_alternative_key" ON "vehicles"("plate", "plate_alternative");
-
--- CreateIndex
-CREATE UNIQUE INDEX "quote_vehicles_vehicle_without_plate_id_key" ON "quote_vehicles"("vehicle_without_plate_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "quote_vehicles_quote_id_key" ON "quote_vehicles"("quote_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "insurance_companies_cnpj_key" ON "insurance_companies"("cnpj");
@@ -299,28 +341,46 @@ ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "vehicles" ADD CONSTRAINT "vehicles_manufacturer_id_fkey" FOREIGN KEY ("manufacturer_id") REFERENCES "manufacturer_vehicles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "vehicles_without_plate" ADD CONSTRAINT "vehicles_without_plate_manufacturer_id_fkey" FOREIGN KEY ("manufacturer_id") REFERENCES "manufacturer_vehicles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "quotes" ADD CONSTRAINT "temporary_insured" FOREIGN KEY ("temporary_insured_id") REFERENCES "temporary_insureds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "quotes" ADD CONSTRAINT "quotes_insured_id_fkey" FOREIGN KEY ("insured_id") REFERENCES "insureds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "quotes" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "quotes" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "safes" ADD CONSTRAINT "temporary_insured" FOREIGN KEY ("temporary_insured_id") REFERENCES "temporary_insureds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "safes" ADD CONSTRAINT "safes_insured_id_fkey" FOREIGN KEY ("insured_id") REFERENCES "insureds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "safes" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "quote_vehicles" ADD CONSTRAINT "quote_vehicles_quote_id_fkey" FOREIGN KEY ("quote_id") REFERENCES "quotes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "quote_vehicles" ADD CONSTRAINT "quote_vehicles_vehicle_id_fkey" FOREIGN KEY ("vehicle_id") REFERENCES "vehicles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "quote_vehicles" ADD CONSTRAINT "quote_vehicles_vehicle_id_fkey" FOREIGN KEY ("vehicle_id") REFERENCES "vehicles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "quote_vehicles" ADD CONSTRAINT "vehicle_without_plate" FOREIGN KEY ("vehicle_without_plate_id") REFERENCES "vehicles_without_plate"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "quote_vehicles" ADD CONSTRAINT "vehicle_without_plate" FOREIGN KEY ("vehicle_without_plate_id") REFERENCES "vehicles_without_plate"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "safe_vehicles" ADD CONSTRAINT "safe_vehicles_safe_id_fkey" FOREIGN KEY ("safe_id") REFERENCES "safes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "safe_vehicles" ADD CONSTRAINT "safe_vehicles_vehicle_id_fkey" FOREIGN KEY ("vehicle_id") REFERENCES "vehicles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "safe_vehicles" ADD CONSTRAINT "vehicle_without_plate" FOREIGN KEY ("vehicle_without_plate_id") REFERENCES "vehicles_without_plate"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "vehicles" ADD CONSTRAINT "vehicles_manufacturer_id_fkey" FOREIGN KEY ("manufacturer_id") REFERENCES "manufacturer_vehicles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "vehicles_without_plate" ADD CONSTRAINT "vehicles_without_plate_manufacturer_id_fkey" FOREIGN KEY ("manufacturer_id") REFERENCES "manufacturer_vehicles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "insurance_companies_categories_contacts" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;

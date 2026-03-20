@@ -2,15 +2,17 @@ import type { Prisma } from '@/generated/prisma/client';
 
 const selectPrisma = {
 	id: true,
-	type: true,
 	status: true,
+	modality: true,
 	renewal: true,
+	association: true,
 	temporaryInsured: {
 		select: {
 			name: true,
 			phone: true,
 		},
 	},
+	insuranceCompanyId: true,
 	quoteVehicle: {
 		select: {
 			vehicle: {

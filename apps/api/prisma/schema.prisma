@@ -114,6 +114,7 @@ model TemporaryInsured {
   profession        String?
 
   quotes Quote[] @relation("quote_to_temporary_insured")
+  safes  Safe[]  @relation("safe_to_temporary_insured")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -123,6 +124,17 @@ model TemporaryInsured {
 
 model Insured {
   id String @id @default(uuid(7)) @db.Uuid
+
+  name  String
+  phone String @db.VarChar(13)
+
+  cpf           String        @db.VarChar(11)
+  birth         DateTime      @db.Date
+  age           Int
+  maritalStatus MaritalStatus @map("marital_status")
+
+  qualificationTime Int?    @map("qualification_time")
+  profession        String?
 
   quotes Quote[] @relation("insured_to_quote")
   safes  Safe[]  @relation("insured_to_safe")
@@ -169,21 +181,23 @@ model Quote {
 model Safe {
   id String @id @default(uuid(7)) @db.Uuid
 
-  insuredId String  @map("insured_id") @db.Uuid
-  insured   Insured @relation("insured_to_safe", fields: [insuredId], references: [id], onDelete: Restrict)
+  temporaryInsuredId String?           @map("temporary_insured_id") @db.Uuid
+  temporaryInsured   TemporaryInsured? @relation("safe_to_temporary_insured", fields: [temporaryInsuredId], references: [id], onDelete: Restrict, map: "temporary_insured")
+
+  insuredId String?  @map("insured_id") @db.Uuid
+  insured   Insured? @relation("insured_to_safe", fields: [insuredId], references: [id], onDelete: Restrict)
 
   modality ModalityInsurance
 
-  insuranceCompanyId String           @map("insurance_company_id") @db.Uuid
-  insuranceCompany   InsuranceCompany @relation("insurance_company_to_safe", fields: [insuranceCompanyId], references: [id], onDelete: Restrict, map: "insurance_company")
+  insuranceCompanyId String?           @map("insurance_company_id") @db.Uuid
+  insuranceCompany   InsuranceCompany? @relation("insurance_company_to_safe", fields: [insuranceCompanyId], references: [id], onDelete: Restrict, map: "insurance_company")
+
+  isExternal Boolean? @map("is_external")
 
   expiration DateTime @db.Date
+  franchise  Decimal? @db.Decimal(10, 2)
 
   safeVehicle SafeVehicle? @relation("safe_to_safe_vehicle", map: "safe_vehicle")
-
-  status        StatusSafe @default(waiting)
-  statusAt      DateTime   @default(now()) @map("status_at") @db.Timestamptz
-  statusMessage String?    @map("status_message")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -239,11 +253,15 @@ model SafeVehicle {
   safeId String @map("safe_id") @db.Uuid
   safe   Safe   @relation("safe_to_safe_vehicle", fields: [safeId], references: [id], onDelete: Cascade)
 
-  vehicleId String  @map("vehicle_id") @db.Uuid
-  vehicle   Vehicle @relation("safe_vehicle_to_vehicle", fields: [vehicleId], references: [id], onDelete: Restrict)
+  vehicleId String?  @map("vehicle_id") @db.Uuid
+  vehicle   Vehicle? @relation("safe_vehicle_to_vehicle", fields: [vehicleId], references: [id], onDelete: Restrict)
 
   vehicleWithoutPlateId String?              @map("vehicle_without_plate_id") @db.Uuid
   vehicleWithoutPlate   VehicleWithoutPlate? @relation("safe_vehicle_to_vehicle_without_plate", fields: [vehicleWithoutPlateId], references: [id], map: "vehicle_without_plate", onDelete: Restrict)
+
+  usage VehicleUsage
+
+  overnightPostalCode String @map("overnight_postal_code") @db.VarChar(8)
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -395,15 +413,6 @@ enum ModalityInsurance {
 }
 
 enum StatusQuote {
-  waiting
-  quoting
-  quoted
-  sent
-  recused
-  confirmed
-}
-
-enum StatusSafe {
   waiting
   quoting
   quoted

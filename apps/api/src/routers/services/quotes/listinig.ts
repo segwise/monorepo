@@ -11,37 +11,15 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 		'/simple',
 		zValidator('query', SchemaSearchQueriesQuoteSimple),
 		async (ctx) => {
-			const { producer, name, limit, type, status, requestAt } =
-				ctx.req.valid('query');
+			const { limit } = ctx.req.valid('query');
 
 			const where: Prisma.QuoteWhereInput = {};
 
-			if (producer) {
-			}
-
-			if (type) {
-				where.type = type;
-			}
-
-			if (status) {
-				where.status = status;
-			}
-
-			if (name && where.temporaryInsured) {
-				if (!where.temporaryInsured) {
-					where.temporaryInsured = {};
-				}
-
-				where.temporaryInsured.name = name;
-			}
-
-			if (requestAt) {
-				where.requestAt = {};
-			}
-
 			const quotes = await ctx.database.quote.findMany({
 				where,
-				take: limit,
+				...(limit && {
+					take: limit,
+				}),
 				select: selectPrisma,
 				relationLoadStrategy: 'join',
 			});
@@ -51,9 +29,6 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 					data: quotes.map(serializer),
 					next: null,
 					previous: null,
-					pages: {
-						1: '',
-					},
 				} satisfies ResponseDataCursor<QuoteSimple>,
 				200,
 			);
