@@ -15,7 +15,7 @@
         "@rn-primitives/select": "^1.2.0",
         "@rn-primitives/separator": "^1.2.0",
         "@rn-primitives/slot": "^1.2.0",
-        "@segwise/core": "^1.1.90",
+        "@segwise/core": "^1.1.92",
         "@tanstack/query-async-storage-persister": "^5.90.27",
         "@tanstack/react-query": "^5.90.21",
         "@tanstack/react-query-persist-client": "^5.90.27",
@@ -503,7 +503,7 @@
 
     "@rn-primitives/types": ["@rn-primitives/types@1.2.0", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-web": "*" }, "optionalPeers": ["react-native", "react-native-web"] }, "sha512-b+6zKgdKVqAfaFPSfhwlQL0dnPQXPpW890m3eguC0VDI1eOsoEvUfVb6lmgH4bum9MmI0xymq4tOUI/fsKLoCQ=="],
 
-    "@segwise/core": ["@segwise/core@1.1.90", "https://npm.pkg.github.com/download/@segwise/core/1.1.90/4e2695562c72549671fe43c38d8594e4b249775d", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-9aTIyuO/uUJHGODbnFSbQKkfRarFb6ZwVDrZkPi9KGZX8xkaxreL0PwDcPypwcgPm8l44C4d/RwXQopd+ocbrQ=="],
+    "@segwise/core": ["@segwise/core@1.1.92", "https://npm.pkg.github.com/download/@segwise/core/1.1.92/8be7a4f64b86b37cbc41ebbdb2c6ddee05fbc9b2", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-8NPBetbLax7KtnqykrdKLI2i/cFkc77QYZ4RESmL/CW7YAQzWEdxng+UfgEu7c9G2FONKY8KMpcH8S6++dlY8Q=="],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.27.10", "", {}, "sha512-MTBk/3jGLNB2tVxv6uLlFh1iu64iYOQ2PbdOSK3NW8JZsmlaOh2q6sdtKowBhfw8QFLmYNzTW4/oK4uATIi6ZA=="],
 

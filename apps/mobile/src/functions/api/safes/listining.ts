@@ -6,7 +6,11 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 	const myFiltersRegistration = storage.getString(
 		'filters:insurances:registrations',
 	);
+
 	const myFiltersIds = storage.getString('filters:insurances:ids');
+	const myFiltersIdsExcludes = storage.getString(
+		'filters:insurances:ids:excludes',
+	);
 
 	if (!myFiltersRegistration && !myFiltersIds) {
 		return {
@@ -29,6 +33,14 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 
 		for (const item of items) {
 			url.searchParams.append('registrations', item);
+		}
+	}
+
+	if (myFiltersIdsExcludes) {
+		const items = JSON.parse(myFiltersIdsExcludes);
+
+		for (const item of items) {
+			url.searchParams.append('excludes', item);
 		}
 	}
 
