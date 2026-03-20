@@ -15,7 +15,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 		'/simple',
 		zValidator('query', SchemaSearchQueriesSafeSimple),
 		async (ctx) => {
-			const { ids, registrations, excludes, limit } = ctx.req.valid('query');
+			const { ids, excludes, limit } = ctx.req.valid('query');
 
 			const where: Prisma.SafeWhereInput = {
 				...(!!ids?.length && {
@@ -34,13 +34,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 							}),
 						},
 					}),
-				...(!!registrations?.length && {
-					insured: {
-						cpf: {
-							in: registrations,
-						},
-					},
-				}),
 			};
 
 			const safes = await ctx.database.safe.findMany({
