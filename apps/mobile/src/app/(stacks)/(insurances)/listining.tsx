@@ -239,7 +239,7 @@ function InsurancesListiningScreen() {
 								accessible={false}
 								className='text-sm text-white font-semibold mr-2 uppercase'
 							>
-								Pesquisar
+								Buscar
 							</Text>
 							<SymbolView
 								name={{

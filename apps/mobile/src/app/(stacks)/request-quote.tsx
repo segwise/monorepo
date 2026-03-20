@@ -31,6 +31,7 @@ import {
 	maskPostalCode,
 } from '@segwise/core/masks';
 import { SchemaQuoteSimpleRegister } from '@segwise/core/schemas';
+import { translateVehicleUsage } from '@segwise/core/translate';
 import type { QuoteSimpleRegister } from '@segwise/core/types';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
@@ -38,6 +39,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
 	ActivityIndicator,
+	Keyboard,
 	Text,
 	TouchableOpacity,
 	useWindowDimensions,
@@ -79,7 +81,7 @@ function RequestQuote() {
 	const selectTriggerRefInsuranceCompany = useRef<TriggerRef>(null);
 	const selectTriggerRefInsuranceAssociationCompany = useRef<TriggerRef>(null);
 
-	const { push, back, replace } = useRouter();
+	const { back, replace } = useRouter();
 
 	const { width } = useWindowDimensions();
 	const { bottom } = useSafeAreaInsets();
@@ -127,6 +129,8 @@ function RequestQuote() {
 	const isRenewal = type === 'renewal';
 
 	function onSubmit(props: QuoteSimpleRegister) {
+		Keyboard.dismiss();
+
 		mutate(props, {
 			async onSuccess(data, _variables, _mutate, ctx) {
 				storage.set('first-quote', true);
@@ -159,7 +163,15 @@ function RequestQuote() {
 					});
 				}
 
-				setOpenDialog(true);
+				if (props.renewal) {
+					setOpenDialog(true);
+				} else {
+					back();
+
+					toast.success(
+						'Aguarde até 24 horas para ter um retorno'.toUpperCase(),
+					);
+				}
 			},
 			onError(error) {
 				toast.error(error.message, {
@@ -322,6 +334,7 @@ function RequestQuote() {
 									{/* @ts-ignore */}
 									<Select
 										{...field}
+										onOpenChange={() => Keyboard.dismiss()}
 										onValueChange={(value) => {
 											field.onChange(value);
 
@@ -341,24 +354,46 @@ function RequestQuote() {
 										<SelectContent style={{ width: width - 32 }}>
 											<SelectItem
 												value='leisure_and_work'
-												label='LAZER E TRABALHO'
+												label={translateVehicleUsage(
+													'leisure_and_work',
+												).toUpperCase()}
 											/>
-											<SelectItem value='leisure' label='SOMENTE LAZER' />
+											<SelectItem
+												value='leisure'
+												label={translateVehicleUsage('leisure').toUpperCase()}
+											/>
 											<SelectItem
 												value='client_supplier_visits'
-												label='VISITA A CLIENTES'
+												label={translateVehicleUsage(
+													'client_supplier_visits',
+												).toUpperCase()}
 											/>
 											<SelectItem
 												value='app_based_transport'
-												label='TRANSPORTE POR APLICATIVO'
+												label={translateVehicleUsage(
+													'app_based_transport',
+												).toUpperCase()}
 											/>
-											<SelectItem value='taxi' label='TAXI' />
+											<SelectItem
+												value='taxi'
+												label={translateVehicleUsage('taxi').toUpperCase()}
+											/>
 											<SelectItem
 												value='public_transportation'
-												label='LOTAÇÃO'
+												label={translateVehicleUsage(
+													'public_transportation',
+												).toUpperCase()}
 											/>
-											<SelectItem value='delivieries' label='ENTREGAS' />
-											<SelectItem value='tourism' label='TURISMO' />
+											<SelectItem
+												value='delivieries'
+												label={translateVehicleUsage(
+													'delivieries',
+												).toUpperCase()}
+											/>
+											<SelectItem
+												value='tourism'
+												label={translateVehicleUsage('tourism').toUpperCase()}
+											/>
 										</SelectContent>
 									</Select>
 									{fieldState.error?.message && (
@@ -432,8 +467,8 @@ function RequestQuote() {
 										onChangeText={(value) =>
 											field.onChange(value.toUpperCase())
 										}
-										label='Nome Completo'
-										placeholder='Nome Completo'
+										label='Nome e Sobrenome'
+										placeholder='Nome e Sobrenome'
 										className='uppercase'
 										keyboardAppearance='dark'
 										autoCapitalize='characters'
@@ -519,6 +554,7 @@ function RequestQuote() {
 								// @ts-expect-error
 								<Select
 									{...field}
+									onOpenChange={() => Keyboard.dismiss()}
 									onValueChange={(value) => {
 										field.onChange(value);
 
@@ -574,6 +610,7 @@ function RequestQuote() {
 												{...field}
 												// @ts-expect-error
 												value={field.value || undefined}
+												onOpenChange={() => Keyboard.dismiss()}
 												onValueChange={(value) => {
 													field.onChange(value);
 
@@ -620,7 +657,7 @@ function RequestQuote() {
 												onChangeText={(value) =>
 													field.onChange(maskDateString(value))
 												}
-												label='Vigência'
+												label='Final da Vigência'
 												placeholder='00/00/0000'
 												keyboardAppearance='dark'
 												maxLength={10}
@@ -745,7 +782,7 @@ function RequestQuote() {
 				<Dialog open={openDialog} onOpenChange={setOpenDialog}>
 					<DialogContent showClose={false}>
 						<DialogHeader className='gap-1'>
-							<DialogTitle className='text-xl text-center font-bold leading-none'>
+							<DialogTitle className='text-xl text-center font-bold leading-none uppercase'>
 								Cotação enviada com sucesso!
 							</DialogTitle>
 							<DialogDescription className='text-sm font-semibold text-center leading-none px-6 text-gray-500'>
@@ -790,7 +827,7 @@ function RequestQuote() {
 							<View className='mt-4 gap-y-2'>
 								<Button
 									variant='outline'
-									className='border-primary'
+									className='border-primary h-fit'
 									onPress={() => {
 										if (firstInit) {
 											replace('/(stacks)/home');
@@ -804,31 +841,17 @@ function RequestQuote() {
 									<Text
 										allowFontScaling={false}
 										accessible={false}
-										className='text-sm leading-tight font-semibold text-primary'
+										className='text-sm leading-tight font-semibold text-primary text-center'
 									>
-										FECHAR
-									</Text>
-								</Button>
-								<Button
-									className='border-primary'
-									onPress={() => {
-										if (firstInit) {
-											replace('/(stacks)/home');
-
-											push('/(stacks)/(insurances)/listining');
-
-											return;
-										}
-
-										replace('/(stacks)/(insurances)/listining');
-									}}
-								>
-									<Text
-										allowFontScaling={false}
-										accessible={false}
-										className='text-sm leading-tight font-semibold text-white'
-									>
-										VER MEUS SEGUROS
+										FECHAR E CLICAR EM
+										{'\n'}
+										<Text
+											allowFontScaling={false}
+											accessible={false}
+											className='font-extrabold'
+										>
+											MEUS SEGUROS
+										</Text>
 									</Text>
 								</Button>
 							</View>

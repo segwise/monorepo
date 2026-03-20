@@ -16,6 +16,7 @@ async function submitQuoteSimple(props: QuoteSimpleRegister) {
 		return data;
 	} catch (error) {
 		if (error instanceof XiorError) {
+			console.log(error.response);
 			throw new Error(error.response?.data.message || 'Falha ao registrar');
 		}
 

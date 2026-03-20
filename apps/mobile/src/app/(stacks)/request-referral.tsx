@@ -22,7 +22,11 @@ function RequestReferralScreen() {
 
 	const { mutate, isPending } = useReferral();
 
-	const { control, handleSubmit } = useForm({
+	const {
+		control,
+		handleSubmit,
+		formState: { isDirty, isValid },
+	} = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
 		reValidateMode: 'onChange',
@@ -120,7 +124,7 @@ function RequestReferralScreen() {
 							size='lg'
 							className='w-full mt-4 h-14'
 							onPress={handleSubmit(onSubmit)}
-							disabled={isPending}
+							disabled={isPending || !isDirty || !isValid}
 						>
 							<Text
 								allowFontScaling={false}
@@ -133,7 +137,7 @@ function RequestReferralScreen() {
 								<SymbolView
 									name={{
 										ios: 'link',
-										android: 'link',
+										android: 'chevron_right',
 									}}
 									size={20}
 									tintColor='#FFFFFF'
