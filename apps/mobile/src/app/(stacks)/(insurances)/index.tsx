@@ -8,6 +8,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 function InsurancesScreen() {
 	const { push } = useRouter();
+
 	return (
 		<View>
 			<View className='w-full h-[20rem] overflow-hidden -ml-3'>
@@ -29,7 +30,6 @@ function InsurancesScreen() {
 					accessible={false}
 				/>
 			</View>
-
 			<View className='px-4 gap-y-6'>
 				<Text
 					allowFontScaling={false}

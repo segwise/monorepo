@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input, InputError } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
 import { useReferral } from '@/libraries/hooks/api/referral';
-import { store } from '@/libraries/store';
+import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SchemaProducerReferral } from '@segwise/core/schemas';
 import type { ProducerReferral } from '@segwise/core/types';
@@ -37,7 +37,7 @@ function RequestReferralScreen() {
 
 		mutate(props, {
 			onSuccess(_, { referral }) {
-				store.set('referral', referral);
+				storage.set('referral', referral);
 
 				replace('/(stacks)/request-quote?first-init=true');
 			},
@@ -93,7 +93,7 @@ function RequestReferralScreen() {
 									<Input
 										{...field}
 										onChangeText={(value) =>
-											field.onChange(value.toUpperCase())
+											field.onChange(value.toUpperCase().trim())
 										}
 										label='Código de Desconto'
 										placeholder='Digite o código aqui'
@@ -101,12 +101,13 @@ function RequestReferralScreen() {
 										autoCapitalize='characters'
 										autoComplete='off'
 										autoCorrect={false}
-										returnKeyLabel='Confirmar'
-										returnKeyType='done'
+										returnKeyLabel='Enviar'
+										returnKeyType='send'
 										enablesReturnKeyAutomatically
 										keyboardAppearance='dark'
-										enterKeyHint='done'
+										enterKeyHint='send'
 										maxLength={10}
+										onSubmitEditing={handleSubmit(onSubmit)}
 									/>
 									{fieldState.error?.message && (
 										<InputError>{fieldState.error.message}</InputError>
@@ -126,7 +127,7 @@ function RequestReferralScreen() {
 								accessible={false}
 								className='text-white text-lg font-semibold'
 							>
-								{!isPending ? 'APROVEITE OS BENEFÍCIOS' : 'ENVIANDO'}
+								{!isPending ? 'GARANTA SEUS BENEFÍCIOS' : 'ENVIANDO'}
 							</Text>
 							{!isPending && (
 								<SymbolView

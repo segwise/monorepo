@@ -1,7 +1,7 @@
 import LOGO from '@/assets/images/logo/segwise.png';
 import BACKGROUND_MAP from '@/assets/images/splash-screen/background-map.png';
 import { cn } from '@/libraries/classname';
-import { store } from '@/libraries/store';
+import { storage } from '@/libraries/storage';
 import { Image, ImageBackground } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
@@ -14,8 +14,8 @@ function IndexScreen() {
 	const { replace } = useRouter();
 
 	const navigation = useCallback(() => {
-		const storeReferral = store.getString('referral');
-		const storeFirstQuote = store.getBoolean('first-quote');
+		const storeReferral = storage.getString('referral');
+		const storeFirstQuote = storage.getBoolean('first-quote');
 
 		replace(
 			!storeReferral

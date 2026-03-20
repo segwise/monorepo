@@ -1,5 +1,5 @@
 import { Header } from '@/containers/header';
-import { store } from '@/libraries/store';
+import { storage } from '@/libraries/storage';
 import { Stack } from 'expo-router';
 
 export const unstable_settings = {
@@ -7,7 +7,7 @@ export const unstable_settings = {
 };
 
 function StackLayout() {
-	const isReferral = !!store.getString('referral');
+	const isReferral = !!storage.getString('referral');
 
 	return (
 		<Stack

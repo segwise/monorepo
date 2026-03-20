@@ -11,6 +11,7 @@ function InsurancesRoot() {
 			}}
 		>
 			<Stack.Screen name='index' />
+			<Stack.Screen name='listining' />
 		</Stack>
 	);
 }

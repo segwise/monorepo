@@ -1,5 +1,5 @@
 import { createMMKV } from 'react-native-mmkv';
 
-const store = createMMKV();
+const storage = createMMKV();
 
-export { store };
+export { storage };
