@@ -8,8 +8,6 @@ const useInsuranceCompaniesDetailsById = (id: string) =>
 			await fetchApi.insuranceCompanies.details(queryKey[1], {
 				signal,
 			}),
-		gcTime: Infinity,
-		staleTime: Infinity,
 	});
 
 export { useInsuranceCompaniesDetailsById };

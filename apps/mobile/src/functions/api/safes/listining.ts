@@ -1,6 +1,12 @@
 import { api } from '@/libraries/api';
 import { storage } from '@/libraries/storage';
-import type { ResponseDataCursor, SafeSimple } from '@segwise/core/types';
+import type {
+	ResponseDataCursor,
+	SafeRegistration,
+	SafeSimple,
+} from '@segwise/core/types';
+import { format } from 'date-fns';
+import { XiorError } from 'xior';
 
 async function safesListining({ signal }: { signal: AbortSignal }) {
 	const myFiltersRegistration = storage.getString(
@@ -54,4 +60,28 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 	return data;
 }
 
-export { safesListining };
+async function safesListiningRegistration({
+	registration,
+	birth,
+}: SafeRegistration) {
+	try {
+		const url = new URL(`${api.config?.baseURL}/safes/simple/registration`);
+
+		url.searchParams.set('registration', registration);
+		url.searchParams.set('birth', format(birth, 'dd/MM/yyyy'));
+
+		const { data } = await api.get<ResponseDataCursor<SafeSimple>>(
+			url.toString(),
+		);
+
+		return data;
+	} catch (error) {
+		if (error instanceof XiorError) {
+			throw new Error(error.response?.data.message || 'Ocorreu algum erro');
+		}
+
+		throw error;
+	}
+}
+
+export { safesListining, safesListiningRegistration };

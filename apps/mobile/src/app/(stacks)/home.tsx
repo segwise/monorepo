@@ -1,19 +1,12 @@
 import { ButtonGrid } from '@/containers/home/button-grid';
 import { ButtonLink } from '@/containers/home/button-link';
 import { ShareApp } from '@/functions/share-app';
-import { storage } from '@/libraries/storage';
+import { useSafes } from '@/libraries/hooks/api/safe';
 import { Text, View } from 'react-native';
-import { useMMKVString } from 'react-native-mmkv';
 import Svg, { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
 
 function HomeScreen() {
-	const [myFiltersIds] = useMMKVString('filters:insurances:ids', storage);
-	const [myFiltersRegistration] = useMMKVString(
-		'filters:insurances:registrations',
-		storage,
-	);
-
-	const insuranceExists = !myFiltersRegistration && !myFiltersIds;
+	const { data: safes } = useSafes();
 
 	return (
 		<View className='flex-1'>
@@ -22,7 +15,7 @@ function HomeScreen() {
 					<ButtonLink
 						title='MEUS SEGUROS'
 						href={
-							!insuranceExists
+							safes?.data.length
 								? '/(stacks)/(insurances)/listining'
 								: '/(stacks)/(insurances)'
 						}

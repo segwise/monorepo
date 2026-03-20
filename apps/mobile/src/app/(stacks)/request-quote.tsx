@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/libraries/classname';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/api/insurance-companies/simple';
+import { useQuoteIsPlate } from '@/libraries/hooks/api/quotes/plate';
 import { useQuoteSimpleRegister } from '@/libraries/hooks/api/quotes/register/simple';
 import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,7 +34,7 @@ import { SchemaQuoteSimpleRegister } from '@segwise/core/schemas';
 import type { QuoteSimpleRegister } from '@segwise/core/types';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
 	ActivityIndicator,
@@ -101,6 +102,7 @@ function RequestQuote() {
 		formState: { isValid, isDirty, errors },
 		getFieldState,
 		clearErrors,
+		setError,
 		resetField,
 	} = useForm({
 		mode: 'all',
@@ -112,6 +114,10 @@ function RequestQuote() {
 			vehicleWithLicensePlate: true,
 		},
 	});
+
+	const plate = watch('plate') || null;
+
+	const { data: quoteIsPlate } = useQuoteIsPlate(plate || '');
 
 	const vehicleWithLicensePlate = watch('vehicleWithLicensePlate');
 
@@ -162,6 +168,16 @@ function RequestQuote() {
 			},
 		});
 	}
+
+	useEffect(() => {
+		if (quoteIsPlate) {
+			setTimeout(() => {
+				setError('plate', {
+					message: 'Veículo já está sendo cotado',
+				});
+			}, 100);
+		}
+	}, [quoteIsPlate, setError]);
 
 	return (
 		<Fragment>

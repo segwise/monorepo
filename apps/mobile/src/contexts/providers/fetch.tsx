@@ -24,18 +24,6 @@ const clientPersister = createAsyncStoragePersister({
 	storage: clientStorage,
 });
 
-function shouldDehydrateQuery(queryKey: string[]) {
-	if (Array.isArray(queryKey)) {
-		const firstPart = queryKey[0];
-
-		if (['safes'].includes(firstPart as string)) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
 const queryClient = new QueryClient();
 
 function FetchProvider({ children }: React.PropsWithChildren) {
@@ -46,10 +34,6 @@ function FetchProvider({ children }: React.PropsWithChildren) {
 			client={queryClient}
 			persistOptions={{
 				persister: clientPersister,
-				dehydrateOptions: {
-					shouldDehydrateQuery: (query) =>
-						shouldDehydrateQuery(query.queryKey as string[]),
-				},
 			}}
 		>
 			{children}

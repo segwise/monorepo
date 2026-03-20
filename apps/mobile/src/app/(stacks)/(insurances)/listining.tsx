@@ -74,7 +74,7 @@ function Item(props: SafeSimple) {
 			JSON.stringify(insurancesExcludes),
 		);
 
-		queryClient.invalidateQueries({
+		await queryClient.refetchQueries({
 			queryKey: ['safes'],
 		});
 	}
