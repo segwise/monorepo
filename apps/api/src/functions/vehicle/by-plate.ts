@@ -152,7 +152,6 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 			const { data } = await xior.get<VehicleResponse>(
 				`https://wdapi2.com.br/consulta/${plate}/${environment.APIPLACAS_TOKEN}`,
 			);
-
 			if (data.situacao === null) {
 				throw new Error('Veículo não existe');
 			}
@@ -169,21 +168,25 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 			});
 
 			if (!manufacturer) {
-				const icon = await xior.get(data.logo, {
-					responseType: 'blob',
-				});
+				const icon = await xior
+					.get(data.logo, {
+						responseType: 'blob',
+					})
+					.catch(() => null);
 
 				const manufacturerId = Bun.randomUUIDv7();
 
 				const pathIcon = `/manufacturers/${manufacturerId}`;
 
-				await storage.write(pathIcon, icon.data);
+				if (icon) {
+					await storage.write(pathIcon, icon.data);
+				}
 
 				manufacturer = await transaction.manufacturerVehicle.create({
 					data: {
 						id: manufacturerId,
 						name: data.marca.toLowerCase(),
-						icon: pathIcon,
+						icon: icon ? pathIcon : null,
 						slugs: [data.marca.toLowerCase()],
 					},
 					select: {

@@ -34,6 +34,42 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 			);
 		},
 	);
+
+	server.get('/simple/plate/:plate', async (ctx) => {
+		const { plate } = ctx.req.param();
+
+		const where: Prisma.QuoteWhereInput = {
+			quoteVehicle: {
+				vehicle: {
+					OR: [
+						{
+							plate: plate,
+						},
+						{
+							plateAlternative: plate,
+						},
+					],
+				},
+			},
+		};
+
+		const quote = await ctx.database.quote.findFirst({
+			where,
+			select: selectPrisma,
+			relationLoadStrategy: 'join',
+		});
+
+		if (!quote) {
+			return ctx.json(
+				{
+					message: 'Cotação não encontrada',
+				},
+				404,
+			);
+		}
+
+		return ctx.json(serializer(quote), 200);
+	});
 }
 
 export { registerRoutersServicesQuotesSimpleListining };

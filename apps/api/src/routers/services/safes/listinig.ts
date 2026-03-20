@@ -1,6 +1,10 @@
 import { zValidator } from '@hono/zod-validator';
-import { SchemaSearchQueriesSafeSimple } from '@segwise/core/schemas';
+import {
+	SchemaSearchQueriesSafeRegistration,
+	SchemaSearchQueriesSafeSimple,
+} from '@segwise/core/schemas';
 import type { ResponseDataCursor, SafeSimple } from '@segwise/core/types';
+import { set } from 'date-fns';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
 import { serializer } from '@/db-serializers/safe/simple';
@@ -54,6 +58,53 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					next: null,
 					previous: null,
 				} satisfies ResponseDataCursor<SafeSimple>,
+				200,
+			);
+		},
+	);
+
+	server.get(
+		'/simple/registration',
+		zValidator(
+			'query',
+			SchemaSearchQueriesSafeRegistration.transform(
+				({ registration, birth }) => ({
+					registration,
+					birth: set(birth, {
+						hours: 12,
+					}),
+				}),
+			),
+		),
+		async (ctx) => {
+			const { registration, birth } = ctx.req.valid('query');
+
+			const insured = await ctx.database.insured.findFirst({
+				where: {
+					cpf: registration,
+					birth: {
+						lte: birth,
+						gte: birth,
+					},
+				},
+				select: {
+					id: true,
+				},
+			});
+
+			if (!insured) {
+				return ctx.json(
+					{
+						message: 'Segurado não encontrado',
+					},
+					404,
+				);
+			}
+
+			return ctx.json(
+				{
+					message: '',
+				},
 				200,
 			);
 		},

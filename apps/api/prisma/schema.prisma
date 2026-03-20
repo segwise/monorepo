@@ -325,7 +325,7 @@ model ManufacturerVehicle {
   id String @id @default(uuid(7)) @db.Uuid
 
   name  String
-  icon  String
+  icon  String?
   image String?
 
   slugs String[]
