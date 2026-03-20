@@ -314,6 +314,7 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 					200,
 				);
 			} catch (error) {
+				console.log(error);
 				let message = 'Falha ao registrar';
 
 				if (error instanceof Error) {

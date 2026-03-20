@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { trimTrailingSlash } from 'hono/trailing-slash';
 import type { AppBindings } from '@/@types/server.d';
-import { environment } from '@/libraries/environment';
 import { authMiddleware } from '@/server/middlewares/auth';
 import { cacheMiddleware } from '@/server/middlewares/cache';
 import { corsMiddleware } from '@/server/middlewares/cors';
@@ -47,8 +46,8 @@ server.use(storageMiddleware);
 
 server.use(authMiddleware);
 
-if (environment.NODE_ENV !== 'production') {
-	server.use(logger());
-}
+// if (environment.NODE_ENV !== 'production') {
+server.use(logger());
+// }
 
 export { server };
