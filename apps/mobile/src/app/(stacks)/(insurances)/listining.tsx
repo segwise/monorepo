@@ -57,21 +57,15 @@ function Item(props: SafeSimple) {
 	async function removeItem() {
 		const id = props.id;
 
-		const insurancesExcludesResponse = storage.getString(
-			'filters:insurances:ids:excludes',
-		);
+		const insurancesIdsResponse = storage.getString('filters:insurances:ids');
 
-		const insurancesExcludes = insurancesExcludesResponse
-			? (JSON.parse(insurancesExcludesResponse) as Array<string>)
+		const insurancesIds = insurancesIdsResponse
+			? (JSON.parse(insurancesIdsResponse) as Array<string>)
 			: [];
 
-		if (!insurancesExcludes.includes(id)) {
-			insurancesExcludes.push(id);
-		}
-
 		storage.set(
-			'filters:insurances:ids:excludes',
-			JSON.stringify(insurancesExcludes),
+			'filters:insurances:ids',
+			JSON.stringify(insurancesIds.filter((props) => props !== id)),
 		);
 
 		await queryClient.refetchQueries({

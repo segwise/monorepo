@@ -137,26 +137,16 @@ function RequestQuote() {
 
 				if (data.safe) {
 					const keyStorage = 'filters:insurances:ids';
-					const keyStorageExcludes = 'filters:insurances:ids:excludes';
 
 					const myFiltersIdsStorage = storage.getString(keyStorage);
-					const myFiltersIdsExcludesStorage =
-						storage.getString(keyStorageExcludes);
 
 					const myFiltersIds = myFiltersIdsStorage
 						? (JSON.parse(myFiltersIdsStorage) as Array<string>)
-						: [];
-					const myFiltersIdsExcludes = myFiltersIdsExcludesStorage
-						? (JSON.parse(myFiltersIdsExcludesStorage) as Array<string>)
 						: [];
 
 					myFiltersIds.push(data.safe);
 
 					storage.set(keyStorage, JSON.stringify(myFiltersIds));
-					storage.set(
-						keyStorageExcludes,
-						JSON.stringify(myFiltersIdsExcludes.filter((e) => e !== data.safe)),
-					);
 
 					await ctx.client.refetchQueries({
 						queryKey: ['safes'],

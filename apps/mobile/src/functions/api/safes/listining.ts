@@ -10,9 +10,6 @@ import { XiorError } from 'xior';
 
 async function safesListining({ signal }: { signal: AbortSignal }) {
 	const myFiltersIds = storage.getString('filters:insurances:ids');
-	const myFiltersIdsExcludes = storage.getString(
-		'filters:insurances:ids:excludes',
-	);
 
 	if (!myFiltersIds) {
 		return {
@@ -27,14 +24,6 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 
 		for (const item of items) {
 			url.searchParams.append('ids', item);
-		}
-	}
-
-	if (myFiltersIdsExcludes) {
-		const items = JSON.parse(myFiltersIdsExcludes);
-
-		for (const item of items) {
-			url.searchParams.append('excludes', item);
 		}
 	}
 
