@@ -72,34 +72,29 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 		async (ctx) => {
 			const { registration, birth } = ctx.req.valid('query');
 
-			const insured = await ctx.database.insured.findFirst({
+			const safes = await ctx.database.safe.findMany({
 				where: {
-					cpf: registration,
-					birth: {
-						lte: birth,
-						gte: birth,
+					insured: {
+						cpf: registration,
+						birth: {
+							lte: birth,
+							gte: birth,
+						},
 					},
 				},
-				select: {
-					id: true,
-				},
+				select: selectPrisma,
 			});
 
-			if (!insured) {
+			if (!safes) {
 				return ctx.json(
 					{
-						message: 'Segurado não encontrado',
+						message: 'Seguros não encontrados',
 					},
 					404,
 				);
 			}
 
-			return ctx.json(
-				{
-					message: '',
-				},
-				200,
-			);
+			return ctx.json(safes.map(serializer), 200);
 		},
 	);
 }
