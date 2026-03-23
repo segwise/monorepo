@@ -117,7 +117,7 @@ function FormQuoteRegister() {
 		defaultValues: {
 			producer: null,
 			status: 'waiting',
-			type: 'car',
+			modality: 'car',
 			requestAt: new Date(),
 			insured: {
 				cpf: '',
@@ -158,7 +158,7 @@ function FormQuoteRegister() {
 					producer: null,
 					renewal: null,
 					status: 'waiting',
-					type: 'car',
+					modality: 'car',
 					requestAt: new Date(),
 					insured: {
 						cpf: '',
@@ -300,11 +300,11 @@ function FormQuoteRegister() {
 								<FieldGroup className='grid grid-cols-4'>
 									<Controller
 										control={control}
-										name='type'
+										name='modality'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='category'>
-													Categoria do Seguro:
+													Modalidade do Seguro:
 												</FieldLabel>
 												<Select {...field} onValueChange={field.onChange}>
 													<SelectTrigger

@@ -1,4 +1,5 @@
 import { fakerPT_BR as faker } from '@faker-js/faker';
+import { translateModality } from '@segwise/core/translate';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
@@ -62,7 +63,7 @@ import { CardHeaderHome } from '@/containers/cards/header-home';
 
 const data = Array.from({ length: 10 }).map(() => ({
 	id: faker.string.uuid(),
-	type: faker.helpers.arrayElement(['veichle']),
+	modality: faker.helpers.arrayElement(['car']),
 	renewal: faker.datatype.boolean(),
 	insured: {
 		image: faker.image.avatar(),
@@ -267,7 +268,7 @@ async function PoliciesPage() {
 								{data.map(
 									({
 										id,
-										type,
+										modality,
 										renewal,
 										insured,
 										vehicle,
@@ -328,8 +329,8 @@ async function PoliciesPage() {
 											</TableCell>
 											<TableCell className='text-center w-40'>
 												<Badge className='dark:border-input'>
-													{type === 'veichle' && <CarIcon className='size-4' />}
-													{type === 'veichle' && 'Veicular'}
+													{modality === 'car' && <CarIcon className='size-4' />}
+													{modality === 'car' && translateModality(modality)}
 												</Badge>
 											</TableCell>
 											<TableCell className='w-30'>
