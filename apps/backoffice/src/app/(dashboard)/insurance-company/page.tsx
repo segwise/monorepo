@@ -1765,7 +1765,7 @@ function InsuranceCompanyPage() {
 				</div>
 			</div>
 			<Separator />
-			<div className='grid grid-cols-8 gap-6'>
+			<div className='grid grid-cols-8 gap-x-4 gap-y-6'>
 				{data.map(({ name, image, registration }, index) => (
 					<Card key={index.toString()} className='p-0 overflow-hidden'>
 						<CardContent className='p-0'>
