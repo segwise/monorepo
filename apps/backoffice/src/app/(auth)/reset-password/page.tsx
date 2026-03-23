@@ -1,8 +1,13 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import { Suspense } from 'react';
 import { brand } from '@/config/brand';
 import { FormResetPassword } from '@/containers/forms/auth/reset-password';
 import { getCurrentYear } from '@/functions/date/get-current-year-cache';
+
+export const metadata: Metadata = {
+	title: 'Recuperar senha - Segwise',
+};
 
 function ResetPasswordPage() {
 	return (

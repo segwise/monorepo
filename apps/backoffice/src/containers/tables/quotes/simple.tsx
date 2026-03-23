@@ -1,6 +1,10 @@
 'use client';
 
 import { maskPhone, maskPlate } from '@segwise/core/masks';
+import {
+	translateModality,
+	translateQuoteStatus,
+} from '@segwise/core/translate';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -30,11 +34,14 @@ import {
 } from '@/components/ui/table';
 import { placeholder } from '@/config/placeholder';
 import { useQuotesSimple } from '@/hooks/quotes/use-quotes';
+import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 
 function TableQuotesSimple() {
 	const { data } = useQuotesSimple({
 		simple: true,
 	});
+
+	const { data: manufacturers } = useVehiclesManufacturers();
 
 	const items = data?.data || [];
 
@@ -51,7 +58,7 @@ function TableQuotesSimple() {
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{items.map(({ id, type, insured, vehicle, status, requestAt }) => (
+				{items.map(({ id, modality, insured, vehicle, status, requestAt }) => (
 					<TableRow key={id}>
 						<TableCell className='text-left w-60'>
 							<div className='flex flex-row items-center justify-start gap-x-2'>
@@ -81,24 +88,40 @@ function TableQuotesSimple() {
 							{!!vehicle && (
 								<div className='flex flex-row items-center justify-start gap-x-3'>
 									<Avatar className='size-8 rounded-none bg-background'>
-										<AvatarImage
-											src={`https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Fapiplacas.com.br%2Flogos%2FlogosMarcas%2F${vehicle.manufacturer.toLowerCase().replaceAll(' ', '-')}.png&w=64&q=100`}
-											width={52}
-											height={52}
-											alt='Marca do veículo'
-											priority
-										/>
+										{manufacturers?.find(
+											(props) => props.id === vehicle.manufacturer,
+										)?.icon && (
+											<AvatarImage
+												src={
+													manufacturers?.find(
+														(props) => props.id === vehicle.manufacturer,
+													)?.icon as string
+												}
+												width={52}
+												height={52}
+												alt='Marca do veículo'
+												priority
+											/>
+										)}
 										<AvatarFallback>
-											{insured.name.slice(0, 2).toUpperCase()}
+											{manufacturers
+												?.find((props) => props.id === vehicle.manufacturer)
+												?.name.slice(0, 2)
+												.toUpperCase()}
 										</AvatarFallback>
 									</Avatar>
 									<div>
 										<span className='block text-sm font-medium truncate line-clamp-1 capitalize'>
-											{vehicle.model}
+											{vehicle.plate ? vehicle.model : 'Sem Placa'}
 										</span>
 										{vehicle.plate && (
 											<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
 												{maskPlate(vehicle.plate)}
+											</span>
+										)}
+										{!vehicle.plate && (
+											<span className='block text-xs text-muted-foreground font-normal leading-none'>
+												Verificar veículo
 											</span>
 										)}
 									</div>
@@ -107,9 +130,9 @@ function TableQuotesSimple() {
 						</TableCell>
 						<TableCell className='text-center w-40'>
 							<Badge className='dark:border-input'>
-								{type === 'car' && (
+								{modality === 'car' && (
 									<Fragment>
-										<CarIcon className='size-4' /> Veicular
+										<CarIcon className='size-4' /> {translateModality(modality)}
 									</Fragment>
 								)}
 							</Badge>
@@ -129,12 +152,7 @@ function TableQuotesSimple() {
 													: 'default'
 								}
 							>
-								{status === 'waiting' && 'Aguardando'}
-								{status === 'quoting' && 'Cotando'}
-								{status === 'quoted' && 'Cotado'}
-								{status === 'sent' && 'Enviado'}
-								{status === 'recused' && 'Recusado'}
-								{status === 'confirmed' && 'Aceito'}
+								{translateQuoteStatus(status)}
 							</Badge>
 						</TableCell>
 						<TableCell className='text-center w-40'>

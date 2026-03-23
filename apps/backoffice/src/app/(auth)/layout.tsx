@@ -1,9 +1,14 @@
 import '@/styles';
 
+import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/sonner';
 import { inter } from '@/fonts/inter';
 import { Providers } from '@/providers/contexts';
 import { cn } from '@/utils';
+
+export const metadata: Metadata = {
+	title: 'Autenticação - Segwise',
+};
 
 function RootLayout({
 	children,

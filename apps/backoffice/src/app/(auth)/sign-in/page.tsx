@@ -1,8 +1,13 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import { Suspense } from 'react';
 import { brand } from '@/config/brand';
 import { FormSignIn } from '@/containers/forms/auth/sign-in';
 import { getCurrentYear } from '@/functions/date/get-current-year-cache';
+
+export const metadata: Metadata = {
+	title: 'Fazer login - Segwise',
+};
 
 function SignInPage() {
 	return (

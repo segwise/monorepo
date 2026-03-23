@@ -1,10 +1,15 @@
 import { ArrowLeftIcon } from 'lucide-react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { brand } from '@/config/brand';
 import { FormForgotPassword } from '@/containers/forms/auth/forgot-password';
 import { getCurrentYear } from '@/functions/date/get-current-year-cache';
+
+export const metadata: Metadata = {
+	title: 'Esqueci a senha - Segwise',
+};
 
 function ForgotPasswordPage() {
 	return (
