@@ -1,3 +1,5 @@
+import { maskCNPJ } from '@segwise/core/masks';
+import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { FilterIcon, SearchIcon } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -1777,10 +1779,10 @@ function InsuranceCompanyPage() {
 							/>
 							<div className='px-3 py-4 border-t'>
 								<span className='block text-sm/tight font-medium capitalize line-clamp-2 truncate'>
-									{name}
+									{capitalizeFirstLetters(name)}
 								</span>
 								<span className='block text-xs text-muted-foreground capitalize'>
-									{registration}
+									{maskCNPJ(registration)}
 								</span>
 							</div>
 						</CardContent>
