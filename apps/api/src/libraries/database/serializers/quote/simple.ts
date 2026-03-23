@@ -1,4 +1,4 @@
-import type { QuoteSimple } from '@segwise/core';
+import type { QuoteSimple } from '@segwise/core/types';
 import type { selectPrisma } from '@/db-adapters/quote/simple';
 import type { Prisma } from '@/generated/prisma/client';
 
