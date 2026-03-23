@@ -24,13 +24,13 @@ function RootLayout({
 		<html lang='pt-BR' suppressHydrationWarning>
 			<body
 				className={cn(
-					'bg-sidebar overflow-hidden',
+					'bg-sidebar overflow-hidden overscroll-none',
 					inter.variable,
 					inter.className,
 				)}
 			>
 				<TopLoader />
-				<Providers>
+				<Providers noTheme>
 					<Layout>{children}</Layout>
 				</Providers>
 				<Toaster />

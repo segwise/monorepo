@@ -46,7 +46,7 @@ function Sidebar() {
 				</SidebarMenu>
 			</SidebarHeader>
 			<SidebarSeparator />
-			<SidebarContent>
+			<SidebarContent className='overscroll-none'>
 				{sidebar.map((section, index) => (
 					<div key={section.label}>
 						<SidebarGroup>
