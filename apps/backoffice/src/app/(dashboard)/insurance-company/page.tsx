@@ -1736,7 +1736,7 @@ const data = [
 
 function InsuranceCompanyPage() {
 	return (
-		<main className='grid grid-cols-1 gap-6 mt-1 mb-10'>
+		<main className='grid grid-cols-1 gap-6 mt-1'>
 			<div className='flex flex-row items-center justify-between'>
 				<div className='flex flex-row items-center justify-start gap-x-2'>
 					<InputGroup className='w-60'>
@@ -1765,7 +1765,7 @@ function InsuranceCompanyPage() {
 				</div>
 			</div>
 			<Separator />
-			<div className='grid grid-cols-8 gap-4'>
+			<div className='grid xl:grid-cols-6 2xl:grid-cols-8 gap-4'>
 				{data.map(({ name, image, registration }, index) => (
 					<Card key={index.toString()} className='p-0 overflow-hidden'>
 						<CardContent className='p-0'>
@@ -1775,9 +1775,9 @@ function InsuranceCompanyPage() {
 								height={512}
 								alt='Image do usuário'
 								priority
-								className='object-fill object-center h-45'
+								className='object-fill object-center xl:h-40 2xl:h-45'
 							/>
-							<div className='px-3 py-4 border-t'>
+							<div className='px-3 py-2 border-t'>
 								<span className='block text-sm/tight font-medium capitalize line-clamp-2 truncate'>
 									{capitalizeFirstLetters(name)}
 								</span>

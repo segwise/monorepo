@@ -57,6 +57,7 @@ const sidebar: Array<{
 				title: 'Apólices',
 				pathname: '/policies',
 				icon: FileChartColumnIcon,
+				disabled: true,
 			},
 			{
 				title: 'Sinistros',
@@ -73,6 +74,7 @@ const sidebar: Array<{
 				title: 'Segurados',
 				pathname: '/insureds',
 				icon: UsersRoundIcon,
+				disabled: true,
 			},
 			{
 				title: 'Corretoras',

@@ -9,10 +9,12 @@ import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { formatDistanceToNow } from 'date-fns';
 import {
 	CarIcon,
-	HomeIcon,
+	EyeIcon,
 	MoreHorizontalIcon,
+	PrinterIcon,
 	Trash2Icon,
 } from 'lucide-react';
+import Link from 'next/link';
 import { Fragment } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +35,7 @@ import {
 	TableRow,
 } from '@/components/ui/table';
 import { placeholder } from '@/config/placeholder';
+import { DialogQuoteDeleteById } from '@/containers/dialogs/quotes/delete';
 import { useQuotesSimple } from '@/hooks/quotes/use-quotes';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 
@@ -54,7 +57,7 @@ function TableQuotesSimple() {
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
 					<TableHead className='text-center w-40'>Solicitado Em</TableHead>
-					<TableHead className='text-right w-20'>Ações</TableHead>
+					<TableHead className='text-right'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -160,7 +163,12 @@ function TableQuotesSimple() {
 								{formatDistanceToNow(requestAt).trim()}
 							</Badge>
 						</TableCell>
-						<TableCell className='text-right w-20'>
+						<TableCell className='flex flex-row gap-x-2'>
+							<Button variant='outline' size='icon-sm' asChild>
+								<Link href={`/quotes/${id}`}>
+									<EyeIcon />
+								</Link>
+							</Button>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
@@ -172,22 +180,19 @@ function TableQuotesSimple() {
 									</Button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align='end'>
-									<DropdownMenuItem>
-										<HomeIcon /> Nome da ação
-									</DropdownMenuItem>
-									<DropdownMenuItem>
-										<HomeIcon /> Nome da ação
-									</DropdownMenuItem>
-									<DropdownMenuItem>
-										<HomeIcon /> Nome da ação
-									</DropdownMenuItem>
-									<DropdownMenuItem>
-										<HomeIcon /> Nome da ação
+									<DropdownMenuItem
+										onClick={() => {
+											throw new Error('Falha na geração do PDF');
+										}}
+									>
+										<PrinterIcon /> Imprimir
 									</DropdownMenuItem>
 									<DropdownMenuSeparator />
-									<DropdownMenuItem variant='destructive'>
-										<Trash2Icon /> Apagar
-									</DropdownMenuItem>
+									<DialogQuoteDeleteById id={id}>
+										<DropdownMenuItem variant='destructive'>
+											<Trash2Icon /> Apagar
+										</DropdownMenuItem>
+									</DialogQuoteDeleteById>
 								</DropdownMenuContent>
 							</DropdownMenu>
 						</TableCell>
