@@ -1683,24 +1683,133 @@ async function seed() {
 					},
 				],
 			},
+			{
+				id: '85c0bec0-5e29-4e92-918e-38391acac4e2',
+				name: 'justos seguros s/a',
+				short_name: 'justos',
+				registration: '45865343000157',
+				created_at: '2023-12-05T02:38:46.183Z',
+				assistance_contacts: [
+					{
+						description: 'guincho / sinistro / vidros',
+						contacts: [
+							{
+								value: '30035770',
+								whatsapp: null,
+								region: 'capital_and_metropolis',
+							},
+							{
+								value: '08007309901',
+								whatsapp: null,
+								region: 'all_regions',
+							},
+						],
+					},
+					{
+						description: 'whatsapp',
+						contacts: [
+							{
+								value: '551154686735',
+								whatsapp: true,
+								region: 'all_regions',
+							},
+						],
+					},
+					{
+						description: 'sac',
+						contacts: [
+							{
+								value: '08005912259',
+								whatsapp: null,
+								region: 'all_regions',
+							},
+						],
+					},
+				],
+			},
+			{
+				id: '85c0bec0-5e29-4e92-918e-38391acac4e2',
+				name: 'novo seguros s/a',
+				short_name: 'novo seguros',
+				registration: '50182327000108',
+				created_at: '2023-12-05T02:38:46.183Z',
+				assistance_contacts: [
+					{
+						description: 'guincho / sinistro',
+						contacts: [
+							{
+								value: '08000276131',
+								whatsapp: null,
+								region: 'all_regions',
+							},
+						],
+					},
+					{
+						description: 'vidros / pequenos reparos',
+						contacts: [
+							{
+								value: '08007772173',
+								whatsapp: null,
+								region: 'all_regions',
+							},
+						],
+					},
+					{
+						description: 'whatsapp',
+						contacts: [
+							{
+								value: '5527999100328',
+								whatsapp: true,
+								region: 'all_regions',
+							},
+						],
+					},
+					{
+						description: 'ouvidoria',
+						contacts: [
+							{
+								value: '08000276131',
+								whatsapp: null,
+								region: 'all_regions',
+							},
+						],
+					},
+					{
+						description: 'sac',
+						contacts: [
+							{
+								value: '08000276131',
+								whatsapp: null,
+								region: 'all_regions',
+							},
+						],
+					},
+				],
+			},
 		];
 
 		for (const insurance of insuranceCompanies) {
 			const idInsurance = Bun.randomUUIDv7();
 
-			const pathInsurance = `/insurance-companies/${idInsurance}`;
+			const pathInsurance = insurance.image
+				? `/insurance-companies/${idInsurance}`
+				: undefined;
 
-			const { data } = await xior.get(insurance.image, {
-				responseType: 'blob',
-			});
+			if (insurance.image) {
+				const { data } = await xior.get(insurance.image, {
+					responseType: 'blob',
+				});
 
-			await storage.write(pathInsurance, data);
+				await storage.write(pathInsurance as string, data);
+			}
 
 			const company = await database.insuranceCompany.create({
 				data: {
 					id: idInsurance,
 					name: insurance.name,
-					icon: pathInsurance,
+					...(pathInsurance && {
+						icon: pathInsurance,
+					}),
 					cnpj: insurance.registration,
 				},
 				select: {
