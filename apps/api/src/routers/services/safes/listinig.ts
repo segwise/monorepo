@@ -15,25 +15,14 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 		'/simple',
 		zValidator('query', SchemaSearchQueriesSafeSimple),
 		async (ctx) => {
-			const { ids, excludes, limit } = ctx.req.valid('query');
+			const { ids, limit } = ctx.req.valid('query');
 
 			const where: Prisma.SafeWhereInput = {
 				...(!!ids?.length && {
 					id: {
 						in: ids,
-						...(!!excludes?.length && {
-							notIn: excludes,
-						}),
 					},
 				}),
-				...(!ids?.length &&
-					!!excludes?.length && {
-						id: {
-							...(!!excludes?.length && {
-								notIn: excludes,
-							}),
-						},
-					}),
 			};
 
 			const safes = await ctx.database.safe.findMany({
@@ -83,6 +72,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					},
 				},
 				select: selectPrisma,
+				relationLoadStrategy: 'join',
 			});
 
 			if (!safes) {

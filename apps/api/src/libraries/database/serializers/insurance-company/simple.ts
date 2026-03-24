@@ -16,8 +16,13 @@ function serializer(
 	return {
 		id: props.id,
 		name: props.name,
-		icon: getPresignedUrl(storage, props.icon),
 		cnpj: props.cnpj,
+		...(props.icon && {
+			icon: getPresignedUrl(storage, props.icon),
+		}),
+		...(props.image && {
+			image: getPresignedUrl(storage, props.image),
+		}),
 	} satisfies InsuranceCompanySimple;
 }
 
