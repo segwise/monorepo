@@ -20,8 +20,8 @@ function MainDriver() {
 					da semana:{`\n\n`}
 				</Text>
 				<Text allowFontScaling={false} accessible={false}>
-					O segurado deverá informar como o principal condutor a pessoa mais
-					jovem que utiliza o veículo.
+					O segurado deverá informar como principal condutor a pessoa mais jovem
+					que utiliza o veículo.
 					{`\n\n`}
 				</Text>
 				<Text allowFontScaling={false} accessible={false}>
@@ -76,8 +76,7 @@ function OvernightPostalCode() {
 				accessible={false}
 				className='text-base text-left font-bold leading-tight mt-4'
 			>
-				Definir como CEP de pernoite o local onde o veículo passa a maior parte
-				do tempo.
+				Definir como CEP o local onde o veículo pernoita a maior parte do tempo.
 			</Text>
 		</View>
 	);
@@ -150,12 +149,8 @@ function DutiesOfTheInsured() {
 				{`\n\n`}
 				<Text allowFontScaling={false} accessible={false}>
 					Se houver divergência nas informações de risco contidas na
-					proposta/apólice:
-				</Text>
-				{`\n\n`}
-				<Text allowFontScaling={false} accessible={false}>
-					O segurado deverá informar tal situação imediatamente a
-					corretora/seguradora
+					proposta/apólice, o segurado deverá informar tal situação
+					imediatamente a corretora/seguradora
 				</Text>
 				{`\n\n`}
 				<Text allowFontScaling={false} accessible={false}>
@@ -201,6 +196,17 @@ function DutiesOfTheInsured() {
 					<Text
 						allowFontScaling={false}
 						accessible={false}
+						className='text-base text-center font-bold leading-tight mt-4'
+						style={{
+							textDecorationLine: 'underline',
+						}}
+					>
+						Seguro, só com o corretor de seguros
+					</Text>
+					{`\n\n`}
+					<Text
+						allowFontScaling={false}
+						accessible={false}
 						className='font-bold'
 					>
 						ARTIGO 765/766 do código civil brasileiro:
@@ -216,16 +222,6 @@ function DutiesOfTheInsured() {
 						contratadas.
 					</Text>
 				</Text>
-			</Text>
-			<Text
-				allowFontScaling={false}
-				accessible={false}
-				className='text-base text-center font-bold leading-tight mt-4'
-				style={{
-					textDecorationLine: 'underline',
-				}}
-			>
-				Seguro, só com o corretor de seguros
 			</Text>
 		</View>
 	);

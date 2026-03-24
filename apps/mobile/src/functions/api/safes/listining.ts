@@ -9,9 +9,11 @@ import { format } from 'date-fns';
 import { XiorError } from 'xior';
 
 async function safesListining({ signal }: { signal: AbortSignal }) {
-	const myFiltersIds = storage.getString('filters:insurances:ids');
+	const myFiltersIds = JSON.parse(
+		storage.getString('filters:insurances:ids') || '[]',
+	) as Array<string>;
 
-	if (!myFiltersIds) {
+	if (!myFiltersIds.length) {
 		return {
 			data: [],
 		};
@@ -20,9 +22,7 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 	const url = new URL(`${api.config?.baseURL}/safes/simple`);
 
 	if (myFiltersIds) {
-		const items = JSON.parse(myFiltersIds);
-
-		for (const item of items) {
+		for (const item of myFiltersIds) {
 			url.searchParams.append('ids', item);
 		}
 	}
