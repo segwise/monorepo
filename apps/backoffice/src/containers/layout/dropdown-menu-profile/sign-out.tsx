@@ -17,7 +17,9 @@ function DropdownmenuButtonSignOut() {
 		toast.dismiss();
 
 		mutate(undefined, {
-			onSuccess() {
+			onSuccess(_data, _variables, _result, ctx) {
+				ctx.client.clear();
+
 				router.push('/sign-in');
 			},
 			onError(error) {

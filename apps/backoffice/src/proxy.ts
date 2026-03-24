@@ -26,6 +26,7 @@ function proxy(request: NextRequest) {
 
 	if (!session && !isPublicRoute) {
 		const redirectTo = new URL('/sign-in', request.url);
+
 		redirectTo.searchParams.set('callbackUrl', pathname);
 
 		return NextResponse.redirect(redirectTo);

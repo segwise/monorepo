@@ -163,7 +163,7 @@ function TableQuotesSimple() {
 								{formatDistanceToNow(requestAt).trim()}
 							</Badge>
 						</TableCell>
-						<TableCell className='text-right flex flex-row gap-x-2'>
+						<TableCell className='justify-end flex flex-row gap-x-2'>
 							<Button variant='outline' size='icon-sm' asChild>
 								<Link href={`/quotes/${id}`}>
 									<EyeIcon />

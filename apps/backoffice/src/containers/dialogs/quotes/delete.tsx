@@ -1,6 +1,7 @@
 import { SaveIcon, XCircleIcon } from 'lucide-react';
 import type React from 'react';
 import { cloneElement } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -13,9 +14,11 @@ import {
 	DialogTrigger,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { useQuotesDeleteById } from '@/libraries/hooks/quotes/use-quotes-delete';
 
 function DialogQuoteDeleteById({
 	children,
+	id,
 }: React.PropsWithChildren<{
 	id: string;
 }>) {
@@ -23,6 +26,21 @@ function DialogQuoteDeleteById({
 	const Comp = cloneElement(children, {
 		onSelect: (e) => e.preventDefault(),
 	});
+
+	const { mutate, isPending } = useQuotesDeleteById(id);
+
+	function onSubmit() {
+		mutate(undefined, {
+			async onSuccess() {
+				toast.success('REGISTRO DELETADO COM SUCESSO!', {
+					description: 'O registro não poderá mais ser recuperado',
+				});
+			},
+			onError(error) {
+				toast.error(error.message || 'Falha ao excluir registro');
+			},
+		});
+	}
 
 	return (
 		<Dialog>
@@ -44,7 +62,11 @@ function DialogQuoteDeleteById({
 							Fechar <XCircleIcon />
 						</Button>
 					</DialogClose>
-					<Button>
+					<Button
+						isPending={isPending}
+						textPending='Confirmando'
+						onClick={onSubmit}
+					>
 						Confirmar <SaveIcon />
 					</Button>
 				</DialogFooter>
