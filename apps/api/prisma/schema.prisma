@@ -372,8 +372,7 @@ model InsuranceCompanyCategoryContact {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@unique([insuranceCompanyId])
-  @@unique([index])
+  @@unique([insuranceCompanyId, index])
   @@map("insurance_companies_categories_contacts")
 }
 
@@ -394,7 +393,7 @@ model InsuranceCompanyContact {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique([categoryId, value])
-  @@unique([index])
+  @@unique([categoryId, index])
   @@map("insurance_companies_contacts")
 }
 
