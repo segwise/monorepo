@@ -39,6 +39,9 @@ function registerRoutersServicesInsuranceCompaniesListining(server: Server) {
 		const insuranceCompanies = await ctx.database.insuranceCompany.findMany({
 			select: selectPrismaSimple,
 			relationLoadStrategy: 'join',
+			orderBy: {
+				name: 'asc',
+			},
 		});
 
 		const data = insuranceCompanies.map((props) =>
