@@ -29,7 +29,7 @@
 		"@hono/zod-validator": "^0.7.6",
 		"@prisma/adapter-pg": "^7.0.1",
 		"@prisma/client": "7.0.1",
-		"@segwise/core": "^1.1.107",
+		"@segwise/core": "^1.1.108",
 		"better-auth": "^1.4.1",
 		"date-fns": "^4.1.0",
 		"hono": "^4.10.6",
