@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
 	cacheComponents: true,
 	images: {
 		qualities: [100],
+		dangerouslyAllowLocalIP: process.env.NODE_ENV === 'development',
 		remotePatterns: [
 			{
 				hostname: '**',

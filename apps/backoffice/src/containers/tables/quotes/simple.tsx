@@ -40,9 +40,7 @@ import { useQuotesSimple } from '@/hooks/quotes/use-quotes';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 
 function TableQuotesSimple() {
-	const { data } = useQuotesSimple({
-		simple: true,
-	});
+	const { data } = useQuotesSimple();
 
 	const { data: manufacturers } = useVehiclesManufacturers();
 
