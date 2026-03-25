@@ -6,7 +6,7 @@ import {
 	translateQuoteStatus,
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns';
 import {
 	CarIcon,
 	EyeIcon,
@@ -158,7 +158,7 @@ function TableQuotesSimple() {
 						</TableCell>
 						<TableCell className='text-center w-40'>
 							<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
-								{formatDistanceToNow(requestAt).trim()}
+								{formatDistanceToNowStrict(requestAt)}
 							</Badge>
 						</TableCell>
 						<TableCell className='justify-end flex flex-row gap-x-2'>

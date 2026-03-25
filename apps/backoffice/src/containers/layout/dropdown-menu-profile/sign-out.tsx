@@ -1,7 +1,6 @@
 'use client';
 
 import { LogOutIcon } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { Activity } from 'react';
 import { toast } from 'sonner';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -9,8 +8,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { useSignOut } from '@/hooks/auth/use-sign-out';
 
 function DropdownmenuButtonSignOut() {
-	const router = useRouter();
-
 	const { mutate, isPending } = useSignOut();
 
 	function handler() {
@@ -20,7 +17,7 @@ function DropdownmenuButtonSignOut() {
 			onSuccess(_data, _variables, _result, ctx) {
 				ctx.client.clear();
 
-				router.push('/sign-in');
+				window.location.reload();
 			},
 			onError(error) {
 				toast.error(error.message);
