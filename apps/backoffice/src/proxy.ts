@@ -1,14 +1,32 @@
-import { getSessionCookie } from 'better-auth/cookies';
+import { unstable_cache } from 'next/cache';
+
+// import { getSessionCookie } from 'better-auth/cookies';
 import { type NextRequest, NextResponse } from 'next/server';
+import { auth } from './libraries/auth';
 
 const PUBLIC_ROUTES = ['/sign-in', '/forgot-password', '/reset-password'];
 
-function proxy(request: NextRequest) {
+const getSessionCached = unstable_cache(
+	async (cookieHeader: string | null) => {
+		const session = await auth.getSession({
+			fetchOptions: {
+				headers: cookieHeader ? { cookie: cookieHeader } : {},
+			},
+		});
+
+		return session.data;
+	},
+	['session-proxy'],
+	{
+		tags: ['session-proxy'],
+		revalidate: 60 * 30,
+	},
+);
+
+async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
-	const session = getSessionCookie(request.headers, {
-		cookiePrefix: 'auth',
-	});
+	const session = await getSessionCached(request.headers.get('cookie'));
 
 	if (session && pathname === '/') {
 		return NextResponse.redirect(new URL('/dashboard', request.url));

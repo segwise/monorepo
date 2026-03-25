@@ -28,23 +28,9 @@ import {
 	InputGroupButton,
 	InputGroupInput,
 } from '@/components/ui/input-group';
-import {
-	Pagination,
-	PaginationContent,
-	PaginationEllipsis,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
-} from '@/components/ui/pagination';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { CardHeaderHome } from '@/containers/cards/header-home';
+import { TablePagination } from '@/containers/tables/pagination';
 import { TableQuotesSimple } from '@/containers/tables/quotes/simple';
 
 export const metadata: Metadata = {
@@ -218,44 +204,7 @@ async function QuotesPage() {
 						<TableQuotesSimple />
 					</CardContent>
 				</Card>
-				<div className='flex flex-row items-center justify-between **:gap-x-2'>
-					<div>
-						<span className='text-sm px-2 text-muted-foreground'>
-							Total: 10 registros
-						</span>
-					</div>
-					<div className='flex flex-row items-center justify-end'>
-						<div className='flex flex-row items-center justify-end gap-x-1'>
-							<span className='text-sm font-normal leading-none text-muted-foreground'>
-								Registros:
-							</span>
-							<Select defaultValue='10'>
-								<SelectTrigger>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent align='center'>
-									<SelectItem value='10'>10</SelectItem>
-									<SelectItem value='20'>20</SelectItem>
-									<SelectItem value='30'>30</SelectItem>
-									<SelectItem value='50'>50</SelectItem>
-									<SelectItem value='100'>100</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-						<Separator orientation='vertical' className='h-7 mx-2' />
-						<Pagination>
-							<PaginationContent>
-								<PaginationPrevious />
-								<PaginationEllipsis />
-								<PaginationLink>1</PaginationLink>
-								<PaginationLink>2</PaginationLink>
-								<PaginationLink>3</PaginationLink>
-								<PaginationEllipsis />
-								<PaginationNext />
-							</PaginationContent>
-						</Pagination>
-					</div>
-				</div>
+				<TablePagination />
 			</div>
 		</main>
 	);

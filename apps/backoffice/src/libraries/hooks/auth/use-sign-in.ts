@@ -1,9 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
+import type { BetterFetchError } from 'better-auth/client';
 import type { SignIn } from '@/@types/auth/sign-in';
 import { auth } from '@/auth';
 
 const useSignIn = () =>
-	useMutation<unknown, Error, SignIn>({
+	useMutation<unknown, BetterFetchError, SignIn>({
 		mutationKey: ['auth', 'sign-in'],
 		mutationFn: async ({ email, password, rememberPassword }) =>
 			await auth.signIn.email(
@@ -12,29 +13,15 @@ const useSignIn = () =>
 					password,
 					rememberMe: rememberPassword,
 				},
-				// {
-				// 	onError(ctx) {
-				// 		if (
-				// 			ctx.error.message?.toLowerCase() ===
-				// 				BASE_ERROR_CODES.INVALID_EMAIL_OR_PASSWORD.toLowerCase() ||
-				// 			ctx.error.message?.toLowerCase() ===
-				// 				BASE_ERROR_CODES.INVALID_EMAIL.toLowerCase() ||
-				// 			ctx.error.message?.toLowerCase() ===
-				// 				BASE_ERROR_CODES.INVALID_PASSWORD.toLowerCase()
-				// 		) {
-				// 			throw new Error('Credenciais de login inválidas');
-				// 		}
+				{
+					onError({ error }) {
+						if (error.message.toLowerCase() === 'invalid email or password') {
+							throw new Error('Email ou senha inválidos');
+						}
 
-				// 		if (
-				// 			ctx.error.message?.toLowerCase() ===
-				// 			BASE_ERROR_CODES.EMAIL_NOT_VERIFIED.toLowerCase()
-				// 		) {
-				// 			throw new Error('E-mail não verificado');
-				// 		}
-
-				// 		throw new Error('Falha ao fazer login');
-				// 	},
-				// },
+						throw error.error;
+					},
+				},
 			),
 	});
 
