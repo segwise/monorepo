@@ -1,3 +1,4 @@
+import type { Session } from 'better-auth';
 import type { S3Client } from 'bun';
 import type {
 	Context as HonoContext,
@@ -7,6 +8,7 @@ import type { Resend } from 'resend';
 import type { Database } from '@/@types/database';
 import type { Environment } from '@/@types/environment';
 import type { auth } from '@/auth';
+import type { Role } from '@/generated/prisma/enums';
 import type { server } from '@/server';
 
 type Server = typeof server;
@@ -22,6 +24,9 @@ type Variables = {
 	storage: {
 		images: S3Client;
 		documents: S3Client;
+	};
+	session: Session & {
+		role: Role;
 	};
 };
 

@@ -1,16 +1,32 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { admin } from 'better-auth/plugins';
+import { admin, customSession } from 'better-auth/plugins';
 import { secondaryStorage } from '@/auth/adapters/secondary-storage';
+import { getMainDomain } from '@/functions/hostname/get-main-domain';
 import { environment } from '@/libraries/environment';
+import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 import { database } from '@/services/database';
 import { email } from '@/services/email';
+import { storage } from '../storage/images';
+
+const mainDomain = getMainDomain(environment.BASE_URL);
 
 const auth = betterAuth({
+	appName: 'Segwise',
+	basePath: '/auth',
 	baseURL: environment.BETTER_AUTH_URL,
 	secret: environment.BETTER_AUTH_SECRET,
-	trustedOrigins: [environment.APPLICATION_URL],
-	basePath: '/auth',
+	trustedOrigins:
+		environment.NODE_ENV !== 'development'
+			? [`https://*.${mainDomain}`, `https://${mainDomain}`]
+			: [
+					'http://localhost:3000',
+					'https://localhost:3000',
+					'http://localhost:3001',
+					'https://localhost:3001',
+					'http://localhost:3002',
+					'https://localhost:3002',
+				],
 	database: prismaAdapter(database, {
 		provider: 'postgresql',
 		transaction: true,
@@ -19,7 +35,7 @@ const auth = betterAuth({
 	}),
 	emailAndPassword: {
 		enabled: true,
-		disableSignUp: false,
+		disableSignUp: true,
 		requireEmailVerification: true,
 		minPasswordLength: 8,
 		maxPasswordLength: 128,
@@ -39,11 +55,29 @@ const auth = betterAuth({
 		revokeSessionsOnPasswordReset: true,
 		password: {
 			hash: async (password) => {
+				if (
+					password.startsWith('$argon2id$') ||
+					password.startsWith('$argon2i$') ||
+					password.startsWith('$argon2d$')
+				) {
+					return password;
+				}
+
 				return await Bun.password.hash(password, 'argon2id');
 			},
 			verify: async ({ hash, password }) => {
 				return await Bun.password.verify(password, hash, 'argon2id');
 			},
+		},
+		onPasswordReset: async ({ user }) => {
+			await database.user.update({
+				where: {
+					id: user.id,
+				},
+				data: {
+					emailVerified: true,
+				},
+			});
 		},
 	},
 	emailVerification: {
@@ -117,7 +151,7 @@ const auth = betterAuth({
 		accountLinking: {
 			enabled: true,
 			trustedProviders: ['email-password'],
-			allowDifferentEmails: false,
+			allowDifferentEmails: true,
 		},
 		storeStateStrategy: 'database',
 	},
@@ -141,17 +175,17 @@ const auth = betterAuth({
 		disableCSRFCheck: false,
 		crossSubDomainCookies: {
 			enabled: true,
-			domain:
-				environment.NODE_ENV !== 'development'
-					? environment.APPLICATION_URL.split('.').slice(-3).join('.')
-					: undefined,
+			domain: getMainDomain(environment.BASE_URL),
 		},
 		defaultCookieAttributes: {
 			httpOnly: true,
 			secure: true,
 			sameSite: 'Lax',
 		},
-		cookiePrefix: 'auth',
+		cookiePrefix:
+			environment.NODE_ENV === 'production'
+				? 'auth'
+				: `${environment.NODE_ENV}.auth`,
 		database: {
 			generateId: () => Bun.randomUUIDv7(),
 		},
@@ -164,7 +198,19 @@ const auth = betterAuth({
 		throw: true,
 		errorURL: '/auth/error',
 	},
-	plugins: [admin()],
+	plugins: [
+		admin(),
+		customSession(async ({ user, session }) => {
+			if (user?.image) {
+				user.image = getPresignedUrl(storage, user.image);
+			}
+
+			return {
+				user,
+				session,
+			};
+		}),
+	],
 });
 
 export { auth };

@@ -5,6 +5,7 @@ const SchemaEnvironment = z.object({
 	PORT: z.coerce.number('PORT inválido').default(3000),
 	DATABASE_URL: z.url('DATABASE_URL inválido'),
 	CACHE_URL: z.url('CACHE_URL inválido'),
+	BASE_URL: z.url('BASE_URL inválido'),
 	BETTER_AUTH_URL: z.url('BETTER_AUTH_URL inválido'),
 	BETTER_AUTH_SECRET: z.string('BETTER_AUTH_SECRET inválido'),
 	MINIO_ENDPOINT: z.url('MINIO_ENDPOINT inválido'),

@@ -22,20 +22,20 @@
 		"prisma": "7.0.1"
 	},
 	"peerDependencies": {
-		"typescript": "^5"
+		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"@faker-js/faker": "^10.3.0",
+		"@faker-js/faker": "^10.4.0",
 		"@hono/zod-validator": "^0.7.6",
-		"@prisma/adapter-pg": "^7.0.1",
+		"@prisma/adapter-pg": "^7.5.0",
 		"@prisma/client": "7.0.1",
 		"@segwise/core": "^1.1.110",
-		"better-auth": "^1.4.1",
+		"better-auth": "^1.5.6",
 		"date-fns": "^4.1.0",
-		"hono": "^4.10.6",
+		"hono": "^4.12.9",
 		"quick-lru": "^7.3.0",
-		"resend": "^6.5.2",
+		"resend": "^6.9.4",
 		"xior": "^0.8.3",
-		"zod": "^4.1.13"
+		"zod": "^4.3.6"
 	}
 }

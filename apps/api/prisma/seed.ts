@@ -1073,27 +1073,6 @@ async function seed() {
 				],
 			},
 			{
-				id: 'c5fbb8f5-2d0b-4ea6-96f6-bf482d5a5102',
-				name: 'oceanica brasil operadora de seguros e partipacoes ltda',
-				short_name: 'oceanica seguros',
-				registration: '50184794000169',
-				image:
-					'https://eerbunnlzzosgfxsuskw.supabase.co/storage/v1/object/public/insurers/c5fbb8f5-2d0b-4ea6-96f6-bf482d5a5102/logo',
-				created_at: '2023-12-05T02:38:46.183Z',
-				assistance_contacts: [
-					{
-						description: 'assistência 24h / vidros / sinistro',
-						contacts: [
-							{
-								value: '08007407812',
-								whatsapp: true,
-								region: 'all_regions',
-							},
-						],
-					},
-				],
-			},
-			{
 				id: '79c00f92-05e3-4569-8ad8-f3f31b24fbe8',
 				name: 'porto seguro cia de seguros gerais',
 				short_name: 'porto seguro',
