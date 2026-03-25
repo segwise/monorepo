@@ -14,8 +14,8 @@ const mainDomain = getMainDomain(environment.BASE_URL);
 const auth = betterAuth({
 	appName: 'Segwise',
 	basePath: '/auth',
-	baseURL: environment.BETTER_AUTH_URL,
-	secret: environment.BETTER_AUTH_SECRET,
+	baseURL: environment.BASE_URL,
+	secret: environment.AUTH_SECRET,
 	trustedOrigins:
 		environment.NODE_ENV !== 'development'
 			? [`https://*.${mainDomain}`, `https://${mainDomain}`]
