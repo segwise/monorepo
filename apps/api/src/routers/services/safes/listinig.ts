@@ -1,7 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import {
-	SchemaSearchQueriesSafeRegistration,
-	SchemaSearchQueriesSafeSimple,
+	SchemaSearchParamsSafeRegistration,
+	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
 import type { ResponseDataCursor, SafeSimple } from '@segwise/core/types';
 import { set } from 'date-fns';
@@ -13,7 +13,7 @@ import type { Prisma } from '@/generated/prisma/client';
 function registerRoutersServicesSafesSimpleListining(server: Server) {
 	server.get(
 		'/simple',
-		zValidator('query', SchemaSearchQueriesSafeSimple),
+		zValidator('query', SchemaSearchParamsSafeSimple),
 		async (ctx) => {
 			const { ids, limit } = ctx.req.valid('query');
 
@@ -25,18 +25,24 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				}),
 			};
 
-			const safes = await ctx.database.safe.findMany({
-				where,
-				...(limit && {
-					take: limit,
+			const [safes, total] = await ctx.database.$transaction([
+				ctx.database.safe.findMany({
+					where,
+					...(limit && {
+						take: limit,
+					}),
+					select: selectPrisma,
+					relationLoadStrategy: 'join',
 				}),
-				select: selectPrisma,
-				relationLoadStrategy: 'join',
-			});
+				ctx.database.safe.count({
+					where,
+				}),
+			]);
 
 			return ctx.json(
 				{
 					data: safes.map(serializer),
+					total,
 					next: null,
 					previous: null,
 				} satisfies ResponseDataCursor<SafeSimple>,
@@ -49,7 +55,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 		'/simple/registration',
 		zValidator(
 			'query',
-			SchemaSearchQueriesSafeRegistration.transform(
+			SchemaSearchParamsSafeRegistration.transform(
 				({ registration, birth }) => ({
 					registration,
 					birth: set(birth, {

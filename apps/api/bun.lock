@@ -5,18 +5,18 @@
     "": {
       "name": "backend",
       "dependencies": {
-        "@faker-js/faker": "^10.3.0",
+        "@faker-js/faker": "^10.4.0",
         "@hono/zod-validator": "^0.7.6",
-        "@prisma/adapter-pg": "^7.0.1",
+        "@prisma/adapter-pg": "^7.5.0",
         "@prisma/client": "7.0.1",
-        "@segwise/core": "^1.1.110",
-        "better-auth": "^1.4.1",
+        "@segwise/core": "^1.1.128",
+        "better-auth": "^1.5.6",
         "date-fns": "^4.1.0",
-        "hono": "^4.10.6",
+        "hono": "^4.12.9",
         "quick-lru": "^7.3.0",
-        "resend": "^6.5.2",
+        "resend": "^6.9.4",
         "xior": "^0.8.3",
-        "zod": "^4.1.13",
+        "zod": "^4.3.6",
       },
       "devDependencies": {
         "@biomejs/biome": "2.3.7",
@@ -24,7 +24,7 @@
         "prisma": "7.0.1",
       },
       "peerDependencies": {
-        "typescript": "^5",
+        "typescript": "^5.9.3",
       },
     },
   },
@@ -121,7 +121,7 @@
 
     "@prisma/studio-core": ["@prisma/studio-core@0.8.2", "", { "peerDependencies": { "@types/react": "^18.0.0 || ^19.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" } }, "sha512-/iAEWEUpTja+7gVMu1LtR2pPlvDmveAwMHdTWbDeGlT7yiv0ZTCPpmeAGdq/Y9aJ9Zj1cEGBXGRbmmNPj022PQ=="],
 
-    "@segwise/core": ["@segwise/core@1.1.110", "https://npm.pkg.github.com/download/@segwise/core/1.1.110/89927a7590fa34e27b630e620b82089fb060b441", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-6D1pDZmDjiH0o1SwXPod+hex2geEA/w/mEARcuevUsbrXdI3mMh3s68iYfUJhHcLEJa+iMW7LcwftW+QEjbKMQ=="],
+    "@segwise/core": ["@segwise/core@1.1.128", "https://npm.pkg.github.com/download/@segwise/core/1.1.128/5d0dcd652e7cbf7ed368c466a00b5069dbbd4f8f", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-/4IK/LxiJoJDi9yGwDAI3yrDvB78NbbQgYEXw23+HO9Qfn0s6IOflakCokrRQt6LqkV7c2x4FVfgmx/RkzqIqg=="],
 
     "@stablelib/base64": ["@stablelib/base64@1.0.1", "", {}, "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ=="],
 

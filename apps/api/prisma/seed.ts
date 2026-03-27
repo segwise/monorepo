@@ -1,5 +1,19 @@
+import { faker } from '@faker-js/faker/locale/pt_BR';
+import {
+	addDays,
+	endOfDay,
+	endOfYear,
+	startOfDay,
+	subHours,
+	subYears,
+} from 'date-fns';
 import xior from 'xior';
-import { Role } from '@/generated/prisma/enums';
+import {
+	ModalityInsurance,
+	Role,
+	StatusQuote,
+	VehicleUsage,
+} from '@/generated/prisma/enums';
 import { auth } from '@/services/auth';
 import { database } from '@/services/database';
 import { storage } from '@/services/storage/images';
@@ -39,7 +53,7 @@ async function seed() {
 			},
 		});
 
-		const insuranceCompanies = [
+		const insuranceCompaniesSeed = [
 			{
 				id: '3bf7a588-36b1-4a2c-bd80-0a4541fb58a6',
 				name: 'aig seguros brasil s/a',
@@ -1665,6 +1679,8 @@ async function seed() {
 			{
 				id: '85c0bec0-5e29-4e92-918e-38391acac4e2',
 				name: 'justos seguros s/a',
+				image:
+					'https://raichu-uploads.s3.amazonaws.com/logo_novo-seguros_YPrk8n.png',
 				short_name: 'justos',
 				registration: '45865343000157',
 				created_at: '2023-12-05T02:38:46.183Z',
@@ -1709,6 +1725,8 @@ async function seed() {
 			{
 				id: '85c0bec0-5e29-4e92-918e-38391acac4e2',
 				name: 'novo seguros s/a',
+				image:
+					'https://velseg.com.br/wp-content/uploads/2025/09/seguradora-parceira-velseg-justos-1.jpg',
 				short_name: 'novo seguros',
 				registration: '50182327000108',
 				created_at: '2023-12-05T02:38:46.183Z',
@@ -1767,7 +1785,7 @@ async function seed() {
 			},
 		];
 
-		for (const insurance of insuranceCompanies) {
+		for (const insurance of insuranceCompaniesSeed) {
 			const idInsurance = Bun.randomUUIDv7();
 
 			const pathInsurance = insurance.image
@@ -1841,6 +1859,117 @@ async function seed() {
 					}
 				}
 			}
+		}
+
+		await database.manufacturerVehicle.createMany({
+			data: Array.from({ length: 10 }).map(() => ({
+				name: faker.vehicle.manufacturer(),
+			})),
+		});
+
+		const [insuranceCompanies, manufacturers] = await database.$transaction([
+			database.insuranceCompany.findMany({
+				select: {
+					id: true,
+				},
+			}),
+			database.manufacturerVehicle.findMany({
+				select: {
+					id: true,
+				},
+			}),
+		]);
+
+		for (let i = 0; i < 500; i++) {
+			const renewal = faker.datatype.boolean();
+
+			const status = faker.helpers.enumValue(StatusQuote);
+
+			const isPlate = faker.datatype.boolean();
+
+			await database.quote.create({
+				data: {
+					...(!!renewal && {
+						insuranceCompany: {
+							connect: {
+								id: insuranceCompanies[
+									faker.number.int({
+										min: 0,
+										max: insuranceCompanies.length - 1 || 0,
+									})
+								]?.id as string,
+							},
+						},
+						expiration: addDays(
+							new Date(),
+							faker.number.int({ min: 1, max: 100 }),
+						),
+						franchise: faker.helpers.arrayElement([
+							undefined,
+							faker.number.int({ min: 1_000, max: 5_000 }),
+						]),
+					}),
+					temporaryInsured: {
+						create: {
+							name: faker.person.fullName(),
+							phone: faker.phone.number({ style: 'international' }).slice(1),
+						},
+					},
+					modality: faker.helpers.enumValue(ModalityInsurance),
+					quoteVehicle: {
+						create: {
+							usage: faker.helpers.enumValue(VehicleUsage),
+							overnightPostalCode: faker.location.zipCode('########'),
+							...(!!isPlate && {
+								vehicle: {
+									create: {
+										plate: faker.vehicle.vrm(),
+										plateAlternative: faker.vehicle.vrm(),
+										model: faker.vehicle.model(),
+										modelYear: faker.date
+											.between({
+												from: subYears(
+													startOfDay(new Date()),
+													faker.number.int({ min: 0, max: 7 }),
+												),
+												to: endOfYear(endOfDay(new Date())),
+											})
+											.getFullYear(),
+										manufacturer: {
+											connect: {
+												id: manufacturers[
+													faker.number.int({
+														min: 0,
+														max: manufacturers.length - 1,
+													})
+												]?.id as string,
+											},
+										},
+									},
+								},
+							}),
+							...(!isPlate && {
+								vehicleWithoutPlate: {
+									create: {},
+								},
+							}),
+						},
+					},
+					renewal,
+					requestAt: subHours(
+						new Date(),
+						faker.number.int({ min: 30, max: 10000 }),
+					),
+					status,
+					statusAt: subHours(
+						new Date(),
+						faker.number.int({ min: 30, max: 10000 }),
+					),
+					...(status === 'recused' && {
+						statusMessage: faker.lorem.lines(1),
+					}),
+				},
+			});
 		}
 	} catch (error) {
 		console.error(error);
