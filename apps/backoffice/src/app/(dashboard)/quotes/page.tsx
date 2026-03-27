@@ -204,7 +204,7 @@ async function QuotesPage() {
 						<TableQuotesSimple />
 					</CardContent>
 				</Card>
-				<TablePagination />
+				<TablePagination queryKey={['quotes', 'simple']} />
 			</div>
 		</main>
 	);

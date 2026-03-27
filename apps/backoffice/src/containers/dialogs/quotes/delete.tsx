@@ -58,7 +58,7 @@ function DialogQuoteDeleteById({
 				<Separator />
 				<DialogFooter>
 					<DialogClose asChild>
-						<Button variant='destructive'>
+						<Button variant='destructive' tabIndex={-1}>
 							Fechar <XCircleIcon />
 						</Button>
 					</DialogClose>
