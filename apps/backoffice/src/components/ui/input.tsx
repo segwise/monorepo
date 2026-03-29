@@ -20,4 +20,20 @@ const Input = forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
 
 Input.displayName = 'Input';
 
-export { Input };
+const InputMessage = forwardRef<HTMLSpanElement, React.ComponentProps<'span'>>(
+	({ className, children, ...props }, ref) => {
+		return (
+			<span
+				className={cn('text-destructive text-xs', className)}
+				ref={ref}
+				{...props}
+			>
+				{children}
+			</span>
+		);
+	},
+);
+
+InputMessage.displayName = 'InputMessage';
+
+export { Input, InputMessage };

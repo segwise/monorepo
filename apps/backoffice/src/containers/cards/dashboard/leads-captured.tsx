@@ -1,5 +1,5 @@
 import { Users2Icon } from 'lucide-react';
-import { CardHeaderHome } from './header-home';
+import { CardHeaderHome } from '../header-home';
 
 function CardLeadsCaptured() {
 	return (

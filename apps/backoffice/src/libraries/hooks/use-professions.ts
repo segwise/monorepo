@@ -1,23 +1,23 @@
+import type { ProfessionSimple } from '@segwise/core/types';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/libraries/api';
 
-const useProfessions = ({ simple }: { simple?: boolean } = {}) =>
+type UseProfessionsSimpleProps = {
+	enabled: boolean;
+};
+
+const useProfessionsSimple = ({
+	enabled,
+}: Partial<UseProfessionsSimpleProps> = {}) =>
 	useQuery({
-		queryKey: [
-			'professions',
-			{
-				simple,
-			},
-		],
+		queryKey: ['professions', 'simple'],
 		queryFn: async ({ signal }) =>
 			await api
-				.get<Array<{ code: string; name: string }>>(
-					!simple ? '/professions' : '/professions/simple',
-					{
-						signal,
-					},
-				)
+				.get<Array<ProfessionSimple>>('/professions/simple', {
+					signal,
+				})
 				.then(({ data }) => data),
+		enabled,
 	});
 
-export { useProfessions };
+export { useProfessionsSimple };

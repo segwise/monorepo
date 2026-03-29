@@ -78,9 +78,9 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { placeholder } from '@/config/placeholder';
-import { useProducers } from '@/libraries/hooks/producers/use-producers';
+import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useQuotesRegister } from '@/libraries/hooks/quotes/use-quotes-register';
-import { useProfessions } from '@/libraries/hooks/use-professions';
+import { useProfessionsSimple } from '@/libraries/hooks/use-professions';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 
 function FormQuoteRegister() {
@@ -91,13 +91,9 @@ function FormQuoteRegister() {
 
 	const { mutate, isPending } = useQuotesRegister();
 
-	const { data: producers } = useProducers({
-		simple: true,
-	});
+	const { data: producers } = useProducersSimple();
 
-	const { data: professions } = useProfessions({
-		simple: true,
-	});
+	const { data: professions } = useProfessionsSimple();
 
 	const { data: manufacturers } = useVehiclesManufacturers();
 

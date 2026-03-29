@@ -64,7 +64,7 @@ function TablePagination({ queryKey }: { queryKey: ['quotes', 'simple'] }) {
 			if (query?.total > 0 && query?.data?.length === 0) {
 				setSearchParams({
 					// @ts-expect-error
-					cursor: query.pages.last,
+					cursor: query.previous || query.pages.last,
 				});
 			}
 		});

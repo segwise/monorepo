@@ -1,5 +1,5 @@
 import { Building2Icon } from 'lucide-react';
-import { CardHeaderHome } from './header-home';
+import { CardHeaderHome } from '../header-home';
 
 function CardActiveBrokers() {
 	return (

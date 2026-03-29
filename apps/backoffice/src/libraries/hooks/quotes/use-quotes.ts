@@ -6,16 +6,13 @@ import type { SearchParamsProps } from '@/libraries/search-params/quotes';
 const useQuotesSimple = (props: SearchParamsProps) =>
 	useQuery({
 		queryKey: ['quotes', 'simple', props],
-		queryFn: async ({ signal }) => {
-			const response = (
+		queryFn: async ({ signal }) =>
+			(
 				await api.get<ResponseDataCursor<QuoteSimple>>('/quotes/simple', {
 					params: props,
 					signal,
 				})
-			).data;
-
-			return response;
-		},
+			).data,
 	});
 
 export { useQuotesSimple };

@@ -251,12 +251,13 @@ function TableQuotesSimple() {
 									</Button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align='end'>
-									<DropdownMenuItem
-										onClick={() => {
-											throw new Error('Falha na geração do PDF');
-										}}
-									>
-										<PrinterIcon /> Imprimir
+									<DropdownMenuItem asChild>
+										<Link
+											target='_blank'
+											href={`${process.env.NEXT_PUBLIC_API_URL}/quotes/${id}/print`}
+										>
+											<PrinterIcon /> Imprimir
+										</Link>
 									</DropdownMenuItem>
 									<DropdownMenuSeparator />
 									<DialogQuoteDeleteById id={id}>
