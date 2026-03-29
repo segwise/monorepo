@@ -7,9 +7,9 @@ import { registerRoutersServicesQuotesRegister } from '@/routers/services/quotes
 function registerRoutersServicesQuotes(server: Server) {
 	const base = server.basePath('/quotes');
 
+	registerRoutersServicesQuotesById(base);
 	registerRoutersServicesQuotesRegister(base);
 	registerRoutersServicesQuotesSimpleListining(base);
-	registerRoutersServicesQuotesById(base);
 }
 
 export { registerRoutersServicesQuotes };

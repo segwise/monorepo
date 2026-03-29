@@ -1,5 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsQuoteSimple } from '@segwise/core/schemas';
+import { endOfDay, endOfMonth, startOfDay, startOfMonth } from 'date-fns';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/quote/simple';
 import { serializer } from '@/db-serializers/quote/simple';
@@ -11,10 +12,85 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 		'/simple',
 		zValidator('query', SchemaSearchParamsQuoteSimple),
 		async (ctx) => {
-			const { cursor, limit } = ctx.req.valid('query');
+			const {
+				cursor,
+				limit,
+				search,
+				producer,
+				insuranceCompanies,
+				requestAt,
+				modality,
+				status,
+				renewal,
+			} = ctx.req.valid('query');
 
 			const pageMargins = 2;
-			const where: Prisma.QuoteWhereInput = {};
+
+			const where: Prisma.QuoteWhereInput = {
+				...(!!renewal && {
+					renewal,
+				}),
+				...(!!search && {
+					OR: [
+						{
+							insured: {
+								name: {
+									search: search.replaceAll(' ', '&'),
+									mode: 'insensitive',
+								},
+							},
+						},
+						{
+							temporaryInsured: {
+								name: {
+									search: search.replaceAll(' ', '&'),
+									mode: 'insensitive',
+								},
+							},
+						},
+					],
+				}),
+				...(!!producer?.length && {
+					producerId: {
+						in: producer,
+					},
+				}),
+				...(!!insuranceCompanies?.length && {
+					insuranceCompanyId: {
+						in: insuranceCompanies,
+					},
+				}),
+				...(!requestAt && {
+					requestAt: {
+						gte: startOfMonth(startOfDay(new Date())),
+						lte: endOfMonth(endOfDay(new Date())),
+					},
+				}),
+				...(!!requestAt &&
+					typeof requestAt === 'string' && {
+						requestAt: {
+							gte: startOfDay(requestAt),
+							lte: endOfDay(requestAt),
+						},
+					}),
+				...(!!requestAt &&
+					typeof requestAt === 'object' && {
+						requestAt: {
+							gte: startOfDay(requestAt.start),
+							lte: endOfDay(requestAt.end),
+						},
+					}),
+				...(!!modality && {
+					modality: {
+						in: modality,
+					},
+				}),
+				...(!!status && {
+					status: {
+						in: status,
+					},
+				}),
+			};
 
 			const [quotes, total, itemsBefore] = await ctx.database.$transaction([
 				ctx.database.quote.findMany({
