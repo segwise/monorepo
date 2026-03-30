@@ -41,6 +41,7 @@ model User {
 
   @@unique([referral])
   @@unique([email])
+  @@index([referral])
   @@index([name])
   @@index([email])
   @@index([phone])
@@ -126,6 +127,9 @@ model TemporaryInsured {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@index([name])
+  @@index([phone])
+  @@index([cpf])
   @@map("temporary_insureds")
 }
 
