@@ -4,7 +4,6 @@ import {
 	SchemaQuoteType,
 	SchemaSearchParamsQuoteSimple,
 } from '@segwise/core/schemas';
-import { endOfToday, startOfMonth, startOfToday } from 'date-fns';
 import {
 	parseAsArrayOf,
 	parseAsBoolean,
@@ -21,12 +20,7 @@ const useSearchParams = () =>
 		search: parseAsString,
 		producers: parseAsArrayOf(parseAsString),
 		insuranceCompanies: parseAsArrayOf(parseAsString),
-		requestAt: parseAsJson(
-			SchemaSearchParamsQuoteSimple.shape.requestAt,
-		).withDefault({
-			start: startOfMonth(startOfToday()).toISOString(),
-			end: endOfToday().toISOString(),
-		}),
+		requestAt: parseAsJson(SchemaSearchParamsQuoteSimple.shape.requestAt),
 		type: parseAsArrayOf(parseAsStringEnum(SchemaQuoteType.options)),
 		status: parseAsArrayOf(parseAsStringEnum(SchemaQuoteStatus.options)),
 		limit: parseAsInteger.withDefault(
