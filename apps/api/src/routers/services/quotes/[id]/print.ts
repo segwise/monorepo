@@ -9,7 +9,6 @@ import type { QuotePrint } from '@segwise/core/types';
 import { parseISO } from 'date-fns';
 import hbs from 'handlebars';
 import { PDFDocument } from 'pdf-lib';
-import puppeteer from 'puppeteer';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/libraries/database/adapters/quote/print';
 import { serializer } from '@/libraries/database/serializers/quote/print';
@@ -772,20 +771,14 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 			}),
 		});
 
-		const browser = await puppeteer.launch({
-			headless: true,
-			...(ctx.environment.NODE_ENV !== 'development' && {
-				executablePath: '/usr/bin/chromium-browser',
-			}),
-			args: [...puppeteer.defaultArgs(), '--no-sandbox'],
-			timeout: 60000,
-			ignoreDefaultArgs: true,
+		const { page, release } = await ctx.browser();
+
+		await page.setContent(content, {
+			waitUntil: 'networkidle',
+			timeout: 12000,
 		});
 
-		const page = await browser.newPage();
-		await page.setContent(content);
-
-		const data = await page.pdf({
+		const pdfBuffer = await page.pdf({
 			pageRanges: '1',
 			format: 'A4',
 			printBackground: true,
@@ -797,9 +790,9 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 			},
 		});
 
-		await browser.close();
+		await release();
 
-		const pdf = await PDFDocument.load(data);
+		const pdf = await PDFDocument.load(pdfBuffer);
 		pdf.setTitle(`${quote.id}.pdf`);
 		// pdf.setAuthor(quote.company.name.toUpperCase());
 		pdf.setCreator('SEGWISE TECNOLOGIA');

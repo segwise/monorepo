@@ -9,6 +9,7 @@ import type { Database } from '@/@types/database';
 import type { Environment } from '@/@types/environment';
 import type { auth } from '@/auth';
 import type { Role } from '@/generated/prisma/enums';
+import type { acquirePage } from '@/libraries/pdf/browser';
 import type { server } from '@/server';
 
 type Server = typeof server;
@@ -28,6 +29,7 @@ type Variables = {
 	session: Session & {
 		role: Role;
 	};
+	browser: Awaited<typeof acquirePage>;
 };
 
 type AppBindings = {
