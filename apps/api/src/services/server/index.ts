@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { logger } from 'hono/logger';
 import { trimTrailingSlash } from 'hono/trailing-slash';
 import type { AppBindings } from '@/@types/server.d';
 import { environment } from '@/libraries/environment';
@@ -18,24 +17,26 @@ import { storageMiddleware } from '@/server/middlewares/storage';
 
 const server = new Hono<AppBindings>({
 	strict: true,
-	getPath: (req) => {
-		const host = req.headers.get('host') || '';
+	...(environment.NODE_ENV !== 'development' && {
+		getPath: (req) => {
+			const host = req.headers.get('host') || '';
 
-		const domain = host.split(':')[0]?.split('.').shift();
+			const domain = host.split(':')[0]?.split('.').shift();
 
-		const subdomain = domain === 'localhost' ? 'services' : domain;
+			const subdomain = domain === 'localhost' ? 'services' : domain;
 
-		if (!subdomain || !['api', 'services'].includes(subdomain)) {
-			return '/__invalid_host__';
-		}
+			if (!subdomain || !['api', 'services'].includes(subdomain)) {
+				return '/__invalid_host__';
+			}
 
-		const url = new URL(req.url);
-		const path = url.pathname === '/' ? '' : url.pathname;
+			const url = new URL(req.url);
+			const path = url.pathname === '/' ? '' : url.pathname;
 
-		const fullPath = `/${subdomain}${path}`;
+			const fullPath = `/${subdomain}${path}`;
 
-		return fullPath;
-	},
+			return fullPath;
+		},
+	}),
 });
 
 server.use(trimTrailingSlash());
@@ -54,10 +55,6 @@ server.use(storageMiddleware);
 
 server.use(authMiddleware);
 server.use(sessionMiddleware);
-
-if (environment.NODE_ENV !== 'production') {
-	server.use(logger());
-}
 
 server.onError(errorMiddleware);
 
