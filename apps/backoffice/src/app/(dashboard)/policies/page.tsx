@@ -221,30 +221,55 @@ async function PoliciesPage() {
 			</div>
 			<Separator />
 			<div className='grid grid-cols-5 gap-x-3'>
-				<CardHeaderHome icon={HomeIcon} title='Seguros' value='0' percent={0} />
 				<CardHeaderHome
+					isPending={false}
+					icon={HomeIcon}
+					title='Seguros'
+					value='0'
+					percent={0}
+					before='0'
+					type='year'
+					setType={() => {}}
+				/>
+				<CardHeaderHome
+					isPending={false}
 					icon={HomeIcon}
 					title='Prêmio Líquido'
 					value='0'
 					percent={0}
+					before='0'
+					type='year'
+					setType={() => {}}
 				/>
 				<CardHeaderHome
+					isPending={false}
 					icon={HomeIcon}
 					title='Média em Prêmio Líquido'
 					value='0'
 					percent={0}
+					before='0'
+					type='year'
+					setType={() => {}}
 				/>
 				<CardHeaderHome
+					isPending={false}
 					icon={HomeIcon}
 					title='Comissão'
 					value='0'
 					percent={0}
+					before='0'
+					type='year'
+					setType={() => {}}
 				/>
 				<CardHeaderHome
+					isPending={false}
 					icon={HomeIcon}
 					title='Média em Comissão'
 					value='0'
 					percent={0}
+					before='0'
+					type='year'
+					setType={() => {}}
 				/>
 			</div>
 			<div className='space-y-3'>

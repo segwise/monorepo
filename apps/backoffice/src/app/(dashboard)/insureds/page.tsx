@@ -207,22 +207,34 @@ async function InsuredsPage() {
 			<Separator />
 			<div className='grid grid-cols-3 gap-x-3'>
 				<CardHeaderHome
+					isPending={false}
 					icon={HomeIcon}
 					title='Segurados'
 					value='0'
 					percent={0}
+					before='0'
+					type='year'
+					setType={() => {}}
 				/>
 				<CardHeaderHome
+					isPending={false}
 					icon={HomeIcon}
 					title='Crescimento Mensal'
 					value='0'
 					percent={0}
+					before='0'
+					type='year'
+					setType={() => {}}
 				/>
 				<CardHeaderHome
+					isPending={false}
 					icon={HomeIcon}
 					title='Média em Prêmio Líquido'
 					value='0'
 					percent={0}
+					before='0'
+					type='year'
+					setType={() => {}}
 				/>
 			</div>
 			<div className='space-y-3'>
