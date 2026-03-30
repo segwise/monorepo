@@ -14,7 +14,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN bun run db:generate
-# RUN bun run build
 
 FROM base AS runner
 WORKDIR /app
@@ -50,7 +49,6 @@ COPY --from=builder /app/.npmrc ./
 
 RUN bun --bun install --frozen-lockfile --production
 
-# COPY --from=builder /app/dist ./
 COPY --from=builder /app/src ./src
 
 COPY --from=builder /app/prisma ./prisma
