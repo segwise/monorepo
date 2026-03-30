@@ -19,6 +19,22 @@ RUN bun run build
 FROM base AS runner
 WORKDIR /app
 
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    udev \
+    mesa-gbm \
+    libdrm \
+    libxkbcommon
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock* ./
 COPY --from=builder /app/.npmrc ./
@@ -34,6 +50,10 @@ COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/generated ./generated
 
 COPY --from=builder /app/entrypoint.sh ./
+
+RUN addgroup -S user && adduser -S -G user user
+RUN chown -R user:user /app
+USER user
 
 ENV NODE_ENV=production
 ENV PORT=3000

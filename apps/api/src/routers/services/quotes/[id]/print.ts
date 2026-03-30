@@ -774,9 +774,9 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 
 		const browser = await puppeteer.launch({
 			headless: true,
-			// ...(ctx.environment.NODE_ENV !== 'development' && {
-			// 	executablePath: '/usr/bin/chromium-browser',
-			// }),
+			...(ctx.environment.NODE_ENV !== 'development' && {
+				executablePath: '/usr/bin/chromium-browser',
+			}),
 			args: [...puppeteer.defaultArgs(), '--no-sandbox'],
 			timeout: 60000,
 			ignoreDefaultArgs: true,
