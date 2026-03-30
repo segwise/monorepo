@@ -37,6 +37,11 @@ RUN apk add --no-cache \
     libxfixes \
     libxrandr \
     libxtst \
+    pango \
+    cups-libs \
+    alsa-lib \
+    at-spi2-atk \
+    gtk+3.0 \
     && rm -rf /var/cache/apk/*
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
