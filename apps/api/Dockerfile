@@ -29,6 +29,14 @@ RUN apk add --no-cache \
     udev \
     fontconfig \
     libstdc++ \
+    libx11 \
+    libxcb \
+    libxcomposite \
+    libxdamage \
+    libxext \
+    libxfixes \
+    libxrandr \
+    libxtst \
     && rm -rf /var/cache/apk/*
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
