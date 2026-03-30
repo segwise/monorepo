@@ -11,6 +11,7 @@ yarn-error.log*
 bun-debug.log*
 
 node_modules
+bun.lock*
 .cache
 *.log
 
