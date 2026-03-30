@@ -25,7 +25,7 @@ const corsMiddleware: MiddlewareHandler = async (ctx, next) => {
 		return await corsApiMiddleware(ctx, next);
 	}
 
-	if (ctx.req.path.includes('/auth')) {
+	if (ctx.req.path.includes('/services/auth')) {
 		return await corsAuthMiddleware(ctx, next);
 	}
 
