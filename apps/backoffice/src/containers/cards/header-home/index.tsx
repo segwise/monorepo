@@ -1,6 +1,6 @@
 import {
 	ArrowUpIcon,
-	type HomeIcon,
+	type LucideIcon,
 	TrendingDownIcon,
 	TrendingUpIcon,
 } from 'lucide-react';
@@ -18,7 +18,7 @@ import { ChangePeriod } from './change-period';
 
 interface CardHeaderHomeProps {
 	isPending?: boolean;
-	icon?: typeof HomeIcon;
+	icon?: LucideIcon;
 	title: string;
 	value: string;
 	before: string;
