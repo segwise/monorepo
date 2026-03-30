@@ -33,7 +33,7 @@ RUN apk add --no-cache \
     libgtk-3-0 \
     libasound2
 
-RUN bun x playwright install --with-deps
+RUN bun x playwright install --with-deps chromium
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock* ./
