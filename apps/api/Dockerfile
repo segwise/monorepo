@@ -39,8 +39,6 @@ RUN apk add --no-cache \
     libxshmfence \
     alsa-lib
 
-RUN bun x playwright install chromium
-
 ENV PLAYWRIGHT_BROWSERS_PATH=0 \
     CHROMIUM_PATH=/usr/bin/chromium-browser
 
