@@ -1,4 +1,4 @@
-import { CarFrontIcon, LockIcon, SettingsIcon } from 'lucide-react';
+import { LockIcon, SettingsIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Activity, Suspense } from 'react';
@@ -97,21 +97,8 @@ function Sidebar() {
 				<SidebarGroupContent>
 					<SidebarMenu>
 						<SidebarMenuItem>
-							<SidebarMenuButton tooltip='Consultar Planca'>
-								<CarFrontIcon />
-								<span>Consultar Placa</span>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
-					</SidebarMenu>
-				</SidebarGroupContent>
-			</SidebarGroup>
-			<SidebarSeparator />
-			<SidebarGroup>
-				<SidebarGroupContent>
-					<SidebarMenu>
-						<SidebarMenuItem>
 							<SidebarMenuButton asChild tooltip='Configurações'>
-								<Link href='/settings'>
+								<Link href='/settings' prefetch={false}>
 									<SettingsIcon />
 									<span>Configurações</span>
 								</Link>
