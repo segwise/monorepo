@@ -245,9 +245,11 @@ function FormQuoteRegister() {
 														<span className='text-xs/tight font-medium block text-left'>
 															{capitalizeFirstLetters(name)}
 														</span>
-														<span className='text-xs/tight text-muted-foreground block text-left'>
-															{maskPhone(contact.phone)}
-														</span>
+														{contact.phone && (
+															<span className='text-xs/tight text-muted-foreground block text-left'>
+																{maskPhone(contact.phone)}
+															</span>
+														)}
 													</div>
 												</div>
 											</SelectItem>
