@@ -70,6 +70,7 @@ function Sidebar() {
 														'',
 														item.disabled && 'pointer-events-none',
 													)}
+													prefetch={!item.disabled}
 												>
 													<item.icon />
 													<span>{item.title}</span>
