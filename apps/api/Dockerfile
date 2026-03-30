@@ -19,7 +19,7 @@ RUN bun run build
 FROM base AS runner
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
     wget \
     ca-certificates \
     fonts-liberation \
@@ -50,10 +50,6 @@ COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/generated ./generated
 
 COPY --from=builder /app/entrypoint.sh ./
-
-RUN addgroup -S user && adduser -S -G user user
-RUN chown -R user:user /app
-USER user
 
 ENV NODE_ENV=production
 ENV PORT=3000
