@@ -22,16 +22,22 @@ WORKDIR /app
 RUN apk add --no-cache \
     wget \
     ca-certificates \
-    fonts-liberation \
-    libnss3 \
-    libatk-bridge2.0-0 \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libasound2
+    nss \
+    freetype \
+    harfbuzz \
+    ttf-freefont \
+    chromium \
+    udev \
+    dumb-init \
+    dbus \
+    mesa-gl \
+    libx11 \
+    libxcomposite \
+    libxdamage \
+    libxrandr \
+    libxkbcommon \
+    libxshmfence \
+    alsa-lib
 
 RUN bun x playwright install --with-deps chromium
 
