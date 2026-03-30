@@ -3,11 +3,12 @@ import {
 	addDays,
 	endOfDay,
 	endOfYear,
-	startOfDay,
+	startOfToday,
 	subHours,
 	subYears,
 } from 'date-fns';
 import xior from 'xior';
+import { generateReferral } from '@/functions/generate-referral';
 import {
 	ModalityInsurance,
 	Role,
@@ -1788,25 +1789,19 @@ async function seed() {
 		for (const insurance of insuranceCompaniesSeed) {
 			const idInsurance = Bun.randomUUIDv7();
 
-			const pathInsurance = insurance.image
-				? `/insurance-companies/${idInsurance}`
-				: undefined;
+			const pathInsurance = `/insurance-companies/${idInsurance}`;
 
-			if (insurance.image) {
-				const { data } = await xior.get(insurance.image, {
-					responseType: 'blob',
-				});
+			const { data } = await xior.get(insurance.image, {
+				responseType: 'blob',
+			});
 
-				await storage.write(pathInsurance as string, data);
-			}
+			await storage.write(pathInsurance as string, data);
 
 			const company = await database.insuranceCompany.create({
 				data: {
 					id: idInsurance,
 					name: insurance.name,
-					...(pathInsurance && {
-						icon: pathInsurance,
-					}),
+					icon: pathInsurance,
 					cnpj: insurance.registration,
 				},
 				select: {
@@ -1929,7 +1924,7 @@ async function seed() {
 										modelYear: faker.date
 											.between({
 												from: subYears(
-													startOfDay(new Date()),
+													startOfToday(),
 													faker.number.int({ min: 0, max: 7 }),
 												),
 												to: endOfYear(endOfDay(new Date())),
@@ -1967,6 +1962,35 @@ async function seed() {
 					),
 					...(status === 'recused' && {
 						statusMessage: faker.lorem.lines(1),
+					}),
+				},
+			});
+		}
+
+		for (let i = 0; i < 10; i++) {
+			const id = Bun.randomUUIDv7();
+
+			const image = faker.helpers.arrayElement([null, faker.image.avatar()]);
+
+			const pathImage = image ? `/users/${id}` : null;
+
+			if (pathImage && image) {
+				const { data } = await xior.get(image, {
+					responseType: 'blob',
+				});
+
+				await storage.write(pathImage, data);
+			}
+
+			await database.user.create({
+				data: {
+					id,
+					name: faker.person.fullName(),
+					email: faker.internet.email(),
+					referral: generateReferral(),
+					role: Role.producer,
+					...(pathImage && {
+						image: pathImage,
 					}),
 				},
 			});

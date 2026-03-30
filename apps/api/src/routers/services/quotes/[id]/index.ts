@@ -6,8 +6,8 @@ import { registerRoutersServicesQuotesByIdPrint } from '@/routers/services/quote
 function registerRoutersServicesQuotesById(server: Server) {
 	const base = server.basePath(`/:id{${z.regexes.uuid7.source.slice(1)}}`);
 
-	registerRoutersServicesQuotesByIdDelete(base);
 	registerRoutersServicesQuotesByIdPrint(base);
+	registerRoutersServicesQuotesByIdDelete(base);
 }
 
 export { registerRoutersServicesQuotesById };

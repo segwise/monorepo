@@ -21,6 +21,8 @@ model User {
   email         String
   emailVerified Boolean? @map("email_verified")
 
+  phone String? @db.VarChar(13)
+
   referral String
 
   role String

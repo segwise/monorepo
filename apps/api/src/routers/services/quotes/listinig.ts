@@ -1,6 +1,13 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsQuoteSimple } from '@segwise/core/schemas';
-import { endOfDay, endOfMonth, startOfDay, startOfMonth } from 'date-fns';
+import {
+	endOfDay,
+	endOfMonth,
+	endOfToday,
+	startOfDay,
+	startOfMonth,
+	startOfToday,
+} from 'date-fns';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/quote/simple';
 import { serializer } from '@/db-serializers/quote/simple';
@@ -16,7 +23,7 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				cursor,
 				limit,
 				search,
-				producer,
+				producers,
 				insuranceCompanies,
 				requestAt,
 				modality,
@@ -50,9 +57,9 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						},
 					],
 				}),
-				...(!!producer?.length && {
+				...(!!producers?.length && {
 					producerId: {
-						in: producer,
+						in: producers,
 					},
 				}),
 				...(!!insuranceCompanies?.length && {
@@ -62,8 +69,8 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				}),
 				...(!requestAt && {
 					requestAt: {
-						gte: startOfMonth(startOfDay(new Date())),
-						lte: endOfMonth(endOfDay(new Date())),
+						gte: startOfMonth(startOfToday()),
+						lte: endOfMonth(endOfToday()),
 					},
 				}),
 				...(!!requestAt &&

@@ -3,8 +3,10 @@ import { SchemaSearchParamsQuoteSimple } from '@segwise/core';
 import {
 	endOfDay,
 	endOfMonth,
+	endOfToday,
 	startOfDay,
 	startOfMonth,
+	startOfToday,
 	subMonths,
 	subYears,
 } from 'date-fns';
@@ -56,8 +58,8 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 						...where,
 						requestAt: {
 							...(!requestAt && {
-								gte: startOfMonth(startOfDay(new Date())),
-								lte: endOfMonth(endOfDay(new Date())),
+								gte: startOfMonth(startOfToday()),
+								lte: endOfMonth(endOfToday()),
 							}),
 							...(!!requestAt && {
 								...(typeof requestAt === 'string' && {
@@ -79,12 +81,12 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 							...(!requestAt && {
 								gte:
 									type === 'year'
-										? subYears(startOfMonth(startOfDay(new Date())), 1)
-										: subMonths(startOfMonth(startOfDay(new Date())), 1),
+										? subYears(startOfMonth(startOfToday()), 1)
+										: subMonths(startOfMonth(startOfToday()), 1),
 								lte:
 									type === 'year'
-										? subYears(endOfMonth(endOfDay(new Date())), 1)
-										: subMonths(endOfMonth(endOfDay(new Date())), 1),
+										? subYears(endOfMonth(endOfToday()), 1)
+										: subMonths(endOfMonth(endOfToday()), 1),
 							}),
 							...(!!requestAt && {
 								...(typeof requestAt === 'string' && {
