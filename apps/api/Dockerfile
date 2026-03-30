@@ -39,6 +39,8 @@ RUN apk add --no-cache \
     libxshmfence \
     alsa-lib
 
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 ENV PLAYWRIGHT_BROWSERS_PATH=0 \
     CHROMIUM_PATH=/usr/bin/chromium-browser
 
@@ -57,6 +59,10 @@ COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/generated ./generated
 
 COPY --from=builder /app/entrypoint.sh ./
+
+RUN chown -R appuser:appgroup /app
+
+USER appuser
 
 ENV NODE_ENV=production
 ENV PORT=3000
