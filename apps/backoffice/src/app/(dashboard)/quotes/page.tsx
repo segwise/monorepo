@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { CardQuotesCountAnalytics } from '@/containers/cards/quotes/count-analytics';
 import { CardQuotesStatusAnalytics } from '@/containers/cards/quotes/status-analytics';
+import { SheetFilters } from '@/containers/sheets/filters';
 import { TableFilters, TableFiltersCount } from '@/containers/tables/filters';
 import { TablePagination } from '@/containers/tables/pagination';
 import { TableQuotesSimple } from '@/containers/tables/quotes/simple';
@@ -33,9 +34,20 @@ function QuotesPage() {
 					/>
 				</div>
 				<div className='flex flex-row items-center justify-end gap-x-2'>
-					<Button variant='outline' className='dark:bg-primary'>
-						<FilterIcon /> Filtrar <TableFiltersCount />
-					</Button>
+					<SheetFilters
+						type='quotes'
+						filters={[
+							'producers',
+							'insuranceCompanies',
+							'requestAt',
+							'modality',
+							'status',
+						]}
+					>
+						<Button variant='outline' className='dark:bg-primary'>
+							<FilterIcon /> Filtrar <TableFiltersCount />
+						</Button>
+					</SheetFilters>
 					<Button asChild variant='outline' className='dark:bg-primary'>
 						<Link href='/quotes/register'>
 							<PlusIcon /> Cadastrar

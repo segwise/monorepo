@@ -11,7 +11,6 @@ import {
 	CarIcon,
 	EyeIcon,
 	InfoIcon,
-	MoreHorizontalIcon,
 	PrinterIcon,
 	Trash2Icon,
 } from 'lucide-react';
@@ -20,13 +19,6 @@ import { Fragment } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
 	Empty,
 	EmptyDescription,
@@ -240,7 +232,21 @@ function TableQuotesSimple() {
 									<EyeIcon />
 								</Link>
 							</Button>
-							<DropdownMenu>
+							<Button variant='outline' size='icon-sm' asChild>
+								<Link
+									target='_blank'
+									href={`${process.env.NEXT_PUBLIC_API_URL}/quotes/${id}/print`}
+								>
+									<PrinterIcon />
+								</Link>
+							</Button>
+							<DialogQuoteDeleteById id={id}>
+								<Button variant='destructive' size='icon-sm'>
+									<Trash2Icon />
+								</Button>
+							</DialogQuoteDeleteById>
+
+							{/* <DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
 										variant='outline'
@@ -266,7 +272,7 @@ function TableQuotesSimple() {
 										</DropdownMenuItem>
 									</DialogQuoteDeleteById>
 								</DropdownMenuContent>
-							</DropdownMenu>
+							</DropdownMenu> */}
 						</TableCell>
 					</TableRow>
 				))}

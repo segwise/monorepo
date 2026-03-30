@@ -5,9 +5,25 @@ import {
 	translateQuoteStatus,
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
-import { endOfDay, format, isSameDay, parseISO, startOfDay } from 'date-fns';
-import { CarIcon, EditIcon, XCircleIcon } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import {
+	endOfDay,
+	endOfToday,
+	format,
+	isSameDay,
+	parseISO,
+	startOfDay,
+	startOfMonth,
+	startOfToday,
+} from 'date-fns';
+import {
+	CarIcon,
+	ChevronsUpDownIcon,
+	SaveIcon,
+	XCircleIcon,
+	XIcon,
+} from 'lucide-react';
+import { Fragment, useEffect, useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +34,8 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { placeholder } from '@/config/placeholder';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
@@ -43,6 +61,11 @@ function TableFilters({ filters }: TableFiltersProps) {
 		!!searchParams.producers?.length ||
 		searchParams.renewal === true ||
 		searchParams.renewal === false ||
+		!(
+			typeof searchParams.requestAt === 'object' &&
+			isSameDay(searchParams.requestAt.start, startOfMonth(startOfToday())) &&
+			isSameDay(searchParams.requestAt.end, endOfToday())
+		) ||
 		!!searchParams.status?.length ||
 		!!searchParams.type?.length;
 
@@ -65,9 +88,9 @@ function TableFilters({ filters }: TableFiltersProps) {
 		<Fragment>
 			<Separator orientation='vertical' className='h-7 mx-2' />
 			<div className='flex flex-row items-center justify-start gap-x-4 divide-x divide-border/50 *:pr-4'>
+				{getFilter('requestAt') && <FilterRequestAt />}
 				{getFilter('producers') && <FilterProducers />}
 				{getFilter('insuranceCompanies') && <FilterInsuranceCompanies />}
-				{getFilter('requestAt') && <FilterRequestAt />}
 				{getFilter('modality') && <FilterModality />}
 				{getFilter('status') && <FilterStatus />}
 				{isSearchParams && (
@@ -95,6 +118,11 @@ function TableFiltersCount() {
 		!!searchParams.producers?.length,
 		searchParams.renewal === true,
 		searchParams.renewal === false,
+		!(
+			typeof searchParams.requestAt === 'object' &&
+			isSameDay(searchParams.requestAt.start, startOfMonth(startOfToday())) &&
+			isSameDay(searchParams.requestAt.end, endOfToday())
+		),
 		!!searchParams.status?.length,
 		!!searchParams.type?.length,
 	];
@@ -115,32 +143,260 @@ function TableFiltersCount() {
 	);
 }
 
-function FilterProducers() {
-	const [searchParams] = useSearchParams();
+function FilterRequestAt() {
+	const [searchParams, setSearchParams] = useSearchParams();
 
-	const { data } = useProducersSimple({
-		enabled: !!searchParams.producers?.length,
-	});
+	const [open, setOpen] = useState<boolean>(false);
 
-	if (!searchParams.producers?.length || !data?.length) {
+	const defaultDate =
+		typeof searchParams.requestAt === 'string'
+			? {
+					from: startOfDay(parseISO(searchParams.requestAt)),
+				}
+			: {
+					from: startOfDay(parseISO(searchParams.requestAt.start)),
+					to: endOfDay(parseISO(searchParams.requestAt.end)),
+				};
+
+	const [date, setDate] = useState<DateRange>(defaultDate);
+
+	const isDateDefault =
+		typeof searchParams.requestAt === 'object' &&
+		isSameDay(searchParams.requestAt.start, startOfMonth(startOfToday())) &&
+		isSameDay(searchParams.requestAt.end, endOfToday());
+
+	function onChange() {
+		setSearchParams({
+			...(!!date.from && !!date.to && isSameDay(date.from, date.to)
+				? {
+						requestAt: date.from.toISOString(),
+					}
+				: {
+						...(!!date?.from &&
+							!!date.to && {
+								requestAt: {
+									start: date.from.toISOString(),
+									end: date.to.toISOString(),
+								},
+							}),
+						...(!!date?.from &&
+							!date.to && {
+								requestAt: date.from.toISOString(),
+							}),
+					}),
+		});
+
+		setOpen(false);
+	}
+
+	function onReset() {
+		setSearchParams({
+			requestAt: null,
+		});
+
+		setDate(defaultDate);
+
+		setOpen(false);
+	}
+
+	useEffect(() => {
+		setDate(defaultDate);
+	}, [defaultDate]);
+
+	if (!searchParams.requestAt) {
 		return;
 	}
 
 	return (
 		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
 			<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
-				Produtor:{' '}
-				<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
+				Período:
+				{!isDateDefault && (
+					<XCircleIcon
+						className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive'
+						onClick={onReset}
+					/>
+				)}
 			</span>
-			<span className='text-muted-foreground truncate'>
-				{searchParams.producers
-					?.map((props) =>
-						capitalizeFirstLetters(
-							data?.find((e) => e.id === props)?.name as string,
-						),
-					)
-					.join(', ')}
+			<Popover open={open} onOpenChange={setOpen}>
+				<PopoverTrigger>
+					<span className='text-muted-foreground truncate cursor-pointer flex flex-row items-center justify-start gap-x-1'>
+						{typeof searchParams.requestAt === 'string' &&
+							format(parseISO(searchParams.requestAt), 'dd/MM/yyyy')}
+						{typeof searchParams.requestAt === 'object' &&
+							(isSameDay(
+								searchParams.requestAt.start,
+								searchParams.requestAt.end,
+							)
+								? format(parseISO(searchParams.requestAt.start), 'dd/MM/yyyy')
+								: `${format(parseISO(searchParams.requestAt.start), 'dd/MM/yyyy')} - ${format(parseISO(searchParams.requestAt.end), 'dd/MM/yyyy')}`)}
+						<ChevronsUpDownIcon className='size-3' />
+					</span>
+				</PopoverTrigger>
+				<PopoverContent align='start' side='bottom' className='w-auto p-0'>
+					<Calendar
+						required
+						mode='range'
+						defaultMonth={parseISO(
+							typeof searchParams.requestAt === 'string'
+								? searchParams.requestAt
+								: searchParams.requestAt.start,
+						)}
+						selected={date}
+						onSelect={setDate}
+						disabled={{
+							after: new Date(),
+						}}
+						numberOfMonths={2}
+					/>
+					<Separator />
+					<div className='flex flex-row items-center justify-between gap-x-2 p-2'>
+						{!isDateDefault && (
+							<Button
+								variant='destructive'
+								size='sm'
+								onClick={onReset}
+								className='flex-1'
+							>
+								Resetar <XCircleIcon />
+							</Button>
+						)}
+						<Button size='sm' onClick={onChange} className='flex-1'>
+							Aplicar <SaveIcon />
+						</Button>
+					</div>
+				</PopoverContent>
+			</Popover>
+		</div>
+	);
+}
+
+function FilterProducers() {
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const { data, isPending } = useProducersSimple({
+		enabled: !!searchParams.producers?.length,
+	});
+
+	const existingItems =
+		data?.filter((e) => searchParams.producers?.some((id) => id === e.id)) ||
+		[];
+
+	const items =
+		data?.filter((e) =>
+			existingItems?.slice(0, 2).some(({ id }) => id === e.id),
+		) || [];
+
+	const remainingItems =
+		data?.filter((e) =>
+			existingItems?.slice(2).some(({ id }) => id === e.id),
+		) || [];
+
+	function clearSearchParams() {
+		setSearchParams({
+			producers: null,
+		});
+	}
+
+	function removeItem(item: string) {
+		setSearchParams({
+			producers: searchParams.producers?.filter((e) => e !== item) || null,
+		});
+	}
+
+	if (!searchParams.producers?.length) {
+		return;
+	}
+
+	return (
+		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
+			<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
+				Produtor:
+				{items.length > 1 && (
+					<XCircleIcon
+						className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive'
+						onClick={clearSearchParams}
+					/>
+				)}
 			</span>
+			<div className='flex flex-row items-center justify-start gap-x-2'>
+				{isPending
+					? Array.from({
+							length: searchParams.producers.slice(0, 2).length,
+						}).map((_, index) => (
+							<div
+								key={index.toString()}
+								className='flex flex-row items-center justify-start gap-x-1 relative'
+							>
+								<Skeleton className='size-4 rounded-full' />
+								<Skeleton className='w-18 h-3' />
+							</div>
+						))
+					: items?.map((props) => (
+							<div
+								key={props.id}
+								className='text-muted-foreground truncate flex flex-row items-center justify-start gap-x-1 relative'
+							>
+								<Avatar className='size-4'>
+									<AvatarImage
+										src={props?.avatar || placeholder.user}
+										width={512}
+										height={512}
+										alt={capitalizeFirstLetters(props.name.toUpperCase())}
+									/>
+									<AvatarFallback>
+										{props.name.toUpperCase().slice(0, 2)}
+									</AvatarFallback>
+								</Avatar>
+								{capitalizeFirstLetters(props.name)}
+								<XIcon
+									className='size-3 hover:text-foreground cursor-pointer'
+									onClick={() => removeItem(props.id)}
+								/>
+							</div>
+						))}
+				{!!remainingItems.length && (
+					<Popover>
+						<PopoverTrigger asChild>
+							<Badge className='py-0 cursor-pointer'>
+								+ {remainingItems.length}
+							</Badge>
+						</PopoverTrigger>
+						<PopoverContent
+							align='end'
+							className='w-fit px-1.5 py-1 space-y-0.5'
+						>
+							{remainingItems?.map((props) => (
+								<div
+									key={props.id}
+									className='flex flex-row items-center justify-start gap-x-2 relative rounded cursor-pointer px-1 py-0.5'
+								>
+									<div className='flex flex-row items-center justify-start gap-x-1.5'>
+										<Avatar className='size-4'>
+											<AvatarImage
+												src={props?.avatar || placeholder.user}
+												width={512}
+												height={512}
+												alt={capitalizeFirstLetters(props.name.toUpperCase())}
+											/>
+											<AvatarFallback>
+												{props.name.toUpperCase().slice(0, 2)}
+											</AvatarFallback>
+										</Avatar>
+										<span className='text-muted-foreground text-xs font-normal'>
+											{capitalizeFirstLetters(props.name as string)}
+										</span>
+									</div>
+									<XIcon
+										className='size-3 hover:text-destructive cursor-pointer ml-auto'
+										onClick={() => removeItem(props.id)}
+									/>
+								</div>
+							))}
+						</PopoverContent>
+					</Popover>
+				)}
+			</div>
 		</div>
 	);
 }
@@ -185,98 +441,6 @@ function FilterInsuranceCompanies() {
 					);
 				})}
 			</div>
-		</div>
-	);
-}
-
-function FilterRequestAt() {
-	const [open, setOpen] = useState<boolean>(false);
-
-	const [searchParams, setSearchParams] = useSearchParams();
-
-	if (!searchParams.requestAt) {
-		return;
-	}
-
-	return (
-		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
-			<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
-				Período:
-				<EditIcon
-					className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive'
-					onClick={() => setOpen((e) => !e)}
-				/>
-			</span>
-			<Popover open={open} onOpenChange={setOpen}>
-				<PopoverTrigger>
-					<span className='text-muted-foreground truncate cursor-pointer'>
-						{typeof searchParams.requestAt === 'string' &&
-							format(parseISO(searchParams.requestAt), 'dd/MM/yyyy')}
-						{typeof searchParams.requestAt === 'object' &&
-							`${format(parseISO(searchParams.requestAt.start), 'dd/MM/yyyy')} - ${format(parseISO(searchParams.requestAt.end), 'dd/MM/yyyy')}`}
-					</span>
-				</PopoverTrigger>
-				<PopoverContent align='start' side='bottom' className='w-auto p-0'>
-					<Calendar
-						mode='range'
-						defaultMonth={parseISO(
-							typeof searchParams.requestAt === 'string'
-								? searchParams.requestAt
-								: searchParams.requestAt.start,
-						)}
-						selected={
-							typeof searchParams.requestAt === 'string'
-								? {
-										from: startOfDay(parseISO(searchParams.requestAt)),
-									}
-								: {
-										from: startOfDay(parseISO(searchParams.requestAt.start)),
-										to: endOfDay(parseISO(searchParams.requestAt.end)),
-									}
-						}
-						onSelect={(date) => {
-							setSearchParams({
-								...(!date && {
-									requestAt: null,
-								}),
-								...(!!date && {
-									...(!!date.from && !!date.to && isSameDay(date.from, date.to)
-										? {
-												requestAt: date.from.toISOString(),
-											}
-										: {
-												...(!!date?.from &&
-													!!date.to && {
-														requestAt: {
-															start: date.from.toISOString(),
-															end: date.to.toISOString(),
-														},
-													}),
-												...(!!date?.from &&
-													!date.to && {
-														requestAt: date.from.toISOString(),
-													}),
-											}),
-								}),
-							});
-						}}
-						numberOfMonths={2}
-					/>
-					<Separator />
-					<Button
-						onClick={() => [
-							setSearchParams({
-								requestAt: null,
-							}),
-							setOpen(false),
-						]}
-						variant='destructive'
-						className='w-full rounded-t-none text-white'
-					>
-						Resetar <XCircleIcon />
-					</Button>
-				</PopoverContent>
-			</Popover>
 		</div>
 	);
 }

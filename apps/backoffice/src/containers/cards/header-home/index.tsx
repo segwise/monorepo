@@ -2,7 +2,6 @@ import {
 	ArrowDownRightIcon,
 	ArrowUpIcon,
 	ArrowUpRightIcon,
-	ChevronsUpDownIcon,
 	type HomeIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -15,12 +14,14 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChangePeriod } from './change-period';
 
 interface CardHeaderHomeProps {
 	isPending: boolean;
 	icon?: typeof HomeIcon;
 	title: string;
 	value: string;
+	before: string;
 	percent: number;
 	type: 'year' | 'month';
 	setType: (type: 'year' | 'month') => void;
@@ -31,6 +32,7 @@ function CardHeaderHome({
 	icon: Icon,
 	title,
 	value,
+	before,
 	percent,
 	type,
 	setType,
@@ -65,21 +67,7 @@ function CardHeaderHome({
 			<CardFooter className='pb-2 -mt-4 flex flex-row items-center justify-between'>
 				{!!isPending && <Skeleton className='w-22 h-3 rounded' />}
 				{!isPending && (
-					// biome-ignore lint/a11y/noStaticElementInteractions: span
-					// biome-ignore lint/a11y/useKeyWithClickEvents: span
-					<div
-						className='text-xs font-medium text-muted-foreground/80 flex flex-row items-center justify-start gap-x-1 cursor-pointer w-fit'
-						onClick={() => setType(type === 'year' ? 'month' : 'year')}
-					>
-						<span>
-							Do{' '}
-							<span className='underline'>
-								{type === 'year' ? 'ano' : 'mês'}
-							</span>{' '}
-							anterior
-						</span>
-						<ChevronsUpDownIcon className='size-3.5' />
-					</div>
+					<ChangePeriod value={before} type={type} setType={setType} />
 				)}
 				{!!isPending && <Skeleton className='w-14 h-5 rounded-full' />}
 				{!isPending && (

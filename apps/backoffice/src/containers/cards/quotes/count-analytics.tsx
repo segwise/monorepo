@@ -32,6 +32,7 @@ function CardQuotesCountAnalytics({ title }: CardQuotesCountAnalyticsProps) {
 			icon={HomeIcon}
 			title={title}
 			value={current.toString()}
+			before={before.toString()}
 			percent={percent}
 			type={type}
 			setType={setType}
