@@ -785,7 +785,11 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 				'--disable-gpu',
 				'--no-zygote',
 				'--single-process',
+				'--disable-web-security',
+				'--disable-features=IsolateOrigins,site-per-process',
+				'--font-render-hinting=none',
 			],
+			timeout: 60000,
 			ignoreDefaultArgs: true,
 		});
 
