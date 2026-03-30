@@ -41,6 +41,9 @@ model User {
 
   @@unique([referral])
   @@unique([email])
+  @@index([name])
+  @@index([email])
+  @@index([phone])
   @@map("users")
 }
 
@@ -182,6 +185,11 @@ model Quote {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@index([producerId])
+  @@index([insuranceCompanyId])
+  @@index([status])
+  @@index([modality])
+  @@index([requestAt])
   @@map("quotes")
 }
 
