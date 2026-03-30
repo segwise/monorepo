@@ -30,18 +30,11 @@ RUN apk add --no-cache \
     fontconfig \
     libstdc++ \
     libx11 \
-    libxcb \
     libxcomposite \
     libxdamage \
     libxext \
     libxfixes \
-    libxrandr \
-    libxtst \
     pango \
-    cups-libs \
-    alsa-lib \
-    at-spi2-core \
-    libatk-bridge-2.0 \
     && rm -rf /var/cache/apk/*
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
