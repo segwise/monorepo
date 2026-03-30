@@ -14,7 +14,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN bun run db:generate
-RUN bun run build
+# RUN bun run build
 
 FROM base AS runner
 WORKDIR /app
@@ -50,17 +50,19 @@ COPY --from=builder /app/.npmrc ./
 
 RUN bun --bun install --frozen-lockfile --production
 
-COPY --from=builder /app/dist ./
+# COPY --from=builder /app/dist ./
+COPY --from=builder /app/src ./src
 
-COPY --from=builder /app/prisma/migrations ./prisma/migrations
-COPY --from=builder /app/prisma/schema.prisma ./prisma
+COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./
+COPY --from=builder /app/tsconfig.json ./
 
 COPY --from=builder /app/generated ./generated
 
 COPY --from=builder /app/entrypoint.sh ./
 
 RUN chown -R appuser:appgroup /app
+RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser
 
 USER appuser
 
@@ -68,8 +70,6 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 EXPOSE 3000
-
-RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser
 
 RUN chmod +x ./entrypoint.sh
 

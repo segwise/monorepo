@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "bun --bun run --watch src/index.ts",
 		"build": "bun --bun build src/index.ts --outdir=dist --production --minify --sourcemap=inline --target=bun --root ./src --external:playwright* --external:chromium-bidi* --external:electron* && bun --bun build src/seed.ts --outdir=dist --production --minify --sourcemap=inline --target=bun --root ./src --external:playwright* --external:chromium-bidi* --external:electron*",
-		"start": "bun --bun run index.js",
+		"start": "bun --bun run src/index.ts",
 		"auth:generate": "bun x --bun @better-auth/cli generate --config src/services/auth/index.ts",
 		"auth:migrate": "bun x --bun @better-auth/cli migrate --config src/services/auth/index.ts",
 		"db:generate": "bun x --bun prisma generate",
