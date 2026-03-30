@@ -9,11 +9,11 @@ const corsDefaultMiddleware: MiddlewareHandler = cors({
 
 const corsAuthMiddleware: MiddlewareHandler = cors({
 	origin: environment.APPLICATION_URL,
+	credentials: true,
 	allowHeaders: ['Content-Type', 'Authorization'],
 	allowMethods: ['POST', 'GET', 'OPTIONS'],
 	exposeHeaders: ['Content-Length'],
 	maxAge: 600,
-	credentials: true,
 });
 
 const corsApiMiddleware: MiddlewareHandler = cors({
