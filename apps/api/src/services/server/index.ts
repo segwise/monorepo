@@ -17,7 +17,7 @@ import { storageMiddleware } from '@/server/middlewares/storage';
 
 const server = new Hono<AppBindings>({
 	strict: true,
-	...(environment.NODE_ENV !== 'development' && {
+	...(environment.NODE_ENV === 'development' && {
 		getPath: (req) => {
 			const host = req.headers.get('host') || '';
 
