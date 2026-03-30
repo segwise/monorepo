@@ -1,4 +1,4 @@
-FROM oven/bun:1.3.5-debian AS base
+FROM oven/bun:1.3.5-alpine AS base
 
 FROM base AS deps
 WORKDIR /app
@@ -19,27 +19,25 @@ RUN bun run build
 FROM base AS runner
 WORKDIR /app
 
-# RUN apk add --no-cache \
-#     wget \
-#     ca-certificates \
-#     nss \
-#     freetype \
-#     harfbuzz \
-#     ttf-freefont \
-#     chromium \
-#     udev \
-#     dumb-init \
-#     dbus \
-#     mesa-gl \
-#     libx11 \
-#     libxcomposite \
-#     libxdamage \
-#     libxrandr \
-#     libxkbcommon \
-#     libxshmfence \
-#     alsa-lib
-
-RUN bun x playwright install --with-deps chromium
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ttf-freefont \
+    ca-certificates \
+    libstdc++ \
+    udev \
+    dbus \
+    dumb-init \
+    mesa-gl \
+    libx11 \
+    libxcomposite \
+    libxdamage \
+    libxrandr \
+    libxkbcommon \
+    libxshmfence \
+    alsa-lib
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock* ./
