@@ -56,7 +56,6 @@ async function seed() {
 
 		const insuranceCompaniesSeed = [
 			{
-				id: '3bf7a588-36b1-4a2c-bd80-0a4541fb58a6',
 				name: 'aig seguros brasil s/a',
 				short_name: 'aig',
 				registration: '33040981000150',
@@ -107,7 +106,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '806dc0f0-6216-49af-9fa7-22de41931e22',
 				name: 'alfa seguradora s/a',
 				short_name: 'alfa',
 				registration: '02713529000188',
@@ -168,7 +166,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '6b588296-0484-49b3-b1a3-56300e54495a',
 				name: 'allianz seguros s/a',
 				short_name: 'allianz',
 				registration: '61573796000166',
@@ -239,7 +236,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '5f5f67e2-58f0-4d2a-a174-933cee7f259a',
 				name: 'aruana seguradora s/a',
 				short_name: 'aruana',
 				registration: '07017295000158',
@@ -290,7 +286,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '464ed884-ef62-4697-82bd-487b520272a3',
 				name: 'azul companhia de seguros gerais',
 				short_name: 'azul',
 				registration: '33448150000111',
@@ -351,7 +346,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '9be0a96f-1489-4c09-b409-51e502313097',
 				name: 'banestes seguros s/a',
 				short_name: 'banestes',
 				registration: '27053230000175',
@@ -412,7 +406,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '37a92a07-ab17-4b88-b071-2443aaaf7841',
 				name: 'bb seguros participacoes s/a',
 				short_name: 'bb seguros',
 				registration: '11159426000109',
@@ -478,7 +471,6 @@ async function seed() {
 				],
 			},
 			{
-				id: 'e1c48eab-be8e-4c9a-8034-15a56486d542',
 				name: 'bradesco seguros s/a',
 				short_name: 'bradesco seguros',
 				registration: '33055146000193',
@@ -539,7 +531,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '1d87fcce-c431-48aa-b9c5-07d843893761',
 				name: 'caixa seguradora s/a',
 				short_name: 'caixa seguradora',
 				registration: '34020354000110',
@@ -605,7 +596,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '59ed9068-bfd6-4c6f-b3bb-7f056dcfeda7',
 				name: 'chubb seguros brasil s/a',
 				short_name: 'chubb',
 				registration: '03502099000118',
@@ -671,7 +661,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '996bdaec-5717-441c-9a16-e59ab417ebb1',
 				name: 'darwin seguros s a',
 				short_name: 'darwin seguros',
 				registration: '44187990000194',
@@ -702,7 +691,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '77bfb521-a940-4ebb-98e4-0d2ef86ce09e',
 				name: 'ezze seguros s/a',
 				short_name: 'ezze seguros',
 				registration: '31534848000124',
@@ -712,7 +700,6 @@ async function seed() {
 				assistance_contacts: [],
 			},
 			{
-				id: 'f85f4b1e-6dff-4c3f-8717-13662bef19c6',
 				name: 'generali brasil seguros s/a',
 				short_name: 'generali',
 				registration: '33072307000157',
@@ -783,7 +770,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '8a8be33d-5e2b-4957-a4b3-bab732bdb751',
 				name: 'hdi seguros s/a',
 				short_name: 'hdi',
 				registration: '29980158000157',
@@ -844,7 +830,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '43b80b4e-379c-4390-82f9-1f9cefc97ac0',
 				name: 'indiana seguros s/a',
 				short_name: 'indiana',
 				registration: '61100145000159',
@@ -895,7 +880,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '9df4e00c-2c12-448a-94a7-50949f6854eb',
 				name: 'itaú seguros s/a',
 				short_name: 'itaú seguros',
 				registration: '61557039000107',
@@ -956,7 +940,6 @@ async function seed() {
 				],
 			},
 			{
-				id: 'a1df4caf-0bc6-4494-b3ce-1e06619e0b7f',
 				name: 'mapfre seguros gerais s/a',
 				short_name: 'mapfre',
 				registration: '61074175000138',
@@ -1017,7 +1000,6 @@ async function seed() {
 				],
 			},
 			{
-				id: 'c9d45441-d4be-4338-ac6a-d2787d8555ad',
 				name: 'mitsui sumitomo seguros s/a',
 				short_name: 'mitsui sumitomo',
 				registration: '33016221000107',
@@ -1088,7 +1070,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '79c00f92-05e3-4569-8ad8-f3f31b24fbe8',
 				name: 'porto seguro cia de seguros gerais',
 				short_name: 'porto seguro',
 				registration: '61198164000160',
@@ -1149,7 +1130,6 @@ async function seed() {
 				],
 			},
 			{
-				id: 'c97a1e5c-4036-4f7e-919a-a274d47a6fd4',
 				name: 'sancor seguros do brasil s/a',
 				short_name: 'sancor',
 				registration: '17643407000130',
@@ -1215,7 +1195,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '4596e171-fae1-44db-bb58-7fc01252228a',
 				name: 'santander s.a. serviços técnicos, administrativos e de corretagem de seguros',
 				short_name: 'santander seguros',
 				registration: '52312907000190',
@@ -1271,7 +1250,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '6724945c-ede7-49e2-ba84-ac001b57040d',
 				name: 'sompo seguros s/a',
 				short_name: 'sompo',
 				registration: '61383493000180',
@@ -1332,7 +1310,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '46897db3-6955-49d4-8d26-d4ce4ece20c0',
 				name: 'suhai seguradora s/a',
 				short_name: 'suhai',
 				registration: '16825255000123',
@@ -1373,7 +1350,6 @@ async function seed() {
 				],
 			},
 			{
-				id: 'e296ba94-0eb6-49ac-a4e2-2469b4b4a16b',
 				name: 'tokio marine seguradora s/a',
 				short_name: 'tokio marine',
 				registration: '33164021000100',
@@ -1429,7 +1405,6 @@ async function seed() {
 				],
 			},
 			{
-				id: 'eb992f8c-d93d-4f94-bf46-88c485b53e7c',
 				name: 'usebens seguros s/a',
 				short_name: 'usebens',
 				registration: '09180505000150',
@@ -1480,7 +1455,6 @@ async function seed() {
 				],
 			},
 			{
-				id: 'b0e841bb-7355-4f37-aed6-88fc60e5d25c',
 				name: 'yelum seguros',
 				short_name: 'yelum',
 				registration: '61550141000172',
@@ -1551,7 +1525,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '5ea5573a-2697-4a28-bfc4-26017a1e48aa',
 				name: 'youse seguradora s/a',
 				short_name: 'youse',
 				registration: '24856160000103',
@@ -1607,7 +1580,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '85c0bec0-5e29-4e92-918e-38391acac4e2',
 				name: 'zurich brasil seguros s/a',
 				short_name: 'zurich',
 				registration: '61382735000111',
@@ -1678,7 +1650,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '85c0bec0-5e29-4e92-918e-38391acac4e2',
 				name: 'justos seguros s/a',
 				image:
 					'https://raichu-uploads.s3.amazonaws.com/logo_novo-seguros_YPrk8n.png',
@@ -1724,7 +1695,6 @@ async function seed() {
 				],
 			},
 			{
-				id: '85c0bec0-5e29-4e92-918e-38391acac4e2',
 				name: 'novo seguros s/a',
 				image:
 					'https://velseg.com.br/wp-content/uploads/2025/09/seguradora-parceira-velseg-justos-1.jpg',
