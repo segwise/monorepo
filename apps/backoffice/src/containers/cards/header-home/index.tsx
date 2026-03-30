@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ChangePeriod } from './change-period';
 
 interface CardHeaderHomeProps {
-	isPending: boolean;
+	isPending?: boolean;
 	icon?: typeof HomeIcon;
 	title: string;
 	value: string;
@@ -26,7 +26,7 @@ interface CardHeaderHomeProps {
 }
 
 function CardHeaderHome({
-	isPending,
+	isPending = false,
 	icon: Icon,
 	title,
 	value,
