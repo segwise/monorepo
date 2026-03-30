@@ -1,6 +1,6 @@
 import type { ProducerSimple } from '@segwise/core/types';
-import type { selectPrisma } from '@/db-adapters/producers/simple';
 import type { Prisma } from '@/generated/prisma/client';
+import type { selectPrisma } from '@/libraries/database/adapters/producer/simple';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 
 interface SerializerProps {

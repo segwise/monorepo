@@ -4,7 +4,9 @@ import { registerRoutersServicesQuotesByIdDelete } from '@/routers/services/quot
 import { registerRoutersServicesQuotesByIdPrint } from '@/routers/services/quotes/[id]/print';
 
 function registerRoutersServicesQuotesById(server: Server) {
-	const base = server.basePath(`/:id{${z.regexes.uuid7.source.slice(1)}}`);
+	const base = server.basePath(
+		`/:id{${z.regexes.uuid7.source.slice(1).slice(0, -1)}}`,
+	);
 
 	registerRoutersServicesQuotesByIdPrint(base);
 	registerRoutersServicesQuotesByIdDelete(base);

@@ -1,8 +1,7 @@
 import type { Server } from '@/@types/server.d';
-
-import { selectPrisma } from '@/db-adapters/producers/simple';
-import { serializer } from '@/db-serializers/producers/simple';
 import { Role } from '@/generated/prisma/enums';
+import { selectPrisma } from '@/libraries/database/adapters/producer/simple';
+import { serializer } from '@/libraries/database/serializers/producer/simple';
 
 function registerRoutersServicesProducersSimpleListining(server: Server) {
 	server.get('/simple', async (ctx) => {

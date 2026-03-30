@@ -47,6 +47,7 @@ function serializer(
 					0,
 			},
 		}),
+		expiration: props.expiration,
 		requestAt: props.requestAt,
 	} satisfies QuoteSimple;
 }
