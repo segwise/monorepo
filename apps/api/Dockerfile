@@ -41,6 +41,9 @@ RUN apk add --no-cache \
 
 RUN bun x playwright install chromium
 
+ENV PLAYWRIGHT_BROWSERS_PATH=0 \
+    CHROMIUM_PATH=/usr/bin/chromium-browser
+
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock* ./
 COPY --from=builder /app/.npmrc ./
