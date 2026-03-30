@@ -1,5 +1,9 @@
-import { type Browser, type BrowserContext, chromium } from 'playwright';
-import { environment } from '../environment';
+import {
+	type Browser,
+	type BrowserContext,
+	chromium,
+	type Page,
+} from 'playwright';
 
 let browserInstance: Browser | null = null;
 const contextPool: BrowserContext[] = [];
@@ -13,17 +17,19 @@ async function getBrowser(): Promise<Browser> {
 	}
 
 	if (!browserInstance || !browserInstance.isConnected()) {
-		console.log('Não existe browser');
-
 		browserInstance = await chromium.launch({
 			headless: true,
-			...(environment.NODE_ENV !== 'development' && {
-				executablePath: '/usr/bin/chromium-browser',
-			}),
-			args: ['--no-sandbox', '--disable-setuid-sandbox'],
+			args: [
+				'--no-sandbox',
+				'--disable-setuid-sandbox',
+				'--disable-dev-shm-usage',
+				'--disable-gpu',
+				'--disable-extensions',
+				'--disable-background-networking',
+				'--disable-features=IsolateOrigins,site-per-process',
+				'--single-process',
+			],
 		});
-	} else {
-		console.log('Existe browser');
 	}
 
 	return browserInstance;
@@ -32,40 +38,43 @@ async function getBrowser(): Promise<Browser> {
 async function acquirePage() {
 	const browser = await getBrowser();
 
-	if (contextPool.length > 0) {
-		const context = contextPool.pop();
+	let context: BrowserContext;
+	let page: Page;
 
-		if (context?.browser()) {
-			const page = await context.newPage();
+	if (contextPool.length > 0) {
+		const reused = contextPool.pop();
+
+		if (reused?.browser()) {
+			context = reused;
+
+			page = await context.newPage();
 
 			return { page, context, release };
 		}
 	}
 
 	if (contextPool.length + 1 > MAX_CONTEXTS) {
-		await new Promise((resolve) => setTimeout(resolve, 50));
+		await new Promise((r) => setTimeout(r, 40));
 	}
 
-	const context = await browser.newContext({
+	context = await browser.newContext({
 		viewport: { width: 1200, height: 1700 },
 		deviceScaleFactor: 1,
 	});
 
-	const page = await context.newPage();
+	page = await context.newPage();
 
 	return { page, context, release };
 
 	async function release() {
-		if (isShuttingDown || !context.browser()) {
-			return;
-		}
+		if (isShuttingDown) return;
 
-		await page.close().catch(() => {});
+		await page?.close().catch(() => {});
 
-		if (contextPool.length < MAX_CONTEXTS) {
+		if (contextPool.length < MAX_CONTEXTS && context?.browser()) {
 			contextPool.push(context);
 		} else {
-			await context.close().catch(() => {});
+			await context?.close().catch(() => {});
 		}
 	}
 }
@@ -73,7 +82,7 @@ async function acquirePage() {
 async function shutdownBrowser() {
 	isShuttingDown = true;
 
-	for (const ctx of contextPool) {
+	for (const ctx of [...contextPool]) {
 		await ctx.close().catch(() => {});
 	}
 
@@ -81,6 +90,7 @@ async function shutdownBrowser() {
 
 	if (browserInstance) {
 		await browserInstance.close().catch(() => {});
+
 		browserInstance = null;
 	}
 }
