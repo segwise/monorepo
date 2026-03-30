@@ -112,7 +112,6 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						id: 'desc',
 					},
 					select: selectPrisma,
-					relationLoadStrategy: 'join',
 				}),
 				ctx.database.quote.count({ where }),
 				cursor
@@ -156,7 +155,6 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 								select: {
 									id: true,
 								},
-								relationLoadStrategy: 'join',
 							})
 							.then((response) => response?.id)) || null;
 
@@ -189,7 +187,6 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						skip: limit as number,
 						orderBy: { id: 'desc' },
 						select: { id: true },
-						relationLoadStrategy: 'join',
 					});
 
 					tempCursorForward = batchForward?.id || null;
@@ -211,7 +208,6 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						skip: limit as number,
 						orderBy: { id: 'asc' },
 						select: { id: true },
-						relationLoadStrategy: 'join',
 					});
 
 					const furtherPrev = batchBackward?.id || null;
@@ -232,7 +228,6 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				orderBy: { id: 'asc' },
 				skip: skipGetLastPage >= 0 ? skipGetLastPage : (limit as number) - 1,
 				select: { id: true },
-				relationLoadStrategy: 'join',
 			});
 
 			if (lastPage?.id) {
