@@ -19,29 +19,6 @@ RUN bun run build
 FROM base AS runner
 WORKDIR /app
 
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    udev \
-    fontconfig \
-    libstdc++ \
-    libx11 \
-    libxcomposite \
-    libxdamage \
-    libxext \
-    libxfixes \
-    pango \
-    && rm -rf /var/cache/apk/*
-
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    CHROME_BIN=/usr/bin/chromium-browser \
-    PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
-
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock* ./
 COPY --from=builder /app/.npmrc ./

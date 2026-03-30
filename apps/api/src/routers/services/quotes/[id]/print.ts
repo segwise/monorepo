@@ -777,21 +777,7 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 			...(ctx.environment.NODE_ENV !== 'development' && {
 				executablePath: '/usr/bin/chromium-browser',
 			}),
-			args: [
-				...puppeteer.defaultArgs(),
-				'--no-sandbox',
-				'--disable-setuid-sandbox',
-				'--disable-dev-shm-usage',
-				'--disable-gpu',
-				'--no-zygote',
-				'--single-process',
-				'--disable-web-security',
-				'--disable-features=IsolateOrigins,site-per-process',
-				'--use-gl=swiftshader',
-				'--font-render-hinting=none',
-				'--disable-background-timer-throttling',
-				'--disable-backgrounding-occluded-windows',
-			],
+			args: [...puppeteer.defaultArgs(), '--no-sandbox'],
 			timeout: 60000,
 			ignoreDefaultArgs: true,
 		});
