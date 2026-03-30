@@ -112,6 +112,7 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						id: 'desc',
 					},
 					select: selectPrisma,
+					relationLoadStrategy: 'join',
 				}),
 				ctx.database.quote.count({ where }),
 				cursor
