@@ -19,7 +19,27 @@ RUN bun run build
 FROM base AS runner
 WORKDIR /app
 
-RUN bun x playwright install --with-deps chromium
+RUN apk add --no-cache \
+    wget \
+    ca-certificates \
+    nss \
+    freetype \
+    harfbuzz \
+    ttf-freefont \
+    chromium \
+    udev \
+    dumb-init \
+    dbus \
+    mesa-gl \
+    libx11 \
+    libxcomposite \
+    libxdamage \
+    libxrandr \
+    libxkbcommon \
+    libxshmfence \
+    alsa-lib
+
+# RUN bun x playwright install --with-deps chromium
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock* ./
