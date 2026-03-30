@@ -792,8 +792,9 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 			});
 
 			const pdf = await PDFDocument.load(pdfBuffer);
+
 			pdf.setTitle(`${quote.id}.pdf`);
-			// pdf.setAuthor(quote.company.name.toUpperCase());
+			pdf.setAuthor('SEGWISE TECNOLOGIA');
 			pdf.setCreator('SEGWISE TECNOLOGIA');
 			pdf.setLanguage('pt-BR');
 			pdf.setCreationDate(quote.requestAt);
