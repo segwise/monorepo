@@ -12,7 +12,6 @@ const SchemaAuthResetPassword = z
 	.refine((values) => values.password === values.passwordConfirm, {
 		error: 'Senhas não conferem',
 		path: ['passwordConfirm'],
-	})
-	.strict();
+	});
 
 export { SchemaAuthResetPassword };

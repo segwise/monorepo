@@ -1,8 +1,13 @@
 'use client';
 
 import type { QuoteStatus } from '@segwise/core/types';
-import { HomeIcon } from 'lucide-react';
-import { useState } from 'react';
+import {
+	FileBadgeIcon,
+	FileClockIcon,
+	FileSearch2Icon,
+	FileX2Icon,
+	type LucideIcon,
+} from 'lucide-react';
 import { useQuotesAnalyticsStatus } from '@/libraries/hooks/quotes/analytics/use-quotes-analytics';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 import { CardHeaderHome } from '../header-home';
@@ -12,17 +17,24 @@ interface CardQuotesStatusAnalyticsProps {
 	status: QuoteStatus | Array<QuoteStatus>;
 }
 
+const icons: Record<QuoteStatus, LucideIcon> = {
+	waiting: FileClockIcon,
+	quoting: FileSearch2Icon,
+	quoted: FileSearch2Icon,
+	sent: FileSearch2Icon,
+	confirmed: FileBadgeIcon,
+	recused: FileX2Icon,
+};
+
 function CardQuotesStatusAnalytics({
 	title,
 	status,
 }: CardQuotesStatusAnalyticsProps) {
 	const [searchParams] = useSearchParams();
 
-	const [type, setType] = useState<'year' | 'month'>('year');
-
 	const { data, isPending } = useQuotesAnalyticsStatus({
 		...searchParams,
-		type,
+		type: searchParams.basisOfAnalysis,
 		status: typeof status === 'string' ? [status] : status,
 	});
 
@@ -35,13 +47,11 @@ function CardQuotesStatusAnalytics({
 	return (
 		<CardHeaderHome
 			isPending={isPending}
-			icon={HomeIcon}
+			icon={icons[typeof status === 'string' ? status : status[0]]}
 			title={title}
 			value={current.toString()}
 			before={before.toString()}
 			percent={percent}
-			type={type}
-			setType={setType}
 		/>
 	);
 }

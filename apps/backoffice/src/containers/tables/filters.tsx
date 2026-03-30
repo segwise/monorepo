@@ -1,5 +1,6 @@
 'use client';
 
+import { SchemaModality, SchemaQuoteStatus } from '@segwise/core/schemas';
 import {
 	translateModality,
 	translateQuoteStatus,
@@ -25,7 +26,7 @@ import {
 import { Fragment, useEffect, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -335,7 +336,7 @@ function FilterProducers() {
 					: items?.map((props) => (
 							<div
 								key={props.id}
-								className='text-muted-foreground truncate flex flex-row items-center justify-start gap-x-1 relative'
+								className='text-muted-foreground truncate flex flex-row items-center justify-start gap-x-1 relative line-clamp-1 max-w-28'
 							>
 								<Avatar className='size-4'>
 									<AvatarImage
@@ -348,7 +349,9 @@ function FilterProducers() {
 										{props.name.toUpperCase().slice(0, 2)}
 									</AvatarFallback>
 								</Avatar>
-								{capitalizeFirstLetters(props.name)}
+								<span className='truncate flex-1'>
+									{capitalizeFirstLetters(props.name)}
+								</span>
 								<XIcon
 									className='size-3 hover:text-foreground cursor-pointer'
 									onClick={() => removeItem(props.id)}
@@ -358,7 +361,7 @@ function FilterProducers() {
 				{!!remainingItems.length && (
 					<Popover>
 						<PopoverTrigger asChild>
-							<Badge className='py-0 cursor-pointer'>
+							<Badge className='py-0 cursor-pointer line-clamp-1 truncate'>
 								+ {remainingItems.length}
 							</Badge>
 						</PopoverTrigger>
@@ -402,13 +405,31 @@ function FilterProducers() {
 }
 
 function FilterInsuranceCompanies() {
-	const [searchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 
-	const { data } = useInsuranceCompaniesSimple({
+	const { data, isPending } = useInsuranceCompaniesSimple({
 		enabled: !!searchParams.insuranceCompanies?.length,
 	});
 
-	if (!searchParams.insuranceCompanies?.length || !!data?.length) {
+	const items =
+		data?.filter((e) =>
+			searchParams.insuranceCompanies?.some((id) => id === e.id),
+		) || [];
+
+	function clearSearchParams() {
+		setSearchParams({
+			insuranceCompanies: null,
+		});
+	}
+
+	function removeItem(item: string) {
+		setSearchParams({
+			insuranceCompanies:
+				searchParams.insuranceCompanies?.filter((e) => e !== item) || null,
+		});
+	}
+
+	if (!searchParams.insuranceCompanies?.length) {
 		return;
 	}
 
@@ -416,39 +437,117 @@ function FilterInsuranceCompanies() {
 		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
 			<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
 				Seguradoras:
-				<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
+				{items.length > 1 && (
+					<XCircleIcon
+						className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive'
+						onClick={clearSearchParams}
+					/>
+				)}
 			</span>
-			<div className='flex flex-row items-center justify-start -space-x-1.5'>
-				{searchParams.insuranceCompanies?.map((insuranceCompany) => {
-					const company = data?.find((e) => e.id === insuranceCompany);
-
-					return (
-						<Avatar
-							key={company?.id}
-							className='size-5 bg-muted not-dark:border not-dark:border-foreground/30 dark:bg-white'
+			<div className='flex flex-row items-center justify-start gap-x-2'>
+				{isPending
+					? Array.from({
+							length: searchParams.insuranceCompanies.slice(0, 2).length,
+						}).map((_, index) => (
+							<div
+								key={index.toString()}
+								className='flex flex-row items-center justify-start gap-x-1 relative'
+							>
+								<Skeleton className='size-4 rounded-full' />
+								<Skeleton className='w-18 h-3' />
+							</div>
+						))
+					: items.slice(0, 2)?.map((props) => (
+							<div
+								key={props.id}
+								className='text-muted-foreground truncate flex flex-row items-center justify-start gap-x-1 relative line-clamp-1 max-w-28'
+							>
+								<Avatar className='size-4'>
+									<AvatarImage
+										src={props?.icon || placeholder.user}
+										width={512}
+										height={512}
+										alt={capitalizeFirstLetters(props.name.toUpperCase())}
+									/>
+									<AvatarFallback>
+										{props.name.toUpperCase().slice(0, 2)}
+									</AvatarFallback>
+								</Avatar>
+								<span className='truncate flex-1'>
+									{capitalizeFirstLetters(props.name)}
+								</span>
+								<XIcon
+									className='size-3! hover:text-foreground cursor-pointer'
+									onClick={() => removeItem(props.id)}
+								/>
+							</div>
+						))}
+				{!!items.slice(2).length && (
+					<Popover>
+						<PopoverTrigger asChild>
+							<Badge className='py-0 cursor-pointer line-clamp-1 truncate'>
+								+ {items.slice(2).length}
+							</Badge>
+						</PopoverTrigger>
+						<PopoverContent
+							align='end'
+							className='w-fit px-1.5 py-1 space-y-0.5'
 						>
-							<AvatarImage
-								src={company?.icon as string}
-								width={52}
-								height={52}
-								alt={capitalizeFirstLetters(company?.name as string)}
-								priority
-							/>
-							<AvatarFallback>
-								{company?.name.slice(0, 2).toUpperCase()}
-							</AvatarFallback>
-						</Avatar>
-					);
-				})}
+							{items.slice(2)?.map((props) => (
+								<div
+									key={props.id}
+									className='flex flex-row items-center justify-start gap-x-2 relative rounded cursor-pointer px-1 py-0.5'
+								>
+									<div className='flex flex-row items-center justify-start gap-x-1.5'>
+										<Avatar className='size-4'>
+											<AvatarImage
+												src={props?.icon || placeholder.user}
+												width={512}
+												height={512}
+												alt={capitalizeFirstLetters(props.name.toUpperCase())}
+											/>
+											<AvatarFallback>
+												{props.name.toUpperCase().slice(0, 2)}
+											</AvatarFallback>
+										</Avatar>
+										<span className='text-muted-foreground text-xs font-normal'>
+											{capitalizeFirstLetters(props.name as string)}
+										</span>
+									</div>
+									<XIcon
+										className='size-3 hover:text-destructive cursor-pointer ml-auto'
+										onClick={() => removeItem(props.id)}
+									/>
+								</div>
+							))}
+						</PopoverContent>
+					</Popover>
+				)}
 			</div>
 		</div>
 	);
 }
 
 function FilterModality() {
-	const [searchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 
-	if (!searchParams.modality) {
+	const items = SchemaModality.options.filter((id) =>
+		searchParams.modality?.some((e) => e === id),
+	);
+
+	function clearSearchParams() {
+		setSearchParams({
+			modality: null,
+		});
+	}
+
+	function removeItem(item: string) {
+		setSearchParams({
+			modality: searchParams.modality?.filter((e) => e !== item) || null,
+		});
+	}
+
+	if (!items.length) {
 		return;
 	}
 
@@ -456,28 +555,93 @@ function FilterModality() {
 		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
 			<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
 				Tipo:
-				<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
+				{items.length > 1 && (
+					<XCircleIcon
+						onClick={clearSearchParams}
+						className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive'
+					/>
+				)}
 			</span>
 			<div className='flex flex-row items-center justify-start gap-x-2'>
-				{searchParams.modality.map((props) => {
+				{items.slice(0, 2).map((props) => {
 					const Icon = props === 'car' ? CarIcon : CarIcon;
 
 					return (
 						<Badge key={props} className='font-medium'>
 							<Icon className='size-4 stroke-[1.4]' />
 							{translateModality(props)}
+							<XIcon
+								className='size-3! hover:text-destructive cursor-pointer'
+								onClick={() => removeItem(props)}
+							/>
 						</Badge>
 					);
 				})}
+				{!!items.slice(2).length && (
+					<Popover>
+						<PopoverTrigger asChild>
+							<Badge className='cursor-pointer line-clamp-1 truncate'>
+								+ {items.slice(2).length}
+							</Badge>
+						</PopoverTrigger>
+						<PopoverContent
+							align='end'
+							className='w-fit px-1.5 py-1 space-y-0.5'
+						>
+							{items.slice(2)?.map((props) => (
+								<div
+									key={props}
+									className='flex flex-row items-center justify-start gap-x-2 relative rounded cursor-pointer px-1 py-0.5'
+								>
+									<div className='flex flex-row items-center justify-start gap-x-1.5'>
+										<Avatar className='size-4'>
+											<AvatarImage
+												src={props || placeholder.user}
+												width={512}
+												height={512}
+												alt={translateModality(props)}
+											/>
+											<AvatarFallback>
+												{translateModality(props).slice(0, 2)}
+											</AvatarFallback>
+										</Avatar>
+										<span className='text-muted-foreground text-xs font-normal'>
+											{translateModality(props)}
+										</span>
+									</div>
+									<XIcon
+										className='size-3 hover:text-destructive cursor-pointer ml-auto'
+										onClick={() => removeItem(props)}
+									/>
+								</div>
+							))}
+						</PopoverContent>
+					</Popover>
+				)}
 			</div>
 		</div>
 	);
 }
 
 function FilterStatus() {
-	const [searchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 
-	if (!searchParams.status) {
+	const items = SchemaQuoteStatus.options.filter((id) =>
+		searchParams.status?.some((e) => e === id),
+	);
+
+	function clearSearchParams() {
+		setSearchParams({
+			status: null,
+		});
+	}
+
+	function removeItem(item: string) {
+		setSearchParams({
+			status: searchParams.status?.filter((e) => e !== item) || null,
+		});
+	}
+	if (!items.length) {
 		return;
 	}
 
@@ -485,19 +649,64 @@ function FilterStatus() {
 		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
 			<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
 				Stauts:
-				<XCircleIcon className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive' />
+				{items.length > 1 && (
+					<XCircleIcon
+						onClick={clearSearchParams}
+						className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive'
+					/>
+				)}
 			</span>
 			<div className='flex flex-row items-center justify-start gap-x-2'>
-				{searchParams.status.map((props) => {
-					const variant: BadgeProps['variant'] =
-						props === 'waiting' ? 'warning' : 'default';
-
-					return (
-						<Badge key={props} variant={variant} className='font-medium'>
-							{translateQuoteStatus(props)}
-						</Badge>
-					);
-				})}
+				{items.slice(0, 2).map((props) => (
+					<Badge key={props} variant='default' className='font-medium'>
+						{translateQuoteStatus(props)}
+						<XIcon
+							className='size-3! hover:text-destructive cursor-pointer'
+							onClick={() => removeItem(props)}
+						/>
+					</Badge>
+				))}
+				{!!items.slice(2).length && (
+					<Popover>
+						<PopoverTrigger asChild>
+							<Badge className='cursor-pointer line-clamp-1 truncate'>
+								+ {items.slice(2).length}
+							</Badge>
+						</PopoverTrigger>
+						<PopoverContent
+							align='end'
+							className='w-fit px-1.5 py-1 space-y-0.5'
+						>
+							{items.slice(2)?.map((props) => (
+								<div
+									key={props}
+									className='flex flex-row items-center justify-start gap-x-2 relative rounded cursor-pointer px-1 py-0.5'
+								>
+									<div className='flex flex-row items-center justify-start gap-x-1.5'>
+										<Avatar className='size-4'>
+											<AvatarImage
+												src={props || placeholder.user}
+												width={512}
+												height={512}
+												alt={translateQuoteStatus(props)}
+											/>
+											<AvatarFallback>
+												{translateQuoteStatus(props).slice(0, 2)}
+											</AvatarFallback>
+										</Avatar>
+										<span className='text-muted-foreground text-xs font-normal'>
+											{translateQuoteStatus(props)}
+										</span>
+									</div>
+									<XIcon
+										className='size-3 hover:text-destructive cursor-pointer ml-auto'
+										onClick={() => removeItem(props)}
+									/>
+								</div>
+							))}
+						</PopoverContent>
+					</Popover>
+				)}
 			</div>
 		</div>
 	);

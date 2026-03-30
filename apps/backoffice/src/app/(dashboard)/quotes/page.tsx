@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { CardQuotesCountAnalytics } from '@/containers/cards/quotes/count-analytics';
 import { CardQuotesStatusAnalytics } from '@/containers/cards/quotes/status-analytics';
 import { SheetFilters } from '@/containers/sheets/filters';
+import { FilterBasisOfAnalysis } from '@/containers/tables/filter-base-of-analytics';
 import { TableFilters, TableFiltersCount } from '@/containers/tables/filters';
 import { TablePagination } from '@/containers/tables/pagination';
 import { TableQuotesSimple } from '@/containers/tables/quotes/simple';
@@ -57,6 +58,7 @@ function QuotesPage() {
 			</div>
 			<Separator />
 			<div className='grid grid-cols-5 gap-x-3'>
+				<FilterBasisOfAnalysis className='col-span-full' />
 				<CardQuotesCountAnalytics title='Total Geral' />
 				<CardQuotesStatusAnalytics status='waiting' title='Pendentes' />
 				<CardQuotesStatusAnalytics

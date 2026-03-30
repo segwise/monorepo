@@ -1,6 +1,16 @@
 'use client';
 
-import type { ProducerSimple } from '@segwise/core/types';
+import { SchemaModality, SchemaQuoteStatus } from '@segwise/core/schemas';
+import {
+	translateModality,
+	translateQuoteStatus,
+} from '@segwise/core/translate';
+import type {
+	InsuranceCompanySimple,
+	Modality,
+	ProducerSimple,
+	QuoteStatus,
+} from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import {
 	endOfDay,
@@ -12,7 +22,7 @@ import {
 	startOfMonth,
 	startOfToday,
 } from 'date-fns';
-import { CalendarIcon, SaveIcon, XCircleIcon } from 'lucide-react';
+import { CalendarIcon, CarIcon, SaveIcon, XCircleIcon } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -48,6 +58,7 @@ import {
 	SheetTrigger,
 } from '@/components/ui/sheet';
 import { placeholder } from '@/config/placeholder';
+import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 
@@ -92,14 +103,27 @@ function SheetFilters({
 						to: endOfDay(parseISO(searchParams.requestAt.end)),
 					},
 		producers: searchParams.producers || [],
+		insuranceCompanies: searchParams.insuranceCompanies || [],
+		modalities: searchParams.modality || [],
+		status: searchParams.status || [],
 	};
 
 	const [requestAt, setRequestAt] = useState<DateRange>(defaults.requestAt);
 	const [producers, setProducers] = useState<Array<string>>(defaults.producers);
+	const [insuranceCompanies, setInsuranceCompanies] = useState<Array<string>>(
+		defaults.insuranceCompanies,
+	);
+	const [modalities, setModalities] = useState<Array<Modality>>(
+		defaults.modalities,
+	);
+	const [status, setStatus] = useState<Array<QuoteStatus>>(defaults.status);
 
 	function onReset() {
 		setRequestAt(defaults.requestAt);
 		setProducers(defaults.producers);
+		setInsuranceCompanies(defaults.insuranceCompanies);
+		setModalities(defaults.modalities);
+		setStatus(defaults.status);
 	}
 
 	function onChangeOpen(open: boolean) {
@@ -118,7 +142,10 @@ function SheetFilters({
 						start: requestAt.from?.toISOString() as string,
 						end: requestAt.to.toISOString() as string,
 					},
-			producers: producers.length > 0 ? producers : null,
+			producers: producers.length ? producers : null,
+			insuranceCompanies: insuranceCompanies.length ? insuranceCompanies : null,
+			modality: modalities.length ? modalities : null,
+			status: status.length ? status : null,
 		});
 
 		setOpen(false);
@@ -144,6 +171,18 @@ function SheetFilters({
 					)}
 					{filters.includes('producers') && (
 						<FilterProducers value={producers} onChange={setProducers} />
+					)}
+					{filters.includes('insuranceCompanies') && (
+						<FilterInsuranceCompanies
+							value={insuranceCompanies}
+							onChange={setInsuranceCompanies}
+						/>
+					)}
+					{filters.includes('modality') && (
+						<FilterModality value={modalities} onChange={setModalities} />
+					)}
+					{filters.includes('status') && (
+						<FilterStatus value={status} onChange={setStatus} />
 					)}
 				</div>
 				<SheetFooter>
@@ -317,7 +356,7 @@ function FilterProducers({
 										)}
 									</ComboboxChip>
 								))}
-								<ComboboxChipsInput placeholder='Selecionar Produtor' />
+								<ComboboxChipsInput placeholder='Selecionar Produtores' />
 							</Fragment>
 						)}
 					</ComboboxValue>
@@ -339,6 +378,248 @@ function FilterProducers({
 									</AvatarFallback>
 								</Avatar>
 								{capitalizeFirstLetters(item.name)}
+							</ComboboxItem>
+						)}
+					</ComboboxList>
+					{!!value.length && (
+						<Fragment>
+							<Separator />
+							<div className='my-2 mx-2'>
+								<Button
+									variant='destructive'
+									size='sm'
+									onClick={onReset}
+									className='w-full'
+								>
+									Limpar <XCircleIcon />
+								</Button>
+							</div>
+						</Fragment>
+					)}
+				</ComboboxContent>
+			</Combobox>
+		</Field>
+	);
+}
+
+function FilterInsuranceCompanies({
+	value,
+	onChange,
+}: {
+	value: Array<string>;
+	onChange: (value: Array<string>) => void;
+}) {
+	const { data } = useInsuranceCompaniesSimple();
+
+	const anchor = useComboboxAnchor();
+
+	function onReset() {
+		onChange([]);
+	}
+
+	return (
+		<Field>
+			<FieldLabel>Seguradoras</FieldLabel>
+			<Combobox
+				multiple
+				autoHighlight
+				items={data}
+				value={value}
+				onValueChange={onChange}
+			>
+				<ComboboxChips ref={anchor} className='w-full max-w-xs'>
+					<ComboboxValue>
+						{(values: Array<string>) => (
+							<Fragment>
+								{values.map((value) => (
+									<ComboboxChip key={value}>
+										<Avatar className='size-4'>
+											<AvatarImage
+												src={
+													data?.find((e) => e.id === value)?.icon ||
+													placeholder.company
+												}
+												width={512}
+												height={512}
+												alt={capitalizeFirstLetters(
+													data
+														?.find((e) => e.id === value)
+														?.name.toUpperCase() as string,
+												).replace('S/a', 'S/A')}
+											/>
+											<AvatarFallback>
+												{data
+													?.find((e) => e.id === value)
+													?.name.toUpperCase()
+													.slice(0, 2)}
+											</AvatarFallback>
+										</Avatar>
+										{capitalizeFirstLetters(
+											data?.find((e) => e.id === value)?.name as string,
+										).replace('S/a', 'S/A')}
+									</ComboboxChip>
+								))}
+								<ComboboxChipsInput placeholder='Selecionar Seguradoras' />
+							</Fragment>
+						)}
+					</ComboboxValue>
+				</ComboboxChips>
+				<ComboboxContent anchor={anchor} align='end'>
+					<ComboboxEmpty>Nenhum registro encontrado</ComboboxEmpty>
+					<ComboboxList>
+						{(item: InsuranceCompanySimple) => (
+							<ComboboxItem key={item.id} value={item.id}>
+								<Avatar className='size-6'>
+									<AvatarImage
+										src={item.icon || placeholder.company}
+										width={512}
+										height={512}
+										alt={capitalizeFirstLetters(item.name).replace(
+											'S/a',
+											'S/A',
+										)}
+									/>
+									<AvatarFallback>
+										{item.name.toUpperCase().slice(0, 2)}
+									</AvatarFallback>
+								</Avatar>
+								{capitalizeFirstLetters(item.name).replace('S/a', 'S/A')}
+							</ComboboxItem>
+						)}
+					</ComboboxList>
+					{!!value.length && (
+						<Fragment>
+							<Separator />
+							<div className='my-2 mx-2'>
+								<Button
+									variant='destructive'
+									size='sm'
+									onClick={onReset}
+									className='w-full'
+								>
+									Limpar <XCircleIcon />
+								</Button>
+							</div>
+						</Fragment>
+					)}
+				</ComboboxContent>
+			</Combobox>
+		</Field>
+	);
+}
+
+function FilterModality({
+	value,
+	onChange,
+}: {
+	value: Array<Modality>;
+	onChange: (value: Array<Modality>) => void;
+}) {
+	const anchor = useComboboxAnchor();
+
+	function onReset() {
+		onChange([]);
+	}
+
+	return (
+		<Field>
+			<FieldLabel>Modalidade</FieldLabel>
+			<Combobox
+				multiple
+				autoHighlight
+				items={SchemaModality.options}
+				value={value}
+				onValueChange={onChange}
+			>
+				<ComboboxChips ref={anchor} className='w-full max-w-xs'>
+					<ComboboxValue>
+						{(values: Array<Modality>) => (
+							<Fragment>
+								{values.map((value) => (
+									<ComboboxChip key={value}>
+										{value === 'car' && <CarIcon className='size-4' />}
+										{translateModality(value)}
+									</ComboboxChip>
+								))}
+								<ComboboxChipsInput placeholder='Selecionar Modalidade' />
+							</Fragment>
+						)}
+					</ComboboxValue>
+				</ComboboxChips>
+				<ComboboxContent anchor={anchor}>
+					<ComboboxEmpty>Nenhum registro encontrado</ComboboxEmpty>
+					<ComboboxList>
+						{(item: Modality) => (
+							<ComboboxItem key={item} value={item}>
+								{item === 'car' && <CarIcon className='size-5 stroke-[1.5]' />}
+								{translateModality(item)}
+							</ComboboxItem>
+						)}
+					</ComboboxList>
+					{!!value.length && (
+						<Fragment>
+							<Separator />
+							<div className='my-2 mx-2'>
+								<Button
+									variant='destructive'
+									size='sm'
+									onClick={onReset}
+									className='w-full'
+								>
+									Limpar <XCircleIcon />
+								</Button>
+							</div>
+						</Fragment>
+					)}
+				</ComboboxContent>
+			</Combobox>
+		</Field>
+	);
+}
+
+function FilterStatus({
+	value,
+	onChange,
+}: {
+	value: Array<QuoteStatus>;
+	onChange: (value: Array<QuoteStatus>) => void;
+}) {
+	const anchor = useComboboxAnchor();
+
+	function onReset() {
+		onChange([]);
+	}
+
+	return (
+		<Field>
+			<FieldLabel>Status</FieldLabel>
+			<Combobox
+				multiple
+				autoHighlight
+				items={SchemaQuoteStatus.options}
+				value={value}
+				onValueChange={onChange}
+			>
+				<ComboboxChips ref={anchor} className='w-full max-w-xs'>
+					<ComboboxValue>
+						{(values: Array<QuoteStatus>) => (
+							<Fragment>
+								{values.map((value) => (
+									<ComboboxChip key={value}>
+										{translateQuoteStatus(value)}
+									</ComboboxChip>
+								))}
+								<ComboboxChipsInput placeholder='Selecionar Status' />
+							</Fragment>
+						)}
+					</ComboboxValue>
+				</ComboboxChips>
+				<ComboboxContent anchor={anchor}>
+					<ComboboxEmpty>Nenhum registro encontrado</ComboboxEmpty>
+					<ComboboxList>
+						{(item: QuoteStatus) => (
+							<ComboboxItem key={item} value={item}>
+								{translateQuoteStatus(item)}
 							</ComboboxItem>
 						)}
 					</ComboboxList>

@@ -1,7 +1,6 @@
 'use client';
 
-import { HomeIcon } from 'lucide-react';
-import { useState } from 'react';
+import { FileTextIcon } from 'lucide-react';
 import { useQuotesAnalyticsCount } from '@/libraries/hooks/quotes/analytics/use-quotes-analytics';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 import { CardHeaderHome } from '../header-home';
@@ -13,11 +12,9 @@ interface CardQuotesCountAnalyticsProps {
 function CardQuotesCountAnalytics({ title }: CardQuotesCountAnalyticsProps) {
 	const [searchParams] = useSearchParams();
 
-	const [type, setType] = useState<'year' | 'month'>('year');
-
 	const { data, isPending } = useQuotesAnalyticsCount({
 		...searchParams,
-		type,
+		type: searchParams.basisOfAnalysis,
 	});
 
 	const current = data?.current || 0;
@@ -29,13 +26,11 @@ function CardQuotesCountAnalytics({ title }: CardQuotesCountAnalyticsProps) {
 	return (
 		<CardHeaderHome
 			isPending={isPending}
-			icon={HomeIcon}
+			icon={FileTextIcon}
 			title={title}
 			value={current.toString()}
 			before={before.toString()}
 			percent={percent}
-			type={type}
-			setType={setType}
 		/>
 	);
 }

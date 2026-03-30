@@ -34,6 +34,7 @@ const useSearchParams = () =>
 		),
 		renewal: parseAsBoolean,
 		modality: parseAsArrayOf(parseAsStringEnum(SchemaModality.options)),
+		basisOfAnalysis: parseAsStringEnum(['year', 'month']).withDefault('year'),
 	});
 
 type SearchParamsProps = ReturnType<typeof useSearchParams>[0];

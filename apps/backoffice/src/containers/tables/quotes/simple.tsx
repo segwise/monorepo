@@ -6,15 +6,12 @@ import {
 	translateQuoteStatus,
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
-import { formatDistanceToNowStrict } from 'date-fns';
 import {
-	CarIcon,
-	EyeIcon,
-	InfoIcon,
-	PrinterIcon,
-	Trash2Icon,
-} from 'lucide-react';
-import Link from 'next/link';
+	format,
+	formatDistanceToNow,
+	formatDistanceToNowStrict,
+} from 'date-fns';
+import { CarIcon, InfoIcon, PrinterIcon, Trash2Icon } from 'lucide-react';
 import { Fragment } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -38,13 +35,24 @@ import {
 import { placeholder } from '@/config/placeholder';
 import { DialogQuoteDeleteById } from '@/containers/dialogs/quotes/delete';
 import { useQuotesSimple } from '@/hooks/quotes/use-quotes';
+import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
+import { useQuotesPrintById } from '@/libraries/hooks/quotes/use-quotes-print';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
+import { cn } from '@/libraries/utils';
 
 function TableQuotesSimple() {
 	const [searchParams] = useSearchParams();
 
 	const { data, isPending, isSuccess } = useQuotesSimple(searchParams);
+
+	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
+
+	const {
+		mutate: mutateQuotePrint,
+		isPending: isPendingQuotePrint,
+		variables: variablesQuotePrint,
+	} = useQuotesPrintById();
 
 	const { data: manufacturers } = useVehiclesManufacturers();
 
@@ -57,10 +65,11 @@ function TableQuotesSimple() {
 				<TableRow>
 					<TableHead className='text-left w-60'>Segurado</TableHead>
 					<TableHead className='text-left flex-1'>Dados</TableHead>
+					<TableHead className='text-left w-55' />
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
 					<TableHead className='text-center w-40'>Solicitado Em</TableHead>
-					<TableHead className='text-right'>Ações</TableHead>
+					<TableHead className='text-right w-40'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -88,13 +97,14 @@ function TableQuotesSimple() {
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
+							<TableCell className='w-55' />
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
-							<TableCell className='justify-end flex flex-row gap-x-2'>
+							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
 								<Skeleton className='size-9 rounded-sm' />
 								<Skeleton className='size-9 rounded-sm' />
 							</TableCell>
@@ -124,129 +134,190 @@ function TableQuotesSimple() {
 						</TableCell>
 					</TableRow>
 				)}
-				{items.map(({ id, modality, insured, vehicle, status, requestAt }) => (
-					<TableRow key={id}>
-						<TableCell className='text-left w-60'>
-							<div className='flex flex-row items-center justify-start gap-x-2'>
-								<Avatar className='size-8 border bg-background'>
-									<AvatarImage
-										src={insured.image || placeholder.user}
-										width={52}
-										height={52}
-										alt='Image do usuário'
-										priority
-									/>
-									<AvatarFallback>
-										{insured.name.slice(0, 2).toUpperCase()}
-									</AvatarFallback>
-								</Avatar>
-								<div>
-									<span className='block text-sm font-medium truncate line-clamp-1'>
-										{capitalizeFirstLetters(insured.name)}
-									</span>
-									<span className='block text-xs text-muted-foreground font-normal leading-none'>
-										{maskPhone(insured.contact.phone)}
-									</span>
-								</div>
-							</div>
-						</TableCell>
-						<TableCell className='text-left flex-1'>
-							{!!vehicle && (
-								<div className='flex flex-row items-center justify-start gap-x-3'>
-									<Avatar className='size-8 rounded-none bg-background'>
-										{!!manufacturers?.find(
-											(props) => props.id === vehicle.manufacturer,
-										)?.icon && (
-											<AvatarImage
-												src={
-													manufacturers?.find(
-														(props) => props.id === vehicle.manufacturer,
-													)?.icon as string
-												}
-												width={52}
-												height={52}
-												alt='Marca do veículo'
-												priority
-											/>
-										)}
+				{items.map(
+					({
+						id,
+						modality,
+						insured,
+						vehicle,
+						insuranceCompany,
+						status,
+						requestAt,
+						expiration,
+					}) => (
+						<TableRow key={id}>
+							<TableCell className='text-left w-60'>
+								<div className='flex flex-row items-center justify-start gap-x-2'>
+									<Avatar className='size-8 border bg-background'>
+										<AvatarImage
+											src={insured.image || placeholder.user}
+											width={52}
+											height={52}
+											alt='Image do usuário'
+											priority
+										/>
 										<AvatarFallback>
-											{manufacturers
-												?.find((props) => props.id === vehicle.manufacturer)
-												?.name.slice(0, 2)
-												.toUpperCase() || 'SP'}
+											{insured.name.slice(0, 2).toUpperCase()}
 										</AvatarFallback>
 									</Avatar>
 									<div>
-										<span className='block text-sm font-medium truncate line-clamp-1 capitalize'>
-											{vehicle.plate ? vehicle.model : 'Sem Placa'}
+										<span className='block text-sm font-medium truncate line-clamp-1'>
+											{capitalizeFirstLetters(insured.name)}
 										</span>
-										{vehicle.plate && (
-											<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
-												{maskPlate(vehicle.plate)}
-											</span>
-										)}
-										{!vehicle.plate && (
-											<span className='block text-xs text-muted-foreground font-normal leading-none'>
-												Verificar veículo
-											</span>
-										)}
+										<span className='block text-xs text-muted-foreground font-normal leading-none'>
+											{maskPhone(insured.contact.phone)}
+										</span>
 									</div>
 								</div>
-							)}
-						</TableCell>
-						<TableCell className='text-center w-40'>
-							<Badge className='dark:border-input'>
-								{modality === 'car' && (
-									<Fragment>
-										<CarIcon className='size-4' /> {translateModality(modality)}
-									</Fragment>
-								)}
-							</Badge>
-						</TableCell>
-						<TableCell className='text-center w-40'>
-							<Badge
-								className='w-25 truncate line-clamp-1 mx-auto dark:border dark:border-input'
-								variant={
-									status === 'confirmed'
-										? 'success'
-										: status === 'recused'
-											? 'destructive'
-											: status === 'waiting'
-												? 'warning'
-												: status === 'sent'
-													? 'active'
-													: 'default'
-								}
-							>
-								{translateQuoteStatus(status)}
-							</Badge>
-						</TableCell>
-						<TableCell className='text-center w-40'>
-							<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
-								{formatDistanceToNowStrict(requestAt)}
-							</Badge>
-						</TableCell>
-						<TableCell className='justify-end flex flex-row gap-x-2'>
-							<Button variant='outline' size='icon-sm' asChild>
-								<Link href={`/quotes/${id}`}>
-									<EyeIcon />
-								</Link>
-							</Button>
-							<Button variant='outline' size='icon-sm' asChild>
-								<Link
-									target='_blank'
-									href={`${process.env.NEXT_PUBLIC_API_URL}/quotes/${id}/print`}
+							</TableCell>
+							<TableCell className='text-left flex-1'>
+								<div className='flex flex-row items-center justify-start'>
+									{!!vehicle && (
+										<div className='flex flex-row items-center justify-start gap-x-3'>
+											<Avatar className='size-8 rounded-none bg-background'>
+												{!!manufacturers?.find(
+													(props) => props.id === vehicle.manufacturer,
+												)?.icon && (
+													<AvatarImage
+														src={
+															manufacturers?.find(
+																(props) => props.id === vehicle.manufacturer,
+															)?.icon as string
+														}
+														width={52}
+														height={52}
+														alt='Marca do veículo'
+														priority
+													/>
+												)}
+												<AvatarFallback>
+													{manufacturers
+														?.find((props) => props.id === vehicle.manufacturer)
+														?.name.slice(0, 2)
+														.toUpperCase() || 'SP'}
+												</AvatarFallback>
+											</Avatar>
+											<div>
+												<span className='block text-sm font-medium truncate line-clamp-1 capitalize'>
+													{vehicle.plate ? vehicle.model : 'Sem Placa'}
+												</span>
+												{vehicle.plate && (
+													<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
+														{maskPlate(vehicle.plate)}
+													</span>
+												)}
+												{!vehicle.plate && (
+													<span className='block text-xs text-muted-foreground font-normal leading-none'>
+														Verificar veículo
+													</span>
+												)}
+											</div>
+										</div>
+									)}
+								</div>
+							</TableCell>
+							<TableCell className='text-left w-55'>
+								<div className='flex flex-row items-center justify-start'>
+									{!!insuranceCompany && (
+										<div className='flex flex-row items-center justify-start gap-x-2'>
+											<Avatar className='size-7 rounded-full bg-background'>
+												{!!insuranceCompanies?.find(
+													(props) => props.id === insuranceCompany,
+												)?.icon && (
+													<AvatarImage
+														src={
+															insuranceCompanies?.find(
+																(props) => props.id === insuranceCompany,
+															)?.icon as string
+														}
+														width={52}
+														height={52}
+														alt='Marca do veículo'
+														priority
+													/>
+												)}
+												<AvatarFallback>
+													{insuranceCompanies
+														?.find((props) => props.id === insuranceCompany)
+														?.name.slice(0, 2)
+														.toUpperCase() || 'SP'}
+												</AvatarFallback>
+											</Avatar>
+											{!!expiration && (
+												<div className='flex flex-col items-start justify-start'>
+													<span className='block text-xs font-medium truncate line-clamp-1 capitalize'>
+														Final da Vigência
+													</span>
+													<span className='block text-xs text-muted-foreground font-normal leading-none'>
+														{format(expiration, 'dd/MM/yyyy')} -{' '}
+														{formatDistanceToNow(expiration).replace(
+															'cerca de ',
+															'',
+														)}
+													</span>
+												</div>
+											)}
+										</div>
+									)}
+								</div>
+							</TableCell>
+							<TableCell className='text-center w-40'>
+								<Badge className='dark:border-input'>
+									{modality === 'car' && (
+										<Fragment>
+											<CarIcon className='size-4' />{' '}
+											{translateModality(modality)}
+										</Fragment>
+									)}
+								</Badge>
+							</TableCell>
+							<TableCell className='text-center w-40'>
+								<Badge
+									className='w-25 truncate line-clamp-1 mx-auto dark:border dark:border-input'
+									variant={
+										status === 'confirmed'
+											? 'success'
+											: status === 'recused'
+												? 'destructive'
+												: status === 'waiting'
+													? 'warning'
+													: status === 'sent'
+														? 'active'
+														: 'default'
+									}
+								>
+									{translateQuoteStatus(status)}
+								</Badge>
+							</TableCell>
+							<TableCell className='text-center w-40'>
+								<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
+									{formatDistanceToNowStrict(requestAt)}
+								</Badge>
+							</TableCell>
+							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
+								{/* <Button variant='outline' size='icon-sm' asChild>
+									<Link href={`/quotes/${id}`}>
+										<EyeIcon />
+									</Link>
+								</Button> */}
+								<Button
+									variant='outline'
+									size='icon-sm'
+									isPending={isPendingQuotePrint && variablesQuotePrint === id}
+									onClick={() => mutateQuotePrint(id)}
+									className={cn(
+										'',
+										isPendingQuotePrint && 'pointer-events-none',
+									)}
 								>
 									<PrinterIcon />
-								</Link>
-							</Button>
-							<DialogQuoteDeleteById id={id}>
-								<Button variant='destructive' size='icon-sm'>
-									<Trash2Icon />
 								</Button>
-							</DialogQuoteDeleteById>
-
-							{/* <DropdownMenu>
+								<DialogQuoteDeleteById id={id}>
+									<Button variant='destructive' size='icon-sm'>
+										<Trash2Icon />
+									</Button>
+								</DialogQuoteDeleteById>
+								{/* <DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
 										variant='outline'
@@ -273,9 +344,10 @@ function TableQuotesSimple() {
 									</DialogQuoteDeleteById>
 								</DropdownMenuContent>
 							</DropdownMenu> */}
-						</TableCell>
-					</TableRow>
-				))}
+							</TableCell>
+						</TableRow>
+					),
+				)}
 			</TableBody>
 		</Table>
 	);

@@ -1,8 +1,8 @@
 import {
-	ArrowDownRightIcon,
 	ArrowUpIcon,
-	ArrowUpRightIcon,
 	type HomeIcon,
+	TrendingDownIcon,
+	TrendingUpIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -23,8 +23,6 @@ interface CardHeaderHomeProps {
 	value: string;
 	before: string;
 	percent: number;
-	type: 'year' | 'month';
-	setType: (type: 'year' | 'month') => void;
 }
 
 function CardHeaderHome({
@@ -34,8 +32,6 @@ function CardHeaderHome({
 	value,
 	before,
 	percent,
-	type,
-	setType,
 }: CardHeaderHomeProps) {
 	return (
 		<Card className='p-0 bg-muted/50'>
@@ -44,16 +40,16 @@ function CardHeaderHome({
 					<CardTitle className='flex flex-row items-center justify-start gap-x-2 text-sm text-muted-foreground font-medium'>
 						{!!isPending && <Skeleton className='size-5 rounded' />}
 						{!!isPending && <Skeleton className='w-20 h-4 rounded' />}
-						{!isPending && Icon && <Icon className='size-5' />}
+						{!isPending && Icon && <Icon className='size-4.5' />}
 						{!isPending && title}
 					</CardTitle>
 					<CardAction>
 						{!!isPending && <Skeleton className='size-5 rounded' />}
 						{!isPending && percent > 0 && (
-							<ArrowUpRightIcon className='text-active' />
+							<TrendingUpIcon className='text-active' />
 						)}
 						{!isPending && percent < 0 && (
-							<ArrowDownRightIcon className='text-active' />
+							<TrendingDownIcon className='text-active' />
 						)}
 					</CardAction>
 				</CardHeader>
@@ -66,9 +62,7 @@ function CardHeaderHome({
 			</Card>
 			<CardFooter className='pb-2 -mt-4 flex flex-row items-center justify-between'>
 				{!!isPending && <Skeleton className='w-22 h-3 rounded' />}
-				{!isPending && (
-					<ChangePeriod value={before} type={type} setType={setType} />
-				)}
+				{!isPending && <ChangePeriod value={before} />}
 				{!!isPending && <Skeleton className='w-14 h-5 rounded-full' />}
 				{!isPending && (
 					<Badge

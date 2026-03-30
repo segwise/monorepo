@@ -10,8 +10,6 @@ function CardLeadsCaptured() {
 			value='0'
 			percent={0}
 			before='0'
-			type='year'
-			setType={() => {}}
 		/>
 	);
 }

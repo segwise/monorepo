@@ -70,7 +70,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 					disabled
 					{...props}
 				>
-					{textPending || 'Carregando'}
+					{size !== 'icon-lg' &&
+						size !== 'icon-sm' &&
+						size !== 'icon-xs' &&
+						(textPending || 'Carregando')}
 					<Spinner />
 				</Comp>
 			);
