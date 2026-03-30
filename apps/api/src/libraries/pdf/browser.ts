@@ -12,6 +12,7 @@ async function getBrowser(): Promise<Browser> {
 	}
 
 	if (!browserInstance || !browserInstance.isConnected()) {
+		console.log('Não existe browser');
 		browserInstance = await chromium.launch({
 			headless: true,
 			args: [
@@ -25,6 +26,8 @@ async function getBrowser(): Promise<Browser> {
 				'--single-process',
 			],
 		});
+	} else {
+		console.log('Existe browser');
 	}
 
 	return browserInstance;
