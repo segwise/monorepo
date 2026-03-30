@@ -774,7 +774,18 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 
 		const browser = await puppeteer.launch({
 			headless: true,
-			args: [...puppeteer.defaultArgs(), '--no-sandbox'],
+			...(ctx.environment.NODE_ENV !== 'production' && {
+				executablePath: '/usr/bin/chromium-browser',
+			}),
+			args: [
+				...puppeteer.defaultArgs(),
+				'--no-sandbox',
+				'--disable-setuid-sandbox',
+				'--disable-dev-shm-usage',
+				'--disable-gpu',
+				'--no-zygote',
+				'--single-process',
+			],
 			ignoreDefaultArgs: true,
 		});
 
