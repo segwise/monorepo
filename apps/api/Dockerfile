@@ -39,7 +39,7 @@ RUN apk add --no-cache \
     libxshmfence \
     alsa-lib
 
-RUN bun x playwright install --with-deps chromium
+RUN bun x playwright install --with-deps
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock* ./
