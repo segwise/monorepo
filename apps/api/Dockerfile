@@ -69,6 +69,8 @@ ENV PORT=3000
 
 EXPOSE 3000
 
+RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser
+
 RUN chmod +x ./entrypoint.sh
 
 ENTRYPOINT ["./entrypoint.sh"]
