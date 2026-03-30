@@ -40,8 +40,8 @@ RUN apk add --no-cache \
     pango \
     cups-libs \
     alsa-lib \
-    at-spi2-atk \
-    gtk+3.0 \
+    at-spi2-core \
+    libatk-bridge-2.0 \
     && rm -rf /var/cache/apk/*
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
