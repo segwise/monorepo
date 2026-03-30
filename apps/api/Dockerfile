@@ -39,7 +39,7 @@ RUN apk add --no-cache \
     libxshmfence \
     alsa-lib
 
-# RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 ENV PLAYWRIGHT_BROWSERS_PATH=0 \
     CHROMIUM_PATH=/usr/bin/chromium-browser
@@ -60,16 +60,16 @@ COPY --from=builder /app/generated ./generated
 
 COPY --from=builder /app/entrypoint.sh ./
 
-# RUN chown -R appuser:appgroup /app
+RUN chown -R appuser:appgroup /app
 
-# USER appuser
+USER appuser
 
 ENV NODE_ENV=production
 ENV PORT=3000
 
 EXPOSE 3000
 
-# RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser
+RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser
 
 RUN chmod +x ./entrypoint.sh
 
