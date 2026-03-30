@@ -185,11 +185,12 @@ model Quote {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@index([requestAt])
   @@index([producerId])
   @@index([insuranceCompanyId])
   @@index([status])
   @@index([modality])
-  @@index([requestAt])
+  @@index([id, requestAt])
   @@map("quotes")
 }
 
