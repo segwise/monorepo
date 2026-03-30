@@ -773,39 +773,43 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 
 		const { page, release } = await ctx.browser();
 
-		await page.setContent(content, {
-			waitUntil: 'networkidle',
-			timeout: 12000,
-		});
+		try {
+			await page.setContent(content, {
+				waitUntil: 'networkidle',
+				timeout: 15000,
+			});
 
-		const pdfBuffer = await page.pdf({
-			pageRanges: '1',
-			format: 'A4',
-			printBackground: true,
-			margin: {
-				left: 0,
-				top: 0,
-				right: 0,
-				bottom: 0,
-			},
-		});
+			const pdfBuffer = await page.pdf({
+				pageRanges: '1',
+				format: 'A4',
+				printBackground: true,
+				margin: {
+					left: 0,
+					top: 0,
+					right: 0,
+					bottom: 0,
+				},
+			});
 
-		await release();
+			const pdf = await PDFDocument.load(pdfBuffer);
+			pdf.setTitle(`${quote.id}.pdf`);
+			// pdf.setAuthor(quote.company.name.toUpperCase());
+			pdf.setCreator('SEGWISE TECNOLOGIA');
+			pdf.setLanguage('pt-BR');
+			pdf.setCreationDate(quote.requestAt);
+			pdf.setModificationDate(quote.updatedAt);
 
-		const pdf = await PDFDocument.load(pdfBuffer);
-		pdf.setTitle(`${quote.id}.pdf`);
-		// pdf.setAuthor(quote.company.name.toUpperCase());
-		pdf.setCreator('SEGWISE TECNOLOGIA');
-		pdf.setLanguage('pt-BR');
-		pdf.setCreationDate(quote.requestAt);
-		pdf.setModificationDate(quote.updatedAt);
-
-		return new Response(await pdf.save(), {
-			headers: {
-				'Content-Type': 'application/pdf',
-			},
-			status: 200,
-		});
+			return new Response(await pdf.save(), {
+				headers: {
+					'Content-Type': 'application/pdf',
+				},
+				status: 200,
+			});
+		} catch {
+			return ctx.json({ message: 'Erro ao gerar PDF' }, 500);
+		} finally {
+			await release();
+		}
 	});
 }
 
