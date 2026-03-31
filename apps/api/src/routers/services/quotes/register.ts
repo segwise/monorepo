@@ -1,6 +1,16 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaQuoteRegister, SchemaQuoteSimpleRegister } from '@segwise/core';
-import { differenceInYears, endOfDay, endOfMonth } from 'date-fns';
+import {
+	differenceInYears,
+	endOfDay,
+	endOfMonth,
+	isSameDay,
+	setHours,
+	setMilliseconds,
+	setMinutes,
+	setSeconds,
+	startOfDay,
+} from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { vehicleByPlate } from '@/functions/vehicle/by-plate';
@@ -8,8 +18,16 @@ import { ModalityInsurance } from '@/generated/prisma/browser';
 
 function registerRoutersServicesQuotesRegister(server: Server) {
 	server.post('/', zValidator('json', SchemaQuoteRegister), async (ctx) => {
-		const { modality, renewal, status, requestAt, insured, vehicle, driver } =
-			ctx.req.valid('json');
+		const {
+			modality,
+			renewal,
+			status,
+			requestAt,
+			insured,
+			vehicle,
+			driver,
+			producer,
+		} = ctx.req.valid('json');
 
 		await ctx.database.$transaction(async (transaction) => {
 			const temporaryInsured = await transaction.temporaryInsured.create({
@@ -32,10 +50,28 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 
 			await transaction.quote.create({
 				data: {
+					...(!!producer && {
+						producer: {
+							connect: {
+								id: producer,
+							},
+						},
+					}),
 					modality,
 					renewal,
 					status,
-					requestAt,
+					requestAt: isSameDay(new Date(), requestAt)
+						? setMilliseconds(
+								setSeconds(
+									setMinutes(
+										setHours(requestAt, new Date().getHours()),
+										new Date().getMinutes(),
+									),
+									new Date().getSeconds(),
+								),
+								0,
+							)
+						: startOfDay(requestAt),
 					temporaryInsured: {
 						connect: {
 							id: temporaryInsured.id,

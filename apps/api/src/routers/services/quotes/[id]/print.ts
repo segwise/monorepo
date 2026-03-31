@@ -671,7 +671,7 @@ async function compile(
 		// 		primary: quote.company.theme?.primary,
 		// 	},
 		// },
-		...(quote.insuranceCompany && {
+		...(!!quote.insuranceCompany && {
 			insurer: {
 				name: quote.insuranceCompany.name,
 				image: quote.insuranceCompany.icon,

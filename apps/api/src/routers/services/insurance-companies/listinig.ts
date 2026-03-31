@@ -1,25 +1,44 @@
+import { zValidator } from '@hono/zod-validator';
+import { SchemaSearchParamsInsuranceCompanySimple } from '@segwise/core';
 import type { Server } from '@/@types/server.d';
+import type { Prisma } from '@/generated/prisma/client';
 import { selectPrisma as selectPrismaSimple } from '@/libraries/database/adapters/insurance-company/simple';
 import { serializer as serializerSimple } from '@/libraries/database/serializers/insurance-company/simple';
 
 function registerRoutersServicesInsuranceCompaniesListining(server: Server) {
-	server.get('/simple', async (ctx) => {
-		const insuranceCompanies = await ctx.database.insuranceCompany.findMany({
-			select: selectPrismaSimple,
-			relationLoadStrategy: 'join',
-			orderBy: {
-				name: 'asc',
-			},
-		});
+	server.get(
+		'/simple',
+		zValidator('query', SchemaSearchParamsInsuranceCompanySimple),
+		async (ctx) => {
+			const { search } = ctx.req.valid('query');
 
-		const data = insuranceCompanies.map((props) =>
-			serializerSimple(props, {
-				storage: ctx.storage.images,
-			}),
-		);
+			const where: Prisma.InsuranceCompanyWhereInput = {
+				...(!!search && {
+					name: {
+						search: search.replaceAll(' ', '&'),
+						mode: 'insensitive',
+					},
+				}),
+			};
 
-		return ctx.json(data, 200);
-	});
+			const insuranceCompanies = await ctx.database.insuranceCompany.findMany({
+				where,
+				select: selectPrismaSimple,
+				orderBy: {
+					name: 'asc',
+				},
+				relationLoadStrategy: 'join',
+			});
+
+			const data = insuranceCompanies.map((props) =>
+				serializerSimple(props, {
+					storage: ctx.storage.images,
+				}),
+			);
+
+			return ctx.json(data, 200);
+		},
+	);
 }
 
 export { registerRoutersServicesInsuranceCompaniesListining };
