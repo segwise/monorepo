@@ -173,7 +173,7 @@ function FilterRequestAt() {
 		() =>
 			!searchParams.requestAt
 				? {
-						from: startOfToday(),
+						from: startOfMonth(startOfToday()),
 						to: endOfToday(),
 					}
 				: typeof searchParams.requestAt === 'string'
@@ -201,22 +201,22 @@ function FilterRequestAt() {
 
 	const [date, setDate] = useState<DateRange>(defaultDate);
 
-	const isDateDefault =
-		!!searchParams.requestAt &&
-		isSameDay(
-			searchParams.requestAt instanceof Date ||
-				typeof searchParams.requestAt === 'string'
-				? searchParams.requestAt
-				: searchParams.requestAt.start,
-			startOfMonth(startOfToday()),
-		) &&
-		isSameDay(
-			searchParams.requestAt instanceof Date ||
-				typeof searchParams.requestAt === 'string'
-				? searchParams.requestAt
-				: searchParams.requestAt.end,
-			endOfToday(),
-		);
+	const isDateDefault = !searchParams.requestAt
+		? true
+		: isSameDay(
+				searchParams.requestAt instanceof Date ||
+					typeof searchParams.requestAt === 'string'
+					? searchParams.requestAt
+					: searchParams.requestAt.start,
+				startOfMonth(startOfToday()),
+			) &&
+			isSameDay(
+				searchParams.requestAt instanceof Date ||
+					typeof searchParams.requestAt === 'string'
+					? searchParams.requestAt
+					: searchParams.requestAt.end,
+				endOfToday(),
+			);
 
 	function onChange() {
 		setSearchParams({
@@ -256,10 +256,6 @@ function FilterRequestAt() {
 		setDate(defaultDate);
 	}, [defaultDate]);
 
-	if (!searchParams.requestAt) {
-		return;
-	}
-
 	return (
 		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
 			<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
@@ -274,39 +270,58 @@ function FilterRequestAt() {
 			<Popover open={open} onOpenChange={setOpen}>
 				<PopoverTrigger>
 					<span className='text-muted-foreground truncate cursor-pointer flex flex-row items-center justify-start gap-x-1'>
-						{typeof searchParams.requestAt === 'string' &&
-							format(parseISO(searchParams.requestAt), 'dd/MM/yyyy')}
-						{typeof searchParams.requestAt === 'object' &&
-							(isSameDay(
-								searchParams.requestAt instanceof Date ||
-									typeof searchParams.requestAt === 'string'
-									? searchParams.requestAt
-									: searchParams.requestAt.start,
-								searchParams.requestAt instanceof Date ||
-									typeof searchParams.requestAt === 'string'
-									? searchParams.requestAt
-									: searchParams.requestAt.end,
-							)
-								? format(
+						{!searchParams.requestAt &&
+							`${format(startOfMonth(startOfToday()), 'dd/MM/yyyy')} - ${format(
+								endOfToday(),
+								'dd/MM/yyyy',
+							)}`}
+						{!!searchParams.requestAt && (
+							<Fragment>
+								{typeof searchParams.requestAt === 'string' &&
+									format(parseISO(searchParams.requestAt), 'dd/MM/yyyy')}
+								{typeof searchParams.requestAt === 'object' &&
+									(isSameDay(
 										searchParams.requestAt instanceof Date ||
 											typeof searchParams.requestAt === 'string'
 											? searchParams.requestAt
-											: searchParams.requestAt.start,
-										'dd/MM/yyyy',
+											: searchParams.requestAt?.start instanceof Date
+												? searchParams.requestAt.start
+												: (searchParams.requestAt?.start as string),
+										searchParams.requestAt instanceof Date ||
+											typeof searchParams.requestAt === 'string'
+											? searchParams.requestAt
+											: searchParams.requestAt?.end instanceof Date
+												? searchParams.requestAt.end
+												: (searchParams.requestAt?.end as string),
 									)
-								: `${format(
-										searchParams.requestAt instanceof Date ||
-											typeof searchParams.requestAt === 'string'
-											? searchParams.requestAt
-											: searchParams.requestAt.start,
-										'dd/MM/yyyy',
-									)} - ${format(
-										searchParams.requestAt instanceof Date ||
-											typeof searchParams.requestAt === 'string'
-											? searchParams.requestAt
-											: searchParams.requestAt.end,
-										'dd/MM/yyyy',
-									)}`)}
+										? format(
+												searchParams.requestAt instanceof Date ||
+													typeof searchParams.requestAt === 'string'
+													? searchParams.requestAt
+													: searchParams.requestAt?.start instanceof Date
+														? searchParams.requestAt?.start
+														: (searchParams.requestAt?.start as string),
+												'dd/MM/yyyy',
+											)
+										: `${format(
+												searchParams.requestAt instanceof Date ||
+													typeof searchParams.requestAt === 'string'
+													? searchParams.requestAt
+													: searchParams.requestAt?.start instanceof Date
+														? searchParams.requestAt?.start
+														: (searchParams.requestAt?.start as string),
+												'dd/MM/yyyy',
+											)} - ${format(
+												searchParams.requestAt instanceof Date ||
+													typeof searchParams.requestAt === 'string'
+													? searchParams.requestAt
+													: searchParams.requestAt?.end instanceof Date
+														? searchParams.requestAt?.end
+														: (searchParams.requestAt?.end as string),
+												'dd/MM/yyyy',
+											)}`)}
+							</Fragment>
+						)}
 						<ChevronsUpDownIcon className='size-3' />
 					</span>
 				</PopoverTrigger>
@@ -320,9 +335,9 @@ function FilterRequestAt() {
 								? typeof searchParams.requestAt === 'string'
 									? parseISO(searchParams.requestAt)
 									: searchParams.requestAt
-								: typeof searchParams.requestAt.start === 'string'
+								: typeof searchParams.requestAt?.start === 'string'
 									? parseISO(searchParams.requestAt.start)
-									: searchParams.requestAt.start
+									: searchParams.requestAt?.start
 						}
 						selected={date}
 						onSelect={setDate}
