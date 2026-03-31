@@ -10,10 +10,17 @@ interface CardQuotesCountAnalyticsProps {
 }
 
 function CardQuotesCountAnalytics({ title }: CardQuotesCountAnalyticsProps) {
-	const [{ cursor: _cursor, limit: _limit, ...searchParams }] =
-		useSearchParams();
+	const [searchParams] = useSearchParams();
 
-	const { data, isPending } = useQuotesAnalyticsCount(searchParams);
+	const { data, isPending } = useQuotesAnalyticsCount({
+		basisOfAnalysis: searchParams.basisOfAnalysis,
+		insuranceCompanies: searchParams.insuranceCompanies,
+		modality: searchParams.modality,
+		producers: searchParams.producers,
+		renewal: searchParams.renewal,
+		requestAt: searchParams.requestAt,
+		search: searchParams.search,
+	});
 
 	const current = data?.current || 0;
 	const before = data?.before || 0;

@@ -77,9 +77,7 @@ function TableFilters({ filters }: TableFiltersProps) {
 							: searchParams.requestAt.end,
 						endOfToday(),
 					)
-				) ||
-				!!searchParams.status?.length ||
-				!!searchParams.type?.length;
+				) || !!searchParams.status?.length;
 
 	function getFilter(filter: Filter) {
 		return filters.includes(filter);
@@ -92,7 +90,7 @@ function TableFilters({ filters }: TableFiltersProps) {
 			requestAt: null,
 			modality: null,
 			status: null,
-			type: null,
+			renewal: null,
 		});
 	}
 
@@ -128,8 +126,7 @@ function TableFiltersCount() {
 		!!searchParams.insuranceCompanies?.length,
 		!!searchParams.modality?.length,
 		!!searchParams.producers?.length,
-		searchParams.renewal === true,
-		searchParams.renewal === false,
+		searchParams.renewal === true || searchParams.renewal === false,
 		!searchParams.requestAt
 			? false
 			: !(
@@ -149,7 +146,6 @@ function TableFiltersCount() {
 					)
 				),
 		!!searchParams.status?.length,
-		!!searchParams.type?.length,
 	];
 
 	const count = isSearchParams.filter(Boolean).length;

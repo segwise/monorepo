@@ -30,11 +30,16 @@ function CardQuotesStatusAnalytics({
 	title,
 	status,
 }: CardQuotesStatusAnalyticsProps) {
-	const [{ cursor: _cursor, limit: _limit, ...searchParams }] =
-		useSearchParams();
+	const [searchParams] = useSearchParams();
 
 	const { data, isPending } = useQuotesAnalyticsStatus({
-		...searchParams,
+		basisOfAnalysis: searchParams.basisOfAnalysis,
+		insuranceCompanies: searchParams.insuranceCompanies,
+		modality: searchParams.modality,
+		producers: searchParams.producers,
+		renewal: searchParams.renewal,
+		requestAt: searchParams.requestAt,
+		search: searchParams.search,
 		status: typeof status === 'string' ? [status] : status,
 	});
 

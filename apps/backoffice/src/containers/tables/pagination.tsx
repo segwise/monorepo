@@ -19,7 +19,11 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 
-function TablePagination({ queryKey }: { queryKey: ['quotes', 'simple'] }) {
+function TablePagination({
+	queryKey,
+}: {
+	queryKey: ['quotes', 'listining', 'simple'];
+}) {
 	const queryCllient = useQueryClient();
 
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -93,7 +97,8 @@ function TablePagination({ queryKey }: { queryKey: ['quotes', 'simple'] }) {
 						Registros:
 					</span>
 					<Select
-						value={searchParams.limit.toString()}
+						value={searchParams.limit?.toString()}
+						defaultValue='10'
 						onValueChange={(value) =>
 							setSearchParams({
 								limit: Number(value),

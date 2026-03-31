@@ -42,10 +42,19 @@ import { useSearchParams } from '@/libraries/search-params/quotes';
 import { cn } from '@/libraries/utils';
 
 function TableQuotesSimple() {
-	const [{ basisOfAnalysis: _basisOfAnalysis, ...searchParams }] =
-		useSearchParams();
+	const [searchParams] = useSearchParams();
 
-	const { data, isPending, isSuccess } = useQuotesSimple(searchParams);
+	const { data, isPending, isSuccess } = useQuotesSimple({
+		cursor: searchParams.cursor,
+		insuranceCompanies: searchParams.insuranceCompanies,
+		limit: searchParams.limit,
+		modality: searchParams.modality,
+		producers: searchParams.producers,
+		renewal: searchParams.renewal,
+		requestAt: searchParams.requestAt,
+		search: searchParams.search,
+		status: searchParams.status,
+	});
 
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
 

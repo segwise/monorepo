@@ -1,16 +1,16 @@
 'use client';
 
 import { ChevronsUpDownIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 import { cn } from '@/libraries/utils';
 
 function FilterBasisOfAnalysis({ className }: { className?: string }) {
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [{ basisOfAnalysis }, setSearchParams] = useSearchParams();
 
 	function onChange() {
 		setSearchParams({
-			basisOfAnalysis:
-				searchParams.basisOfAnalysis === 'year' ? 'month' : 'year',
+			basisOfAnalysis: basisOfAnalysis === 'year' ? 'month' : 'year',
 		});
 	}
 
@@ -22,17 +22,16 @@ function FilterBasisOfAnalysis({ className }: { className?: string }) {
 			)}
 		>
 			Avaliação referente ao{' '}
-			{/** biome-ignore lint/a11y/noStaticElementInteractions: div */}
-			{/** biome-ignore lint/a11y/useKeyWithClickEvents: div */}
-			<div
+			<Button
+				variant='link'
 				onClick={onChange}
-				className='flex flex-row items-center justify-start gap-x-0.5 text-active cursor-pointer underline'
+				className='flex flex-row items-center justify-start gap-x-0.5 text-active cursor-pointer underline p-0! text-xs h-fit!'
 			>
 				<span className='font-medium ml-0.5'>
-					{searchParams.basisOfAnalysis === 'year' ? 'ANO' : 'MÊS'} ANTERIOR
+					{basisOfAnalysis === 'year' ? 'ANO' : 'MÊS'} ANTERIOR
 				</span>
-				<ChevronsUpDownIcon className='size-3 stroke-3' />
-			</div>
+				<ChevronsUpDownIcon className='size-3! stroke-3!' />
+			</Button>
 		</span>
 	);
 }

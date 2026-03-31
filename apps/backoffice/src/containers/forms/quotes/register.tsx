@@ -231,8 +231,8 @@ function FormQuoteRegister() {
 									<SelectContent align='end' side='bottom'>
 										{producers?.map(({ id, avatar, name, contact }) => (
 											<SelectItem key={id} value={id}>
-												<div className='flex flex-row items-center justify-start gap-x-3'>
-													<Avatar className='size-8 rounded-full border'>
+												<div className='flex flex-row items-center justify-start gap-x-2'>
+													<Avatar className='size-6 rounded-full border'>
 														<AvatarImage
 															src={avatar || placeholder.user}
 															width={128}

@@ -5,7 +5,7 @@ import type { SearchParamsProps } from '@/libraries/search-params/quotes';
 
 const useQuotesSimple = (props: Omit<SearchParamsProps, 'basisOfAnalysis'>) =>
 	useQuery({
-		queryKey: ['quotes', 'simple', props],
+		queryKey: ['quotes', 'listining', 'simple', props],
 		queryFn: async ({ signal }) =>
 			(
 				await api.get<ResponseDataCursor<QuoteSimple>>('/quotes/simple', {

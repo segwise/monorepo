@@ -154,10 +154,13 @@ function SheetFilters({
 		setSearchParams({
 			requestAt: !requestAt.to
 				? requestAt.from
-				: {
-						start: requestAt.from as Date,
-						end: requestAt.to as Date,
-					},
+				: isSameDay(requestAt.from as Date, startOfMonth(startOfToday())) &&
+						isSameDay(requestAt.to as Date, endOfToday())
+					? null
+					: {
+							start: requestAt.from as Date,
+							end: requestAt.to as Date,
+						},
 			producers: producers.length ? producers : null,
 			insuranceCompanies: insuranceCompanies.length ? insuranceCompanies : null,
 			modality: modalities.length ? modalities : null,

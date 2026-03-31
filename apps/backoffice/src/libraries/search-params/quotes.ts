@@ -22,9 +22,7 @@ const useSearchParams = () =>
 		insuranceCompanies: parseAsArrayOf(parseAsString),
 		requestAt: parseAsJson(SchemaSearchParamsQuoteSimple.shape.requestAt),
 		status: parseAsArrayOf(parseAsStringEnum(SchemaQuoteStatus.options)),
-		limit: parseAsInteger.withDefault(
-			SchemaSearchParamsQuoteSimple.shape.limit._zod.def.defaultValue || 10,
-		),
+		limit: parseAsInteger,
 		renewal: parseAsBoolean,
 		modality: parseAsArrayOf(parseAsStringEnum(SchemaModality.options)),
 		basisOfAnalysis: parseAsStringEnum(SchemaBasisOfAnalysis.options),

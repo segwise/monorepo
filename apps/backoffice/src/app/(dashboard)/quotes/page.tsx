@@ -74,7 +74,7 @@ function QuotesPage() {
 						<TableQuotesSimple />
 					</CardContent>
 				</Card>
-				<TablePagination queryKey={['quotes', 'simple']} />
+				<TablePagination queryKey={['quotes', 'listining', 'simple']} />
 			</div>
 		</main>
 	);
