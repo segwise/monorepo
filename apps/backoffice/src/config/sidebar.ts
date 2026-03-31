@@ -30,6 +30,7 @@ const sidebar: Array<{
 				title: 'Dashboard',
 				pathname: '/dashboard',
 				icon: LayoutDashboardIcon,
+				disabled: true,
 			},
 		],
 	},

@@ -144,7 +144,7 @@ const SelectItem = forwardRef<
 		<Item
 			ref={ref}
 			className={cn(
-				'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent/50 focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:size-4',
+				'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-muted-foreground/10 focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:size-4',
 				variant === 'destructive' &&
 					'focus:bg-destructive/5 focus:text-destructive focus:cursor-pointer',
 				className,

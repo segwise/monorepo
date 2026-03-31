@@ -20,10 +20,16 @@ import {
 	translateVehicleExchange,
 	translateVehicleUsage,
 } from '@segwise/core/translate';
-import type { QuoteRegister } from '@segwise/core/types';
+import type { QuoteRegister, VehicleManufacturer } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { isDateString } from '@segwise/core/valids';
-import { differenceInYears, format, isDate, parse } from 'date-fns';
+import {
+	differenceInYears,
+	format,
+	isDate,
+	parse,
+	startOfToday,
+} from 'date-fns';
 import {
 	CarIcon,
 	ChevronLeftIcon,
@@ -114,7 +120,7 @@ function FormQuoteRegister() {
 			producer: null,
 			status: 'waiting',
 			modality: 'car',
-			requestAt: new Date(),
+			requestAt: startOfToday(),
 			insured: {
 				cpf: '',
 				name: '',
@@ -155,7 +161,7 @@ function FormQuoteRegister() {
 					renewal: null,
 					status: 'waiting',
 					modality: 'car',
-					requestAt: new Date(),
+					requestAt: startOfToday(),
 					insured: {
 						cpf: '',
 						name: '',
@@ -430,10 +436,9 @@ function FormQuoteRegister() {
 																		'dd/MM/yyyy',
 																	)
 																: maskDateString(field.value)
-															: typeof field.value === 'object' &&
-																	isDate(field.value)
+															: field.value instanceof Date
 																? format(field.value, 'dd/MM/yyyy')
-																: undefined
+																: ''
 													}
 													onChange={({ target: { value } }) =>
 														field.onChange(
@@ -544,7 +549,9 @@ function FormQuoteRegister() {
 																			'dd/MM/yyyy',
 																		)
 																	: maskDateString(field.value)
-																: undefined
+																: field.value instanceof Date
+																	? format(field.value, 'dd/MM/yyyy')
+																	: ''
 														}
 														onChange={({ target: { value } }) => [
 															field.onChange(
@@ -776,9 +783,14 @@ function FormQuoteRegister() {
 												<Combobox
 													{...field}
 													id='vehicle-manufacturer'
-													value={field.value || null}
-													items={manufacturers?.flatMap((e) => e.name)}
+													value={
+														manufacturers?.find((e) => e.id === field.value) ||
+														null
+													}
+													items={manufacturers}
 													onValueChange={field.onChange}
+													itemToStringLabel={(item) => item.name}
+													itemToStringValue={(item) => item.id}
 												>
 													<ComboboxInput placeholder='Selecionar' />
 													<ComboboxContent>
@@ -786,9 +798,9 @@ function FormQuoteRegister() {
 															Nenhum registro encontrado.
 														</ComboboxEmpty>
 														<ComboboxList>
-															{(item, key) => (
-																<ComboboxItem key={key.toString()} value={item}>
-																	{item}
+															{(item: VehicleManufacturer) => (
+																<ComboboxItem key={item.id} value={item.id}>
+																	{item.name}
 																</ComboboxItem>
 															)}
 														</ComboboxList>
@@ -1401,8 +1413,7 @@ function FormQuoteRegister() {
 																			'dd/MM/yyyy',
 																		)
 																	: maskDateString(field.value)
-																: typeof field.value === 'object' &&
-																		isDate(field.value)
+																: field.value instanceof Date
 																	? format(field.value, 'dd/MM/yyyy')
 																	: ''
 														}

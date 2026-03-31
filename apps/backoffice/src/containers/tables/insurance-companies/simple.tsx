@@ -4,14 +4,22 @@ import { maskCNPJ } from '@segwise/core/masks';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { placeholder } from '@/config/placeholder';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
+import { useSearchParams } from '@/libraries/search-params/insurance-companies';
 
 function TableInsuranceCompaniesSimple() {
-	const { data } = useInsuranceCompaniesSimple();
+	const [searchParams] = useSearchParams();
+
+	const { data, isPending } = useInsuranceCompaniesSimple(searchParams);
 
 	return (
-		<div className='grid xl:grid-cols-6 2xl:grid-cols-8 gap-4'>
+		<div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-4'>
+			{!!isPending &&
+				Array.from({ length: 32 }).map((_, index) => (
+					<Skeleton key={index.toString()} className='xl:h-53 2xl:h-58' />
+				))}
 			{data?.map(({ name, icon, cnpj }, index) => (
 				<Card key={index.toString()} className='p-0 overflow-hidden'>
 					<CardContent className='p-0'>

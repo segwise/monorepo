@@ -26,7 +26,7 @@ function Sidebar() {
 		<SidebarUI side='left' variant='inset' collapsible='icon' className='dark'>
 			<SidebarHeader>
 				<SidebarMenu>
-					<SidebarMenuItem>
+					<SidebarMenuItem className='pointer-events-none'>
 						<SidebarMenuButton
 							size='lg'
 							asChild
@@ -96,13 +96,16 @@ function Sidebar() {
 			<SidebarGroup>
 				<SidebarGroupContent>
 					<SidebarMenu>
-						<SidebarMenuItem>
-							<SidebarMenuButton asChild tooltip='Configurações'>
+						<SidebarMenuItem aria-disabled className='pointer-events-none'>
+							<SidebarMenuButton asChild tooltip='Configurações' disabled>
 								<Link href='/settings' prefetch={false}>
 									<SettingsIcon />
 									<span>Configurações</span>
 								</Link>
 							</SidebarMenuButton>
+							<SidebarMenuAction className='[&>svg]:size-3 [&>svg]:opacity-50 pointer-events-none'>
+								<LockIcon />
+							</SidebarMenuAction>
 						</SidebarMenuItem>
 					</SidebarMenu>
 				</SidebarGroupContent>
