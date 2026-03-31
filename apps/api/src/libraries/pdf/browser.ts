@@ -4,6 +4,7 @@ import {
 	chromium,
 	type Page,
 } from 'playwright';
+import { environment } from '../environment';
 
 let browserInstance: Browser | null = null;
 const contextPool: BrowserContext[] = [];
@@ -19,6 +20,9 @@ async function getBrowser(): Promise<Browser> {
 	if (!browserInstance || !browserInstance.isConnected()) {
 		browserInstance = await chromium.launch({
 			headless: true,
+			...(environment.NODE_ENV !== 'development' && {
+				executablePath: '/usr/bin/chromium-browser',
+			}),
 			args: [
 				'--no-sandbox',
 				'--disable-setuid-sandbox',
