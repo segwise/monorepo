@@ -4,7 +4,7 @@ import {
 	chromium,
 	type Page,
 } from 'playwright';
-import { environment } from '../environment';
+import { environment } from '@/environment';
 
 let browserInstance: Browser | null = null;
 const contextPool: BrowserContext[] = [];
