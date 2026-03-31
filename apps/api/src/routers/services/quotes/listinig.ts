@@ -1,13 +1,5 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsQuoteSimple } from '@segwise/core/schemas';
-import {
-	endOfDay,
-	endOfMonth,
-	endOfToday,
-	startOfDay,
-	startOfMonth,
-	startOfToday,
-} from 'date-fns';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/quote/simple';
 import { serializer } from '@/db-serializers/quote/simple';
@@ -67,26 +59,10 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						in: insuranceCompanies,
 					},
 				}),
-				...(!requestAt && {
-					requestAt: {
-						gte: startOfMonth(startOfToday()),
-						lte: endOfMonth(endOfToday()),
-					},
-				}),
-				...(!!requestAt &&
-					typeof requestAt === 'string' && {
-						requestAt: {
-							gte: startOfDay(requestAt),
-							lte: endOfDay(requestAt),
-						},
-					}),
-				...(!!requestAt &&
-					typeof requestAt === 'object' && {
-						requestAt: {
-							gte: startOfDay(requestAt.start),
-							lte: endOfDay(requestAt.end),
-						},
-					}),
+				requestAt: {
+					gte: requestAt.start,
+					lte: requestAt.end,
+				},
 				...(!!modality && {
 					modality: {
 						in: modality,

@@ -1,15 +1,9 @@
 import { zValidator } from '@hono/zod-validator';
-import { SchemaSearchParamsQuoteSimple } from '@segwise/core';
 import {
-	endOfDay,
-	endOfMonth,
-	endOfToday,
-	startOfDay,
-	startOfMonth,
-	startOfToday,
-	subMonths,
-	subYears,
-} from 'date-fns';
+	SchemaBasisOfAnalysis,
+	SchemaSearchParamsQuoteSimple,
+} from '@segwise/core';
+import { subMonths, subYears } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import type { Prisma } from '@/generated/prisma/client';
@@ -21,15 +15,41 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 		'/',
 		zValidator(
 			'query',
-			z.object({
-				type: z.enum(['year', 'month']),
-				...SchemaSearchParamsQuoteSimple.shape,
-			}),
+			z
+				.object({
+					...SchemaSearchParamsQuoteSimple.shape,
+				})
+				.extend({
+					basisOfAnalysis: SchemaBasisOfAnalysis.default('year'),
+				})
+				.pick({
+					basisOfAnalysis: true,
+					search: true,
+					producers: true,
+					insuranceCompanies: true,
+					requestAt: true,
+					modality: true,
+					status: true,
+					renewal: true,
+				})
+				.strict(),
 		),
 		async (ctx) => {
-			const { type, search, requestAt } = ctx.req.valid('query');
+			const {
+				basisOfAnalysis,
+				search,
+				producers,
+				insuranceCompanies,
+				requestAt,
+				modality,
+				status,
+				renewal,
+			} = ctx.req.valid('query');
 
 			const where: Prisma.QuoteWhereInput = {
+				...(!!renewal && {
+					renewal,
+				}),
 				...(!!search && {
 					OR: [
 						{
@@ -50,6 +70,26 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 						},
 					],
 				}),
+				...(!!producers?.length && {
+					producerId: {
+						in: producers,
+					},
+				}),
+				...(!!insuranceCompanies?.length && {
+					insuranceCompanyId: {
+						in: insuranceCompanies,
+					},
+				}),
+				...(!!modality && {
+					modality: {
+						in: modality,
+					},
+				}),
+				...(!!status && {
+					status: {
+						in: status,
+					},
+				}),
 			};
 
 			const [current, before] = await ctx.database.$transaction([
@@ -57,20 +97,8 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 					where: {
 						...where,
 						requestAt: {
-							...(!requestAt && {
-								gte: startOfMonth(startOfToday()),
-								lte: endOfMonth(endOfToday()),
-							}),
-							...(!!requestAt && {
-								...(typeof requestAt === 'string' && {
-									gte: startOfDay(requestAt),
-									lte: endOfDay(requestAt),
-								}),
-								...(typeof requestAt === 'object' && {
-									gte: startOfDay(requestAt.start),
-									lte: endOfDay(requestAt.end),
-								}),
-							}),
+							gte: requestAt.start,
+							lte: requestAt.end,
 						},
 					},
 				}),
@@ -78,38 +106,14 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 					where: {
 						...where,
 						requestAt: {
-							...(!requestAt && {
-								gte:
-									type === 'year'
-										? subYears(startOfMonth(startOfToday()), 1)
-										: subMonths(startOfMonth(startOfToday()), 1),
-								lte:
-									type === 'year'
-										? subYears(endOfMonth(endOfToday()), 1)
-										: subMonths(endOfMonth(endOfToday()), 1),
-							}),
-							...(!!requestAt && {
-								...(typeof requestAt === 'string' && {
-									gte:
-										type === 'year'
-											? subYears(startOfDay(requestAt), 1)
-											: subMonths(startOfDay(requestAt), 1),
-									lte:
-										type === 'year'
-											? subYears(endOfDay(requestAt), 1)
-											: subMonths(endOfDay(requestAt), 1),
-								}),
-								...(typeof requestAt === 'object' && {
-									gte:
-										type === 'year'
-											? subYears(startOfDay(requestAt.start), 1)
-											: subMonths(startOfDay(requestAt.start), 1),
-									lte:
-										type === 'year'
-											? subYears(endOfDay(requestAt.end), 1)
-											: subMonths(endOfDay(requestAt.end), 1),
-								}),
-							}),
+							gte:
+								basisOfAnalysis === 'year'
+									? subYears(requestAt.start, 1)
+									: subMonths(requestAt.start, 1),
+							lte:
+								basisOfAnalysis === 'year'
+									? subYears(requestAt.end, 1)
+									: subMonths(requestAt.end, 1),
 						},
 					},
 				}),

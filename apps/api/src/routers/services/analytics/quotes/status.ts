@@ -1,15 +1,9 @@
 import { zValidator } from '@hono/zod-validator';
-import { SchemaSearchParamsQuoteSimple } from '@segwise/core';
 import {
-	endOfDay,
-	endOfMonth,
-	endOfToday,
-	startOfDay,
-	startOfMonth,
-	startOfToday,
-	subMonths,
-	subYears,
-} from 'date-fns';
+	SchemaBasisOfAnalysis,
+	SchemaSearchParamsQuoteSimple,
+} from '@segwise/core';
+import { endOfDay, startOfDay, subMonths, subYears } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import type { Prisma } from '@/generated/prisma/client';
@@ -21,13 +15,36 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 		'/',
 		zValidator(
 			'query',
-			z.object({
-				type: z.enum(['year', 'month']),
-				...SchemaSearchParamsQuoteSimple.shape,
-			}),
+			z
+				.object({
+					...SchemaSearchParamsQuoteSimple.shape,
+				})
+				.extend({
+					basisOfAnalysis: SchemaBasisOfAnalysis.default('year'),
+				})
+				.pick({
+					basisOfAnalysis: true,
+					search: true,
+					producers: true,
+					insuranceCompanies: true,
+					requestAt: true,
+					modality: true,
+					status: true,
+					renewal: true,
+				})
+				.strict(),
 		),
 		async (ctx) => {
-			const { type, search, status, requestAt } = ctx.req.valid('query');
+			const {
+				basisOfAnalysis,
+				search,
+				producers,
+				insuranceCompanies,
+				requestAt,
+				modality,
+				status,
+				renewal,
+			} = ctx.req.valid('query');
 
 			if (!status?.length) {
 				return ctx.json(
@@ -39,6 +56,9 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 			}
 
 			const where: Prisma.QuoteWhereInput = {
+				...(!!renewal && {
+					renewal,
+				}),
 				...(!!search && {
 					OR: [
 						{
@@ -59,6 +79,26 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 						},
 					],
 				}),
+				...(!!producers?.length && {
+					producerId: {
+						in: producers,
+					},
+				}),
+				...(!!insuranceCompanies?.length && {
+					insuranceCompanyId: {
+						in: insuranceCompanies,
+					},
+				}),
+				...(!!modality && {
+					modality: {
+						in: modality,
+					},
+				}),
+				...(!!status && {
+					status: {
+						in: status,
+					},
+				}),
 			};
 
 			const [current, before] = await ctx.database.$transaction([
@@ -68,12 +108,8 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 						status: {
 							in: status,
 						},
-						requestAt: {
-							...(!requestAt && {
-								gte: startOfMonth(startOfToday()),
-								lte: endOfMonth(endOfToday()),
-							}),
-							...(!!requestAt && {
+						...(!!requestAt && {
+							requestAt: {
 								...(typeof requestAt === 'string' && {
 									gte: startOfDay(requestAt),
 									lte: endOfDay(requestAt),
@@ -82,8 +118,8 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 									gte: startOfDay(requestAt.start),
 									lte: endOfDay(requestAt.end),
 								}),
-							}),
-						},
+							},
+						}),
 					},
 				}),
 				ctx.database.quote.count({
@@ -92,40 +128,30 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 						status: {
 							in: status,
 						},
-						requestAt: {
-							...(!requestAt && {
-								gte:
-									type === 'year'
-										? subYears(startOfMonth(startOfToday()), 1)
-										: subMonths(startOfMonth(startOfToday()), 1),
-								lte:
-									type === 'year'
-										? subYears(endOfMonth(endOfToday()), 1)
-										: subMonths(endOfMonth(endOfToday()), 1),
-							}),
-							...(!!requestAt && {
+						...(!!requestAt && {
+							requestAt: {
 								...(typeof requestAt === 'string' && {
 									gte:
-										type === 'year'
+										basisOfAnalysis === 'year'
 											? subYears(startOfDay(requestAt), 1)
 											: subMonths(startOfDay(requestAt), 1),
 									lte:
-										type === 'year'
+										basisOfAnalysis === 'year'
 											? subYears(endOfDay(requestAt), 1)
 											: subMonths(endOfDay(requestAt), 1),
 								}),
 								...(typeof requestAt === 'object' && {
 									gte:
-										type === 'year'
+										basisOfAnalysis === 'year'
 											? subYears(startOfDay(requestAt.start), 1)
 											: subMonths(startOfDay(requestAt.start), 1),
 									lte:
-										type === 'year'
+										basisOfAnalysis === 'year'
 											? subYears(endOfDay(requestAt.end), 1)
 											: subMonths(endOfDay(requestAt.end), 1),
 								}),
-							}),
-						},
+							},
+						}),
 					},
 				}),
 			]);
