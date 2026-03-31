@@ -23,16 +23,7 @@ async function getBrowser(): Promise<Browser> {
 			...(environment.NODE_ENV !== 'development' && {
 				executablePath: '/usr/bin/chromium-browser',
 			}),
-			args: [
-				'--no-sandbox',
-				'--disable-setuid-sandbox',
-				'--disable-dev-shm-usage',
-				'--disable-gpu',
-				'--disable-extensions',
-				'--disable-background-networking',
-				'--disable-features=IsolateOrigins,site-per-process',
-				'--single-process',
-			],
+			args: ['--no-sandbox', '--disable-setuid-sandbox'],
 		});
 	}
 
