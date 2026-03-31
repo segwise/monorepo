@@ -1,7 +1,7 @@
 import {
+	SchemaBasisOfAnalysis,
 	SchemaModality,
 	SchemaQuoteStatus,
-	SchemaQuoteType,
 	SchemaSearchParamsQuoteSimple,
 } from '@segwise/core/schemas';
 import {
@@ -21,14 +21,13 @@ const useSearchParams = () =>
 		producers: parseAsArrayOf(parseAsString),
 		insuranceCompanies: parseAsArrayOf(parseAsString),
 		requestAt: parseAsJson(SchemaSearchParamsQuoteSimple.shape.requestAt),
-		type: parseAsArrayOf(parseAsStringEnum(SchemaQuoteType.options)),
 		status: parseAsArrayOf(parseAsStringEnum(SchemaQuoteStatus.options)),
 		limit: parseAsInteger.withDefault(
 			SchemaSearchParamsQuoteSimple.shape.limit._zod.def.defaultValue || 10,
 		),
 		renewal: parseAsBoolean,
 		modality: parseAsArrayOf(parseAsStringEnum(SchemaModality.options)),
-		basisOfAnalysis: parseAsStringEnum(['year', 'month']).withDefault('year'),
+		basisOfAnalysis: parseAsStringEnum(SchemaBasisOfAnalysis.options),
 	});
 
 type SearchParamsProps = ReturnType<typeof useSearchParams>[0];

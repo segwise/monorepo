@@ -10,12 +10,10 @@ interface CardQuotesCountAnalyticsProps {
 }
 
 function CardQuotesCountAnalytics({ title }: CardQuotesCountAnalyticsProps) {
-	const [searchParams] = useSearchParams();
+	const [{ cursor: _cursor, limit: _limit, ...searchParams }] =
+		useSearchParams();
 
-	const { data, isPending } = useQuotesAnalyticsCount({
-		...searchParams,
-		type: searchParams.basisOfAnalysis,
-	});
+	const { data, isPending } = useQuotesAnalyticsCount(searchParams);
 
 	const current = data?.current || 0;
 	const before = data?.before || 0;

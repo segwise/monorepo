@@ -93,15 +93,31 @@ function SheetFilters({
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const defaults = {
-		requestAt:
-			typeof searchParams.requestAt === 'string'
+		requestAt: !searchParams.requestAt
+			? {
+					from: startOfMonth(startOfToday()),
+					to: endOfToday(),
+				}
+			: typeof searchParams.requestAt === 'string'
 				? {
-						from: startOfDay(parseISO(searchParams.requestAt)),
+						from: startOfDay(searchParams.requestAt),
+						to: endOfDay(searchParams.requestAt),
 					}
-				: {
-						from: startOfDay(parseISO(searchParams.requestAt.start)),
-						to: endOfDay(parseISO(searchParams.requestAt.end)),
-					},
+				: searchParams.requestAt instanceof Date
+					? {
+							from: startOfDay(searchParams.requestAt),
+							to: endOfDay(searchParams.requestAt),
+						}
+					: typeof searchParams.requestAt.start === 'string' &&
+							typeof searchParams.requestAt.end === 'string'
+						? {
+								from: parseISO(searchParams.requestAt.start),
+								to: parseISO(searchParams.requestAt.end),
+							}
+						: {
+								from: searchParams.requestAt.start as Date,
+								to: searchParams.requestAt.end as Date,
+							},
 		producers: searchParams.producers || [],
 		insuranceCompanies: searchParams.insuranceCompanies || [],
 		modalities: searchParams.modality || [],
@@ -137,10 +153,10 @@ function SheetFilters({
 	function applySearchParams() {
 		setSearchParams({
 			requestAt: !requestAt.to
-				? (requestAt.from?.toISOString() as string)
+				? requestAt.from
 				: {
-						start: requestAt.from?.toISOString() as string,
-						end: requestAt.to.toISOString() as string,
+						start: requestAt.from as Date,
+						end: requestAt.to as Date,
 					},
 			producers: producers.length ? producers : null,
 			insuranceCompanies: insuranceCompanies.length ? insuranceCompanies : null,
@@ -211,15 +227,31 @@ function FilterRequestAt({
 
 	const [searchParams] = useSearchParams();
 
-	const defaultDate =
-		typeof searchParams.requestAt === 'string'
+	const defaultDate = !searchParams.requestAt
+		? {
+				from: startOfMonth(startOfToday()),
+				to: endOfToday(),
+			}
+		: typeof searchParams.requestAt === 'string'
 			? {
-					from: startOfDay(parseISO(searchParams.requestAt)),
+					from: startOfDay(searchParams.requestAt),
+					to: endOfDay(searchParams.requestAt),
 				}
-			: {
-					from: startOfDay(parseISO(searchParams.requestAt.start)),
-					to: endOfDay(parseISO(searchParams.requestAt.end)),
-				};
+			: searchParams.requestAt instanceof Date
+				? {
+						from: startOfDay(searchParams.requestAt),
+						to: endOfDay(searchParams.requestAt),
+					}
+				: searchParams.requestAt.start instanceof Date &&
+						searchParams.requestAt.end instanceof Date
+					? {
+							from: searchParams.requestAt.start,
+							to: searchParams.requestAt.end,
+						}
+					: {
+							from: parseISO(searchParams.requestAt.start as string),
+							to: parseISO(searchParams.requestAt.end as string),
+						};
 
 	const isDateDefault =
 		value.from &&
@@ -272,7 +304,14 @@ function FilterRequestAt({
 						mode='range'
 						defaultMonth={value?.from}
 						selected={value}
-						onSelect={onChange}
+						onSelect={({ from, to }) =>
+							onChange({
+								from: startOfDay(from as Date),
+								...(!!to && {
+									to: endOfDay(to),
+								}),
+							})
+						}
 						numberOfMonths={2}
 						disabled={{
 							after: new Date(),

@@ -4,9 +4,7 @@ import { api } from '@/libraries/api';
 import type { SearchParamsProps } from '@/libraries/search-params/quotes';
 
 const useQuotesAnalyticsCount = (
-	props: Omit<SearchParamsProps, 'type' | 'status'> & {
-		type: 'year' | 'month';
-	},
+	props: Omit<SearchParamsProps, 'status' | 'limit' | 'cursor'>,
 ) =>
 	useQuery({
 		queryKey: ['quotes', 'analytics', 'count', props],
@@ -23,8 +21,7 @@ const useQuotesAnalyticsCount = (
 	});
 
 const useQuotesAnalyticsStatus = (
-	props: Omit<SearchParamsProps, 'type' | 'status'> & {
-		type: 'year' | 'month';
+	props: Omit<SearchParamsProps, 'status' | 'limit' | 'cursor'> & {
 		status: Array<QuoteStatus>;
 	},
 ) =>

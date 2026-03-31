@@ -42,7 +42,8 @@ import { useSearchParams } from '@/libraries/search-params/quotes';
 import { cn } from '@/libraries/utils';
 
 function TableQuotesSimple() {
-	const [searchParams] = useSearchParams();
+	const [{ basisOfAnalysis: _basisOfAnalysis, ...searchParams }] =
+		useSearchParams();
 
 	const { data, isPending, isSuccess } = useQuotesSimple(searchParams);
 

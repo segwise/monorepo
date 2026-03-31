@@ -1,14 +1,13 @@
 'use client';
 
 import { QueryObserver, useQueryClient } from '@tanstack/react-query';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
 	Pagination,
 	PaginationContent,
 	PaginationEllipsis,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
 } from '@/components/ui/pagination';
 import {
 	Select,
@@ -38,8 +37,10 @@ function TablePagination({ queryKey }: { queryKey: ['quotes', 'simple'] }) {
 	});
 
 	useEffect(() => {
+		const { basisOfAnalysis: _basisOfAnalysis, ...params } = searchParams;
+
 		const observer = new QueryObserver(queryCllient, {
-			queryKey: [...queryKey, searchParams],
+			queryKey: [...queryKey, params],
 		});
 
 		const unsubscribe = observer.subscribe((state) => {
@@ -65,6 +66,13 @@ function TablePagination({ queryKey }: { queryKey: ['quotes', 'simple'] }) {
 				setSearchParams({
 					// @ts-expect-error
 					cursor: query.previous || query.pages.last,
+				});
+			}
+
+			// @ts-expect-error
+			if (query?.total > 0 && query?.pages?.count === 1) {
+				setSearchParams({
+					cursor: null,
 				});
 			}
 		});
@@ -108,23 +116,26 @@ function TablePagination({ queryKey }: { queryKey: ['quotes', 'simple'] }) {
 				<Separator orientation='vertical' className='h-7 mx-2' />
 				<Pagination>
 					<PaginationContent>
-						<PaginationPrevious
+						<Button
 							size='sm'
-							aria-disabled={!previous}
-							href='#'
+							disabled={!previous}
 							onClick={() =>
 								setSearchParams({
-									// @ts-expect-error
-									cursor: Object.values(pages).includes(previous)
+									cursor: Object.values(pages ?? {}).includes(previous)
 										? previous
 										: null,
 								})
 							}
-						/>
+							variant='outline'
+							className='gap-1 pl-2.5'
+						>
+							<ChevronLeftIcon className='size-4' />
+							Anterior
+						</Button>
 						{!Object.entries(pages ?? {}).find(([key]) => key === '1') && (
-							<PaginationLink
-								href='#'
+							<Button
 								size='icon-sm'
+								variant='outline'
 								onClick={() =>
 									setSearchParams({
 										cursor: pages?.first,
@@ -132,7 +143,7 @@ function TablePagination({ queryKey }: { queryKey: ['quotes', 'simple'] }) {
 								}
 							>
 								1
-							</PaginationLink>
+							</Button>
 						)}
 						{!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
 						{Object.entries(pages ?? {})
@@ -140,46 +151,51 @@ function TablePagination({ queryKey }: { queryKey: ['quotes', 'simple'] }) {
 								([key]) => key !== 'first' && key !== 'last' && key !== 'count',
 							)
 							.map(([key, value]) => (
-								<PaginationLink
+								<Button
 									key={`${key}-${value}`}
-									href='#'
 									size='icon-sm'
 									onClick={() =>
 										setSearchParams({
 											cursor: value,
 										})
 									}
-									isActive={searchParams.cursor === value}
+									variant={
+										searchParams.cursor === value ? 'default' : 'outline'
+									}
 								>
 									{key}
-								</PaginationLink>
+								</Button>
 							))}
 						{!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
 						{!Object.entries(pages ?? {}).find(
 							([key]) => key === pages?.count?.toString(),
 						) && (
-							<PaginationLink
-								href='#'
+							<Button
 								size='icon-sm'
 								onClick={() =>
 									setSearchParams({
 										cursor: pages?.last,
 									})
 								}
+								variant='outline'
 							>
 								{pages?.count}
-							</PaginationLink>
+							</Button>
 						)}
-						<PaginationNext
+						<Button
 							size='sm'
-							aria-disabled={!next}
-							href='#'
+							disabled={!next}
 							onClick={() =>
 								setSearchParams({
 									cursor: next,
 								})
 							}
-						/>
+							variant='outline'
+							className='gap-1 pr-2.5'
+						>
+							Próximo
+							<ChevronRightIcon className='size-4' />
+						</Button>
 					</PaginationContent>
 				</Pagination>
 			</div>

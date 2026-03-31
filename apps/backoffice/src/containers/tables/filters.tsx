@@ -7,12 +7,10 @@ import {
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import {
-	endOfDay,
 	endOfToday,
 	format,
 	isSameDay,
 	parseISO,
-	startOfDay,
 	startOfMonth,
 	startOfToday,
 } from 'date-fns';
@@ -23,7 +21,7 @@ import {
 	XCircleIcon,
 	XIcon,
 } from 'lucide-react';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -62,13 +60,26 @@ function TableFilters({ filters }: TableFiltersProps) {
 		!!searchParams.producers?.length ||
 		searchParams.renewal === true ||
 		searchParams.renewal === false ||
-		!(
-			typeof searchParams.requestAt === 'object' &&
-			isSameDay(searchParams.requestAt.start, startOfMonth(startOfToday())) &&
-			isSameDay(searchParams.requestAt.end, endOfToday())
-		) ||
-		!!searchParams.status?.length ||
-		!!searchParams.type?.length;
+		!searchParams.requestAt
+			? false
+			: !(
+					isSameDay(
+						searchParams.requestAt instanceof Date ||
+							typeof searchParams.requestAt === 'string'
+							? searchParams.requestAt
+							: searchParams.requestAt.start,
+						startOfMonth(startOfToday()),
+					) &&
+					isSameDay(
+						searchParams.requestAt instanceof Date ||
+							typeof searchParams.requestAt === 'string'
+							? searchParams.requestAt
+							: searchParams.requestAt.end,
+						endOfToday(),
+					)
+				) ||
+				!!searchParams.status?.length ||
+				!!searchParams.type?.length;
 
 	function getFilter(filter: Filter) {
 		return filters.includes(filter);
@@ -119,11 +130,24 @@ function TableFiltersCount() {
 		!!searchParams.producers?.length,
 		searchParams.renewal === true,
 		searchParams.renewal === false,
-		!(
-			typeof searchParams.requestAt === 'object' &&
-			isSameDay(searchParams.requestAt.start, startOfMonth(startOfToday())) &&
-			isSameDay(searchParams.requestAt.end, endOfToday())
-		),
+		!searchParams.requestAt
+			? false
+			: !(
+					isSameDay(
+						searchParams.requestAt instanceof Date ||
+							typeof searchParams.requestAt === 'string'
+							? searchParams.requestAt
+							: searchParams.requestAt.start,
+						startOfMonth(startOfToday()),
+					) &&
+					isSameDay(
+						searchParams.requestAt instanceof Date ||
+							typeof searchParams.requestAt === 'string'
+							? searchParams.requestAt
+							: searchParams.requestAt.end,
+						endOfToday(),
+					)
+				),
 		!!searchParams.status?.length,
 		!!searchParams.type?.length,
 	];
@@ -149,22 +173,54 @@ function FilterRequestAt() {
 
 	const [open, setOpen] = useState<boolean>(false);
 
-	const defaultDate =
-		typeof searchParams.requestAt === 'string'
-			? {
-					from: startOfDay(parseISO(searchParams.requestAt)),
-				}
-			: {
-					from: startOfDay(parseISO(searchParams.requestAt.start)),
-					to: endOfDay(parseISO(searchParams.requestAt.end)),
-				};
+	const defaultDate = useMemo(
+		() =>
+			!searchParams.requestAt
+				? {
+						from: startOfToday(),
+						to: endOfToday(),
+					}
+				: typeof searchParams.requestAt === 'string'
+					? {
+							from: parseISO(searchParams.requestAt),
+							to: parseISO(searchParams.requestAt),
+						}
+					: searchParams.requestAt instanceof Date
+						? {
+								from: searchParams.requestAt,
+								to: searchParams.requestAt,
+							}
+						: typeof searchParams.requestAt.start === 'string' &&
+								typeof searchParams.requestAt.end === 'string'
+							? {
+									from: parseISO(searchParams.requestAt.start),
+									to: parseISO(searchParams.requestAt.end),
+								}
+							: {
+									from: searchParams.requestAt.start as Date,
+									to: searchParams.requestAt.end as Date,
+								},
+		[searchParams],
+	);
 
 	const [date, setDate] = useState<DateRange>(defaultDate);
 
 	const isDateDefault =
-		typeof searchParams.requestAt === 'object' &&
-		isSameDay(searchParams.requestAt.start, startOfMonth(startOfToday())) &&
-		isSameDay(searchParams.requestAt.end, endOfToday());
+		!!searchParams.requestAt &&
+		isSameDay(
+			searchParams.requestAt instanceof Date ||
+				typeof searchParams.requestAt === 'string'
+				? searchParams.requestAt
+				: searchParams.requestAt.start,
+			startOfMonth(startOfToday()),
+		) &&
+		isSameDay(
+			searchParams.requestAt instanceof Date ||
+				typeof searchParams.requestAt === 'string'
+				? searchParams.requestAt
+				: searchParams.requestAt.end,
+			endOfToday(),
+		);
 
 	function onChange() {
 		setSearchParams({
@@ -226,11 +282,35 @@ function FilterRequestAt() {
 							format(parseISO(searchParams.requestAt), 'dd/MM/yyyy')}
 						{typeof searchParams.requestAt === 'object' &&
 							(isSameDay(
-								searchParams.requestAt.start,
-								searchParams.requestAt.end,
+								searchParams.requestAt instanceof Date ||
+									typeof searchParams.requestAt === 'string'
+									? searchParams.requestAt
+									: searchParams.requestAt.start,
+								searchParams.requestAt instanceof Date ||
+									typeof searchParams.requestAt === 'string'
+									? searchParams.requestAt
+									: searchParams.requestAt.end,
 							)
-								? format(parseISO(searchParams.requestAt.start), 'dd/MM/yyyy')
-								: `${format(parseISO(searchParams.requestAt.start), 'dd/MM/yyyy')} - ${format(parseISO(searchParams.requestAt.end), 'dd/MM/yyyy')}`)}
+								? format(
+										searchParams.requestAt instanceof Date ||
+											typeof searchParams.requestAt === 'string'
+											? searchParams.requestAt
+											: searchParams.requestAt.start,
+										'dd/MM/yyyy',
+									)
+								: `${format(
+										searchParams.requestAt instanceof Date ||
+											typeof searchParams.requestAt === 'string'
+											? searchParams.requestAt
+											: searchParams.requestAt.start,
+										'dd/MM/yyyy',
+									)} - ${format(
+										searchParams.requestAt instanceof Date ||
+											typeof searchParams.requestAt === 'string'
+											? searchParams.requestAt
+											: searchParams.requestAt.end,
+										'dd/MM/yyyy',
+									)}`)}
 						<ChevronsUpDownIcon className='size-3' />
 					</span>
 				</PopoverTrigger>
@@ -238,11 +318,16 @@ function FilterRequestAt() {
 					<Calendar
 						required
 						mode='range'
-						defaultMonth={parseISO(
+						defaultMonth={
+							searchParams.requestAt instanceof Date ||
 							typeof searchParams.requestAt === 'string'
-								? searchParams.requestAt
-								: searchParams.requestAt.start,
-						)}
+								? typeof searchParams.requestAt === 'string'
+									? parseISO(searchParams.requestAt)
+									: searchParams.requestAt
+								: typeof searchParams.requestAt.start === 'string'
+									? parseISO(searchParams.requestAt.start)
+									: searchParams.requestAt.start
+						}
 						selected={date}
 						onSelect={setDate}
 						disabled={{

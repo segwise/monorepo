@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { api } from '@/libraries/api';
 
 const useQuotesPrintById = (id?: string) =>
@@ -14,6 +15,9 @@ const useQuotesPrintById = (id?: string) =>
 			const urlBlob = URL.createObjectURL(data);
 
 			window.open(urlBlob, '_blank');
+		},
+		onError(error) {
+			toast.error(error.message.toUpperCase());
 		},
 	});
 
