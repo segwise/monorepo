@@ -11,8 +11,11 @@ function ChangePeriod({ value }: ChangePeriodProps) {
 
 	return (
 		<div className='text-xs font-medium text-muted-foreground/80 flex flex-row items-center justify-start gap-x-1 w-fit p-0 h-fit'>
-			Do {searchParams.basisOfAnalysis === 'year' ? 'ano' : 'mês'} anterior:{' '}
-			{value.padStart(2, '0')}
+			Do{' '}
+			{!searchParams.basisOfAnalysis || searchParams.basisOfAnalysis === 'year'
+				? 'ano'
+				: 'mês'}{' '}
+			anterior: {value.padStart(2, '0')}
 		</div>
 	);
 }

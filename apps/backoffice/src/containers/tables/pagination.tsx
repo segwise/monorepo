@@ -168,43 +168,48 @@ function TablePagination({
 								1
 							</Button>
 						)}
-						{!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
-						{Object.entries(pages ?? {})
-							.filter(
-								([key]) => key !== 'first' && key !== 'last' && key !== 'count',
-							)
-							.map(([key, value]) => (
+						{!!Object.fromEntries(Object.entries(pages ?? {}))?.count &&
+							!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
+						{!!Object.fromEntries(Object.entries(pages ?? {}))?.count &&
+							Object.entries(pages ?? {})
+								.filter(
+									([key]) =>
+										key !== 'first' && key !== 'last' && key !== 'count',
+								)
+								.map(([key, value]) => (
+									<Button
+										key={`${key}-${value}`}
+										size='icon-sm'
+										onClick={() =>
+											setSearchParams({
+												cursor: value,
+											})
+										}
+										variant={
+											searchParams.cursor === value ? 'default' : 'outline'
+										}
+									>
+										{key}
+									</Button>
+								))}
+						{!!Object.fromEntries(Object.entries(pages ?? {}))?.count &&
+							!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
+						{!!Object.fromEntries(Object.entries(pages ?? {}))?.last &&
+							!Object.entries(pages ?? {}).find(
+								([key]) => key === pages?.count?.toString(),
+							) && (
 								<Button
-									key={`${key}-${value}`}
 									size='icon-sm'
 									onClick={() =>
 										setSearchParams({
-											cursor: value,
+											cursor: pages?.last,
 										})
 									}
-									variant={
-										searchParams.cursor === value ? 'default' : 'outline'
-									}
+									variant='outline'
 								>
-									{key}
+									{pages?.count}
 								</Button>
-							))}
-						{!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
-						{!Object.entries(pages ?? {}).find(
-							([key]) => key === pages?.count?.toString(),
-						) && (
-							<Button
-								size='icon-sm'
-								onClick={() =>
-									setSearchParams({
-										cursor: pages?.last,
-									})
-								}
-								variant='outline'
-							>
-								{pages?.count}
-							</Button>
-						)}
+							)}
 						<Button
 							size='sm'
 							disabled={!next}
