@@ -10,6 +10,7 @@ import {
 	setMinutes,
 	setSeconds,
 	startOfDay,
+	subYears,
 } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
@@ -27,6 +28,8 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 			vehicle,
 			driver,
 			producer,
+			insuranceCompany,
+			expiration,
 		} = ctx.req.valid('json');
 
 		await ctx.database.$transaction(async (transaction) => {
@@ -59,6 +62,15 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 					}),
 					modality,
 					renewal,
+					...(!!renewal &&
+						!!insuranceCompany && {
+							insuranceCompany: {
+								connect: {
+									id: insuranceCompany,
+								},
+							},
+							expiration,
+						}),
 					status,
 					requestedAt: isSameDay(new Date(), requestedAt)
 						? setMilliseconds(
@@ -318,9 +330,11 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 								...(expiration
 									? {
 											expiration: endOfDay(expiration),
+											requestedAt: subYears(endOfDay(expiration), 1),
 										}
 									: {
 											expiration: endOfMonth(new Date()),
+											requestedAt: subYears(endOfMonth(new Date()), 1),
 										}),
 								franchise,
 							},
