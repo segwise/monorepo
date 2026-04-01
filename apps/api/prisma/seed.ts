@@ -2032,7 +2032,10 @@ async function seed() {
 				: faker.helpers.arrayElement(producers);
 
 			const effectivedAt = faker.datatype.boolean()
-				? subHours(new Date(), faker.number.int({ min: 30, max: 10000 }))
+				? subHours(
+						addDays(startOfToday(), faker.number.int({ min: 0, max: 1 })),
+						faker.number.int({ min: 30, max: 10000 }),
+					)
 				: null;
 
 			await database.safe.create({
