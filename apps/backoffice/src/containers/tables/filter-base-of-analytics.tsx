@@ -10,7 +10,8 @@ function FilterBasisOfAnalysis({ className }: { className?: string }) {
 
 	function onChange() {
 		setSearchParams({
-			basisOfAnalysis: basisOfAnalysis === 'year' ? 'month' : 'year',
+			basisOfAnalysis:
+				!basisOfAnalysis || basisOfAnalysis === 'year' ? 'month' : 'year',
 		});
 	}
 
@@ -28,7 +29,12 @@ function FilterBasisOfAnalysis({ className }: { className?: string }) {
 				className='flex flex-row items-center justify-start gap-x-0.5 text-active cursor-pointer underline p-0! text-xs h-fit!'
 			>
 				<span className='font-medium ml-0.5'>
-					{basisOfAnalysis === 'year' ? 'ANO' : 'MÊS'} ANTERIOR
+					{!basisOfAnalysis || basisOfAnalysis === 'year'
+						? 'ANO'
+						: basisOfAnalysis === 'month'
+							? 'MÊS'
+							: 'NULL'}{' '}
+					ANTERIOR
 				</span>
 				<ChevronsUpDownIcon className='size-3! stroke-3!' />
 			</Button>
