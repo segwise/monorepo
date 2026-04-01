@@ -98,9 +98,7 @@ function FormQuoteRegister() {
 	const { mutate, isPending } = useQuotesRegister();
 
 	const { data: producers } = useProducersSimple();
-
 	const { data: professions } = useProfessionsSimple();
-
 	const { data: manufacturers } = useVehiclesManufacturers();
 
 	const {
