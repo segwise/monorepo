@@ -118,7 +118,7 @@ function FormQuoteRegister() {
 			producer: null,
 			status: 'waiting',
 			modality: 'car',
-			requestAt: startOfToday(),
+			requestedAt: startOfToday(),
 			insured: {
 				cpf: '',
 				name: '',
@@ -159,7 +159,7 @@ function FormQuoteRegister() {
 					renewal: null,
 					status: 'waiting',
 					modality: 'car',
-					requestAt: startOfToday(),
+					requestedAt: startOfToday(),
 					insured: {
 						cpf: '',
 						name: '',
@@ -411,7 +411,7 @@ function FormQuoteRegister() {
 									/>
 									<Controller
 										control={control}
-										name='requestAt'
+										name='requestedAt'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='request-date'>

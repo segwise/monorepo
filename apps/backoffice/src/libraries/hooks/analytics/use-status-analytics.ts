@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/libraries/api';
 
 const useAnalyticsStatus = (
-	type: 'quotes' | 'safes',
+	type: 'quotes' | 'proposals' | 'policies',
 	{
 		cursor: _cursor,
 		limit: _limit,
@@ -27,7 +27,7 @@ const useAnalyticsStatus = (
 	});
 
 const useAnalyticsStatusCount = (
-	type: 'quotes' | 'safes',
+	type: 'quotes' | 'proposals' | 'policies',
 	{
 		cursor: _cursor,
 		limit: _limit,

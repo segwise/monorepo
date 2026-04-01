@@ -22,11 +22,11 @@ import { CardAnalyticsStatus } from '@/containers/cards/analytics/status/status'
 import { FilterBasisOfAnalysis } from '@/containers/tables/filter-base-of-analytics';
 import { TablePagination } from '@/containers/tables/pagination';
 import {
-	TableHeaderFilters,
-	TableHeaderFiltersCount,
-} from '@/containers/tables/policies/filters/header';
-import { TableSheetFilters } from '@/containers/tables/policies/filters/sheet';
-import { TablePoliciesSimple } from '@/containers/tables/policies/simple';
+	TableSafesHeaderFilters,
+	TableSafesHeaderFiltersCount,
+} from '@/containers/tables/safes/filters/header';
+import { TableSafesSheetFilters } from '@/containers/tables/safes/filters/sheet';
+import { TableSafesSimple } from '@/containers/tables/safes/simple';
 
 export const metadata: Metadata = {
 	title: 'Apólices',
@@ -38,14 +38,14 @@ function PoliciesPage() {
 			<div className='flex flex-row items-center justify-between'>
 				<div className='flex flex-row items-center justify-start gap-x-2'>
 					<InputSearch />
-					<TableHeaderFilters />
+					<TableSafesHeaderFilters />
 				</div>
 				<div className='flex flex-row items-center justify-end gap-x-2'>
-					<TableSheetFilters>
+					<TableSafesSheetFilters>
 						<Button variant='outline' className='dark:bg-primary'>
-							<FilterIcon /> Filtrar <TableHeaderFiltersCount />
+							<FilterIcon /> Filtrar <TableSafesHeaderFiltersCount />
 						</Button>
-					</TableSheetFilters>
+					</TableSafesSheetFilters>
 					<ButtonGroup>
 						<Button asChild variant='outline' className='dark:bg-primary'>
 							<Link href='/policies/register'>
@@ -74,23 +74,23 @@ function PoliciesPage() {
 			<Separator />
 			<div className='grid grid-cols-4 gap-x-3'>
 				<FilterBasisOfAnalysis className='col-span-full' />
-				<CardAnalyticsStatusCount title='Total Geral' type='safes' />
+				<CardAnalyticsStatusCount title='Total Geral' type='policies' />
 				<CardAnalyticsStatus
-					type='safes'
+					type='policies'
 					status='canceled'
 					title='Cancelados'
 				/>
 				<CardAnalyticsStatus
-					type='safes'
+					type='policies'
 					status='suspended'
 					title='Suspensos'
 				/>
-				<CardAnalyticsStatus type='safes' status='active' title='Ativos' />
+				<CardAnalyticsStatus type='policies' status='active' title='Ativos' />
 			</div>
 			<div className='space-y-3'>
 				<Card className='p-0 overflow-hidden'>
 					<CardContent className='p-0'>
-						<TablePoliciesSimple />
+						<TableSafesSimple type='policies' />
 					</CardContent>
 				</Card>
 				<TablePagination type='policies' />

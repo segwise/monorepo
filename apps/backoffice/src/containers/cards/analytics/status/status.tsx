@@ -12,7 +12,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAnalyticsStatus } from '@/libraries/hooks/analytics/use-status-analytics';
 import { CardHeaderHome } from '../../header-home';
 
-type Type = 'quotes' | 'safes';
+type Type = 'quotes' | 'proposals' | 'policies';
 
 type Status = QuoteStatus | SafeStatus;
 

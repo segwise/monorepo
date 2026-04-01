@@ -39,7 +39,7 @@ import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-compani
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/safes';
 
-function TableHeaderFilters() {
+function TableSafesHeaderFilters() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const isSearchParams =
@@ -103,7 +103,7 @@ function TableHeaderFilters() {
 	);
 }
 
-function TableHeaderFiltersCount() {
+function TableSafesHeaderFiltersCount() {
 	const [searchParams] = useSearchParams();
 
 	const isSearchParams = [
@@ -792,4 +792,4 @@ function FilterStatus() {
 	);
 }
 
-export { TableHeaderFilters, TableHeaderFiltersCount };
+export { TableSafesHeaderFilters, TableSafesHeaderFiltersCount };

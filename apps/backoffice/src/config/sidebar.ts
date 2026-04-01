@@ -52,7 +52,6 @@ const sidebar: Array<{
 				title: 'Propostas',
 				pathname: '/proposals',
 				icon: FileJsonIcon,
-				disabled: true,
 			},
 			{
 				title: 'Apólices',

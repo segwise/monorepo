@@ -26,7 +26,7 @@ const useSearchParams = () =>
 			.withOptions({
 				clearOnDefault: true,
 			}),
-		requestAt: parseAsJson(SchemaSearchParamsQuoteSimple.shape.requestAt),
+		requestedAt: parseAsJson(SchemaSearchParamsQuoteSimple.shape.requestedAt),
 		status: parseAsArrayOf(parseAsStringEnum(SchemaQuoteStatus.options))
 			.withDefault([])
 			.withOptions({

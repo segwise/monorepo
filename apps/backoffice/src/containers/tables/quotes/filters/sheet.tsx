@@ -62,36 +62,36 @@ import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-compani
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 
-function TableSheetFilters({ children }: React.PropsWithChildren) {
+function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
 	const [open, setOpen] = useState<boolean>(false);
 
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const defaults = {
-		requestAt: !searchParams.requestAt
+		requestedAt: !searchParams.requestedAt
 			? {
 					from: startOfMonth(startOfToday()),
 					to: endOfToday(),
 				}
-			: typeof searchParams.requestAt === 'string'
+			: typeof searchParams.requestedAt === 'string'
 				? {
-						from: startOfDay(searchParams.requestAt),
-						to: endOfDay(searchParams.requestAt),
+						from: startOfDay(searchParams.requestedAt),
+						to: endOfDay(searchParams.requestedAt),
 					}
-				: searchParams.requestAt instanceof Date
+				: searchParams.requestedAt instanceof Date
 					? {
-							from: startOfDay(searchParams.requestAt),
-							to: endOfDay(searchParams.requestAt),
+							from: startOfDay(searchParams.requestedAt),
+							to: endOfDay(searchParams.requestedAt),
 						}
-					: typeof searchParams.requestAt.start === 'string' &&
-							typeof searchParams.requestAt.end === 'string'
+					: typeof searchParams.requestedAt.start === 'string' &&
+							typeof searchParams.requestedAt.end === 'string'
 						? {
-								from: parseISO(searchParams.requestAt.start),
-								to: parseISO(searchParams.requestAt.end),
+								from: parseISO(searchParams.requestedAt.start),
+								to: parseISO(searchParams.requestedAt.end),
 							}
 						: {
-								from: searchParams.requestAt.start as Date,
-								to: searchParams.requestAt.end as Date,
+								from: searchParams.requestedAt.start as Date,
+								to: searchParams.requestedAt.end as Date,
 							},
 		producers: searchParams.producers || [],
 		insuranceCompanies: searchParams.insuranceCompanies || [],
@@ -99,7 +99,9 @@ function TableSheetFilters({ children }: React.PropsWithChildren) {
 		status: searchParams.status || [],
 	};
 
-	const [requestAt, setRequestAt] = useState<DateRange>(defaults.requestAt);
+	const [requestedAt, setrequestedAt] = useState<DateRange>(
+		defaults.requestedAt,
+	);
 	const [producers, setProducers] = useState<Array<string>>(defaults.producers);
 	const [insuranceCompanies, setInsuranceCompanies] = useState<Array<string>>(
 		defaults.insuranceCompanies,
@@ -110,7 +112,7 @@ function TableSheetFilters({ children }: React.PropsWithChildren) {
 	const [status, setStatus] = useState<Array<QuoteStatus>>(defaults.status);
 
 	function onReset() {
-		setRequestAt(defaults.requestAt);
+		setrequestedAt(defaults.requestedAt);
 		setProducers(defaults.producers);
 		setInsuranceCompanies(defaults.insuranceCompanies);
 		setModalities(defaults.modalities);
@@ -127,14 +129,14 @@ function TableSheetFilters({ children }: React.PropsWithChildren) {
 
 	function applySearchParams() {
 		setSearchParams({
-			requestAt: !requestAt.to
-				? requestAt.from
-				: isSameDay(requestAt.from as Date, startOfMonth(startOfToday())) &&
-						isSameDay(requestAt.to as Date, endOfToday())
+			requestedAt: !requestedAt.to
+				? requestedAt.from
+				: isSameDay(requestedAt.from as Date, startOfMonth(startOfToday())) &&
+						isSameDay(requestedAt.to as Date, endOfToday())
 					? null
 					: {
-							start: requestAt.from as Date,
-							end: requestAt.to as Date,
+							start: requestedAt.from as Date,
+							end: requestedAt.to as Date,
 						},
 			producers: producers.length ? producers : null,
 			insuranceCompanies: insuranceCompanies.length ? insuranceCompanies : null,
@@ -160,7 +162,7 @@ function TableSheetFilters({ children }: React.PropsWithChildren) {
 				</SheetHeader>
 				<Separator />
 				<div className='px-4 space-y-3'>
-					<FilterRequestAt value={requestAt} onChange={setRequestAt} />
+					<FilterrequestedAt value={requestedAt} onChange={setrequestedAt} />
 					<FilterProducers value={producers} onChange={setProducers} />
 					<FilterInsuranceCompanies
 						value={insuranceCompanies}
@@ -184,7 +186,7 @@ function TableSheetFilters({ children }: React.PropsWithChildren) {
 	);
 }
 
-function FilterRequestAt({
+function FilterrequestedAt({
 	value,
 	onChange,
 }: {
@@ -195,30 +197,30 @@ function FilterRequestAt({
 
 	const [searchParams] = useSearchParams();
 
-	const defaultDate = !searchParams.requestAt
+	const defaultDate = !searchParams.requestedAt
 		? {
 				from: startOfMonth(startOfToday()),
 				to: endOfToday(),
 			}
-		: typeof searchParams.requestAt === 'string'
+		: typeof searchParams.requestedAt === 'string'
 			? {
-					from: startOfDay(searchParams.requestAt),
-					to: endOfDay(searchParams.requestAt),
+					from: startOfDay(searchParams.requestedAt),
+					to: endOfDay(searchParams.requestedAt),
 				}
-			: searchParams.requestAt instanceof Date
+			: searchParams.requestedAt instanceof Date
 				? {
-						from: startOfDay(searchParams.requestAt),
-						to: endOfDay(searchParams.requestAt),
+						from: startOfDay(searchParams.requestedAt),
+						to: endOfDay(searchParams.requestedAt),
 					}
-				: searchParams.requestAt.start instanceof Date &&
-						searchParams.requestAt.end instanceof Date
+				: searchParams.requestedAt.start instanceof Date &&
+						searchParams.requestedAt.end instanceof Date
 					? {
-							from: searchParams.requestAt.start,
-							to: searchParams.requestAt.end,
+							from: searchParams.requestedAt.start,
+							to: searchParams.requestedAt.end,
 						}
 					: {
-							from: parseISO(searchParams.requestAt.start as string),
-							to: parseISO(searchParams.requestAt.end as string),
+							from: parseISO(searchParams.requestedAt.start as string),
+							to: parseISO(searchParams.requestedAt.end as string),
 						};
 
 	const isDateDefault =
@@ -668,4 +670,4 @@ function FilterStatus({
 	);
 }
 
-export { TableSheetFilters };
+export { TableQuotesSheetFilters };

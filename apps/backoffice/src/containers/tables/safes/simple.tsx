@@ -11,7 +11,8 @@ import {
 	formatDistanceToNow,
 	formatDistanceToNowStrict,
 } from 'date-fns';
-import { CarIcon, InfoIcon, PrinterIcon, Trash2Icon } from 'lucide-react';
+import { CarIcon, EyeIcon, InfoIcon, Trash2Icon } from 'lucide-react';
+import Link from 'next/link';
 import { Fragment } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -36,16 +37,14 @@ import { placeholder } from '@/config/placeholder';
 import { DialogSafeDeleteById } from '@/containers/dialogs/safes/delete';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useSafesSimple } from '@/libraries/hooks/safes/use-safes';
-import { useSafesPrintById } from '@/libraries/hooks/safes/use-safes-print';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 import { useSearchParams } from '@/libraries/search-params/safes';
-import { cn } from '@/libraries/utils';
 
-function TablePoliciesSimple() {
+function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 	const [searchParams] = useSearchParams();
 
 	const { data, isPending, isSuccess } = useSafesSimple({
-		effectived: true,
+		effectived: type === 'policies',
 		cursor: searchParams.cursor,
 		insuranceCompanies: searchParams.insuranceCompanies,
 		limit: searchParams.limit,
@@ -58,12 +57,6 @@ function TablePoliciesSimple() {
 	});
 
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
-
-	const {
-		mutate: mutateSafePrint,
-		isPending: isPendingSafePrint,
-		variables: variablesSafePrint,
-	} = useSafesPrintById();
 
 	const { data: manufacturers } = useVehiclesManufacturers();
 
@@ -79,7 +72,9 @@ function TablePoliciesSimple() {
 					<TableHead className='text-left w-55'>Seguradora</TableHead>
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
-					<TableHead className='text-center w-40'>Iniciado Em</TableHead>
+					<TableHead className='text-center w-40'>
+						{type === 'proposals' ? 'Solicitado' : 'Efetivado'} Em
+					</TableHead>
 					<TableHead className='text-right w-40'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
@@ -153,6 +148,7 @@ function TablePoliciesSimple() {
 						vehicle,
 						insuranceCompany,
 						status,
+						requestedAt,
 						effectivedAt,
 						expiration,
 					}) => (
@@ -299,33 +295,26 @@ function TablePoliciesSimple() {
 								</Badge>
 							</TableCell>
 							<TableCell className='text-center w-40'>
-								{effectivedAt ? (
+								{type === 'proposals' && requestedAt && (
+									<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
+										{requestedAt
+											? formatDistanceToNowStrict(requestedAt)
+											: '-----------'}
+									</Badge>
+								)}
+								{type === 'policies' && effectivedAt && (
 									<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
 										{effectivedAt
 											? formatDistanceToNowStrict(effectivedAt)
 											: '-----------'}
 									</Badge>
-								) : (
-									'-----------'
 								)}
 							</TableCell>
 							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
-								{/* <Button variant='outline' size='icon-sm' asChild>
-									<Link href={`/safes/${id}`}>
+								<Button variant='outline' size='icon-sm' asChild>
+									<Link href={`/${type}/${id}`}>
 										<EyeIcon />
 									</Link>
-								</Button> */}
-								<Button
-									variant='outline'
-									size='icon-sm'
-									isPending={isPendingSafePrint && variablesSafePrint === id}
-									onClick={() => mutateSafePrint(id)}
-									className={cn(
-										'',
-										isPendingSafePrint && 'pointer-events-none',
-									)}
-								>
-									<PrinterIcon />
 								</Button>
 								<DialogSafeDeleteById id={id}>
 									<Button variant='destructive' size='icon-sm'>
@@ -368,4 +357,4 @@ function TablePoliciesSimple() {
 	);
 }
 
-export { TablePoliciesSimple };
+export { TableSafesSimple };

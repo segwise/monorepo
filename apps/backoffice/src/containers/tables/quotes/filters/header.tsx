@@ -39,7 +39,7 @@ import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-compani
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 
-function TableHeaderFilters() {
+function TableQuotesHeaderFilters() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const isSearchParams =
@@ -48,21 +48,21 @@ function TableHeaderFilters() {
 		!!searchParams.producers?.length ||
 		searchParams.renewal === true ||
 		searchParams.renewal === false ||
-		!searchParams.requestAt
+		!searchParams.requestedAt
 			? false
 			: !(
 					isSameDay(
-						searchParams.requestAt instanceof Date ||
-							typeof searchParams.requestAt === 'string'
-							? searchParams.requestAt
-							: searchParams.requestAt.start,
+						searchParams.requestedAt instanceof Date ||
+							typeof searchParams.requestedAt === 'string'
+							? searchParams.requestedAt
+							: searchParams.requestedAt.start,
 						startOfMonth(startOfToday()),
 					) &&
 					isSameDay(
-						searchParams.requestAt instanceof Date ||
-							typeof searchParams.requestAt === 'string'
-							? searchParams.requestAt
-							: searchParams.requestAt.end,
+						searchParams.requestedAt instanceof Date ||
+							typeof searchParams.requestedAt === 'string'
+							? searchParams.requestedAt
+							: searchParams.requestedAt.end,
 						endOfToday(),
 					)
 				) || !!searchParams.status?.length;
@@ -71,7 +71,7 @@ function TableHeaderFilters() {
 		setSearchParams({
 			producers: null,
 			insuranceCompanies: null,
-			requestAt: null,
+			requestedAt: null,
 			modality: null,
 			status: null,
 			renewal: null,
@@ -82,7 +82,7 @@ function TableHeaderFilters() {
 		<Fragment>
 			<Separator orientation='vertical' className='h-7 mx-2' />
 			<div className='flex flex-row items-center justify-start gap-x-4 divide-x divide-border/50 *:pr-4'>
-				<FilterRequestAt />
+				<FilterrequestedAt />
 				<FilterProducers />
 				<FilterInsuranceCompanies />
 				<FilterModality />
@@ -103,7 +103,7 @@ function TableHeaderFilters() {
 	);
 }
 
-function TableHeaderFiltersCount() {
+function TableQuotesHeaderFiltersCount() {
 	const [searchParams] = useSearchParams();
 
 	const isSearchParams = [
@@ -111,21 +111,21 @@ function TableHeaderFiltersCount() {
 		!!searchParams.modality?.length,
 		!!searchParams.producers?.length,
 		searchParams.renewal === true || searchParams.renewal === false,
-		!searchParams.requestAt
+		!searchParams.requestedAt
 			? false
 			: !(
 					isSameDay(
-						searchParams.requestAt instanceof Date ||
-							typeof searchParams.requestAt === 'string'
-							? searchParams.requestAt
-							: searchParams.requestAt.start,
+						searchParams.requestedAt instanceof Date ||
+							typeof searchParams.requestedAt === 'string'
+							? searchParams.requestedAt
+							: searchParams.requestedAt.start,
 						startOfMonth(startOfToday()),
 					) &&
 					isSameDay(
-						searchParams.requestAt instanceof Date ||
-							typeof searchParams.requestAt === 'string'
-							? searchParams.requestAt
-							: searchParams.requestAt.end,
+						searchParams.requestedAt instanceof Date ||
+							typeof searchParams.requestedAt === 'string'
+							? searchParams.requestedAt
+							: searchParams.requestedAt.end,
 						endOfToday(),
 					)
 				),
@@ -148,57 +148,57 @@ function TableHeaderFiltersCount() {
 	);
 }
 
-function FilterRequestAt() {
+function FilterrequestedAt() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [open, setOpen] = useState<boolean>(false);
 
 	const defaultDate = useMemo(
 		() =>
-			!searchParams.requestAt
+			!searchParams.requestedAt
 				? {
 						from: startOfMonth(startOfToday()),
 						to: endOfToday(),
 					}
-				: typeof searchParams.requestAt === 'string'
+				: typeof searchParams.requestedAt === 'string'
 					? {
-							from: parseISO(searchParams.requestAt),
-							to: parseISO(searchParams.requestAt),
+							from: parseISO(searchParams.requestedAt),
+							to: parseISO(searchParams.requestedAt),
 						}
-					: searchParams.requestAt instanceof Date
+					: searchParams.requestedAt instanceof Date
 						? {
-								from: searchParams.requestAt,
-								to: searchParams.requestAt,
+								from: searchParams.requestedAt,
+								to: searchParams.requestedAt,
 							}
-						: typeof searchParams.requestAt.start === 'string' &&
-								typeof searchParams.requestAt.end === 'string'
+						: typeof searchParams.requestedAt.start === 'string' &&
+								typeof searchParams.requestedAt.end === 'string'
 							? {
-									from: parseISO(searchParams.requestAt.start),
-									to: parseISO(searchParams.requestAt.end),
+									from: parseISO(searchParams.requestedAt.start),
+									to: parseISO(searchParams.requestedAt.end),
 								}
 							: {
-									from: searchParams.requestAt.start as Date,
-									to: searchParams.requestAt.end as Date,
+									from: searchParams.requestedAt.start as Date,
+									to: searchParams.requestedAt.end as Date,
 								},
 		[searchParams],
 	);
 
 	const [date, setDate] = useState<DateRange>(defaultDate);
 
-	const isDateDefault = !searchParams.requestAt
+	const isDateDefault = !searchParams.requestedAt
 		? true
 		: isSameDay(
-				searchParams.requestAt instanceof Date ||
-					typeof searchParams.requestAt === 'string'
-					? searchParams.requestAt
-					: searchParams.requestAt.start,
+				searchParams.requestedAt instanceof Date ||
+					typeof searchParams.requestedAt === 'string'
+					? searchParams.requestedAt
+					: searchParams.requestedAt.start,
 				startOfMonth(startOfToday()),
 			) &&
 			isSameDay(
-				searchParams.requestAt instanceof Date ||
-					typeof searchParams.requestAt === 'string'
-					? searchParams.requestAt
-					: searchParams.requestAt.end,
+				searchParams.requestedAt instanceof Date ||
+					typeof searchParams.requestedAt === 'string'
+					? searchParams.requestedAt
+					: searchParams.requestedAt.end,
 				endOfToday(),
 			);
 
@@ -206,19 +206,19 @@ function FilterRequestAt() {
 		setSearchParams({
 			...(!!date.from && !!date.to && isSameDay(date.from, date.to)
 				? {
-						requestAt: date.from.toISOString(),
+						requestedAt: date.from.toISOString(),
 					}
 				: {
 						...(!!date?.from &&
 							!!date.to && {
-								requestAt: {
+								requestedAt: {
 									start: date.from.toISOString(),
 									end: date.to.toISOString(),
 								},
 							}),
 						...(!!date?.from &&
 							!date.to && {
-								requestAt: date.from.toISOString(),
+								requestedAt: date.from.toISOString(),
 							}),
 					}),
 		});
@@ -228,7 +228,7 @@ function FilterRequestAt() {
 
 	function onReset() {
 		setSearchParams({
-			requestAt: null,
+			requestedAt: null,
 		});
 
 		setDate(defaultDate);
@@ -254,54 +254,54 @@ function FilterRequestAt() {
 			<Popover open={open} onOpenChange={setOpen}>
 				<PopoverTrigger>
 					<span className='text-muted-foreground truncate cursor-pointer flex flex-row items-center justify-start gap-x-1'>
-						{!searchParams.requestAt &&
+						{!searchParams.requestedAt &&
 							`${format(startOfMonth(startOfToday()), 'dd/MM/yyyy')} - ${format(
 								endOfToday(),
 								'dd/MM/yyyy',
 							)}`}
-						{!!searchParams.requestAt && (
+						{!!searchParams.requestedAt && (
 							<Fragment>
-								{typeof searchParams.requestAt === 'string' &&
-									format(parseISO(searchParams.requestAt), 'dd/MM/yyyy')}
-								{typeof searchParams.requestAt === 'object' &&
+								{typeof searchParams.requestedAt === 'string' &&
+									format(parseISO(searchParams.requestedAt), 'dd/MM/yyyy')}
+								{typeof searchParams.requestedAt === 'object' &&
 									(isSameDay(
-										searchParams.requestAt instanceof Date ||
-											typeof searchParams.requestAt === 'string'
-											? searchParams.requestAt
-											: searchParams.requestAt?.start instanceof Date
-												? searchParams.requestAt.start
-												: (searchParams.requestAt?.start as string),
-										searchParams.requestAt instanceof Date ||
-											typeof searchParams.requestAt === 'string'
-											? searchParams.requestAt
-											: searchParams.requestAt?.end instanceof Date
-												? searchParams.requestAt.end
-												: (searchParams.requestAt?.end as string),
+										searchParams.requestedAt instanceof Date ||
+											typeof searchParams.requestedAt === 'string'
+											? searchParams.requestedAt
+											: searchParams.requestedAt?.start instanceof Date
+												? searchParams.requestedAt.start
+												: (searchParams.requestedAt?.start as string),
+										searchParams.requestedAt instanceof Date ||
+											typeof searchParams.requestedAt === 'string'
+											? searchParams.requestedAt
+											: searchParams.requestedAt?.end instanceof Date
+												? searchParams.requestedAt.end
+												: (searchParams.requestedAt?.end as string),
 									)
 										? format(
-												searchParams.requestAt instanceof Date ||
-													typeof searchParams.requestAt === 'string'
-													? searchParams.requestAt
-													: searchParams.requestAt?.start instanceof Date
-														? searchParams.requestAt?.start
-														: (searchParams.requestAt?.start as string),
+												searchParams.requestedAt instanceof Date ||
+													typeof searchParams.requestedAt === 'string'
+													? searchParams.requestedAt
+													: searchParams.requestedAt?.start instanceof Date
+														? searchParams.requestedAt?.start
+														: (searchParams.requestedAt?.start as string),
 												'dd/MM/yyyy',
 											)
 										: `${format(
-												searchParams.requestAt instanceof Date ||
-													typeof searchParams.requestAt === 'string'
-													? searchParams.requestAt
-													: searchParams.requestAt?.start instanceof Date
-														? searchParams.requestAt?.start
-														: (searchParams.requestAt?.start as string),
+												searchParams.requestedAt instanceof Date ||
+													typeof searchParams.requestedAt === 'string'
+													? searchParams.requestedAt
+													: searchParams.requestedAt?.start instanceof Date
+														? searchParams.requestedAt?.start
+														: (searchParams.requestedAt?.start as string),
 												'dd/MM/yyyy',
 											)} - ${format(
-												searchParams.requestAt instanceof Date ||
-													typeof searchParams.requestAt === 'string'
-													? searchParams.requestAt
-													: searchParams.requestAt?.end instanceof Date
-														? searchParams.requestAt?.end
-														: (searchParams.requestAt?.end as string),
+												searchParams.requestedAt instanceof Date ||
+													typeof searchParams.requestedAt === 'string'
+													? searchParams.requestedAt
+													: searchParams.requestedAt?.end instanceof Date
+														? searchParams.requestedAt?.end
+														: (searchParams.requestedAt?.end as string),
 												'dd/MM/yyyy',
 											)}`)}
 							</Fragment>
@@ -314,14 +314,14 @@ function FilterRequestAt() {
 						required
 						mode='range'
 						defaultMonth={
-							searchParams.requestAt instanceof Date ||
-							typeof searchParams.requestAt === 'string'
-								? typeof searchParams.requestAt === 'string'
-									? parseISO(searchParams.requestAt)
-									: searchParams.requestAt
-								: typeof searchParams.requestAt?.start === 'string'
-									? parseISO(searchParams.requestAt.start)
-									: searchParams.requestAt?.start
+							searchParams.requestedAt instanceof Date ||
+							typeof searchParams.requestedAt === 'string'
+								? typeof searchParams.requestedAt === 'string'
+									? parseISO(searchParams.requestedAt)
+									: searchParams.requestedAt
+								: typeof searchParams.requestedAt?.start === 'string'
+									? parseISO(searchParams.requestedAt.start)
+									: searchParams.requestedAt?.start
 						}
 						selected={date}
 						onSelect={setDate}
@@ -792,4 +792,4 @@ function FilterStatus() {
 	);
 }
 
-export { TableHeaderFilters, TableHeaderFiltersCount };
+export { TableQuotesHeaderFilters, TableQuotesHeaderFiltersCount };

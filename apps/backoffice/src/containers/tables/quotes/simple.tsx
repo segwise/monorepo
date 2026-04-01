@@ -51,7 +51,7 @@ function TableQuotesSimple() {
 		modality: searchParams.modality,
 		producers: searchParams.producers,
 		renewal: searchParams.renewal,
-		requestAt: searchParams.requestAt,
+		requestedAt: searchParams.requestedAt,
 		search: searchParams.search,
 		status: searchParams.status,
 	});
@@ -152,7 +152,7 @@ function TableQuotesSimple() {
 						vehicle,
 						insuranceCompany,
 						status,
-						requestAt,
+						requestedAt,
 						expiration,
 					}) => (
 						<TableRow key={id}>
@@ -301,7 +301,7 @@ function TableQuotesSimple() {
 							</TableCell>
 							<TableCell className='text-center w-40'>
 								<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
-									{formatDistanceToNowStrict(requestAt)}
+									{formatDistanceToNowStrict(requestedAt)}
 								</Badge>
 							</TableCell>
 							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>

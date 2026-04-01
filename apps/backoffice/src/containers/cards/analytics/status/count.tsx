@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAnalyticsStatusCount } from '@/libraries/hooks/analytics/use-status-analytics';
 import { CardHeaderHome } from '../../header-home';
 
-type Type = 'quotes' | 'safes';
+type Type = 'quotes' | 'proposals' | 'policies';
 
 interface CardAnalyticsStatusCountProps {
 	title: string;

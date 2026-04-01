@@ -26,8 +26,8 @@ const useSearchParams = () =>
 			.withOptions({
 				clearOnDefault: true,
 			}),
-		effectivedAt: parseAsJson(SchemaSearchParamsSafeSimple.shape.effectivedAt),
 		effectived: parseAsBoolean,
+		effectivedAt: parseAsJson(SchemaSearchParamsSafeSimple.shape.effectivedAt),
 		status: parseAsArrayOf(parseAsStringEnum(SchemaSafeStatus.options))
 			.withDefault([])
 			.withOptions({

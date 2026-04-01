@@ -10,10 +10,10 @@ import { CardAnalyticsStatus } from '@/containers/cards/analytics/status/status'
 import { FilterBasisOfAnalysis } from '@/containers/tables/filter-base-of-analytics';
 import { TablePagination } from '@/containers/tables/pagination';
 import {
-	TableHeaderFilters,
-	TableHeaderFiltersCount,
+	TableQuotesHeaderFilters,
+	TableQuotesHeaderFiltersCount,
 } from '@/containers/tables/quotes/filters/header';
-import { TableSheetFilters } from '@/containers/tables/quotes/filters/sheet';
+import { TableQuotesSheetFilters } from '@/containers/tables/quotes/filters/sheet';
 import { TableQuotesSimple } from '@/containers/tables/quotes/simple';
 
 export const metadata: Metadata = {
@@ -26,14 +26,14 @@ function QuotesPage() {
 			<div className='flex flex-row items-center justify-between'>
 				<div className='flex flex-row items-center justify-start gap-x-2'>
 					<InputSearch />
-					<TableHeaderFilters />
+					<TableQuotesHeaderFilters />
 				</div>
 				<div className='flex flex-row items-center justify-end gap-x-2'>
-					<TableSheetFilters>
+					<TableQuotesSheetFilters>
 						<Button variant='outline' className='dark:bg-primary'>
-							<FilterIcon /> Filtrar <TableHeaderFiltersCount />
+							<FilterIcon /> Filtrar <TableQuotesHeaderFiltersCount />
 						</Button>
-					</TableSheetFilters>
+					</TableQuotesSheetFilters>
 					<Button asChild variant='outline' className='dark:bg-primary'>
 						<Link href='/quotes/register'>
 							<PlusIcon /> Cadastrar

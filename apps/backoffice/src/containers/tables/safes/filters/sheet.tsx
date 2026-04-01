@@ -62,7 +62,7 @@ import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-compani
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/safes';
 
-function TableSheetFilters({ children }: React.PropsWithChildren) {
+function TableSafesSheetFilters({ children }: React.PropsWithChildren) {
 	const [open, setOpen] = useState<boolean>(false);
 
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -670,4 +670,4 @@ function FilterStatus({
 	);
 }
 
-export { TableSheetFilters };
+export { TableSafesSheetFilters };
