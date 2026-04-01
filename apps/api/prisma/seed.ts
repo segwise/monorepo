@@ -2119,7 +2119,10 @@ async function seed() {
 					},
 					requestedAt: effectivedAt
 						? subDays(effectivedAt, faker.number.int({ min: 1, max: 7 }))
-						: subDays(startOfToday(), faker.number.int({ min: 1, max: 7 })),
+						: subDays(
+								subDays(startOfToday(), faker.number.int({ min: 0, max: 1 })),
+								faker.number.int({ min: 1, max: 7 }),
+							),
 					...(!!effectivedAt && {
 						effectivedAt,
 					}),
