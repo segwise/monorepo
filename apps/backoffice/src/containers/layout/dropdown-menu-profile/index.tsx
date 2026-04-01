@@ -29,7 +29,7 @@ async function DropdownMenuProfile({
 							src={data?.user.image || placeholder.user}
 							alt={data?.user.name || 'Imagem de perfil'}
 							preload
-							className='aspect-square size-8 rounded-full object-cover object-center bg-sidebar'
+							className='aspect-square size-8 rounded-full object-cover object-center bg-muted-foreground/20'
 						/>
 						<div className='text-left'>
 							<span className='block text-sm dark:text-foreground font-semibold leading-none'>

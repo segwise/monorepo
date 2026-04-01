@@ -155,7 +155,7 @@ function FormQuoteRegister() {
 	function onSubmit(props: QuoteRegister) {
 		mutate(props, {
 			onSuccess(data) {
-				toast.success(data.message || 'Cadastrado com sucesso');
+				toast.success((data.message || 'Cadastrado com sucesso').toUpperCase());
 
 				setTheInsuredPartyIsTheDriver(false);
 				// @ts-expect-error
@@ -374,57 +374,108 @@ function FormQuoteRegister() {
 										)}
 									/>
 									{isRenewal && (
-										<Controller
-											control={control}
-											name='insuranceCompany'
-											render={({ field, fieldState }) => (
-												<Field data-invalid={fieldState.invalid}>
-													<FieldLabel htmlFor='insurance-company'>
-														Seguradora:
-													</FieldLabel>
-													<Select
-														{...field}
-														value={field.value || ''}
-														onValueChange={field.onChange}
-													>
-														<SelectTrigger
-															id='insurance-company'
-															aria-invalid={fieldState.invalid}
+										<Fragment>
+											<Controller
+												control={control}
+												name='insuranceCompany'
+												render={({ field, fieldState }) => (
+													<Field data-invalid={fieldState.invalid}>
+														<FieldLabel htmlFor='insurance-company'>
+															Seguradora:
+														</FieldLabel>
+														<Select
+															{...field}
+															value={field.value || ''}
+															onValueChange={field.onChange}
 														>
-															<SelectValue placeholder='Selecionar' />
-														</SelectTrigger>
-														<SelectContent className='max-h-72' align='center'>
-															{insuranceCompanies?.map(({ id, icon, name }) => (
-																<SelectItem key={id} value={id}>
-																	<div className='flex flex-row items-center justify-start gap-x-2'>
-																		<Avatar className='size-6'>
-																			<AvatarImage
-																				src={icon || placeholder.company}
-																				width={512}
-																				height={512}
-																				alt={capitalizeFirstLetters(
-																					name,
-																				).replace('S/a', 'S/A')}
-																			/>
-																			<AvatarFallback>
-																				{name.toUpperCase().slice(0, 2)}
-																			</AvatarFallback>
-																		</Avatar>
-																		{capitalizeFirstLetters(name).replace(
-																			'S/a',
-																			'S/A',
-																		)}
-																	</div>
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-													{fieldState.invalid && (
-														<FieldError errors={[fieldState.error]} />
-													)}
-												</Field>
-											)}
-										/>
+															<SelectTrigger
+																id='insurance-company'
+																aria-invalid={fieldState.invalid}
+															>
+																<SelectValue placeholder='Selecionar' />
+															</SelectTrigger>
+															<SelectContent
+																className='max-h-72'
+																align='center'
+															>
+																{insuranceCompanies?.map(
+																	({ id, icon, name }) => (
+																		<SelectItem key={id} value={id}>
+																			<div className='flex flex-row items-center justify-start gap-x-2'>
+																				<Avatar className='size-6'>
+																					<AvatarImage
+																						src={icon || placeholder.company}
+																						width={512}
+																						height={512}
+																						alt={capitalizeFirstLetters(
+																							name,
+																						).replace('S/a', 'S/A')}
+																					/>
+																					<AvatarFallback>
+																						{name.toUpperCase().slice(0, 2)}
+																					</AvatarFallback>
+																				</Avatar>
+																				{capitalizeFirstLetters(name).replace(
+																					'S/a',
+																					'S/A',
+																				)}
+																			</div>
+																		</SelectItem>
+																	),
+																)}
+															</SelectContent>
+														</Select>
+														{fieldState.invalid && (
+															<FieldError errors={[fieldState.error]} />
+														)}
+													</Field>
+												)}
+											/>
+											<Controller
+												control={control}
+												name='expiration'
+												render={({ field, fieldState }) => (
+													<Field data-invalid={fieldState.invalid}>
+														<FieldLabel htmlFor='expiration'>
+															Final da Vigência:
+														</FieldLabel>
+														<Input
+															{...field}
+															id='expiration'
+															aria-invalid={fieldState.invalid}
+															placeholder='00/00/0000'
+															value={
+																typeof field.value === 'string'
+																	? isDateString(field.value)
+																		? format(
+																				parse(
+																					field.value,
+																					'dd/MM/yyyy',
+																					new Date(),
+																				),
+																				'dd/MM/yyyy',
+																			)
+																		: maskDateString(field.value)
+																	: field.value instanceof Date
+																		? format(field.value, 'dd/MM/yyyy')
+																		: ''
+															}
+															onChange={({ target: { value } }) =>
+																field.onChange(
+																	isDateString(value)
+																		? parse(value, 'dd/MM/yyyy', new Date())
+																		: maskDateString(value),
+																)
+															}
+															maxLength={10}
+														/>
+														{fieldState.invalid && (
+															<FieldError errors={[fieldState.error]} />
+														)}
+													</Field>
+												)}
+											/>
+										</Fragment>
 									)}
 									<Controller
 										control={control}

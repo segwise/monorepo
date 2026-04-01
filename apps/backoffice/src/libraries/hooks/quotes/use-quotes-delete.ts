@@ -8,9 +8,11 @@ const useQuotesDeleteById = (id: string) =>
 		mutationFn: async () =>
 			(await api.delete<ResponseDefault>(`/quotes/${id}`)).data,
 		async onSuccess(_data, _variables, _result, ctx) {
-			await ctx.client.invalidateQueries({
-				queryKey: ['quotes'],
-			});
+			setTimeout(async () => {
+				await ctx.client.invalidateQueries({
+					queryKey: ['quotes'],
+				});
+			}, 300);
 		},
 	});
 

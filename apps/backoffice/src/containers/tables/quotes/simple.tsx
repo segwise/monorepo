@@ -7,9 +7,11 @@ import {
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import {
+	differenceInDays,
 	format,
 	formatDistanceToNow,
 	formatDistanceToNowStrict,
+	isAfter,
 } from 'date-fns';
 import { CarIcon, InfoIcon, PrinterIcon, Trash2Icon } from 'lucide-react';
 import { Fragment } from 'react';
@@ -73,7 +75,7 @@ function TableQuotesSimple() {
 		<Table>
 			<TableHeader>
 				<TableRow>
-					<TableHead className='text-left w-60'>Segurado</TableHead>
+					<TableHead className='text-left w-50'>Segurado</TableHead>
 					<TableHead className='text-left flex-1'>Dados</TableHead>
 					<TableHead className='text-left w-55' />
 					<TableHead className='text-center w-40'>Tipo</TableHead>
@@ -86,7 +88,7 @@ function TableQuotesSimple() {
 				{isPending &&
 					Array.from({ length: 10 }).map((_, index) => (
 						<TableRow key={index.toString()} className='hover:bg-transparent'>
-							<TableCell className='w-60'>
+							<TableCell className='w-50'>
 								<div className='flex flex-row items-center justify-start gap-x-2'>
 									<Skeleton className='size-8 rounded-full' />
 									<div>
@@ -156,7 +158,7 @@ function TableQuotesSimple() {
 						expiration,
 					}) => (
 						<TableRow key={id}>
-							<TableCell className='text-left w-60'>
+							<TableCell className='text-left w-50'>
 								<div className='flex flex-row items-center justify-start gap-x-2'>
 									<Avatar className='size-8 border bg-background'>
 										<AvatarImage
@@ -171,7 +173,7 @@ function TableQuotesSimple() {
 										</AvatarFallback>
 									</Avatar>
 									<div>
-										<span className='block text-sm font-medium truncate line-clamp-1'>
+										<span className='block text-sm font-medium truncate line-clamp-1 max-w-40'>
 											{capitalizeFirstLetters(insured.name)}
 										</span>
 										<span className='block text-xs text-muted-foreground font-normal leading-none'>
@@ -255,15 +257,16 @@ function TableQuotesSimple() {
 											</Avatar>
 											{!!expiration && (
 												<div className='flex flex-col items-start justify-start'>
-													<span className='block text-xs font-medium truncate line-clamp-1 capitalize'>
+													<span className='block text-xs font-medium truncate line-clamp-1'>
 														Final da Vigência
 													</span>
-													<span className='block text-xs text-muted-foreground font-normal leading-none'>
-														{format(expiration, 'dd/MM/yyyy')} -{' '}
-														{formatDistanceToNow(expiration).replace(
-															'cerca de ',
-															'',
-														)}
+													<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
+														{format(expiration, 'dd/MM/yyyy')}{' '}
+														{isAfter(expiration, new Date()) &&
+															differenceInDays(expiration, new Date()) <= 7 &&
+															`- ${formatDistanceToNow(expiration)
+																.replace('cerca de ', '')
+																.replace('mais de ', '')}`}
 													</span>
 												</div>
 											)}
