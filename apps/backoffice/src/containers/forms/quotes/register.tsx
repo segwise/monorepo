@@ -84,6 +84,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { placeholder } from '@/config/placeholder';
+import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useQuotesRegister } from '@/libraries/hooks/quotes/use-quotes-register';
 import { useProfessionsSimple } from '@/libraries/hooks/use-professions';
@@ -95,6 +96,7 @@ function FormQuoteRegister() {
 	const { data: producers } = useProducersSimple();
 	const { data: professions } = useProfessionsSimple();
 	const { data: manufacturers } = useVehiclesManufacturers();
+	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
 
 	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
 		useState<boolean>(false);
@@ -108,6 +110,7 @@ function FormQuoteRegister() {
 		clearErrors,
 		getValues,
 		reset,
+		watch,
 		formState: { isDirty },
 	} = useForm({
 		mode: 'all',
@@ -146,6 +149,8 @@ function FormQuoteRegister() {
 			},
 		},
 	});
+
+	const isRenewal = watch('renewal');
 
 	function onSubmit(props: QuoteRegister) {
 		mutate(props, {
@@ -368,6 +373,59 @@ function FormQuoteRegister() {
 											</Field>
 										)}
 									/>
+									{isRenewal && (
+										<Controller
+											control={control}
+											name='insuranceCompany'
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor='insurance-company'>
+														Seguradora:
+													</FieldLabel>
+													<Select
+														{...field}
+														value={field.value || ''}
+														onValueChange={field.onChange}
+													>
+														<SelectTrigger
+															id='insurance-company'
+															aria-invalid={fieldState.invalid}
+														>
+															<SelectValue placeholder='Selecionar' />
+														</SelectTrigger>
+														<SelectContent className='max-h-72' align='center'>
+															{insuranceCompanies?.map(({ id, icon, name }) => (
+																<SelectItem key={id} value={id}>
+																	<div className='flex flex-row items-center justify-start gap-x-2'>
+																		<Avatar className='size-6'>
+																			<AvatarImage
+																				src={icon || placeholder.company}
+																				width={512}
+																				height={512}
+																				alt={capitalizeFirstLetters(
+																					name,
+																				).replace('S/a', 'S/A')}
+																			/>
+																			<AvatarFallback>
+																				{name.toUpperCase().slice(0, 2)}
+																			</AvatarFallback>
+																		</Avatar>
+																		{capitalizeFirstLetters(name).replace(
+																			'S/a',
+																			'S/A',
+																		)}
+																	</div>
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+									)}
 									<Controller
 										control={control}
 										name='status'

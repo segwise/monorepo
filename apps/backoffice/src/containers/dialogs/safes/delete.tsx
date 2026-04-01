@@ -1,6 +1,6 @@
 import { SaveIcon, XCircleIcon } from 'lucide-react';
 import type React from 'react';
-import { cloneElement } from 'react';
+import { cloneElement, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +22,8 @@ function DialogSafeDeleteById({
 }: React.PropsWithChildren<{
 	id: string;
 }>) {
+	const [open, setOpen] = useState<boolean>(false);
+
 	// @ts-expect-error
 	const Comp = cloneElement(children, {
 		onSelect: (e) => e.preventDefault(),
@@ -35,6 +37,8 @@ function DialogSafeDeleteById({
 				toast.success('REGISTRO DELETADO COM SUCESSO!', {
 					description: 'O registro não poderá mais ser recuperado',
 				});
+
+				setOpen(false);
 			},
 			onError(error) {
 				toast.error(error.message || 'Falha ao excluir registro');
@@ -43,7 +47,7 @@ function DialogSafeDeleteById({
 	}
 
 	return (
-		<Dialog>
+		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{Comp}</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
