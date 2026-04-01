@@ -17,7 +17,7 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				search,
 				producers,
 				insuranceCompanies,
-				requestAt,
+				requestedAt,
 				modality,
 				status,
 				renewal,
@@ -59,9 +59,9 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						in: insuranceCompanies,
 					},
 				}),
-				requestAt: {
-					gte: requestAt.start,
-					lte: requestAt.end,
+				requestedAt: {
+					gte: requestedAt.start,
+					lte: requestedAt.end,
 				},
 				...(!!modality && {
 					modality: {

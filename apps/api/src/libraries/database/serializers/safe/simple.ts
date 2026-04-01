@@ -44,6 +44,7 @@ function serializer(
 		}),
 		expiration: props.expiration,
 		effectivedAt: props.effectivedAt,
+		requestedAt: props.requestedAt,
 		modality: props.modality,
 		status: props.status,
 	} satisfies SafeSimple;

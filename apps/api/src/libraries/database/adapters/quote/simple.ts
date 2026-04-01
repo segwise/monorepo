@@ -35,7 +35,7 @@ const selectPrisma = {
 		},
 	},
 	expiration: true,
-	requestAt: true,
+	requestedAt: true,
 } as const satisfies Prisma.QuoteSelect;
 
 export { selectPrisma };

@@ -8,7 +8,7 @@ import z from 'zod';
 import type { Server } from '@/@types/server';
 import type { Prisma } from '@/generated/prisma/client';
 
-function registerRoutersServicesAnalyticsSafesStatus(server: Server) {
+function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 	const base = server.basePath('/status');
 
 	base.get(
@@ -107,6 +107,7 @@ function registerRoutersServicesAnalyticsSafesStatus(server: Server) {
 						in: status,
 					},
 				}),
+				effectivedAt: null,
 			};
 
 			const [current, before] = await ctx.database.$transaction([
@@ -117,7 +118,7 @@ function registerRoutersServicesAnalyticsSafesStatus(server: Server) {
 							in: status,
 						},
 						...(!!effectivedAt && {
-							effectivedAt: {
+							requestedAt: {
 								...(typeof effectivedAt === 'string' && {
 									gte: startOfDay(effectivedAt),
 									lte: endOfDay(effectivedAt),
@@ -137,7 +138,7 @@ function registerRoutersServicesAnalyticsSafesStatus(server: Server) {
 							in: status,
 						},
 						...(!!effectivedAt && {
-							effectivedAt: {
+							requestedAt: {
 								...(typeof effectivedAt === 'string' && {
 									gte:
 										basisOfAnalysis === 'year'
@@ -175,4 +176,4 @@ function registerRoutersServicesAnalyticsSafesStatus(server: Server) {
 	);
 }
 
-export { registerRoutersServicesAnalyticsSafesStatus };
+export { registerRoutersServicesAnalyticsProposalsStatus };

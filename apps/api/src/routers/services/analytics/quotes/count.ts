@@ -27,7 +27,7 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 					search: true,
 					producers: true,
 					insuranceCompanies: true,
-					requestAt: true,
+					requestedAt: true,
 					modality: true,
 					status: true,
 					renewal: true,
@@ -40,7 +40,7 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 				search,
 				producers,
 				insuranceCompanies,
-				requestAt,
+				requestedAt,
 				modality,
 				status,
 				renewal,
@@ -96,24 +96,24 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 				ctx.database.quote.count({
 					where: {
 						...where,
-						requestAt: {
-							gte: requestAt.start,
-							lte: requestAt.end,
+						requestedAt: {
+							gte: requestedAt.start,
+							lte: requestedAt.end,
 						},
 					},
 				}),
 				ctx.database.quote.count({
 					where: {
 						...where,
-						requestAt: {
+						requestedAt: {
 							gte:
 								basisOfAnalysis === 'year'
-									? subYears(requestAt.start, 1)
-									: subMonths(requestAt.start, 1),
+									? subYears(requestedAt.start, 1)
+									: subMonths(requestedAt.start, 1),
 							lte:
 								basisOfAnalysis === 'year'
-									? subYears(requestAt.end, 1)
-									: subMonths(requestAt.end, 1),
+									? subYears(requestedAt.end, 1)
+									: subMonths(requestedAt.end, 1),
 						},
 					},
 				}),

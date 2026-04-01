@@ -42,9 +42,11 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					},
 				}),
 				...(effectived === false && {
-					effectivedAt: {
-						equals: null,
+					requestedAt: {
+						gte: effectivedAt.start,
+						lte: effectivedAt.end,
 					},
+					effectivedAt: null,
 				}),
 				...(!!renewal && {
 					renewal,

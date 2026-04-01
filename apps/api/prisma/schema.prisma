@@ -186,16 +186,16 @@ model Quote {
   statusAt      DateTime    @default(now()) @map("status_at") @db.Timestamptz
   statusMessage String?     @map("status_message")
 
-  requestAt DateTime @default(now()) @map("request_at") @db.Timestamptz
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  requestedAt DateTime @default(now()) @map("requested_at") @db.Timestamptz
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@index([requestAt])
+  @@index([requestedAt])
   @@index([producerId])
   @@index([insuranceCompanyId])
   @@index([status])
   @@index([modality])
-  @@index([id, requestAt])
+  @@index([id, requestedAt])
   @@map("quotes")
 }
 
@@ -234,7 +234,8 @@ model Safe {
   statusAt      DateTime   @default(now()) @map("status_at") @db.Timestamptz
   statusMessage String?    @map("status_message")
 
-  effectivedAt DateTime? @default(now()) @map("effectived_at") @db.Timestamptz
+  requestedAt  DateTime  @map("requested_at") @db.Timestamptz
+  effectivedAt DateTime? @map("effectived_at") @db.Timestamptz
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz

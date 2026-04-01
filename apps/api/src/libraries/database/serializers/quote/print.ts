@@ -50,7 +50,7 @@ function serializer(
 			},
 		}),
 		expiration: props.expiration,
-		requestAt: props.requestAt,
+		requestedAt: props.requestedAt,
 	} satisfies QuotePrint;
 }
 

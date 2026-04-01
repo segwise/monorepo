@@ -45,7 +45,7 @@ const selectPrisma = {
 			},
 		},
 	},
-	requestAt: true,
+	requestedAt: true,
 	updatedAt: true,
 	expiration: true,
 } as const satisfies Prisma.QuoteSelect;

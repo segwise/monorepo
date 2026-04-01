@@ -4,6 +4,7 @@ import {
 	endOfDay,
 	endOfYear,
 	startOfToday,
+	subDays,
 	subHours,
 	subYears,
 } from 'date-fns';
@@ -1855,6 +1856,54 @@ async function seed() {
 			}),
 		]);
 
+		for (let i = 0; i < 10; i++) {
+			const id = Bun.randomUUIDv7();
+
+			const image = faker.helpers.arrayElement([null, faker.image.avatar()]);
+
+			let pathImage: string | null = image ? `/users/${id}` : null;
+
+			if (pathImage && image) {
+				const { data } = await xior
+					.get(image, {
+						responseType: 'blob',
+					})
+					.catch(() => ({
+						data: 'error',
+					}));
+
+				if (data !== 'error') {
+					await storage.write(pathImage, data);
+				}
+
+				if (data === 'error') {
+					pathImage = null;
+				}
+			}
+
+			await database.user.create({
+				data: {
+					id,
+					name: faker.person.fullName(),
+					email: faker.internet.email(),
+					referral: generateReferral(),
+					role: Role.producer,
+					...(pathImage && {
+						image: pathImage,
+					}),
+				},
+			});
+		}
+
+		const producers = await database.user.findMany({
+			where: {
+				role: Role.producer,
+			},
+			select: {
+				id: true,
+			},
+		});
+
 		for (let i = 0; i < 500; i++) {
 			const renewal = faker.datatype.boolean();
 
@@ -1862,8 +1911,19 @@ async function seed() {
 
 			const isPlate = faker.datatype.boolean();
 
+			const producer = faker.datatype.boolean()
+				? null
+				: faker.helpers.arrayElement(producers);
+
 			await database.quote.create({
 				data: {
+					...(!!producer && {
+						producer: {
+							connect: {
+								id: producer.id,
+							},
+						},
+					}),
 					...(!!renewal && {
 						insuranceCompany: {
 							connect: {
@@ -1931,7 +1991,7 @@ async function seed() {
 						},
 					},
 					renewal,
-					requestAt: subHours(
+					requestedAt: subHours(
 						new Date(),
 						faker.number.int({ min: 30, max: 10000 }),
 					),
@@ -1954,19 +2014,36 @@ async function seed() {
 
 			const isPlate = faker.datatype.boolean();
 
-			const previousSafe = renewal
-				? await database.safe.findFirst({
-						select: {
-							id: true,
-						},
-						orderBy: {
-							createdAt: 'asc',
-						},
-					})
+			const previousSafe = faker.datatype.boolean()
+				? null
+				: renewal
+					? await database.safe.findFirst({
+							select: {
+								id: true,
+							},
+							orderBy: {
+								createdAt: 'asc',
+							},
+						})
+					: null;
+
+			const producer = faker.datatype.boolean()
+				? null
+				: faker.helpers.arrayElement(producers);
+
+			const effectivedAt = faker.datatype.boolean()
+				? subHours(new Date(), faker.number.int({ min: 30, max: 10000 }))
 				: null;
 
 			await database.safe.create({
 				data: {
+					...(!!producer && {
+						producer: {
+							connect: {
+								id: producer.id,
+							},
+						},
+					}),
 					renewal,
 					...(!!renewal &&
 						!!previousSafe && {
@@ -2040,10 +2117,12 @@ async function seed() {
 							}),
 						},
 					},
-					effectivedAt: subHours(
-						new Date(),
-						faker.number.int({ min: 30, max: 10000 }),
-					),
+					requestedAt: effectivedAt
+						? subDays(effectivedAt, faker.number.int({ min: 1, max: 7 }))
+						: subDays(startOfToday(), faker.number.int({ min: 1, max: 7 })),
+					...(!!effectivedAt && {
+						effectivedAt,
+					}),
 					status,
 					statusAt: subHours(
 						new Date(),
@@ -2051,45 +2130,6 @@ async function seed() {
 					),
 					...((status === 'canceled' || status === 'suspended') && {
 						statusMessage: faker.lorem.lines(1),
-					}),
-				},
-			});
-		}
-
-		for (let i = 0; i < 10; i++) {
-			const id = Bun.randomUUIDv7();
-
-			const image = faker.helpers.arrayElement([null, faker.image.avatar()]);
-
-			let pathImage: string | null = image ? `/users/${id}` : null;
-
-			if (pathImage && image) {
-				const { data } = await xior
-					.get(image, {
-						responseType: 'blob',
-					})
-					.catch(() => ({
-						data: 'error',
-					}));
-
-				if (data !== 'error') {
-					await storage.write(pathImage, data);
-				}
-
-				if (data === 'error') {
-					pathImage = null;
-				}
-			}
-
-			await database.user.create({
-				data: {
-					id,
-					name: faker.person.fullName(),
-					email: faker.internet.email(),
-					referral: generateReferral(),
-					role: Role.producer,
-					...(pathImage && {
-						image: pathImage,
 					}),
 				},
 			});

@@ -41,6 +41,7 @@ const selectPrisma = {
 		},
 	},
 	expiration: true,
+	requestedAt: true,
 	effectivedAt: true,
 } as const satisfies Prisma.SafeSelect;
 

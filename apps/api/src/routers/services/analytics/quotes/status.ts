@@ -27,7 +27,7 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 					search: true,
 					producers: true,
 					insuranceCompanies: true,
-					requestAt: true,
+					requestedAt: true,
 					modality: true,
 					status: true,
 					renewal: true,
@@ -40,7 +40,7 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 				search,
 				producers,
 				insuranceCompanies,
-				requestAt,
+				requestedAt,
 				modality,
 				status,
 				renewal,
@@ -108,15 +108,15 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 						status: {
 							in: status,
 						},
-						...(!!requestAt && {
-							requestAt: {
-								...(typeof requestAt === 'string' && {
-									gte: startOfDay(requestAt),
-									lte: endOfDay(requestAt),
+						...(!!requestedAt && {
+							requestedAt: {
+								...(typeof requestedAt === 'string' && {
+									gte: startOfDay(requestedAt),
+									lte: endOfDay(requestedAt),
 								}),
-								...(typeof requestAt === 'object' && {
-									gte: startOfDay(requestAt.start),
-									lte: endOfDay(requestAt.end),
+								...(typeof requestedAt === 'object' && {
+									gte: startOfDay(requestedAt.start),
+									lte: endOfDay(requestedAt.end),
 								}),
 							},
 						}),
@@ -128,27 +128,27 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 						status: {
 							in: status,
 						},
-						...(!!requestAt && {
-							requestAt: {
-								...(typeof requestAt === 'string' && {
+						...(!!requestedAt && {
+							requestedAt: {
+								...(typeof requestedAt === 'string' && {
 									gte:
 										basisOfAnalysis === 'year'
-											? subYears(startOfDay(requestAt), 1)
-											: subMonths(startOfDay(requestAt), 1),
+											? subYears(startOfDay(requestedAt), 1)
+											: subMonths(startOfDay(requestedAt), 1),
 									lte:
 										basisOfAnalysis === 'year'
-											? subYears(endOfDay(requestAt), 1)
-											: subMonths(endOfDay(requestAt), 1),
+											? subYears(endOfDay(requestedAt), 1)
+											: subMonths(endOfDay(requestedAt), 1),
 								}),
-								...(typeof requestAt === 'object' && {
+								...(typeof requestedAt === 'object' && {
 									gte:
 										basisOfAnalysis === 'year'
-											? subYears(startOfDay(requestAt.start), 1)
-											: subMonths(startOfDay(requestAt.start), 1),
+											? subYears(startOfDay(requestedAt.start), 1)
+											: subMonths(startOfDay(requestedAt.start), 1),
 									lte:
 										basisOfAnalysis === 'year'
-											? subYears(endOfDay(requestAt.end), 1)
-											: subMonths(endOfDay(requestAt.end), 1),
+											? subYears(endOfDay(requestedAt.end), 1)
+											: subMonths(endOfDay(requestedAt.end), 1),
 								}),
 							},
 						}),

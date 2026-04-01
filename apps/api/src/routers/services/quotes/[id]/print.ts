@@ -721,8 +721,8 @@ async function compile(
 			},
 		},
 		created_at: `${formatadorData.format(
-			quote.requestAt,
-		)} - ${formatadorHora.format(quote.requestAt)}h` as string,
+			quote.requestedAt,
+		)} - ${formatadorHora.format(quote.requestedAt)}h` as string,
 		// qrcode:
 		// 	`https://${quote.company.registration}.segwise.com` +
 		// 	'/api/quotes/' +
@@ -797,7 +797,7 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 			pdf.setAuthor('SEGWISE TECNOLOGIA');
 			pdf.setCreator('SEGWISE TECNOLOGIA');
 			pdf.setLanguage('pt-BR');
-			pdf.setCreationDate(quote.requestAt);
+			pdf.setCreationDate(quote.requestedAt);
 			pdf.setModificationDate(quote.updatedAt);
 
 			return new Response(await pdf.save(), {

@@ -22,7 +22,7 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 			modality,
 			renewal,
 			status,
-			requestAt,
+			requestedAt,
 			insured,
 			vehicle,
 			driver,
@@ -60,18 +60,18 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 					modality,
 					renewal,
 					status,
-					requestAt: isSameDay(new Date(), requestAt)
+					requestedAt: isSameDay(new Date(), requestedAt)
 						? setMilliseconds(
 								setSeconds(
 									setMinutes(
-										setHours(requestAt, new Date().getHours()),
+										setHours(requestedAt, new Date().getHours()),
 										new Date().getMinutes(),
 									),
 									new Date().getSeconds(),
 								),
 								0,
 							)
-						: startOfDay(requestAt),
+						: startOfDay(requestedAt),
 					temporaryInsured: {
 						connect: {
 							id: temporaryInsured.id,
