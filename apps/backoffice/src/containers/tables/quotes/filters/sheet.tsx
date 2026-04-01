@@ -22,10 +22,17 @@ import {
 	startOfMonth,
 	startOfToday,
 } from 'date-fns';
-import { CalendarIcon, CarIcon, SaveIcon, XCircleIcon } from 'lucide-react';
+import {
+	CalendarIcon,
+	CarIcon,
+	SaveIcon,
+	XCircleIcon,
+	XIcon,
+} from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -541,64 +548,31 @@ function FilterModality({
 	value: Array<Modality>;
 	onChange: (value: Array<Modality>) => void;
 }) {
-	const anchor = useComboboxAnchor();
-
-	function onReset() {
-		onChange([]);
+	function onChangeValue(modality: Modality) {
+		if (value.includes(modality)) {
+			onChange(value.filter((e) => e !== modality));
+		} else {
+			onChange([...value, modality]);
+		}
 	}
 
 	return (
 		<Field>
 			<FieldLabel>Modalidade</FieldLabel>
-			<Combobox
-				multiple
-				autoHighlight
-				items={SchemaModality.options}
-				value={value}
-				onValueChange={onChange}
-			>
-				<ComboboxChips ref={anchor} className='w-full max-w-xs'>
-					<ComboboxValue>
-						{(values: Array<Modality>) => (
-							<Fragment>
-								{values.map((value) => (
-									<ComboboxChip key={value}>
-										{value === 'car' && <CarIcon className='size-4' />}
-										{translateModality(value)}
-									</ComboboxChip>
-								))}
-								<ComboboxChipsInput placeholder='Selecionar Modalidade' />
-							</Fragment>
-						)}
-					</ComboboxValue>
-				</ComboboxChips>
-				<ComboboxContent anchor={anchor}>
-					<ComboboxEmpty>Nenhum registro encontrado</ComboboxEmpty>
-					<ComboboxList>
-						{(item: Modality) => (
-							<ComboboxItem key={item} value={item}>
-								{item === 'car' && <CarIcon className='size-5 stroke-[1.5]' />}
-								{translateModality(item)}
-							</ComboboxItem>
-						)}
-					</ComboboxList>
-					{!!value.length && (
-						<Fragment>
-							<Separator />
-							<div className='my-2 mx-2'>
-								<Button
-									variant='destructive'
-									size='sm'
-									onClick={onReset}
-									className='w-full'
-								>
-									Limpar <XCircleIcon />
-								</Button>
-							</div>
-						</Fragment>
-					)}
-				</ComboboxContent>
-			</Combobox>
+			<div>
+				{SchemaModality.options.map((modality) => (
+					<Badge
+						key={modality}
+						variant={!value.includes(modality) ? 'default' : 'active'}
+						className='w-fit px-2 cursor-pointer hover:bg-muted-foreground/20 data-[variant=active]:hover:bg-active/80'
+						onClick={() => onChangeValue(modality)}
+					>
+						{modality === 'car' && <CarIcon />}
+						{translateModality(modality)}{' '}
+						{value.includes(modality) && <XIcon className='size-2.5!' />}
+					</Badge>
+				))}
+			</div>
 		</Field>
 	);
 }
@@ -610,62 +584,30 @@ function FilterStatus({
 	value: Array<QuoteStatus>;
 	onChange: (value: Array<QuoteStatus>) => void;
 }) {
-	const anchor = useComboboxAnchor();
-
-	function onReset() {
-		onChange([]);
+	function onChangeValue(status: QuoteStatus) {
+		if (value.includes(status)) {
+			onChange(value.filter((e) => e !== status));
+		} else {
+			onChange([...value, status]);
+		}
 	}
 
 	return (
 		<Field>
 			<FieldLabel>Status</FieldLabel>
-			<Combobox
-				multiple
-				autoHighlight
-				items={SchemaQuoteStatus.options}
-				value={value}
-				onValueChange={onChange}
-			>
-				<ComboboxChips ref={anchor} className='w-full max-w-xs'>
-					<ComboboxValue>
-						{(values: Array<QuoteStatus>) => (
-							<Fragment>
-								{values.map((value) => (
-									<ComboboxChip key={value}>
-										{translateQuoteStatus(value)}
-									</ComboboxChip>
-								))}
-								<ComboboxChipsInput placeholder='Selecionar Status' />
-							</Fragment>
-						)}
-					</ComboboxValue>
-				</ComboboxChips>
-				<ComboboxContent anchor={anchor}>
-					<ComboboxEmpty>Nenhum registro encontrado</ComboboxEmpty>
-					<ComboboxList>
-						{(item: QuoteStatus) => (
-							<ComboboxItem key={item} value={item}>
-								{translateQuoteStatus(item)}
-							</ComboboxItem>
-						)}
-					</ComboboxList>
-					{!!value.length && (
-						<Fragment>
-							<Separator />
-							<div className='my-2 mx-2'>
-								<Button
-									variant='destructive'
-									size='sm'
-									onClick={onReset}
-									className='w-full'
-								>
-									Limpar <XCircleIcon />
-								</Button>
-							</div>
-						</Fragment>
-					)}
-				</ComboboxContent>
-			</Combobox>
+			<div className=' flex-wrap space-x-1.5 space-y-1'>
+				{SchemaQuoteStatus.options.map((status) => (
+					<Badge
+						key={status}
+						variant={!value.includes(status) ? 'default' : 'active'}
+						className='w-fit px-2 cursor-pointer hover:bg-muted-foreground/20 data-[variant=active]:hover:bg-active/80'
+						onClick={() => onChangeValue(status)}
+					>
+						{translateQuoteStatus(status)}{' '}
+						{value.includes(status) && <XIcon className='size-2.5!' />}
+					</Badge>
+				))}
+			</div>
 		</Field>
 	);
 }

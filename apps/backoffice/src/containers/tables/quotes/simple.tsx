@@ -78,8 +78,8 @@ function TableQuotesSimple() {
 					<TableHead className='text-left w-55' />
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
-					<TableHead className='text-center w-40'>Solicitado Em</TableHead>
-					<TableHead className='text-right w-40'>Ações</TableHead>
+					<TableHead className='text-center w-60'>Solicitado Em</TableHead>
+					<TableHead className='text-right w-30'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -111,10 +111,10 @@ function TableQuotesSimple() {
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
-							<TableCell className='w-40'>
+							<TableCell className='w-60'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
-							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
+							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
 								<Skeleton className='size-9 rounded-sm' />
 								<Skeleton className='size-9 rounded-sm' />
 							</TableCell>
@@ -299,12 +299,12 @@ function TableQuotesSimple() {
 									{translateQuoteStatus(status)}
 								</Badge>
 							</TableCell>
-							<TableCell className='text-center w-40'>
+							<TableCell className='text-center w-60'>
 								<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
 									{formatDistanceToNowStrict(requestedAt)}
 								</Badge>
 							</TableCell>
-							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
+							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
 								{/* <Button variant='outline' size='icon-sm' asChild>
 									<Link href={`/quotes/${id}`}>
 										<EyeIcon />

@@ -762,22 +762,9 @@ function FilterStatus() {
 									key={props}
 									className='flex flex-row items-center justify-start gap-x-2 relative rounded cursor-pointer px-1 py-0.5'
 								>
-									<div className='flex flex-row items-center justify-start gap-x-1.5'>
-										<Avatar className='size-4'>
-											<AvatarImage
-												src={props || placeholder.user}
-												width={512}
-												height={512}
-												alt={translateQuoteStatus(props)}
-											/>
-											<AvatarFallback>
-												{translateQuoteStatus(props).slice(0, 2)}
-											</AvatarFallback>
-										</Avatar>
-										<span className='text-muted-foreground text-xs font-normal'>
-											{translateQuoteStatus(props)}
-										</span>
-									</div>
+									<span className='text-muted-foreground text-xs font-medium'>
+										{translateQuoteStatus(props)}
+									</span>
 									<XIcon
 										className='size-3 hover:text-destructive cursor-pointer ml-auto'
 										onClick={() => removeItem(props)}
