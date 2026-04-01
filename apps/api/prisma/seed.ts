@@ -3,7 +3,6 @@ import {
 	addDays,
 	endOfDay,
 	endOfYear,
-	startOfToday,
 	subDays,
 	subHours,
 	subYears,
@@ -1964,7 +1963,7 @@ async function seed() {
 										modelYear: faker.date
 											.between({
 												from: subYears(
-													startOfToday(),
+													new Date(),
 													faker.number.int({ min: 0, max: 7 }),
 												),
 												to: endOfYear(endOfDay(new Date())),
@@ -2033,7 +2032,7 @@ async function seed() {
 
 			const effectivedAt = faker.datatype.boolean()
 				? subHours(
-						addDays(startOfToday(), faker.number.int({ min: 0, max: 5 })),
+						addDays(new Date(), faker.number.int({ min: 0, max: 5 })),
 						faker.number.int({ min: 30, max: 10000 }),
 					)
 				: null;
@@ -2094,7 +2093,7 @@ async function seed() {
 										modelYear: faker.date
 											.between({
 												from: subYears(
-													startOfToday(),
+													new Date(),
 													faker.number.int({ min: 0, max: 7 }),
 												),
 												to: endOfYear(endOfDay(new Date())),
@@ -2123,7 +2122,7 @@ async function seed() {
 					requestedAt: effectivedAt
 						? subDays(effectivedAt, faker.number.int({ min: 1, max: 7 }))
 						: subDays(
-								subDays(startOfToday(), faker.number.int({ min: 0, max: 5 })),
+								subDays(new Date(), faker.number.int({ min: 0, max: 5 })),
 								faker.number.int({ min: 1, max: 7 }),
 							),
 					...(!!effectivedAt && {
