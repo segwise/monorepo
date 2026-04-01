@@ -1,21 +1,8 @@
-import {
-	FilterIcon,
-	MoreHorizontalIcon,
-	PlusIcon,
-	PrinterIcon,
-} from 'lucide-react';
+import { FilterIcon, PrinterIcon } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { InputSearch } from '@/components/input-search';
 import { Button } from '@/components/ui/button';
-import { ButtonGroup } from '@/components/ui/button-group';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { CardAnalyticsStatusCount } from '@/containers/cards/analytics/status/count';
 import { CardAnalyticsStatus } from '@/containers/cards/analytics/status/status';
@@ -46,29 +33,9 @@ function PoliciesPage() {
 							<FilterIcon /> Filtrar <TableSafesHeaderFiltersCount />
 						</Button>
 					</TableSafesSheetFilters>
-					<ButtonGroup>
-						<Button asChild variant='outline' className='dark:bg-primary'>
-							<Link href='/policies/register'>
-								<PlusIcon /> Cadastrar
-							</Link>
-						</Button>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button
-									variant='outline'
-									size='icon'
-									className='dark:bg-primary'
-								>
-									<MoreHorizontalIcon />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align='end'>
-								<DropdownMenuItem>
-									<PrinterIcon /> Imprimir
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</ButtonGroup>
+					<Button variant='outline' className='dark:bg-primary'>
+						<PrinterIcon /> Imprimir
+					</Button>
 				</div>
 			</div>
 			<Separator />

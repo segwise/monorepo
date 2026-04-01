@@ -1,5 +1,35 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+	maskCPF,
+	maskDateString,
+	maskNumber,
+	maskPhone,
+	maskPlate,
+	maskPostalCode,
+} from '@segwise/core/masks';
+import { SchemaSafeRegister } from '@segwise/core/schemas';
+import {
+	translateGarage,
+	translateGarageSchool,
+	translateGarageWork,
+	translateMaritalStatus,
+	translateResidence,
+	translateVehicleExchange,
+	translateVehicleUsage,
+} from '@segwise/core/translate';
+import type { SafeRegister, VehicleManufacturer } from '@segwise/core/types';
+import { capitalizeFirstLetters } from '@segwise/core/utils';
+import { isDateString } from '@segwise/core/valids';
+import {
+	addYears,
+	differenceInYears,
+	format,
+	isDate,
+	parse,
+	startOfToday,
+} from 'date-fns';
 import {
 	Building2Icon,
 	CarIcon,
@@ -10,14 +40,27 @@ import {
 	User2Icon,
 	UserCircle2Icon,
 } from 'lucide-react';
-import { Fragment } from 'react';
+import { useRouter } from 'next/navigation';
+import { Fragment, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ButtonBack } from '@/components/ui/button/back';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+	Combobox,
+	ComboboxContent,
+	ComboboxEmpty,
+	ComboboxInput,
+	ComboboxItem,
+	ComboboxList,
+} from '@/components/ui/combobox';
+import {
 	Field,
 	FieldContent,
+	FieldError,
 	FieldGroup,
 	FieldLabel,
 	FieldSet,
@@ -28,40 +71,205 @@ import {
 	InputGroup,
 	InputGroupAddon,
 	InputGroupInput,
+	InputGroupText,
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import {
 	Select,
 	SelectContent,
 	SelectItem,
+	SelectSeparator,
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { placeholder } from '@/config/placeholder';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
+import { useSafesRegister } from '@/libraries/hooks/safes/use-safes-register';
 import { useProfessionsSimple } from '@/libraries/hooks/use-professions';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 
 function FormProposalRegister() {
+	const { push } = useRouter();
+
 	const { data: producers } = useProducersSimple();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
 	const { data: professions } = useProfessionsSimple();
 	const { data: manufacturers } = useVehiclesManufacturers();
+
+	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
+		useState<boolean>(false);
+
+	const { mutate, isPending } = useSafesRegister();
+
+	const {
+		control,
+		handleSubmit,
+		setValue,
+		clearErrors,
+		getValues,
+		reset,
+		watch,
+		formState: { isDirty },
+	} = useForm({
+		mode: 'all',
+		criteriaMode: 'all',
+		reValidateMode: 'onChange',
+		resolver: zodResolver(SchemaSafeRegister),
+		defaultValues: {
+			producer: null,
+			modality: 'car',
+			requestedAt: startOfToday(),
+			insured: {
+				cpf: '',
+				name: '',
+				birth: '',
+				phone: '',
+			},
+			vehicle: {
+				plate: null,
+				model: '',
+				modelYear: '',
+				overnightPostalCode: '',
+				additional: {
+					armored: false,
+					gasKit: false,
+					theInsuredIsTheOwner: false,
+					funded: false,
+					driversUnder26: false,
+				},
+			},
+			driver: {
+				cpf: '',
+				name: '',
+				birth: '',
+				phone: '',
+			},
+		},
+	});
+
+	function onSubmit(props: SafeRegister) {
+		mutate(props, {
+			onSuccess(data) {
+				toast.success(data.message || 'Cadastrado com sucesso');
+
+				setTheInsuredPartyIsTheDriver(false);
+				// @ts-expect-error
+				reset({
+					producer: null,
+					renewal: null,
+					status: 'waiting',
+					modality: 'car',
+					requestedAt: startOfToday(),
+					insured: {
+						cpf: '',
+						name: '',
+						birth: '',
+						phone: '',
+						profession: null,
+						maritalStatus: null,
+					},
+					vehicle: {
+						plate: null,
+						model: '',
+						modelYear: '',
+						manufacturer: null,
+						overnightPostalCode: '',
+						usage: '',
+						exchange: '',
+						additional: {
+							residence: {
+								type: null,
+								garage: null,
+							},
+							work: null,
+							school: null,
+							armored: false,
+							gasKit: false,
+							theInsuredIsTheOwner: false,
+							funded: false,
+							driversUnder26: false,
+						},
+						chassi: null,
+					},
+					driver: {
+						cpf: '',
+						name: '',
+						birth: '',
+						phone: '',
+					},
+				});
+
+				setTimeout(() => {
+					clearErrors();
+				}, 100);
+
+				push('/proposals');
+			},
+			onError(error) {
+				toast.error(error.message || 'Falha ao registrar proposta');
+			},
+		});
+	}
+
+	console.log(SchemaSafeRegister.safeParse(watch()));
 
 	return (
 		<Fragment>
 			<div className='flex flex-row items-center justify-between **:gap-x-2'>
 				<div />
 				<div className='flex flex-row items-center justify-end'>
-					<div className='flex flex-row items-center justify-end gap-x-1'>
-						<span className='text-sm font-medium'>Produtor:</span>
-						<Select>
-							<SelectTrigger>
-								<SelectValue placeholder='Nenhum produtor' />
-							</SelectTrigger>
-						</Select>
-					</div>
+					<Controller
+						control={control}
+						name='producer'
+						render={({ field, fieldState }) => (
+							<Field data-invalid={fieldState.invalid} orientation='horizontal'>
+								<FieldLabel>Produtor:</FieldLabel>
+								<Select
+									{...field}
+									value={!field.value ? '' : field.value || ''}
+									onValueChange={(value) =>
+										field.onChange(value === 'clear' ? null : value)
+									}
+								>
+									<SelectTrigger aria-invalid={fieldState.invalid}>
+										<SelectValue placeholder='Nenhum produtor' />
+									</SelectTrigger>
+									<SelectContent align='end' side='bottom' className='max-h-72'>
+										{producers?.map(({ id, avatar, name, contact }) => (
+											<SelectItem key={id} value={id}>
+												<div className='flex flex-row items-center justify-start gap-x-2'>
+													<Avatar className='size-6 rounded-full border'>
+														<AvatarImage
+															src={avatar || placeholder.user}
+															width={128}
+															height={128}
+															alt={`Produtor - ${capitalizeFirstLetters(name)}`}
+														/>
+														<AvatarFallback>{name.slice(0, 2)}</AvatarFallback>
+													</Avatar>
+													<div className='leading-none'>
+														<span className='text-xs/tight font-medium block text-left'>
+															{capitalizeFirstLetters(name)}
+														</span>
+														{contact.phone && (
+															<span className='text-xs/tight text-muted-foreground block text-left'>
+																{maskPhone(contact.phone)}
+															</span>
+														)}
+													</div>
+												</div>
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								{fieldState.invalid && (
+									<FieldError errors={[fieldState.error]} />
+								)}
+							</Field>
+						)}
+					/>
 					<ButtonBack>
 						<Button>
 							<ChevronLeftIcon /> Voltar
@@ -71,430 +279,1277 @@ function FormProposalRegister() {
 			</div>
 			<Card>
 				<CardContent>
-					<FieldGroup>
+					<form id='form-proposal-register' onSubmit={handleSubmit(onSubmit)}>
 						<FieldGroup>
-							<FieldSet>
-								<FieldContent>
-									<FieldTitle className='text-base'>
-										<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-											<ClipboardIcon />
-										</div>
-										Informativo
-									</FieldTitle>
-								</FieldContent>
-							</FieldSet>
-							<FieldGroup className='grid grid-cols-4'>
-								<Field>
-									<FieldLabel>Categoria do Seguro:</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-									</Select>
-								</Field>
-								<Field>
-									<FieldLabel>Tipo do Seguro:</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-									</Select>
-								</Field>
-								<Field>
-									<FieldLabel>Seguradora:</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-									</Select>
-								</Field>
-								<FieldGroup className='flex flex-row items-center justify-between gap-x-0!'>
-									<Field>
-										<FieldLabel>Início da Vigência:</FieldLabel>
-										<Input
-											placeholder='00/00/0000'
-											className='rounded-r-none border-r-0'
-										/>
-									</Field>
-									<Field>
-										<FieldLabel>Final da Vigência:</FieldLabel>
-										<Input
-											placeholder='00/00/0000'
-											className='rounded-l-none'
-										/>
-									</Field>
-								</FieldGroup>
-							</FieldGroup>
-						</FieldGroup>
-						<Separator />
-						<FieldGroup>
-							<FieldSet>
-								<FieldContent>
-									<FieldTitle className='text-base'>
-										<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-											<UserCircle2Icon />
-										</div>
-										Segurado
-									</FieldTitle>
-								</FieldContent>
-							</FieldSet>
-							<FieldGroup className='grid grid-cols-4'>
-								<Field>
-									<FieldLabel>CPF:</FieldLabel>
-									<Input placeholder='000.000.000-00' />
-								</Field>
-								<Field>
-									<FieldLabel>Nome Completo:</FieldLabel>
-									<Input placeholder='Nome Completo' />
-								</Field>
-								<Field>
-									<FieldLabel>Nascimento:</FieldLabel>
-									<Input placeholder='00/00/0000' />
-								</Field>
-								<Field>
-									<FieldLabel>Celular:</FieldLabel>
-									<Input placeholder='(00) 00000-0000' />
-								</Field>
-								<Field>
-									<FieldLabel>Estado Cívil:</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-									</Select>
-								</Field>
-								<Field>
-									<FieldLabel>Tempo de Habilitação:</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-									</Select>
-								</Field>
-								<Field>
-									<FieldLabel>
-										Profissão:
-										<sup className='text-muted-foreground ml-2'>
-											( Opcional )
-										</sup>
-									</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-									</Select>
-								</Field>
-							</FieldGroup>
-						</FieldGroup>
-						<Separator />
-						<FieldGroup>
-							<FieldSet>
-								<FieldContent>
-									<FieldTitle className='text-base'>
-										<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-											<CarIcon />
-										</div>
-										Dados do Veículo
-									</FieldTitle>
-								</FieldContent>
-							</FieldSet>
-							<FieldGroup className='grid grid-cols-4'>
-								<Field>
-									<FieldLabel>
-										Placa:
-										<sup className='text-muted-foreground ml-2'>
-											( Opcional )
-										</sup>
-									</FieldLabel>
-									<Input placeholder='AAA-0000 / AAA0A00' />
-								</Field>
-								<Field>
-									<FieldLabel>Marca:</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-									</Select>
-								</Field>
-								<Field>
-									<FieldLabel>Modelo:</FieldLabel>
-									<Input placeholder='Modelo' />
-								</Field>
-								<FieldGroup className='flex flex-row gap-x-0!'>
-									<Field>
-										<FieldLabel>Ano de Fabricação:</FieldLabel>
-										<Input
-											placeholder='0000'
-											className='rounded-r-none border-r-0'
-										/>
-									</Field>
-									<Field>
-										<FieldLabel>Ano do Modelo:</FieldLabel>
-										<Input placeholder='0000' className='rounded-l-none' />
-									</Field>
-								</FieldGroup>
-								<Field>
-									<FieldLabel>
-										Chassi:
-										<sup className='text-muted-foreground ml-2'>
-											( Opcional )
-										</sup>
-									</FieldLabel>
-									<Input placeholder='Chassi' />
-								</Field>
-								<Field>
-									<FieldLabel>Uso do Veículo:</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-									</Select>
-								</Field>
-								<Field>
-									<FieldLabel>Câmbio:</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-									</Select>
-								</Field>
-								<Field>
-									<FieldLabel>CEP de Pernoite:</FieldLabel>
-									<Input placeholder='00000-000' />
-								</Field>
-							</FieldGroup>
-						</FieldGroup>
-						<Separator />
-						<FieldGroup>
-							<FieldSet>
-								<FieldContent>
-									<FieldTitle className='text-base'>
-										<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-											<UserCircle2Icon />
-										</div>
-										Principal Condutor
-									</FieldTitle>
-								</FieldContent>
-							</FieldSet>
-							<FieldGroup className='grid grid-cols-4'>
-								<Field>
-									<FieldLabel>CPF:</FieldLabel>
-									<InputGroup>
-										<InputGroupAddon
-											align='inline-start'
-											className=' border-r pr-3 mr-1 h-full'
-										>
-											<Label htmlFor='fdsfsdf' className='z-1'>
-												O mesmo
-											</Label>{' '}
-											<Checkbox />
-										</InputGroupAddon>
-										<InputGroupInput
-											id='fdsfsdf'
-											placeholder='000.000.000-00'
-										/>
-									</InputGroup>
-								</Field>
-								<Field>
-									<FieldLabel>Nome Completo:</FieldLabel>
-									<Input placeholder='Nome Completo' />
-								</Field>
-								<Field>
-									<FieldLabel>Nascimento:</FieldLabel>
-									<Input placeholder='00/00/0000' />
-								</Field>
-								<Field>
-									<FieldLabel>Celular:</FieldLabel>
-									<Input placeholder='(00) 00000-0000' />
-								</Field>
-							</FieldGroup>
-						</FieldGroup>
-						<Separator />
-						<FieldGroup>
-							<FieldSet>
-								<FieldContent>
-									<FieldTitle className='text-base'>
-										<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-											<CircleDollarSignIcon />
-										</div>
-										Valores
-									</FieldTitle>
-								</FieldContent>
-							</FieldSet>
-							<FieldGroup className='grid grid-cols-4'>
-								<Field>
-									<FieldLabel>Parcelas:</FieldLabel>
-									<Input placeholder='X vezes' />
-								</Field>
-								<Field>
-									<FieldLabel>Prêmio Líquido:</FieldLabel>
-									<Input placeholder='R$ 000,00' />
-								</Field>
-								<Field>
-									<FieldLabel>Frânquia:</FieldLabel>
-									<Input placeholder='R$ 000,00' />
-								</Field>
-								<Field>
-									<FieldLabel>Comissão:</FieldLabel>
-									<Input placeholder='R$ 000,00' />
-								</Field>
-							</FieldGroup>
-						</FieldGroup>
-						<div className='bg-muted-foreground/10 flex flex-col gap-4 -mx-4 p-4'>
-							<FieldSet>
-								<FieldContent>
-									<FieldTitle className='text-base'>
-										<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-											<User2Icon />
-										</div>
-										Comissionamento
-									</FieldTitle>
-								</FieldContent>
-							</FieldSet>
-							<FieldGroup className='grid grid-cols-4'>
-								<Field>
-									<FieldLabel>Tipo de Comissão:</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-									</Select>
-								</Field>
-								<Field>
-									<FieldLabel>Percentual:</FieldLabel>
-									<Input placeholder='%' />
-								</Field>
-								<Field>
-									<FieldLabel>Desconto:</FieldLabel>
-									<InputGroup>
-										<InputGroupAddon align='inline-start'>
-											<Select>
-												<SelectTrigger className='-ml-3 rounded-r-none border-0 border-r w-20 pl-4'>
-													<SelectValue placeholder='%' />
-												</SelectTrigger>
-												<SelectContent align='start'>
-													<SelectItem value='percent'>%</SelectItem>
-													<SelectItem value='fixed'>R$</SelectItem>
-												</SelectContent>
-											</Select>
-										</InputGroupAddon>
-										<InputGroupInput
-											placeholder='0'
-											className='bg-background'
-										/>
-									</InputGroup>
-								</Field>
-								<Field>
-									<FieldLabel>Pagar em X Parcelas:</FieldLabel>
-									<Input placeholder='X vezes' />
-								</Field>
-								<Field>
-									<FieldLabel>Juros ao Mês:</FieldLabel>
-									<Input placeholder='%' />
-								</Field>
-								<Field>
-									<FieldLabel>Juros Pago a Partir do Mês:</FieldLabel>
-									<Input placeholder='Mês' />
-								</Field>
-								<Field>
-									<FieldLabel>Tipo de Juros:</FieldLabel>
-									<Select>
-										<SelectTrigger>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value='simple'>Simples</SelectItem>
-											<SelectItem value='compound'>Composto</SelectItem>
-										</SelectContent>
-									</Select>
-								</Field>
-								<Field>
-									<FieldLabel>Data de Pagamento:</FieldLabel>
-									<Input placeholder='00/00/0000' />
-								</Field>
-							</FieldGroup>
-						</div>
-						<Separator />
-						<FieldGroup className='grid grid-cols-4'>
 							<FieldGroup>
 								<FieldSet>
 									<FieldContent>
 										<FieldTitle className='text-base'>
 											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-												<Building2Icon />
+												<ClipboardIcon />
 											</div>
-											Corretora
+											Informativo
 										</FieldTitle>
 									</FieldContent>
 								</FieldSet>
-								<FieldGroup className='gap-0! space-y-1'>
-									<Field orientation='horizontal'>
-										<FieldLabel>Parcelas</FieldLabel>
-										<FieldLabel className='text-right'>---------</FieldLabel>
+								<FieldGroup className='grid grid-cols-4'>
+									<Controller
+										control={control}
+										name='modality'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='category'>
+													Modalidade do Seguro:
+												</FieldLabel>
+												<Select {...field} onValueChange={field.onChange}>
+													<SelectTrigger
+														id='category'
+														aria-invalid={fieldState.invalid}
+														className='pointer-events-none'
+													>
+														<SelectValue placeholder='Selecionar' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='car'>
+															<div className='flex flex-row items-center justify-start gap-x-2'>
+																<CarIcon /> <span>Automóvel</span>
+															</div>
+														</SelectItem>
+													</SelectContent>
+												</Select>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='renewal'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='type'>Tipo do Seguro:</FieldLabel>
+												<Select
+													{...field}
+													value={
+														field.value === true
+															? 'renewal'
+															: field.value === false
+																? 'no_renewal'
+																: ''
+													}
+													onValueChange={(value) =>
+														field.onChange(value === 'renewal')
+													}
+												>
+													<SelectTrigger
+														id='type'
+														aria-invalid={fieldState.invalid}
+													>
+														<SelectValue placeholder='Selecionar' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='no_renewal'>
+															Seguro Novo
+														</SelectItem>
+														<SelectItem value='renewal'>Renovação</SelectItem>
+													</SelectContent>
+												</Select>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='insuranceCompany'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='insurance-company'>
+													Seguradora:
+												</FieldLabel>
+												<Select {...field} onValueChange={field.onChange}>
+													<SelectTrigger
+														id='insurance-company'
+														aria-invalid={fieldState.invalid}
+													>
+														<SelectValue placeholder='Selecionar' />
+													</SelectTrigger>
+													<SelectContent className='max-h-72'>
+														{insuranceCompanies?.map(({ id, icon, name }) => (
+															<SelectItem key={id} value={id}>
+																<div className='flex flex-row items-center justify-start gap-x-2'>
+																	<Avatar className='size-6'>
+																		<AvatarImage
+																			src={icon || placeholder.company}
+																			width={512}
+																			height={512}
+																			alt={capitalizeFirstLetters(name).replace(
+																				'S/a',
+																				'S/A',
+																			)}
+																		/>
+																		<AvatarFallback>
+																			{name.toUpperCase().slice(0, 2)}
+																		</AvatarFallback>
+																	</Avatar>
+																	{capitalizeFirstLetters(name).replace(
+																		'S/a',
+																		'S/A',
+																	)}
+																</div>
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<FieldGroup className='flex flex-row items-center justify-between gap-x-0!'>
+										<Controller
+											control={control}
+											name='requestedAt'
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor='start-validity'>
+														Início da Vigência:
+													</FieldLabel>
+													<Input
+														{...field}
+														id='start-validity'
+														aria-invalid={fieldState.invalid}
+														placeholder='00/00/0000'
+														value={
+															typeof field.value === 'string'
+																? isDateString(field.value)
+																	? format(
+																			parse(
+																				field.value,
+																				'dd/MM/yyyy',
+																				new Date(),
+																			),
+																			'dd/MM/yyyy',
+																		)
+																	: maskDateString(field.value)
+																: field.value instanceof Date
+																	? format(field.value, 'dd/MM/yyyy')
+																	: ''
+														}
+														onChange={({ target: { value } }) =>
+															field.onChange(
+																isDateString(value)
+																	? parse(value, 'dd/MM/yyyy', new Date())
+																	: maskDateString(value),
+															)
+														}
+														maxLength={10}
+														className='rounded-r-none'
+													/>
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+										<Controller
+											control={control}
+											name='requestedAt'
+											render={({ field, fieldState }) => (
+												<Field>
+													<FieldLabel htmlFor='end-validity'>
+														Final da Vigência:
+													</FieldLabel>
+													<Input
+														{...field}
+														id='end-validity'
+														readOnly
+														placeholder='00/00/0000'
+														value={
+															field.value instanceof Date
+																? format(addYears(field.value, 1), 'dd/MM/yyyy')
+																: ''
+														}
+														onChange={undefined}
+														maxLength={10}
+														className='rounded-l-none border-l-0'
+													/>
+													{fieldState.invalid && (
+														<FieldError
+															errors={[fieldState.error]}
+															className='opacity-0 invisible'
+														/>
+													)}
+												</Field>
+											)}
+										/>
+									</FieldGroup>
+								</FieldGroup>
+							</FieldGroup>
+							<Separator />
+							<FieldGroup>
+								<FieldSet>
+									<FieldContent>
+										<FieldTitle className='text-base'>
+											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+												<UserCircle2Icon />
+											</div>
+											Segurado
+										</FieldTitle>
+									</FieldContent>
+								</FieldSet>
+								<FieldGroup className='grid grid-cols-4'>
+									<Controller
+										control={control}
+										name='insured.cpf'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='insured-cpf'>CPF:</FieldLabel>
+												<Input
+													{...field}
+													id='insured-cpf'
+													aria-invalid={fieldState.invalid}
+													placeholder='000.000.000-00'
+													onChange={({ target: { value } }) => [
+														field.onChange(maskCPF(value)),
+														theInsuredPartyIsTheDriver
+															? setValue('driver.cpf', maskCPF(value))
+															: undefined,
+													]}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='insured.name'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='insured-name'>
+													Nome Completo:
+												</FieldLabel>
+												<Input
+													{...field}
+													id='insured-name'
+													aria-invalid={fieldState.invalid}
+													placeholder='Nome Completo'
+													onChange={({ target: { value } }) => [
+														field.onChange(capitalizeFirstLetters(value)),
+														theInsuredPartyIsTheDriver
+															? setValue(
+																	'driver.name',
+																	capitalizeFirstLetters(value),
+																)
+															: undefined,
+													]}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='insured.birth'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='insured-birth'>
+													Nascimento:
+												</FieldLabel>
+												<InputGroup>
+													<InputGroupInput
+														{...field}
+														id='insured-birth'
+														aria-invalid={fieldState.invalid}
+														placeholder='00/00/0000'
+														value={
+															typeof field.value === 'string'
+																? isDateString(field.value)
+																	? format(
+																			parse(
+																				field.value,
+																				'dd/MM/yyyy',
+																				new Date(),
+																			),
+																			'dd/MM/yyyy',
+																		)
+																	: maskDateString(field.value)
+																: field.value instanceof Date
+																	? format(field.value, 'dd/MM/yyyy')
+																	: ''
+														}
+														onChange={({ target: { value } }) => [
+															field.onChange(
+																isDateString(value)
+																	? parse(value, 'dd/MM/yyyy', new Date())
+																	: maskDateString(value),
+															),
+															theInsuredPartyIsTheDriver
+																? setValue(
+																		'driver.birth',
+																		isDateString(value)
+																			? parse(value, 'dd/MM/yyyy', new Date())
+																			: maskDateString(value),
+																	)
+																: undefined,
+														]}
+														maxLength={10}
+													/>
+													{!!field.value && isDate(field.value) && (
+														<InputGroupAddon>
+															<InputGroupText>
+																{differenceInYears(new Date(), field.value)}{' '}
+																anos
+															</InputGroupText>
+														</InputGroupAddon>
+													)}
+												</InputGroup>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='insured.phone'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='insured-phone'>
+													Celular:
+												</FieldLabel>
+												<Input
+													{...field}
+													id='insured-phone'
+													aria-invalid={fieldState.invalid}
+													placeholder='(00) 00000-0000'
+													onChange={({ target: { value } }) => [
+														field.onChange(maskPhone(value)),
+														theInsuredPartyIsTheDriver
+															? setValue('driver.phone', maskPhone(value))
+															: undefined,
+													]}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='insured.maritalStatus'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='insured-marital-status'>
+													Estado Cívil:
+												</FieldLabel>
+												<Select {...field} onValueChange={field.onChange}>
+													<SelectTrigger
+														id='insured-marital-status'
+														aria-invalid={fieldState.invalid}
+													>
+														<SelectValue placeholder='Selecionar' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='single'>
+															{translateMaritalStatus('single')}
+														</SelectItem>
+														<SelectItem value='common_law_marriage'>
+															{translateMaritalStatus('common_law_marriage')}
+														</SelectItem>
+														<SelectItem value='separated'>
+															{translateMaritalStatus('separated')}
+														</SelectItem>
+														<SelectItem value='divorced'>
+															{translateMaritalStatus('divorced')}
+														</SelectItem>
+														<SelectItem value='married'>
+															{translateMaritalStatus('married')}
+														</SelectItem>
+														<SelectItem value='widowed'>
+															{translateMaritalStatus('widowed')}
+														</SelectItem>
+													</SelectContent>
+												</Select>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='insured.qualificationTime'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='insured-qualification-time'>
+													Tempo de Habilitação:
+												</FieldLabel>
+												<Select
+													{...field}
+													value={field.value ? String(field.value) : ''}
+													onValueChange={field.onChange}
+												>
+													<SelectTrigger
+														id='insured-qualification-time'
+														aria-invalid={fieldState.invalid}
+													>
+														<SelectValue placeholder='Selecionar' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='0'>
+															Permissão Provisória
+														</SelectItem>
+														<SelectSeparator />
+														<SelectItem value='1'>1 anos</SelectItem>
+														<SelectItem value='2'>2 anos</SelectItem>
+														<SelectItem value='3'>3 anos</SelectItem>
+														<SelectItem value='4'>4 anos</SelectItem>
+														<SelectItem value='5'>5 anos</SelectItem>
+														<SelectItem value='6'>6 anos</SelectItem>
+														<SelectItem value='7'>7 anos</SelectItem>
+														<SelectItem value='8'>8 anos</SelectItem>
+														<SelectItem value='9'>9 anos</SelectItem>
+														<SelectItem value='99'>+10 anos</SelectItem>
+													</SelectContent>
+												</Select>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='insured.profession'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='insured-profession'>
+													Profissões:
+												</FieldLabel>
+												<Combobox
+													{...field}
+													id='insured-profession'
+													value={field.value || null}
+													items={professions?.flatMap((e) => e.name)}
+													onValueChange={field.onChange}
+												>
+													<ComboboxInput placeholder='Selecionar' />
+													<ComboboxContent>
+														<ComboboxEmpty>
+															Nenhum registro encontrado.
+														</ComboboxEmpty>
+														<ComboboxList>
+															{(item, key) => (
+																<ComboboxItem key={key.toString()} value={item}>
+																	{item}
+																</ComboboxItem>
+															)}
+														</ComboboxList>
+													</ComboboxContent>
+												</Combobox>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+								</FieldGroup>
+							</FieldGroup>
+							<Separator />
+							<FieldGroup>
+								<FieldSet>
+									<FieldContent>
+										<FieldTitle className='text-base'>
+											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+												<CarIcon />
+											</div>
+											Dados do Veículo
+										</FieldTitle>
+									</FieldContent>
+								</FieldSet>
+								<FieldGroup className='grid grid-cols-4'>
+									<Controller
+										control={control}
+										name='vehicle.plate'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='vehicle-plate'>
+													Placa:
+													<sup className='text-muted-foreground ml-2'>
+														( Opcional )
+													</sup>
+												</FieldLabel>
+												<Input
+													{...field}
+													id='vehicle-plate'
+													placeholder='AAA-0000 / AAA0A00'
+													aria-invalid={fieldState.invalid}
+													value={field.value || ''}
+													onChange={({ target: { value } }) =>
+														field.onChange(!value ? null : maskPlate(value))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='vehicle.manufacturer'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='vehicle-manufacturer'>
+													Fabricante:
+												</FieldLabel>
+												<Combobox
+													{...field}
+													id='vehicle-manufacturer'
+													value={
+														manufacturers?.find((e) => e.id === field.value) ||
+														null
+													}
+													items={manufacturers}
+													onValueChange={field.onChange}
+													itemToStringLabel={(item) => item.name}
+													itemToStringValue={(item) => item.id}
+												>
+													<ComboboxInput placeholder='Selecionar' />
+													<ComboboxContent>
+														<ComboboxEmpty>
+															Nenhum registro encontrado.
+														</ComboboxEmpty>
+														<ComboboxList>
+															{(item: VehicleManufacturer) => (
+																<ComboboxItem key={item.id} value={item.id}>
+																	{item.name}
+																</ComboboxItem>
+															)}
+														</ComboboxList>
+													</ComboboxContent>
+												</Combobox>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='vehicle.model'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='vehicle-model'>Modelo:</FieldLabel>
+												<Input
+													{...field}
+													id='vehicle-model'
+													aria-invalid={fieldState.invalid}
+													placeholder='Modelo'
+													onChange={({ target: { value } }) =>
+														field.onChange(capitalizeFirstLetters(value))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='vehicle.modelYear'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='vehicle-model-year'>
+													Ano do Modelo:
+												</FieldLabel>
+												<Input
+													{...field}
+													id='vehicle-model-year'
+													aria-invalid={fieldState.invalid}
+													placeholder='0000'
+													value={String(field.value || '')}
+													onChange={({ target: { value } }) =>
+														field.onChange(maskNumber(value).slice(0, 4))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='vehicle.chassi'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='vehicle-chassi'>
+													Chassi:
+													<sup className='text-muted-foreground ml-2'>
+														( Opcional )
+													</sup>
+												</FieldLabel>
+												<Input
+													{...field}
+													value={field.value || ''}
+													id='vehicle-chassi'
+													aria-invalid={fieldState.invalid}
+													placeholder='Chassi'
+													onChange={({ target: { value } }) =>
+														field.onChange(!value ? null : value)
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='vehicle.usage'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='vehicle-usage'>
+													Uso do Veículo:
+												</FieldLabel>
+												<Select {...field} onValueChange={field.onChange}>
+													<SelectTrigger
+														id='vehicle-usage'
+														aria-invalid={fieldState.invalid}
+													>
+														<SelectValue placeholder='Selecionar' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='leisure_and_work'>
+															{translateVehicleUsage('leisure_and_work')}
+														</SelectItem>
+														<SelectItem value='leisure'>
+															{translateVehicleUsage('leisure')}
+														</SelectItem>
+														<SelectItem value='client_supplier_visits'>
+															{translateVehicleUsage('client_supplier_visits')}
+														</SelectItem>
+														<SelectItem value='app_based_transport'>
+															{translateVehicleUsage('app_based_transport')}
+														</SelectItem>
+														<SelectItem value='public_transportation'>
+															{translateVehicleUsage('public_transportation')}
+														</SelectItem>
+														<SelectItem value='taxi'>
+															{translateVehicleUsage('taxi')}
+														</SelectItem>
+														<SelectItem value='delivieries'>
+															{translateVehicleUsage('delivieries')}
+														</SelectItem>
+														<SelectItem value='tourism'>
+															{translateVehicleUsage('tourism')}
+														</SelectItem>
+													</SelectContent>
+												</Select>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='vehicle.exchange'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='vehicle-exchange'>
+													Câmbio:
+												</FieldLabel>
+												<Select {...field} onValueChange={field.onChange}>
+													<SelectTrigger
+														id='vehicle-exchange'
+														aria-invalid={fieldState.invalid}
+													>
+														<SelectValue placeholder='Selecionar' />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value='manual'>
+															{translateVehicleExchange('manual')}
+														</SelectItem>
+														<SelectItem value='automatic'>
+															{translateVehicleExchange('automatic')}
+														</SelectItem>
+													</SelectContent>
+												</Select>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='vehicle.overnightPostalCode'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='vehicle-overnight-postal-code'>
+													CEP de Pernoite:
+												</FieldLabel>
+												<Input
+													{...field}
+													id='vehicle-overnight-postal-code'
+													aria-invalid={fieldState.invalid}
+													placeholder='00000-000'
+													onChange={({ target: { value } }) =>
+														field.onChange(maskPostalCode(value))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<FieldGroup className='flex flex-row gap-x-0!'>
+										<Controller
+											control={control}
+											name='vehicle.additional.residence.type'
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor='vehicle-additional-residence-type'>
+														Reside Em:
+													</FieldLabel>
+													<Select {...field} onValueChange={field.onChange}>
+														<SelectTrigger
+															id='vehicle-additional-residence-type'
+															aria-invalid={fieldState.invalid}
+															className='rounded-r-none border-r-0'
+														>
+															<SelectValue placeholder='Selecionar' />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value='home'>
+																{translateResidence('home')}
+															</SelectItem>
+															<SelectItem value='apartment'>
+																{translateResidence('apartment')}
+															</SelectItem>
+															<SelectItem value='house_condominium'>
+																{translateResidence('house_condominium')}
+															</SelectItem>
+															<SelectItem value='others'>
+																{translateResidence('others')}
+															</SelectItem>
+														</SelectContent>
+													</Select>
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+										<Controller
+											control={control}
+											name='vehicle.additional.residence.garage'
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor='vehicle-additional-residence-garage'>
+														Tipo de Garagem:
+													</FieldLabel>
+													<Select
+														{...field}
+														value={field.value || ''}
+														onValueChange={(value) =>
+															field.onChange(value === 'clear' ? null : value)
+														}
+													>
+														<SelectTrigger
+															id='vehicle-additional-residence-garage'
+															aria-invalid={fieldState.invalid}
+															className='rounded-l-none'
+														>
+															<SelectValue placeholder='Selecionar' />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value='no_garage'>
+																{translateGarage('no_garage')}
+															</SelectItem>
+															<SelectSeparator />
+															<SelectItem value='automatic_gate'>
+																{translateGarage('automatic_gate')}
+															</SelectItem>
+															<SelectItem value='manual_gate'>
+																{translateGarage('manual_gate')}
+															</SelectItem>
+															<SelectItem value='private'>
+																{translateGarage('private')}
+															</SelectItem>
+														</SelectContent>
+													</Select>
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+									</FieldGroup>
+									<FieldGroup className='flex flex-row gap-x-0!'>
+										<Controller
+											control={control}
+											name='vehicle.additional.work'
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor='vehicle-additional-work-garage'>
+														Garagem no Trabalho:
+													</FieldLabel>
+													<Select
+														{...field}
+														value={field.value || ''}
+														onValueChange={(value) =>
+															field.onChange(value === 'clear' ? null : value)
+														}
+													>
+														<SelectTrigger
+															id='vehicle-additional-work-garage'
+															aria-invalid={fieldState.invalid}
+														>
+															<SelectValue placeholder='Selecionar' />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value='does_not_work'>
+																{translateGarageWork('does_not_work')}
+															</SelectItem>
+															<SelectSeparator />
+															<SelectItem value='yes'>
+																{translateGarageWork('yes')}
+															</SelectItem>
+															<SelectItem value='no'>
+																{translateGarageWork('no')}
+															</SelectItem>
+															<SelectItem value='does_not_use'>
+																{translateGarageWork('does_not_use')}
+															</SelectItem>
+														</SelectContent>
+													</Select>
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+									</FieldGroup>
+									<FieldGroup className='flex flex-row gap-x-0!'>
+										<Controller
+											control={control}
+											name='vehicle.additional.school'
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor='vehicle-additional-school-garage'>
+														Garagem na Escola:
+													</FieldLabel>
+													<Select
+														{...field}
+														value={field.value || ''}
+														onValueChange={(value) =>
+															field.onChange(value === 'clear' ? null : value)
+														}
+													>
+														<SelectTrigger
+															id='vehicle-additional-school-garage'
+															aria-invalid={fieldState.invalid}
+														>
+															<SelectValue placeholder='Selecionar' />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value='does_not_study'>
+																{translateGarageSchool('does_not_study')}
+															</SelectItem>
+															<SelectSeparator />
+															<SelectItem value='yes'>
+																{translateGarageSchool('yes')}
+															</SelectItem>
+															<SelectItem value='no'>
+																{translateGarageSchool('no')}
+															</SelectItem>
+															<SelectItem value='does_not_use'>
+																{translateGarageSchool('does_not_use')}
+															</SelectItem>
+														</SelectContent>
+													</Select>
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+									</FieldGroup>
+								</FieldGroup>
+							</FieldGroup>
+							<Separator />
+							<FieldGroup>
+								<FieldSet>
+									<FieldContent>
+										<FieldTitle className='text-base'>
+											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+												<UserCircle2Icon />
+											</div>
+											Principal Condutor |{' '}
+											<div className='flex flex-row items-center justify-start gap-x-2 pr-3'>
+												<Checkbox
+													id='the-same-driver'
+													value={undefined}
+													checked={theInsuredPartyIsTheDriver}
+													onCheckedChange={(value) => [
+														setTheInsuredPartyIsTheDriver(Boolean(value)),
+														Boolean(value) === true
+															? [
+																	setValue('driver', {
+																		cpf: getValues('insured.cpf'),
+																		name: getValues('insured.name'),
+																		phone: getValues('insured.phone'),
+																		birth: getValues('insured.birth'),
+																	}),
+																	clearErrors('driver'),
+																]
+															: undefined,
+													]}
+												/>
+												<Label
+													htmlFor='the-same-driver'
+													className='font-normal text-xs'
+												>
+													O segurado é o condutor
+												</Label>
+											</div>
+										</FieldTitle>
+									</FieldContent>
+								</FieldSet>
+								<FieldGroup className='grid grid-cols-4'>
+									<Controller
+										control={control}
+										name='driver.cpf'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='driver-cpf'>CPF:</FieldLabel>
+												<Input
+													{...field}
+													id='driver-cpf'
+													aria-invalid={fieldState.invalid}
+													disabled={theInsuredPartyIsTheDriver}
+													placeholder='000.000.000-00'
+													onChange={({ target: { value } }) =>
+														field.onChange(maskCPF(value))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='driver.name'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='driver-name'>
+													Nome Completo:
+												</FieldLabel>
+												<Input
+													{...field}
+													id='driver-name'
+													aria-invalid={fieldState.invalid}
+													disabled={theInsuredPartyIsTheDriver}
+													placeholder='Nome Completo'
+													onChange={({ target: { value } }) =>
+														field.onChange(capitalizeFirstLetters(value))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='driver.birth'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='driver-birth'>
+													Nascimento:
+												</FieldLabel>
+												<InputGroup>
+													<InputGroupInput
+														{...field}
+														id='driver-birth'
+														aria-invalid={fieldState.invalid}
+														disabled={theInsuredPartyIsTheDriver}
+														placeholder='00/00/0000'
+														value={
+															typeof field.value === 'string'
+																? isDateString(field.value)
+																	? format(
+																			parse(
+																				field.value,
+																				'dd/MM/yyyy',
+																				new Date(),
+																			),
+																			'dd/MM/yyyy',
+																		)
+																	: maskDateString(field.value)
+																: field.value instanceof Date
+																	? format(field.value, 'dd/MM/yyyy')
+																	: ''
+														}
+														onChange={({ target: { value } }) =>
+															field.onChange(
+																isDateString(value)
+																	? parse(value, 'dd/MM/yyyy', new Date())
+																	: maskDateString(value),
+															)
+														}
+														maxLength={10}
+													/>
+													{!!field.value && isDate(field.value) && (
+														<InputGroupAddon>
+															<InputGroupText>
+																{differenceInYears(new Date(), field.value)}{' '}
+																anos
+															</InputGroupText>
+														</InputGroupAddon>
+													)}
+												</InputGroup>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='driver.phone'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='driver-phone'>Celular:</FieldLabel>
+												<Input
+													{...field}
+													id='driver-phone'
+													aria-invalid={fieldState.invalid}
+													disabled={theInsuredPartyIsTheDriver}
+													placeholder='(00) 00000-0000'
+													onChange={({ target: { value } }) =>
+														field.onChange(maskPhone(value))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+								</FieldGroup>
+							</FieldGroup>
+							<Separator />
+							<FieldGroup>
+								<FieldSet>
+									<FieldContent>
+										<FieldTitle className='text-base'>
+											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+												<CircleDollarSignIcon />
+											</div>
+											Valores
+										</FieldTitle>
+									</FieldContent>
+								</FieldSet>
+								<FieldGroup className='grid grid-cols-4'>
+									<Field>
+										<FieldLabel>Parcelas:</FieldLabel>
+										<Input placeholder='X vezes' />
 									</Field>
-									<Field orientation='horizontal'>
-										<FieldLabel>Prêmio Líquido</FieldLabel>
-										<FieldLabel className='text-right'>---------</FieldLabel>
+									<Field>
+										<FieldLabel>Prêmio Líquido:</FieldLabel>
+										<Input placeholder='R$ 000,00' />
 									</Field>
-									<Field orientation='horizontal'>
-										<FieldLabel>Comissão sobre a venda</FieldLabel>
-										<FieldLabel className='text-right'>---------</FieldLabel>
+									<Field>
+										<FieldLabel>Frânquia:</FieldLabel>
+										<Input placeholder='R$ 000,00' />
+									</Field>
+									<Field>
+										<FieldLabel>Comissão:</FieldLabel>
+										<Input placeholder='R$ 000,00' />
 									</Field>
 								</FieldGroup>
 							</FieldGroup>
-							<FieldGroup>
+							<div className='bg-muted-foreground/10 flex flex-col gap-4 -mx-4 p-4'>
 								<FieldSet>
 									<FieldContent>
 										<FieldTitle className='text-base'>
 											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
 												<User2Icon />
 											</div>
-											Produtor
+											Comissionamento
 										</FieldTitle>
 									</FieldContent>
 								</FieldSet>
-								<FieldGroup className='gap-0! space-y-1'>
-									<Field orientation='horizontal'>
-										<FieldLabel>Parcelas de Comissão</FieldLabel>
-										<FieldLabel className='text-right'>---------</FieldLabel>
+								<FieldGroup className='grid grid-cols-4'>
+									<Field>
+										<FieldLabel>Tipo de Comissão:</FieldLabel>
+										<Select>
+											<SelectTrigger>
+												<SelectValue placeholder='Selecionar' />
+											</SelectTrigger>
+										</Select>
 									</Field>
-									<Field orientation='horizontal'>
-										<FieldLabel>Comissão do Produtor</FieldLabel>
-										<FieldLabel className='text-right'>---------</FieldLabel>
+									<Field>
+										<FieldLabel>Percentual:</FieldLabel>
+										<Input placeholder='%' />
 									</Field>
-									<Field orientation='horizontal'>
-										<FieldLabel>Subtotal</FieldLabel>
-										<FieldLabel className='text-right'>---------</FieldLabel>
+									<Field>
+										<FieldLabel>Desconto:</FieldLabel>
+										<InputGroup>
+											<InputGroupAddon align='inline-start'>
+												<Select>
+													<SelectTrigger className='-ml-3 rounded-r-none border-0 border-r w-20 pl-4'>
+														<SelectValue placeholder='%' />
+													</SelectTrigger>
+													<SelectContent align='start'>
+														<SelectItem value='percent'>%</SelectItem>
+														<SelectItem value='fixed'>R$</SelectItem>
+													</SelectContent>
+												</Select>
+											</InputGroupAddon>
+											<InputGroupInput
+												placeholder='0'
+												className='bg-background'
+											/>
+										</InputGroup>
 									</Field>
-									<Field orientation='horizontal'>
-										<FieldLabel>Total</FieldLabel>
-										<FieldLabel className='text-right'>---------</FieldLabel>
+									<Field>
+										<FieldLabel>Pagar em X Parcelas:</FieldLabel>
+										<Input placeholder='X vezes' />
+									</Field>
+									<Field>
+										<FieldLabel>Juros ao Mês:</FieldLabel>
+										<Input placeholder='%' />
+									</Field>
+									<Field>
+										<FieldLabel>Juros Pago a Partir do Mês:</FieldLabel>
+										<Input placeholder='Mês' />
+									</Field>
+									<Field>
+										<FieldLabel>Tipo de Juros:</FieldLabel>
+										<Select>
+											<SelectTrigger>
+												<SelectValue placeholder='Selecionar' />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value='simple'>Simples</SelectItem>
+												<SelectItem value='compound'>Composto</SelectItem>
+											</SelectContent>
+										</Select>
+									</Field>
+									<Field>
+										<FieldLabel>Data de Pagamento:</FieldLabel>
+										<Input placeholder='00/00/0000' />
 									</Field>
 								</FieldGroup>
-							</FieldGroup>
-							<FieldGroup className='col-start-4'>
-								<FieldSet className='opacity-0 pointer-events-auto'>
-									<FieldContent>
-										<FieldTitle className='text-base'>
-											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-												<Building2Icon />
-											</div>
-											Corretora
-										</FieldTitle>
-									</FieldContent>
-								</FieldSet>
-								<FieldGroup className='gap-0! space-y-1'>
-									<Field orientation='horizontal'>
-										<FieldLabel>Total</FieldLabel>
-										<FieldLabel className='text-right'>---------</FieldLabel>
-									</Field>
+							</div>
+							<Separator />
+							<FieldGroup className='grid grid-cols-4'>
+								<FieldGroup>
+									<FieldSet>
+										<FieldContent>
+											<FieldTitle className='text-base'>
+												<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+													<Building2Icon />
+												</div>
+												Corretora
+											</FieldTitle>
+										</FieldContent>
+									</FieldSet>
+									<FieldGroup className='gap-0! space-y-1'>
+										<Field orientation='horizontal'>
+											<FieldLabel>Parcelas</FieldLabel>
+											<FieldLabel className='text-right'>---------</FieldLabel>
+										</Field>
+										<Field orientation='horizontal'>
+											<FieldLabel>Prêmio Líquido</FieldLabel>
+											<FieldLabel className='text-right'>---------</FieldLabel>
+										</Field>
+										<Field orientation='horizontal'>
+											<FieldLabel>Comissão sobre a venda</FieldLabel>
+											<FieldLabel className='text-right'>---------</FieldLabel>
+										</Field>
+									</FieldGroup>
+								</FieldGroup>
+								<FieldGroup>
+									<FieldSet>
+										<FieldContent>
+											<FieldTitle className='text-base'>
+												<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+													<User2Icon />
+												</div>
+												Produtor
+											</FieldTitle>
+										</FieldContent>
+									</FieldSet>
+									<FieldGroup className='gap-0! space-y-1'>
+										<Field orientation='horizontal'>
+											<FieldLabel>Parcelas de Comissão</FieldLabel>
+											<FieldLabel className='text-right'>---------</FieldLabel>
+										</Field>
+										<Field orientation='horizontal'>
+											<FieldLabel>Comissão do Produtor</FieldLabel>
+											<FieldLabel className='text-right'>---------</FieldLabel>
+										</Field>
+										<Field orientation='horizontal'>
+											<FieldLabel>Subtotal</FieldLabel>
+											<FieldLabel className='text-right'>---------</FieldLabel>
+										</Field>
+										<Field orientation='horizontal'>
+											<FieldLabel>Total</FieldLabel>
+											<FieldLabel className='text-right'>---------</FieldLabel>
+										</Field>
+									</FieldGroup>
+								</FieldGroup>
+								<FieldGroup className='col-start-4'>
+									<FieldSet className='opacity-0 pointer-events-auto'>
+										<FieldContent>
+											<FieldTitle className='text-base'>
+												<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+													<Building2Icon />
+												</div>
+												Corretora
+											</FieldTitle>
+										</FieldContent>
+									</FieldSet>
+									<FieldGroup className='gap-0! space-y-1'>
+										<Field orientation='horizontal'>
+											<FieldLabel>Total</FieldLabel>
+											<FieldLabel className='text-right'>---------</FieldLabel>
+										</Field>
+									</FieldGroup>
 								</FieldGroup>
 							</FieldGroup>
 						</FieldGroup>
-					</FieldGroup>
+					</form>
 				</CardContent>
 			</Card>
-			<Button className='w-full'>
+			<Button
+				type='submit'
+				form='form-proposal-register'
+				className='w-full'
+				disabled={isPending || !isDirty}
+				textPending='Salvando'
+			>
 				<SaveIcon /> Salvar Registro
 			</Button>
 		</Fragment>

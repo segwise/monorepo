@@ -48,7 +48,7 @@ function ProposalsPage() {
 					</TableSafesSheetFilters>
 					<ButtonGroup>
 						<Button asChild variant='outline' className='dark:bg-primary'>
-							<Link href='/policies/register'>
+							<Link href='/proposals/register'>
 								<PlusIcon /> Cadastrar
 							</Link>
 						</Button>

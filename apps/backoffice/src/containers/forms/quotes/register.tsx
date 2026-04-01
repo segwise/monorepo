@@ -92,14 +92,14 @@ import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicle
 function FormQuoteRegister() {
 	const { push } = useRouter();
 
+	const { data: producers } = useProducersSimple();
+	const { data: professions } = useProfessionsSimple();
+	const { data: manufacturers } = useVehiclesManufacturers();
+
 	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
 		useState<boolean>(false);
 
 	const { mutate, isPending } = useQuotesRegister();
-
-	const { data: producers } = useProducersSimple();
-	const { data: professions } = useProfessionsSimple();
-	const { data: manufacturers } = useVehiclesManufacturers();
 
 	const {
 		control,
@@ -1472,6 +1472,7 @@ function FormQuoteRegister() {
 				form='form-quote-register'
 				className='w-full'
 				disabled={isPending || !isDirty}
+				textPending='Salvando'
 			>
 				<SaveIcon /> Salvar Registro
 			</Button>

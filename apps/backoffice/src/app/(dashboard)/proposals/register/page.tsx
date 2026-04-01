@@ -5,7 +5,7 @@ export const metadata: Metadata = {
 	title: 'Cadastrar Apólice',
 };
 
-function QuotesRegisterPage() {
+function ProposalsRegisterPage() {
 	return (
 		<main className='grid grid-cols-1 gap-6 mt-1 mb-10'>
 			<FormProposalRegister />
@@ -13,4 +13,4 @@ function QuotesRegisterPage() {
 	);
 }
 
-export default QuotesRegisterPage;
+export default ProposalsRegisterPage;
