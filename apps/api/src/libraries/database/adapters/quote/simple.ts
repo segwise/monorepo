@@ -2,6 +2,7 @@ import type { Prisma } from '@/generated/prisma/client';
 
 const selectPrisma = {
 	id: true,
+	producerId: true,
 	status: true,
 	modality: true,
 	renewal: true,

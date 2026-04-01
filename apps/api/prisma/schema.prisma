@@ -35,6 +35,7 @@ model User {
   accounts Account[] @relation("account_to_user")
 
   quotes Quote[] @relation("producer_quotes")
+  safes  Safe[]  @relation("producer_safes")
 
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -201,6 +202,8 @@ model Quote {
 model Safe {
   id String @id @default(uuid(7)) @db.Uuid
 
+  isExternal Boolean? @map("is_external")
+
   temporaryInsuredId String?           @map("temporary_insured_id") @db.Uuid
   temporaryInsured   TemporaryInsured? @relation("safe_to_temporary_insured", fields: [temporaryInsuredId], references: [id], onDelete: Restrict, map: "temporary_insured")
 
@@ -209,19 +212,34 @@ model Safe {
 
   modality ModalityInsurance
 
+  renewal Boolean?
+
+  previousSafeId String? @map("previous_safe_id") @db.Uuid
+  previousSafe   Safe?   @relation("related_policies", fields: [previousSafeId], references: [id], map: "previous_safe")
+
+  successorSafe Safe? @relation("related_policies", map: "successor_safe")
+
   insuranceCompanyId String?           @map("insurance_company_id") @db.Uuid
   insuranceCompany   InsuranceCompany? @relation("insurance_company_to_safe", fields: [insuranceCompanyId], references: [id], onDelete: Restrict, map: "insurance_company")
-
-  isExternal Boolean? @map("is_external")
 
   expiration DateTime @db.Date
   franchise  Decimal? @db.Decimal(10, 2)
 
   safeVehicle SafeVehicle? @relation("safe_to_safe_vehicle", map: "safe_vehicle")
 
+  producerId String? @map("producer_id") @db.Uuid
+  producer   User?   @relation("producer_safes", fields: [producerId], references: [id], onDelete: Restrict)
+
+  status        StatusSafe @default(active)
+  statusAt      DateTime   @default(now()) @map("status_at") @db.Timestamptz
+  statusMessage String?    @map("status_message")
+
+  effectivedAt DateTime? @default(now()) @map("effectived_at") @db.Timestamptz
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@unique([previousSafeId])
   @@map("safes")
 }
 
@@ -360,7 +378,7 @@ model InsuranceCompany {
   id String @id @default(uuid(7)) @db.Uuid
 
   name  String
-  icon  String
+  icon  String?
   image String?
 
   cnpj String @db.VarChar(14)
@@ -438,6 +456,12 @@ enum StatusQuote {
   sent
   recused
   confirmed
+}
+
+enum StatusSafe {
+  canceled
+  suspended
+  active
 }
 
 enum MaritalStatus {

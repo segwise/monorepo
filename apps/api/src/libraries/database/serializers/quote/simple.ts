@@ -13,6 +13,7 @@ function serializer(
 
 	return {
 		id: props.id,
+		producer: props.producerId,
 		modality: props.modality,
 		status: props.status,
 		...(props.renewal && {

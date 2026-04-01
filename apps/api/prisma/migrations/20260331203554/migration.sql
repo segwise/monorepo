@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('owner', 'admin', 'user', 'broker', 'producer', 'finance', 'counter');
+CREATE TYPE "Role" AS ENUM ('owner', 'admin', 'customer', 'broker', 'producer', 'finance', 'counter');
 
 -- CreateEnum
 CREATE TYPE "ModalityInsurance" AS ENUM ('car');
@@ -8,7 +8,7 @@ CREATE TYPE "ModalityInsurance" AS ENUM ('car');
 CREATE TYPE "StatusQuote" AS ENUM ('waiting', 'quoting', 'quoted', 'sent', 'recused', 'confirmed');
 
 -- CreateEnum
-CREATE TYPE "StatusSafe" AS ENUM ('waiting', 'quoting', 'quoted', 'sent', 'recused', 'confirmed');
+CREATE TYPE "StatusSafe" AS ENUM ('canceled', 'suspended', 'active');
 
 -- CreateEnum
 CREATE TYPE "MaritalStatus" AS ENUM ('single', 'married', 'divorced', 'widowed', 'separated', 'common_law_marriage');
@@ -41,6 +41,7 @@ CREATE TABLE "users" (
     "image" TEXT,
     "email" TEXT NOT NULL,
     "email_verified" BOOLEAN,
+    "phone" VARCHAR(13),
     "referral" TEXT NOT NULL,
     "role" TEXT NOT NULL,
     "banned" BOOLEAN,
@@ -118,6 +119,14 @@ CREATE TABLE "temporary_insureds" (
 -- CreateTable
 CREATE TABLE "insureds" (
     "id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "phone" VARCHAR(13) NOT NULL,
+    "cpf" VARCHAR(11) NOT NULL,
+    "birth" DATE NOT NULL,
+    "age" INTEGER NOT NULL,
+    "marital_status" "MaritalStatus" NOT NULL,
+    "qualification_time" INTEGER,
+    "profession" TEXT,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -135,6 +144,7 @@ CREATE TABLE "quotes" (
     "insurance_company_id" UUID,
     "expiration" DATE,
     "franchise" DECIMAL(10,2),
+    "producer_id" UUID,
     "status" "StatusQuote" NOT NULL DEFAULT 'waiting',
     "status_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status_message" TEXT,
@@ -148,16 +158,18 @@ CREATE TABLE "quotes" (
 -- CreateTable
 CREATE TABLE "safes" (
     "id" UUID NOT NULL,
-    "temporary_insured_id" UUID,
-    "insured_id" UUID NOT NULL,
-    "modality" "ModalityInsurance" NOT NULL,
-    "insurance_company_id" UUID NOT NULL,
     "is_external" BOOLEAN,
+    "temporary_insured_id" UUID,
+    "insured_id" UUID,
+    "modality" "ModalityInsurance" NOT NULL,
+    "insurance_company_id" UUID,
     "expiration" DATE NOT NULL,
     "franchise" DECIMAL(10,2),
-    "status" "StatusSafe" NOT NULL DEFAULT 'waiting',
+    "producer_id" UUID,
+    "status" "StatusSafe" NOT NULL DEFAULT 'active',
     "status_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status_message" TEXT,
+    "implementation_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -196,7 +208,7 @@ CREATE TABLE "quote_vehicles" (
 CREATE TABLE "safe_vehicles" (
     "id" UUID NOT NULL,
     "safe_id" UUID NOT NULL,
-    "vehicle_id" UUID NOT NULL,
+    "vehicle_id" UUID,
     "vehicle_without_plate_id" UUID,
     "usage" "VehicleUsage" NOT NULL,
     "overnight_postal_code" VARCHAR(8) NOT NULL,
@@ -240,7 +252,7 @@ CREATE TABLE "vehicles_without_plate" (
 CREATE TABLE "manufacturer_vehicles" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
-    "icon" TEXT NOT NULL,
+    "icon" TEXT,
     "image" TEXT,
     "slugs" TEXT[],
 
@@ -287,6 +299,18 @@ CREATE TABLE "insurance_companies_contacts" (
 );
 
 -- CreateIndex
+CREATE INDEX "users_referral_idx" ON "users"("referral");
+
+-- CreateIndex
+CREATE INDEX "users_name_idx" ON "users"("name");
+
+-- CreateIndex
+CREATE INDEX "users_email_idx" ON "users"("email");
+
+-- CreateIndex
+CREATE INDEX "users_phone_idx" ON "users"("phone");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "users_referral_key" ON "users"("referral");
 
 -- CreateIndex
@@ -297,6 +321,33 @@ CREATE UNIQUE INDEX "sessions_token_key" ON "sessions"("token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "accounts_id_key" ON "accounts"("id");
+
+-- CreateIndex
+CREATE INDEX "temporary_insureds_name_idx" ON "temporary_insureds"("name");
+
+-- CreateIndex
+CREATE INDEX "temporary_insureds_phone_idx" ON "temporary_insureds"("phone");
+
+-- CreateIndex
+CREATE INDEX "temporary_insureds_cpf_idx" ON "temporary_insureds"("cpf");
+
+-- CreateIndex
+CREATE INDEX "quotes_request_at_idx" ON "quotes"("request_at");
+
+-- CreateIndex
+CREATE INDEX "quotes_producer_id_idx" ON "quotes"("producer_id");
+
+-- CreateIndex
+CREATE INDEX "quotes_insurance_company_id_idx" ON "quotes"("insurance_company_id");
+
+-- CreateIndex
+CREATE INDEX "quotes_status_idx" ON "quotes"("status");
+
+-- CreateIndex
+CREATE INDEX "quotes_modality_idx" ON "quotes"("modality");
+
+-- CreateIndex
+CREATE INDEX "quotes_id_request_at_idx" ON "quotes"("id", "request_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "quote_vehicles_vehicle_without_plate_id_key" ON "quote_vehicles"("vehicle_without_plate_id");
@@ -323,16 +374,13 @@ CREATE UNIQUE INDEX "vehicles_plate_plate_alternative_key" ON "vehicles"("plate"
 CREATE UNIQUE INDEX "insurance_companies_cnpj_key" ON "insurance_companies"("cnpj");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "insurance_companies_categories_contacts_insurance_company_i_key" ON "insurance_companies_categories_contacts"("insurance_company_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "insurance_companies_categories_contacts_index_key" ON "insurance_companies_categories_contacts"("index");
+CREATE UNIQUE INDEX "insurance_companies_categories_contacts_insurance_company_i_key" ON "insurance_companies_categories_contacts"("insurance_company_id", "index");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "insurance_companies_contacts_category_id_value_key" ON "insurance_companies_contacts"("category_id", "value");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "insurance_companies_contacts_index_key" ON "insurance_companies_contacts"("index");
+CREATE UNIQUE INDEX "insurance_companies_contacts_category_id_index_key" ON "insurance_companies_contacts"("category_id", "index");
 
 -- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -350,6 +398,9 @@ ALTER TABLE "quotes" ADD CONSTRAINT "quotes_insured_id_fkey" FOREIGN KEY ("insur
 ALTER TABLE "quotes" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "quotes" ADD CONSTRAINT "quotes_producer_id_fkey" FOREIGN KEY ("producer_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "safes" ADD CONSTRAINT "temporary_insured" FOREIGN KEY ("temporary_insured_id") REFERENCES "temporary_insureds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -357,6 +408,9 @@ ALTER TABLE "safes" ADD CONSTRAINT "safes_insured_id_fkey" FOREIGN KEY ("insured
 
 -- AddForeignKey
 ALTER TABLE "safes" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "safes" ADD CONSTRAINT "safes_producer_id_fkey" FOREIGN KEY ("producer_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "quote_vehicles" ADD CONSTRAINT "quote_vehicles_quote_id_fkey" FOREIGN KEY ("quote_id") REFERENCES "quotes"("id") ON DELETE CASCADE ON UPDATE CASCADE;

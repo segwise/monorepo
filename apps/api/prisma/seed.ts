@@ -13,6 +13,7 @@ import {
 	ModalityInsurance,
 	Role,
 	StatusQuote,
+	StatusSafe,
 	VehicleUsage,
 } from '@/generated/prisma/enums';
 import { auth } from '@/services/auth';
@@ -1758,13 +1759,23 @@ async function seed() {
 		for (const insurance of insuranceCompaniesSeed) {
 			const idInsurance = Bun.randomUUIDv7();
 
-			const pathInsurance = `/insurance-companies/${idInsurance}`;
+			let pathInsurance: string | null = `/insurance-companies/${idInsurance}`;
 
-			const { data } = await xior.get(insurance.image, {
-				responseType: 'blob',
-			});
+			const { data } = await xior
+				.get(insurance.image, {
+					responseType: 'blob',
+				})
+				.catch(() => ({
+					data: 'error',
+				}));
 
-			await storage.write(pathInsurance as string, data);
+			if (data !== 'error') {
+				await storage.write(pathInsurance as string, data);
+			}
+
+			if (data === 'error') {
+				pathInsurance = null;
+			}
 
 			const company = await database.insuranceCompany.create({
 				data: {
@@ -1936,19 +1947,138 @@ async function seed() {
 			});
 		}
 
+		for (let i = 0; i < 500; i++) {
+			const renewal = faker.datatype.boolean();
+
+			const status = faker.helpers.enumValue(StatusSafe);
+
+			const isPlate = faker.datatype.boolean();
+
+			const previousSafe = renewal
+				? await database.safe.findFirst({
+						select: {
+							id: true,
+						},
+						orderBy: {
+							createdAt: 'asc',
+						},
+					})
+				: null;
+
+			await database.safe.create({
+				data: {
+					renewal,
+					...(!!renewal &&
+						!!previousSafe && {
+							previousSafe: {
+								connect: {
+									id: previousSafe.id,
+								},
+							},
+						}),
+					expiration: addDays(
+						new Date(),
+						faker.number.int({ min: 1, max: 100 }),
+					),
+					insuranceCompany: {
+						connect: {
+							id: insuranceCompanies[
+								faker.number.int({
+									min: 0,
+									max: insuranceCompanies.length - 1 || 0,
+								})
+							]?.id as string,
+						},
+					},
+					franchise: faker.helpers.arrayElement([
+						undefined,
+						faker.number.int({ min: 1_000, max: 5_000 }),
+					]),
+					temporaryInsured: {
+						create: {
+							name: faker.person.fullName(),
+							phone: faker.phone.number({ style: 'international' }).slice(1),
+						},
+					},
+					modality: faker.helpers.enumValue(ModalityInsurance),
+					safeVehicle: {
+						create: {
+							usage: faker.helpers.enumValue(VehicleUsage),
+							overnightPostalCode: faker.location.zipCode('########'),
+							...(!!isPlate && {
+								vehicle: {
+									create: {
+										plate: faker.vehicle.vrm(),
+										plateAlternative: faker.vehicle.vrm(),
+										model: faker.vehicle.model(),
+										modelYear: faker.date
+											.between({
+												from: subYears(
+													startOfToday(),
+													faker.number.int({ min: 0, max: 7 }),
+												),
+												to: endOfYear(endOfDay(new Date())),
+											})
+											.getFullYear(),
+										manufacturer: {
+											connect: {
+												id: manufacturers[
+													faker.number.int({
+														min: 0,
+														max: manufacturers.length - 1,
+													})
+												]?.id as string,
+											},
+										},
+									},
+								},
+							}),
+							...(!isPlate && {
+								vehicleWithoutPlate: {
+									create: {},
+								},
+							}),
+						},
+					},
+					effectivedAt: subHours(
+						new Date(),
+						faker.number.int({ min: 30, max: 10000 }),
+					),
+					status,
+					statusAt: subHours(
+						new Date(),
+						faker.number.int({ min: 30, max: 10000 }),
+					),
+					...((status === 'canceled' || status === 'suspended') && {
+						statusMessage: faker.lorem.lines(1),
+					}),
+				},
+			});
+		}
+
 		for (let i = 0; i < 10; i++) {
 			const id = Bun.randomUUIDv7();
 
 			const image = faker.helpers.arrayElement([null, faker.image.avatar()]);
 
-			const pathImage = image ? `/users/${id}` : null;
+			let pathImage: string | null = image ? `/users/${id}` : null;
 
 			if (pathImage && image) {
-				const { data } = await xior.get(image, {
-					responseType: 'blob',
-				});
+				const { data } = await xior
+					.get(image, {
+						responseType: 'blob',
+					})
+					.catch(() => ({
+						data: 'error',
+					}));
 
-				await storage.write(pathImage, data);
+				if (data !== 'error') {
+					await storage.write(pathImage, data);
+				}
+
+				if (data === 'error') {
+					pathImage = null;
+				}
 			}
 
 			await database.user.create({

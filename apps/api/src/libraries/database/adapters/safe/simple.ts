@@ -2,6 +2,9 @@ import type { Prisma } from '@/generated/prisma/client';
 
 const selectPrisma = {
 	id: true,
+	producerId: true,
+	modality: true,
+	status: true,
 	temporaryInsured: {
 		select: {
 			name: true,
@@ -38,7 +41,7 @@ const selectPrisma = {
 		},
 	},
 	expiration: true,
-	franchise: true,
+	effectivedAt: true,
 } as const satisfies Prisma.SafeSelect;
 
 export { selectPrisma };

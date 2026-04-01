@@ -13,6 +13,7 @@ function serializer(
 
 	return {
 		id: props.id,
+		producer: props.producerId,
 		insured: {
 			name: props?.temporaryInsured?.name || props.insured?.name || '',
 			contact: {
@@ -42,7 +43,9 @@ function serializer(
 			},
 		}),
 		expiration: props.expiration,
-		franchise: props.franchise?.toDecimalPlaces(2).toNumber(),
+		effectivedAt: props.effectivedAt,
+		modality: props.modality,
+		status: props.status,
 	} satisfies SafeSimple;
 }
 
