@@ -228,6 +228,15 @@ function FilterRequestAt({
 		isSameDay(value.to, endOfToday());
 
 	function onReset() {
+		onChange({
+			from: startOfMonth(startOfToday()),
+			to: endOfToday(),
+		});
+
+		setOpen(false);
+	}
+
+	function onClear() {
 		onChange(defaultDate);
 
 		setOpen(false);
@@ -292,10 +301,18 @@ function FilterRequestAt({
 								<Button
 									variant='destructive'
 									size='sm'
-									onClick={onReset}
+									onClick={onClear}
 									className='flex-1'
 								>
 									Limpar <XCircleIcon />
+								</Button>
+								<Button
+									variant='outline'
+									size='sm'
+									onClick={onReset}
+									className='flex-1'
+								>
+									Resetar <XCircleIcon />
 								</Button>
 							</div>
 						</Fragment>

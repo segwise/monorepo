@@ -18,13 +18,27 @@ const useSearchParams = () =>
 	useQueryStates({
 		cursor: parseAsString,
 		search: parseAsString,
-		producers: parseAsArrayOf(parseAsString),
-		insuranceCompanies: parseAsArrayOf(parseAsString),
+		producers: parseAsArrayOf(parseAsString).withDefault([]).withOptions({
+			clearOnDefault: true,
+		}),
+		insuranceCompanies: parseAsArrayOf(parseAsString)
+			.withDefault([])
+			.withOptions({
+				clearOnDefault: true,
+			}),
 		requestAt: parseAsJson(SchemaSearchParamsQuoteSimple.shape.requestAt),
-		status: parseAsArrayOf(parseAsStringEnum(SchemaQuoteStatus.options)),
+		status: parseAsArrayOf(parseAsStringEnum(SchemaQuoteStatus.options))
+			.withDefault([])
+			.withOptions({
+				clearOnDefault: true,
+			}),
 		limit: parseAsInteger,
 		renewal: parseAsBoolean,
-		modality: parseAsArrayOf(parseAsStringEnum(SchemaModality.options)),
+		modality: parseAsArrayOf(parseAsStringEnum(SchemaModality.options))
+			.withDefault([])
+			.withOptions({
+				clearOnDefault: true,
+			}),
 		basisOfAnalysis: parseAsStringEnum(SchemaBasisOfAnalysis.options),
 	});
 
