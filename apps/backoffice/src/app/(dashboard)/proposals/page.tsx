@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 	title: 'Apólices',
 };
 
-function PoliciesPage() {
+function ProposalsPage() {
 	return (
 		<main className='grid grid-cols-1 gap-6 mt-1'>
 			<div className='flex flex-row items-center justify-between'>
@@ -93,10 +93,10 @@ function PoliciesPage() {
 						<TableSafesSimple type='proposals' />
 					</CardContent>
 				</Card>
-				<TablePagination type='policies' />
+				<TablePagination type='proposals' />
 			</div>
 		</main>
 	);
 }
 
-export default PoliciesPage;
+export default ProposalsPage;
