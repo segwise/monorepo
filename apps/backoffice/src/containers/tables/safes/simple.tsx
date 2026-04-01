@@ -71,9 +71,10 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 					<TableHead className='text-left w-55'>Seguradora</TableHead>
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
-					<TableHead className='text-center w-40'>
-						{type === 'proposals' ? 'Solicitado' : 'Efetivado'} Em
-					</TableHead>
+					<TableHead className='text-center w-40'>Solicitado Em</TableHead>
+					{type === 'policies' && (
+						<TableHead className='text-center w-40'>Efetivado Em</TableHead>
+					)}
 					<TableHead className='text-right w-40'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
@@ -294,21 +295,17 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 								</Badge>
 							</TableCell>
 							<TableCell className='text-center w-40'>
-								{type === 'proposals' && requestedAt && (
-									<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
-										{requestedAt
-											? formatDistanceToNowStrict(requestedAt)
-											: '-----------'}
-									</Badge>
-								)}
-								{type === 'policies' && effectivedAt && (
-									<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
-										{effectivedAt
-											? formatDistanceToNowStrict(effectivedAt)
-											: '-----------'}
-									</Badge>
-								)}
+								<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
+									{formatDistanceToNowStrict(requestedAt)}
+								</Badge>
 							</TableCell>
+							{type === 'policies' && effectivedAt && (
+								<TableCell className='text-center w-40'>
+									<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
+										{formatDistanceToNowStrict(effectivedAt)}
+									</Badge>
+								</TableCell>
+							)}
 							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
 								{/* <Button variant='outline' size='icon-sm' asChild>
 									<Link href={`/${type}/${id}`}>
