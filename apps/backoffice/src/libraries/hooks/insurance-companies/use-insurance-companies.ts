@@ -8,7 +8,7 @@ type UseInsuranceCompaniesProps = {
 };
 
 const useInsuranceCompaniesSimple = (
-	props: SearchParamsProps,
+	props: Partial<SearchParamsProps> = {},
 	{ enabled = true }: UseInsuranceCompaniesProps = {},
 ) =>
 	useQuery({

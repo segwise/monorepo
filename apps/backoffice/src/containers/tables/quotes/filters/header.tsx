@@ -39,19 +39,7 @@ import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-compani
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 
-type Filter =
-	| 'producers'
-	| 'insuranceCompanies'
-	| 'requestAt'
-	| 'modality'
-	| 'status';
-
-interface TableFiltersProps {
-	type: 'quotes';
-	filters: Array<Filter>;
-}
-
-function TableFilters({ filters }: TableFiltersProps) {
+function TableHeaderFilters() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const isSearchParams =
@@ -79,10 +67,6 @@ function TableFilters({ filters }: TableFiltersProps) {
 					)
 				) || !!searchParams.status?.length;
 
-	function getFilter(filter: Filter) {
-		return filters.includes(filter);
-	}
-
 	function clearSearchParams() {
 		setSearchParams({
 			producers: null,
@@ -98,11 +82,11 @@ function TableFilters({ filters }: TableFiltersProps) {
 		<Fragment>
 			<Separator orientation='vertical' className='h-7 mx-2' />
 			<div className='flex flex-row items-center justify-start gap-x-4 divide-x divide-border/50 *:pr-4'>
-				{getFilter('requestAt') && <FilterRequestAt />}
-				{getFilter('producers') && <FilterProducers />}
-				{getFilter('insuranceCompanies') && <FilterInsuranceCompanies />}
-				{getFilter('modality') && <FilterModality />}
-				{getFilter('status') && <FilterStatus />}
+				<FilterRequestAt />
+				<FilterProducers />
+				<FilterInsuranceCompanies />
+				<FilterModality />
+				<FilterStatus />
 				{isSearchParams && (
 					<Button
 						variant='link'
@@ -119,7 +103,7 @@ function TableFilters({ filters }: TableFiltersProps) {
 	);
 }
 
-function TableFiltersCount() {
+function TableHeaderFiltersCount() {
 	const [searchParams] = useSearchParams();
 
 	const isSearchParams = [
@@ -503,7 +487,7 @@ function FilterProducers() {
 function FilterInsuranceCompanies() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const { data, isPending } = useInsuranceCompaniesSimple({
+	const { data, isPending } = useInsuranceCompaniesSimple(undefined, {
 		enabled: !!searchParams.insuranceCompanies?.length,
 	});
 
@@ -808,4 +792,4 @@ function FilterStatus() {
 	);
 }
 
-export { TableFilters, TableFiltersCount };
+export { TableHeaderFilters, TableHeaderFiltersCount };

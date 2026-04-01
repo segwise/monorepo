@@ -18,7 +18,7 @@
         "@radix-ui/react-separator": "^1.1.8",
         "@radix-ui/react-slot": "^1.2.4",
         "@radix-ui/react-tooltip": "^1.2.8",
-        "@segwise/core": "^1.1.168",
+        "@segwise/core": "^1.1.177",
         "@tanstack/react-query": "^5.96.0",
         "better-auth": "^1.5.6",
         "class-variance-authority": "^0.7.1",
@@ -287,7 +287,7 @@
 
     "@radix-ui/rect": ["@radix-ui/rect@1.1.1", "", {}, "sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw=="],
 
-    "@segwise/core": ["@segwise/core@1.1.168", "https://npm.pkg.github.com/download/@segwise/core/1.1.168/1f8db090fad33eaa6159104a9b9316153f324515", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-kLJ2aOTTjS/O3XadMpnhPelGdI+GZKQBj2gGK9tidJJKJxw881+2zTz9mPoxefV2tK6iQiZp/DK2rPOetiRw/g=="],
+    "@segwise/core": ["@segwise/core@1.1.177", "https://npm.pkg.github.com/download/@segwise/core/1.1.177/fa5ac76c5b07f57cc087bd9fe224e139da470358", { "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-/Cs4633MVQgM/Aw8WDLoMQan73WRYHE+eLZZ5iQdYA8Z4GNgOrrOFwLdKGkxVNKzIdCAvbxOYuFEjEv4w0XA/g=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.0.0", "", {}, "sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA=="],
 

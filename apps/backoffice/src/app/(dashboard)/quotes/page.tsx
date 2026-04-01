@@ -5,12 +5,15 @@ import { InputSearch } from '@/components/input-search';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { CardQuotesCountAnalytics } from '@/containers/cards/quotes/count-analytics';
-import { CardQuotesStatusAnalytics } from '@/containers/cards/quotes/status-analytics';
-import { SheetFilters } from '@/containers/sheets/filters';
+import { CardAnalyticsStatusCount } from '@/containers/cards/analytics/status/count';
+import { CardAnalyticsStatus } from '@/containers/cards/analytics/status/status';
 import { FilterBasisOfAnalysis } from '@/containers/tables/filter-base-of-analytics';
-import { TableFilters, TableFiltersCount } from '@/containers/tables/filters';
 import { TablePagination } from '@/containers/tables/pagination';
+import {
+	TableHeaderFilters,
+	TableHeaderFiltersCount,
+} from '@/containers/tables/quotes/filters/header';
+import { TableSheetFilters } from '@/containers/tables/quotes/filters/sheet';
 import { TableQuotesSimple } from '@/containers/tables/quotes/simple';
 
 export const metadata: Metadata = {
@@ -23,32 +26,14 @@ function QuotesPage() {
 			<div className='flex flex-row items-center justify-between'>
 				<div className='flex flex-row items-center justify-start gap-x-2'>
 					<InputSearch />
-					<TableFilters
-						type='quotes'
-						filters={[
-							'producers',
-							'insuranceCompanies',
-							'requestAt',
-							'modality',
-							'status',
-						]}
-					/>
+					<TableHeaderFilters />
 				</div>
 				<div className='flex flex-row items-center justify-end gap-x-2'>
-					<SheetFilters
-						type='quotes'
-						filters={[
-							'producers',
-							'insuranceCompanies',
-							'requestAt',
-							'modality',
-							'status',
-						]}
-					>
+					<TableSheetFilters>
 						<Button variant='outline' className='dark:bg-primary'>
-							<FilterIcon /> Filtrar <TableFiltersCount />
+							<FilterIcon /> Filtrar <TableHeaderFiltersCount />
 						</Button>
-					</SheetFilters>
+					</TableSheetFilters>
 					<Button asChild variant='outline' className='dark:bg-primary'>
 						<Link href='/quotes/register'>
 							<PlusIcon /> Cadastrar
@@ -59,14 +44,19 @@ function QuotesPage() {
 			<Separator />
 			<div className='grid grid-cols-5 gap-x-3'>
 				<FilterBasisOfAnalysis className='col-span-full' />
-				<CardQuotesCountAnalytics title='Total Geral' />
-				<CardQuotesStatusAnalytics status='waiting' title='Pendentes' />
-				<CardQuotesStatusAnalytics
+				<CardAnalyticsStatusCount title='Total Geral' type='quotes' />
+				<CardAnalyticsStatus type='quotes' status='waiting' title='Pendentes' />
+				<CardAnalyticsStatus
+					type='quotes'
 					status={['quoting', 'quoted', 'sent']}
 					title='Em Andamento'
 				/>
-				<CardQuotesStatusAnalytics status='recused' title='Recusados' />
-				<CardQuotesStatusAnalytics status='confirmed' title='Confirmados' />
+				<CardAnalyticsStatus type='quotes' status='recused' title='Recusados' />
+				<CardAnalyticsStatus
+					type='quotes'
+					status='confirmed'
+					title='Confirmados'
+				/>
 			</div>
 			<div className='space-y-3'>
 				<Card className='p-0 overflow-hidden'>
@@ -74,7 +64,7 @@ function QuotesPage() {
 						<TableQuotesSimple />
 					</CardContent>
 				</Card>
-				<TablePagination queryKey={['quotes', 'listining', 'simple']} />
+				<TablePagination type='quotes' />
 			</div>
 		</main>
 	);

@@ -95,7 +95,7 @@ const DropdownMenuItem = forwardRef<
 	<Item
 		ref={ref}
 		className={cn(
-			'relative flex cursor-pointer select-none items-center gap-2 rounded px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent/50 focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0',
+			'relative flex cursor-pointer select-none items-center gap-2 rounded px-2 py-1.5 text-sm outline-none transition-colors focus:bg-muted-foreground/10 focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0',
 			inset && 'pl-8',
 			variant === 'destructive' &&
 				'bg-destructive/5! text-destructive! focus:bg-destructive/10! dark:focus:bg-destructive/20! focus:text-destructive! *:[svg]:text-destructive!',

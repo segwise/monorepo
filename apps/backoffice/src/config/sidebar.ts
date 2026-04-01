@@ -58,7 +58,6 @@ const sidebar: Array<{
 				title: 'Apólices',
 				pathname: '/policies',
 				icon: FileChartColumnIcon,
-				disabled: true,
 			},
 			{
 				title: 'Sinistros',

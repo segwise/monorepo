@@ -1,36 +1,23 @@
 import type { QuoteStatus } from '@segwise/core/types';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/libraries/api';
-import type { SearchParamsProps } from '@/libraries/search-params/quotes';
 
-const useQuotesAnalyticsCount = (
-	props: Omit<SearchParamsProps, 'status' | 'limit' | 'cursor'>,
-) =>
-	useQuery({
-		queryKey: ['quotes', 'analytics', 'count', props],
-		queryFn: async ({ signal }) =>
-			(
-				await api.get<{ current: number; before: number }>(
-					'/analytics/quotes/count',
-					{
-						params: props,
-						signal,
-					},
-				)
-			).data,
-	});
-
-const useQuotesAnalyticsStatus = (
-	props: Omit<SearchParamsProps, 'status' | 'limit' | 'cursor'> & {
+const useAnalyticsStatus = (
+	type: 'quotes' | 'safes',
+	{
+		cursor: _cursor,
+		limit: _limit,
+		...props
+	}: Record<string, unknown> & {
 		status: Array<QuoteStatus>;
 	},
 ) =>
 	useQuery({
-		queryKey: ['quotes', 'analytics', 'status', props],
+		queryKey: [type, 'analytics', 'status', props],
 		queryFn: async ({ signal }) =>
 			(
 				await api.get<{ current: number; before: number }>(
-					'/analytics/quotes/status',
+					`/analytics/${type}/status`,
 					{
 						params: props,
 						signal,
@@ -39,4 +26,28 @@ const useQuotesAnalyticsStatus = (
 			).data,
 	});
 
-export { useQuotesAnalyticsCount, useQuotesAnalyticsStatus };
+const useAnalyticsStatusCount = (
+	type: 'quotes' | 'safes',
+	{
+		cursor: _cursor,
+		limit: _limit,
+		...props
+	}: Record<string, unknown> & {
+		status: Array<QuoteStatus>;
+	},
+) =>
+	useQuery({
+		queryKey: [type, 'analytics', 'count', props],
+		queryFn: async ({ signal }) =>
+			(
+				await api.get<{ current: number; before: number }>(
+					`/analytics/${type}/count`,
+					{
+						params: props,
+						signal,
+					},
+				)
+			).data,
+	});
+
+export { useAnalyticsStatus, useAnalyticsStatusCount };

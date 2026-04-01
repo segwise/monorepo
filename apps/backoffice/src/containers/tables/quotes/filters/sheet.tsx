@@ -62,32 +62,7 @@ import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-compani
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 
-type Filter =
-	| 'producers'
-	| 'insuranceCompanies'
-	| 'requestAt'
-	| 'modality'
-	| 'status';
-
-interface SheetFiltersProps {
-	type: 'quotes';
-	filters: Array<Filter>;
-}
-
-function translate(type: SheetFiltersProps['type']) {
-	switch (type) {
-		case 'quotes':
-			return 'Cotações';
-		default:
-			return type;
-	}
-}
-
-function SheetFilters({
-	children,
-	type,
-	filters,
-}: React.PropsWithChildren<SheetFiltersProps>) {
+function TableSheetFilters({ children }: React.PropsWithChildren) {
 	const [open, setOpen] = useState<boolean>(false);
 
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -180,29 +155,19 @@ function SheetFilters({
 			<SheetTrigger asChild>{children}</SheetTrigger>
 			<SheetContent>
 				<SheetHeader>
-					<SheetTitle>Filtrar {translate(type)}</SheetTitle>
+					<SheetTitle>Filtrar Cotações</SheetTitle>
 					<SheetDescription>Consulta avançada de registros</SheetDescription>
 				</SheetHeader>
 				<Separator />
 				<div className='px-4 space-y-3'>
-					{filters.includes('requestAt') && (
-						<FilterRequestAt value={requestAt} onChange={setRequestAt} />
-					)}
-					{filters.includes('producers') && (
-						<FilterProducers value={producers} onChange={setProducers} />
-					)}
-					{filters.includes('insuranceCompanies') && (
-						<FilterInsuranceCompanies
-							value={insuranceCompanies}
-							onChange={setInsuranceCompanies}
-						/>
-					)}
-					{filters.includes('modality') && (
-						<FilterModality value={modalities} onChange={setModalities} />
-					)}
-					{filters.includes('status') && (
-						<FilterStatus value={status} onChange={setStatus} />
-					)}
+					<FilterRequestAt value={requestAt} onChange={setRequestAt} />
+					<FilterProducers value={producers} onChange={setProducers} />
+					<FilterInsuranceCompanies
+						value={insuranceCompanies}
+						onChange={setInsuranceCompanies}
+					/>
+					<FilterModality value={modalities} onChange={setModalities} />
+					<FilterStatus value={status} onChange={setStatus} />
 				</div>
 				<SheetFooter>
 					<Button onClick={applySearchParams}>
@@ -686,4 +651,4 @@ function FilterStatus({
 	);
 }
 
-export { SheetFilters };
+export { TableSheetFilters };

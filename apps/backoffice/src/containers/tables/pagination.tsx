@@ -17,16 +17,29 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { useSearchParams } from '@/libraries/search-params/quotes';
+import { useSearchParams as useSearchParamsQuotes } from '@/libraries/search-params/quotes';
+import { useSearchParams as useSearchParamsSafes } from '@/libraries/search-params/safes';
+
+const queryKeys = {
+	quotes: ['quotes', 'simple'],
+	proposals: ['proposals', 'simple'],
+	policies: ['policies', 'simple'],
+};
 
 function TablePagination({
-	queryKey,
+	type,
 }: {
-	queryKey: ['quotes', 'listining', 'simple'];
+	type: 'quotes' | 'proposals' | 'policies';
 }) {
 	const queryCllient = useQueryClient();
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParamsQuotes, setSearchParamsQuotes] = useSearchParamsQuotes();
+	const [searchParamsSafes, setSearchParamsSafes] = useSearchParamsSafes();
+
+	const [searchParams, setSearchParams] =
+		type === 'quotes'
+			? [searchParamsQuotes, setSearchParamsQuotes]
+			: [searchParamsSafes, setSearchParamsSafes];
 
 	const [{ total, previous, next, pages }, setState] = useState<{
 		total: number;
@@ -41,10 +54,15 @@ function TablePagination({
 	});
 
 	useEffect(() => {
-		const { basisOfAnalysis: _basisOfAnalysis, ...params } = searchParams;
+		const {
+			basisOfAnalysis: _basisOfAnalysis,
+			// @ts-expect-error
+			effectived: _effectived,
+			...params
+		} = searchParams;
 
 		const observer = new QueryObserver(queryCllient, {
-			queryKey: [...queryKey, params],
+			queryKey: [...queryKeys[type], params],
 		});
 
 		const unsubscribe = observer.subscribe((state) => {
@@ -82,7 +100,7 @@ function TablePagination({
 		});
 
 		return unsubscribe;
-	}, [queryCllient, queryKey, searchParams, setSearchParams]);
+	}, [queryCllient, type, searchParams, setSearchParams]);
 
 	return (
 		<div className='flex flex-row items-center justify-between **:gap-x-2'>
