@@ -53,9 +53,7 @@ async function proxy(request: NextRequest) {
 
 	if (session && pathname === '/dashboard') {
 		if (session.user.role === 'admin') {
-			return NextResponse.rewrite(
-				new URL(`/${'producer' || session.user.role}`, request.url),
-			);
+			return NextResponse.rewrite(new URL(`/${'producer'}`, request.url));
 		}
 	}
 
