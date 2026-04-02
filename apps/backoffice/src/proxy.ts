@@ -52,6 +52,14 @@ async function proxy(request: NextRequest) {
 		return NextResponse.redirect(redirectTo);
 	}
 
+	if (session && pathname === '/dashboard') {
+		if (session?.user.role !== 'admin') {
+			return NextResponse.rewrite(
+				new URL(`/reports/${session.user.role}`, request.url),
+			);
+		}
+	}
+
 	return NextResponse.next();
 }
 

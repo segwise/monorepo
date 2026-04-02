@@ -227,48 +227,46 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 							</TableCell>
 							<TableCell className='text-left w-55'>
 								<div className='flex flex-row items-center justify-start'>
-									{!!insuranceCompany && (
-										<div className='flex flex-row items-center justify-start gap-x-2'>
-											<Avatar className='size-7 rounded-full bg-background'>
-												{!!insuranceCompanies?.find(
-													(props) => props.id === insuranceCompany,
-												)?.icon && (
-													<AvatarImage
-														src={
-															insuranceCompanies?.find(
-																(props) => props.id === insuranceCompany,
-															)?.icon as string
-														}
-														width={52}
-														height={52}
-														alt='Marca do veículo'
-														priority
-													/>
-												)}
-												<AvatarFallback>
-													{insuranceCompanies
-														?.find((props) => props.id === insuranceCompany)
-														?.name.slice(0, 2)
-														.toUpperCase() || 'SP'}
-												</AvatarFallback>
-											</Avatar>
-											{!!expiration && (
-												<div className='flex flex-col items-start justify-start'>
-													<span className='block text-xs font-medium truncate line-clamp-1'>
-														Final da Vigência
-													</span>
-													<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
-														{format(expiration, 'dd/MM/yyyy')}{' '}
-														{isAfter(expiration, new Date()) &&
-															differenceInDays(expiration, new Date()) <= 7 &&
-															`- ${formatDistanceToNow(expiration)
-																.replace('cerca de ', '')
-																.replace('mais de ', '')}`}
-													</span>
-												</div>
+									<div className='flex flex-row items-center justify-start gap-x-2'>
+										<Avatar className='size-7 rounded-full bg-background'>
+											{!!insuranceCompanies?.find(
+												(props) => props.id === insuranceCompany,
+											)?.icon && (
+												<AvatarImage
+													src={
+														insuranceCompanies?.find(
+															(props) => props.id === insuranceCompany,
+														)?.icon as string
+													}
+													width={52}
+													height={52}
+													alt='Marca do veículo'
+													priority
+												/>
 											)}
-										</div>
-									)}
+											<AvatarFallback>
+												{insuranceCompanies
+													?.find((props) => props.id === insuranceCompany)
+													?.name.slice(0, 2)
+													.toUpperCase() || 'SS'}
+											</AvatarFallback>
+										</Avatar>
+										{!!expiration && (
+											<div className='flex flex-col items-start justify-start'>
+												<span className='block text-xs font-medium truncate line-clamp-1'>
+													Final da Vigência
+												</span>
+												<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
+													{format(expiration, 'dd/MM/yyyy')}{' '}
+													{isAfter(expiration, new Date()) &&
+														differenceInDays(expiration, new Date()) <= 7 &&
+														`- ${formatDistanceToNow(expiration)
+															.replace('cerca de ', '')
+															.replace('mais de ', '')}`}
+												</span>
+											</div>
+										)}
+									</div>
 								</div>
 							</TableCell>
 							<TableCell className='text-center w-40'>

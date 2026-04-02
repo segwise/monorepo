@@ -17,7 +17,7 @@ const useSafesDeleteById = (id: string) =>
 						queryKey: ['policies'],
 					}),
 				]);
-			}, 300);
+			}, 150);
 		},
 	});
 

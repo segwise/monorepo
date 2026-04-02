@@ -12,7 +12,7 @@ const useQuotesDeleteById = (id: string) =>
 				await ctx.client.invalidateQueries({
 					queryKey: ['quotes'],
 				});
-			}, 300);
+			}, 150);
 		},
 	});
 

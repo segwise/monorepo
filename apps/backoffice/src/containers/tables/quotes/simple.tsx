@@ -252,7 +252,7 @@ function TableQuotesSimple() {
 													{insuranceCompanies
 														?.find((props) => props.id === insuranceCompany)
 														?.name.slice(0, 2)
-														.toUpperCase() || 'SP'}
+														.toUpperCase() || 'SS'}
 												</AvatarFallback>
 											</Avatar>
 											{!!expiration && (

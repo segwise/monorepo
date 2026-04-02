@@ -899,7 +899,10 @@ function FormQuoteRegister() {
 													itemToStringLabel={(item) => item.name}
 													itemToStringValue={(item) => item.id}
 												>
-													<ComboboxInput placeholder='Selecionar' />
+													<ComboboxInput
+														aria-invalid={fieldState.invalid}
+														placeholder='Selecionar'
+													/>
 													<ComboboxContent>
 														<ComboboxEmpty>
 															Nenhum registro encontrado.
