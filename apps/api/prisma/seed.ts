@@ -1855,6 +1855,19 @@ async function seed() {
 			}),
 		]);
 
+		await database.broker
+			.create({
+				data: {
+					name: 'Xcar Corretora de Seguros e Empreendimentos Financeiros LTDA',
+					fantasy: 'Xcar Corretora de Seguros',
+					cnpj: '07581995000170',
+				},
+				select: {
+					id: true,
+				},
+			})
+			.then((response) => response.id);
+
 		for (let i = 0; i < 10; i++) {
 			const id = Bun.randomUUIDv7();
 
@@ -1880,16 +1893,19 @@ async function seed() {
 				}
 			}
 
-			await database.user.create({
-				data: {
-					id,
+			await auth.api.createUser({
+				body: {
 					name: faker.person.fullName(),
 					email: faker.internet.email(),
-					referral: generateReferral(),
+					// @ts-expect-error
 					role: Role.producer,
-					...(pathImage && {
-						image: pathImage,
-					}),
+					data: {
+						id,
+						referral: generateReferral(),
+						...(pathImage && {
+							image: pathImage,
+						}),
+					},
 				},
 			});
 		}

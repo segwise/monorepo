@@ -31,6 +31,9 @@ model User {
   banReason  String?   @map("ban_reason")
   banExpires DateTime? @map("ban_expires") @db.Date
 
+  brokerId String? @map("broker_id") @db.Uuid
+  broker   Broker? @relation("broker_to_user", fields: [brokerId], references: [id], onDelete: Restrict)
+
   sessions Session[] @relation("session_to_user")
   accounts Account[] @relation("account_to_user")
 
@@ -117,9 +120,9 @@ model TemporaryInsured {
 
   cpf               String?        @db.VarChar(11)
   birth             DateTime?      @db.Date
-  age               Int?
+  age               Int?           @db.Integer
   maritalStatus     MaritalStatus? @map("marital_status")
-  qualificationTime Int?           @map("qualification_time")
+  qualificationTime Int?           @map("qualification_time") @db.Integer
   profession        String?
 
   quotes Quote[] @relation("quote_to_temporary_insured")
@@ -142,11 +145,14 @@ model Insured {
 
   cpf           String        @db.VarChar(11)
   birth         DateTime      @db.Date
-  age           Int
+  age           Int           @db.Integer
   maritalStatus MaritalStatus @map("marital_status")
 
-  qualificationTime Int?    @map("qualification_time")
+  qualificationTime Int?    @map("qualification_time") @db.Integer
   profession        String?
+
+  brokerId String? @map("broker_id") @db.Uuid
+  broker   Broker? @relation("broker_to_insured", fields: [brokerId], references: [id], onDelete: Restrict)
 
   quotes Quote[] @relation("insured_to_quote")
   safes  Safe[]  @relation("insured_to_safe")
@@ -204,6 +210,9 @@ model Safe {
 
   isExternal Boolean? @map("is_external")
 
+  producerId String? @map("producer_id") @db.Uuid
+  producer   User?   @relation("producer_safes", fields: [producerId], references: [id], onDelete: Restrict)
+
   temporaryInsuredId String?           @map("temporary_insured_id") @db.Uuid
   temporaryInsured   TemporaryInsured? @relation("safe_to_temporary_insured", fields: [temporaryInsuredId], references: [id], onDelete: Restrict, map: "temporary_insured")
 
@@ -223,12 +232,23 @@ model Safe {
   insuranceCompany   InsuranceCompany? @relation("insurance_company_to_safe", fields: [insuranceCompanyId], references: [id], onDelete: Restrict, map: "insurance_company")
 
   expiration DateTime @db.Date
-  franchise  Decimal? @db.Decimal(10, 2)
 
   safeVehicle SafeVehicle? @relation("safe_to_safe_vehicle", map: "safe_vehicle")
 
-  producerId String? @map("producer_id") @db.Uuid
-  producer   User?   @relation("producer_safes", fields: [producerId], references: [id], onDelete: Restrict)
+  installments Int?     @db.Integer
+  award        Decimal? @db.Decimal(10, 2)
+  franchise    Decimal? @db.Decimal(10, 2)
+  commission   Decimal? @db.Decimal(10, 2)
+
+  commissionOfType              TypeOfCommission? @map("commission_of_type")
+  commissionPercentage          Int?              @map("commission_percentage") @db.Integer
+  commissionDiscountPercentage  Int?              @map("commission_discount_percentage") @db.Integer
+  commissionDiscountFixed       Decimal?          @map("commission_discount_fixed") @db.Decimal(10, 2)
+  commissionInstallments        Int?              @map("commission_installments") @db.Integer
+  commissionMonthlyInterest     Int?              @map("commission_monthly_interest") @db.Integer
+  commissionPayInterestStarting Int?              @map("commission_pay_interest_starting") @db.Integer
+  commissionTypeOfInterest      TypeOfInterest?   @map("commission_type_of_interest")
+  commissionPaymentDate         DateTime?         @map("commission_payment_date") @db.Timestamptz
 
   status        StatusSafe @default(active)
   statusAt      DateTime   @default(now()) @map("status_at") @db.Timestamptz
@@ -275,7 +295,7 @@ model QuoteVehicle {
   driverCPF   String?   @map("driver_cpf") @db.VarChar(11)
   driverName  String?   @map("driver_name")
   driverBirth DateTime? @map("driver_birth") @db.Date
-  driverAge   Int?      @map("driver_age")
+  driverAge   Int?      @map("driver_age") @db.Integer
   driverPhone String?   @map("driver_phone") @db.VarChar(13)
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -302,6 +322,12 @@ model SafeVehicle {
 
   overnightPostalCode String @map("overnight_postal_code") @db.VarChar(8)
 
+  driverCPF   String?   @map("driver_cpf") @db.VarChar(11)
+  driverName  String?   @map("driver_name")
+  driverBirth DateTime? @map("driver_birth") @db.Date
+  driverAge   Int?      @map("driver_age") @db.Integer
+  driverPhone String?   @map("driver_phone") @db.VarChar(13)
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -320,7 +346,7 @@ model Vehicle {
   manufacturer   ManufacturerVehicle @relation("manufacturer_vehicle_to_vehicle", fields: [manufacturerId], references: [id], onDelete: Restrict)
 
   model     String
-  modelYear Int    @map("model_year")
+  modelYear Int    @map("model_year") @db.Integer
 
   exchange VehicleExchange?
 
@@ -347,7 +373,7 @@ model VehicleWithoutPlate {
   manufacturer   ManufacturerVehicle? @relation("manufacturer_vehicle_to_vehicle_without_plate", fields: [manufacturerId], references: [id], onDelete: Restrict)
 
   model     String?
-  modelYear Int?    @map("model_year")
+  modelYear Int?    @map("model_year") @db.Integer
 
   exchange VehicleExchange?
 
@@ -399,7 +425,7 @@ model InsuranceCompany {
 model InsuranceCompanyCategoryContact {
   id String @id @default(uuid(7)) @db.Uuid
 
-  index Int
+  index Int @db.Integer
 
   label String
 
@@ -418,7 +444,7 @@ model InsuranceCompanyCategoryContact {
 model InsuranceCompanyContact {
   id String @id @default(uuid(7)) @db.Uuid
 
-  index Int
+  index Int @db.Integer
 
   coverage InsuranceCompanyContactCoverage
 
@@ -434,6 +460,27 @@ model InsuranceCompanyContact {
   @@unique([categoryId, value])
   @@unique([categoryId, index])
   @@map("insurance_companies_contacts")
+}
+
+model Broker {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  name    String
+  fantasy String?
+  icon    String?
+  image   String?
+
+  cnpj String @db.VarChar(14)
+
+  insureds Insured[] @relation("broker_to_insured")
+  users    User[]    @relation("broker_to_user")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([cnpj])
+  @@index([name])
+  @@map("brokers")
 }
 
 enum Role {
@@ -521,4 +568,15 @@ enum GarageSchool {
 enum InsuranceCompanyContactCoverage {
   all_regions
   capitals_and_metropolitan_regions
+}
+
+enum TypeOfCommission {
+  by_the_brokerage_commission
+  by_the_net_premium
+  fixed_value
+}
+
+enum TypeOfInterest {
+  simple
+  compound
 }

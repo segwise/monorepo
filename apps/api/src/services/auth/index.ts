@@ -104,6 +104,13 @@ const auth = betterAuth({
 				required: true,
 				index: true,
 				unique: true,
+				returned: true,
+			},
+			brokerId: {
+				type: 'string',
+				required: false,
+				index: true,
+				returned: true,
 			},
 		},
 		changeEmail: {
