@@ -59,17 +59,6 @@ const PRODUCER = {
 	avatar: 'FS',
 };
 
-const STATE_COLORS: Record<string, string> = {
-	SP: '#6366f1',
-	RJ: '#10b981',
-	MG: '#f59e0b',
-	RS: '#3b82f6',
-	PR: '#ef4444',
-	SC: '#8b5cf6',
-	BA: '#f97316',
-	PE: '#14b8a6',
-};
-
 const PERIODS: Period[] = [
 	{
 		label: 'Fevereiro 2025',
@@ -339,10 +328,6 @@ function buildCepGroups(insurances: Insurance[]): CepGroup[] {
 	return Object.values(map).sort((a, b) => b.count - a.count);
 }
 
-const TYPE_INITIALS: Record<string, string> = {
-	car: 'AU',
-};
-
 function BottomSheet({
 	open,
 	onClose,
@@ -566,7 +551,6 @@ function CepSheet({
 	const yearInsurances = ALL_YEAR_INSURANCES.filter((i) => i.cep === cep);
 	const months = groupByMonth(yearInsurances, (i) => i.issueDate);
 	const annualCommission = yearInsurances.reduce((s, i) => s + i.commission, 0);
-	const color = STATE_COLORS[state] ?? '#94a3b8';
 
 	return (
 		<BottomSheet
@@ -663,31 +647,17 @@ function ProducerDashboard() {
 				onClose={() => setSelectedCep(null)}
 			/>
 			<div
-				className='relative overflow-hidden px-5 pt-12 pb-8'
+				className='relative overflow-hidden px-3 pt-12 pb-6'
 				style={{
-					background: period.paid
-						? 'linear-gradient(135deg, #052e16 0%, #14532d 60%, #052e16 100%)'
-						: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)',
+					background:
+						'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)',
 				}}
 			>
-				<div
-					className='absolute -top-16 -right-16 h-48 w-48 rounded-full opacity-20 blur-3xl'
-					style={{ background: period.paid ? '#22c55e' : '#6366f1' }}
-				/>
-				<div
-					className='absolute top-8 -left-12 h-36 w-36 rounded-full opacity-15 blur-3xl'
-					style={{ background: period.paid ? '#4ade80' : '#8b5cf6' }}
-				/>
+				<div className='absolute -top-16 -right-16 h-48 w-48 rounded-full opacity-20 blur-3xl bg-[#6366f1]' />
+				<div className='absolute top-8 -left-12 h-36 w-36 rounded-full opacity-15 blur-3xl bg-[#8b5cf6]' />
 				<div className='relative flex items-center justify-between mb-8'>
 					<div className='flex items-center gap-3'>
-						<div
-							className='h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0'
-							style={{
-								background: period.paid
-									? 'rgba(34,197,94,0.85)'
-									: 'rgba(99,102,241,0.9)',
-							}}
-						>
+						<div className='h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 bg-indigo-500'>
 							{PRODUCER.avatar}
 						</div>
 						<div>
@@ -711,7 +681,7 @@ function ProducerDashboard() {
 						</button>
 					</div>
 					<div
-						className='flex items-center gap-1 rounded-full px-1 py-1'
+						className='flex items-center rounded-full px-1 py-1'
 						style={{
 							background: 'rgba(255,255,255,0.08)',
 							border: '1px solid rgba(255,255,255,0.1)',
@@ -721,22 +691,22 @@ function ProducerDashboard() {
 							type='button'
 							onClick={() => canPrev && setPeriodIdx((i) => i - 1)}
 							disabled={!canPrev}
-							className='h-6 w-6 flex items-center justify-center rounded-full transition-colors disabled:opacity-30'
+							className='size-6 flex items-center justify-center rounded-full transition-colors disabled:opacity-30'
 							style={{ color: 'rgba(255,255,255,0.7)' }}
 						>
-							<ChevronLeft className='h-3.5 w-3.5' />
+							<ChevronLeft className='size-3.5' />
 						</button>
-						<span className='text-white text-xs font-medium px-1 min-w-[88px] text-center'>
+						<span className='text-white text-xs font-medium px-1 text-center'>
 							{period.label}
 						</span>
 						<button
 							type='button'
 							onClick={() => canNext && setPeriodIdx((i) => i + 1)}
 							disabled={!canNext}
-							className='h-6 w-6 flex items-center justify-center rounded-full transition-colors disabled:opacity-30'
+							className='size-6 flex items-center justify-center rounded-full transition-colors disabled:opacity-30'
 							style={{ color: 'rgba(255,255,255,0.7)' }}
 						>
-							<ChevronRight className='h-3.5 w-3.5' />
+							<ChevronRight className='size-3.5' />
 						</button>
 					</div>
 				</div>
@@ -799,7 +769,7 @@ function ProducerDashboard() {
 			</div>
 			<div className='rounded-2xl overflow-hidden'>
 				<Tabs defaultValue='insurances'>
-					<TabsList className='w-full bg-white rounded-none pt-1 px-1 pb-1.5 h-11.5 border-b'>
+					<TabsList className='w-full bg-white rounded-none py-1 px-2 h-11.5 border-b'>
 						<TabsTrigger
 							value='insurances'
 							className='flex-1 text-sm rounded-sm h-full data-[state=active]:bg-[#1e293b] data-[state=active]:text-white data-[state=active]:shadow-sm'
@@ -814,7 +784,7 @@ function ProducerDashboard() {
 						</TabsTrigger>
 					</TabsList>
 					<TabsContent value='insurances' className='mt-0'>
-						<div className='divide-y divide-zinc-200 px-5'>
+						<div className='divide-y divide-zinc-200 px-3'>
 							{period.insurances.map((ins) => (
 								<div key={ins.id} className='flex items-center gap-2 py-3.5'>
 									<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
@@ -855,7 +825,7 @@ function ProducerDashboard() {
 						</div>
 					</TabsContent>
 					<TabsContent value='cep' className='mt-0'>
-						<div className='divide-y divide-zinc-200 px-5'>
+						<div className='divide-y divide-zinc-200 px-3'>
 							{groupsCeps.map((group) => (
 								// biome-ignore lint/a11y/noStaticElementInteractions: div
 								// biome-ignore lint/a11y/useKeyWithClickEvents: div
