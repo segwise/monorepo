@@ -10,12 +10,15 @@ import {
 	Clock,
 	Eye,
 	EyeOff,
+	Loader2Icon,
 	LogOut,
 	X,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useSignOut } from '@/libraries/hooks/auth/use-sign-out';
 
 type Insurance = {
 	id: string;
@@ -626,6 +629,23 @@ function ProducerDashboard() {
 
 	const groupsCeps = buildCepGroups(ALL_YEAR_INSURANCES);
 
+	const { mutate: signOut, isPending: isPendingSignout } = useSignOut();
+
+	function logout() {
+		toast.dismiss();
+
+		signOut(undefined, {
+			onSuccess(_data, _variables, _result, ctx) {
+				ctx.client.clear();
+
+				window.location.reload();
+			},
+			onError(error) {
+				toast.error(error.message);
+			},
+		});
+	}
+
 	useEffect(() => {
 		const isVisibleBalance = localStorage.getItem('visible:balance');
 
@@ -635,7 +655,7 @@ function ProducerDashboard() {
 	}, []);
 
 	return (
-		<div className='min-h-screen font-sans'>
+		<div className='min-h-screen font-sans max-w-md mx-auto'>
 			<AllInsurancesSheet
 				open={showAllInsurances}
 				onClose={() => setShowAllInsurances(false)}
@@ -670,14 +690,20 @@ function ProducerDashboard() {
 						</div>
 						<button
 							type='button'
-							className='ml-1 h-7 w-7 rounded-full flex items-center justify-center transition-colors'
+							className='ml-1 h-7 w-7 rounded-full flex items-center justify-center transition-colors cursor-pointer'
 							style={{
 								background: 'rgba(255,255,255,0.08)',
 								border: '1px solid rgba(255,255,255,0.12)',
 							}}
 							title='Sair'
+							onClick={logout}
 						>
-							<LogOut className='h-3.5 w-3.5 text-white/50' />
+							{!isPendingSignout && (
+								<LogOut className='size-3.5 text-white/50' />
+							)}
+							{!!isPendingSignout && (
+								<Loader2Icon className='size-3.5 text-white/50 animate-spin' />
+							)}
 						</button>
 					</div>
 					<div
@@ -727,9 +753,9 @@ function ProducerDashboard() {
 							className='text-white/30 hover:text-white/60 transition-colors'
 						>
 							{hidden ? (
-								<EyeOff className='h-3.5 w-3.5' />
+								<EyeOff className='size-3.5' />
 							) : (
-								<Eye className='h-3.5 w-3.5' />
+								<Eye className='size-3.5' />
 							)}
 						</button>
 					</div>
