@@ -1,15 +1,16 @@
 'use client';
 
 import {
-	ArrowUpRight,
+	ArrowUpRightIcon,
+	Building2Icon,
 	CalendarCheck,
 	ChevronLeft,
 	ChevronRight,
+	ChevronRightIcon,
 	Clock,
 	Eye,
 	EyeOff,
 	LogOut,
-	TrendingUp,
 	X,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -92,7 +93,7 @@ const PERIODS: Period[] = [
 				commission: 132.3,
 				issueDate: '11/02/2025',
 				cep: '01310-100',
-				state: 'SP',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5799',
@@ -102,7 +103,7 @@ const PERIODS: Period[] = [
 				commission: 459,
 				issueDate: '09/02/2025',
 				cep: '20040-020',
-				state: 'RJ',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5798',
@@ -112,7 +113,7 @@ const PERIODS: Period[] = [
 				commission: 877.5,
 				issueDate: '03/02/2025',
 				cep: '01310-100',
-				state: 'SP',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5797',
@@ -122,7 +123,7 @@ const PERIODS: Period[] = [
 				commission: 162,
 				issueDate: '06/02/2025',
 				cep: '90010-150',
-				state: 'RS',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5796',
@@ -132,7 +133,7 @@ const PERIODS: Period[] = [
 				commission: 405,
 				issueDate: '14/02/2025',
 				cep: '80010-010',
-				state: 'PR',
+				state: 'Recife - PE',
 			},
 		],
 	},
@@ -158,7 +159,7 @@ const PERIODS: Period[] = [
 				commission: 526.5,
 				issueDate: '29/03/2025',
 				cep: '01310-100',
-				state: 'SP',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5809',
@@ -168,7 +169,7 @@ const PERIODS: Period[] = [
 				commission: 168.75,
 				issueDate: '26/03/2025',
 				cep: '30112-000',
-				state: 'MG',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5808',
@@ -178,7 +179,7 @@ const PERIODS: Period[] = [
 				commission: 1107,
 				issueDate: '19/03/2025',
 				cep: '20040-020',
-				state: 'RJ',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5807',
@@ -188,7 +189,7 @@ const PERIODS: Period[] = [
 				commission: 108,
 				issueDate: '24/03/2025',
 				cep: '80010-010',
-				state: 'PR',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5806',
@@ -198,7 +199,7 @@ const PERIODS: Period[] = [
 				commission: 432,
 				issueDate: '12/03/2025',
 				cep: '01310-100',
-				state: 'SP',
+				state: 'Recife - PE',
 			},
 		],
 	},
@@ -224,7 +225,7 @@ const PERIODS: Period[] = [
 				commission: 567,
 				issueDate: '02/04/2025',
 				cep: '01310-100',
-				state: 'SP',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5820',
@@ -234,7 +235,7 @@ const PERIODS: Period[] = [
 				commission: 418.5,
 				issueDate: '28/03/2025',
 				cep: '80010-010',
-				state: 'PR',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5819',
@@ -244,7 +245,7 @@ const PERIODS: Period[] = [
 				commission: 182.25,
 				issueDate: '25/03/2025',
 				cep: '01310-100',
-				state: 'SP',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5818',
@@ -254,7 +255,7 @@ const PERIODS: Period[] = [
 				commission: 120.15,
 				issueDate: '20/03/2025',
 				cep: '30112-000',
-				state: 'MG',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5817',
@@ -264,7 +265,7 @@ const PERIODS: Period[] = [
 				commission: 945,
 				issueDate: '15/04/2025',
 				cep: '20040-020',
-				state: 'RJ',
+				state: 'Recife - PE',
 			},
 			{
 				id: 'APL-5816',
@@ -274,13 +275,13 @@ const PERIODS: Period[] = [
 				commission: 378,
 				issueDate: '10/04/2025',
 				cep: '01310-100',
-				state: 'SP',
+				state: 'Recife - PE',
 			},
 		],
 	},
 ];
 
-const ALL_YEAR_INSURANCES = PERIODS.flatMap((p) => p.insurances).reverse();
+const ALL_YEAR_INSURANCES = PERIODS.flatMap((p) => p.insurances);
 
 const MONTH_NAMES: Record<string, string> = {
 	'01': 'Janeiro',
@@ -306,19 +307,22 @@ function groupByMonth<T>(
 	getDate: (item: T) => string,
 ): { key: string; label: string; items: T[] }[] {
 	const map: Record<string, T[]> = {};
+
 	for (const item of items) {
 		const parts = getDate(item).split('/');
 		const key = `${parts[2]}-${parts[1]}`;
 		if (!map[key]) map[key] = [];
 		map[key].push(item);
 	}
+
 	return Object.entries(map)
 		.sort((a, b) => a[0].localeCompare(b[0]))
 		.map(([key, list]) => ({
 			key,
 			label: `${MONTH_NAMES[key.split('-')[1]] ?? key.split('-')[1]} ${key.split('-')[0]}`,
 			items: list,
-		}));
+		}))
+		.reverse();
 }
 
 function buildCepGroups(insurances: Insurance[]): CepGroup[] {
@@ -425,7 +429,7 @@ function BottomSheet({
 						<X className='h-4 w-4' />
 					</button>
 				</div>
-				<div className='overflow-y-car flex-1 min-h-0'>{children}</div>
+				<div className='overflow-y-auto flex-1 min-h-0'>{children}</div>
 				{footer && (
 					<div className='shrink-0 border-t border-zinc-100'>{footer}</div>
 				)}
@@ -446,8 +450,7 @@ function MonthHeader({
 			<span className='text-xs text-zinc-500 uppercase tracking-widest font-semibold'>
 				{label}
 			</span>
-			<div className='flex items-center gap-1 text-emerald-600'>
-				<TrendingUp className='h-3 w-3' />
+			<div className='flex items-center gap-1 text-zinc-800'>
 				<span className='text-xs font-semibold'>{fmt(commission)}</span>
 			</div>
 		</div>
@@ -530,16 +533,14 @@ function AllInsurancesSheet({
 									<p className='text-sm font-medium truncate text-zinc-900'>
 										{ins.client}
 									</p>
-									<p className='text-xs text-zinc-500'>
-										{ins.id} · {ins.issueDate}
-									</p>
+									<p className='text-xs text-zinc-500'>{ins.id}</p>
 								</div>
 								<div className='flex flex-col items-end gap-1 shrink-0'>
-									<span className='text-sm font-semibold text-zinc-800'>
-										{fmt(ins.netPremium)}
+									<span className='text-sm font-semibold text-emerald-600'>
+										{fmt(ins.commission)}
 									</span>
-									<span className='text-xs font-semibold text-emerald-600'>
-										+{fmt(ins.commission)}
+									<span className='text-xs text-zinc-500 font-medium'>
+										{ins.issueDate}
 									</span>
 								</div>
 							</div>
@@ -572,7 +573,7 @@ function CepSheet({
 			open={open}
 			onClose={onClose}
 			title={cep}
-			subtitle={`${state} · ${yearInsurances.length} seguro${yearInsurances.length !== 1 ? 's' : ''} no ano`}
+			subtitle={`${state} · ${yearInsurances.length} Seguro${yearInsurances.length !== 1 ? 's' : ''} no Ano`}
 			footer={
 				yearInsurances.length > 0 ? (
 					<AnnualFooter
@@ -583,167 +584,44 @@ function CepSheet({
 				) : undefined
 			}
 		>
-			{months.length === 0 ? (
-				<p className='text-xs text-zinc-400 text-center py-6'>
-					Sem seguros registrados
-				</p>
-			) : (
-				months.map(({ key, label, items }) => (
-					<div key={key}>
-						<MonthHeader
-							label={label}
-							commission={items.reduce((s, i) => s + i.commission, 0)}
-						/>
-						<div className='divide-y divide-zinc-200 px-5'>
-							{items.map((ins) => {
-								const initials =
-									TYPE_INITIALS[ins.type] ?? ins.type.slice(0, 2).toUpperCase();
-								return (
-									<div key={ins.id} className='flex items-center gap-3.5 py-3'>
-										<div
-											className='size-10 flex items-center justify-center text-[11px] font-bold text-white shrink-0'
-											style={{ background: color }}
-										>
-											{initials}
-										</div>
-										<div className='flex-1 min-w-0'>
-											<p className='text-sm font-medium text-zinc-900 truncate'>
-												{ins.client}
-											</p>
-											<p className='text-xs text-zinc-400'>
-												{ins.id} · {ins.issueDate}
-											</p>
-										</div>
-										<div className='flex flex-col items-end gap-1 shrink-0'>
-											<span className='text-sm font-semibold text-zinc-800'>
-												{fmt(ins.netPremium)}
-											</span>
-											<span className='text-[10px] font-semibold text-emerald-600'>
-												+{fmt(ins.commission)}
-											</span>
-										</div>
-									</div>
-								);
-							})}
-						</div>
-					</div>
-				))
-			)}
-		</BottomSheet>
-	);
-}
-
-function CepListing({
-	periodInsurances,
-	periodLabel,
-	onSelectCep,
-}: {
-	periodInsurances: Insurance[];
-	periodLabel: string;
-	onSelectCep: (cep: string, state: string) => void;
-}) {
-	const [viewMode, setViewMode] = useState<'year' | 'month'>('year');
-
-	const sourceInsurances =
-		viewMode === 'year' ? ALL_YEAR_INSURANCES : periodInsurances;
-	const groups = buildCepGroups(sourceInsurances);
-	const maxCount = Math.max(...groups.map((g) => g.count), 1);
-
-	return (
-		<>
-			<div className='px-5 pt-4 pb-3 flex items-center justify-between'>
-				<p className='text-[11px] text-zinc-400 uppercase tracking-widest'>
-					{viewMode === 'year' ? 'Ano completo' : periodLabel}
-				</p>
-				<div className='flex items-center bg-zinc-100 rounded-lg p-0.5 gap-0.5'>
-					{(['year', 'month'] as const).map((mode) => (
-						<button
-							key={mode}
-							onClick={() => setViewMode(mode)}
-							className='px-3 py-1 rounded-md text-[11px] font-semibold transition-all'
-							style={{
-								background: viewMode === mode ? 'white' : 'transparent',
-								color: viewMode === mode ? '#18181b' : '#a1a1aa',
-								boxShadow:
-									viewMode === mode ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-							}}
-						>
-							{mode === 'year' ? 'Ano' : 'Mês'}
-						</button>
-					))}
-				</div>
-			</div>
-
-			{/* Cards de CEP */}
-			{groups.length === 0 ? (
-				<p className='text-xs text-zinc-400 text-center py-8'>
-					Sem seguros no período
-				</p>
-			) : (
-				<div className='px-4 pb-4 flex flex-col gap-2'>
-					{groups.map((group) => {
-						const color = STATE_COLORS[group.state] ?? '#94a3b8';
-						const barPct = Math.round((group.count / maxCount) * 100);
-						return (
-							<button
-								key={group.cep}
-								onClick={() => onSelectCep(group.cep, group.state)}
-								className='w-full text-left rounded-xl border border-zinc-100 bg-zinc-50 hover:bg-zinc-100 transition-colors overflow-hidden'
-							>
-								{/* Color accent bar */}
-								<div className='h-1 w-full' style={{ background: color }} />
-
-								<div className='px-4 py-3'>
-									<div className='flex items-start justify-between gap-3 mb-2.5'>
-										<div className='flex items-center gap-2.5'>
-											{/* State badge */}
-											<div
-												className='h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shrink-0'
-												style={{ background: color }}
-											>
-												{group.state}
-											</div>
-											<div>
-												<p className='text-sm font-bold text-zinc-900 leading-tight'>
-													{group.cep}
-												</p>
-												<p className='text-[10px] text-zinc-400 leading-tight mt-0.5'>
-													{group.count} seguro{group.count !== 1 ? 's' : ''}
-												</p>
-											</div>
-										</div>
-										<div className='flex flex-col items-end shrink-0'>
-											<span className='text-sm font-bold text-zinc-800'>
-												{fmt(group.commission)}
-											</span>
-											<span className='text-[10px] text-zinc-400 mt-0.5'>
-												comissão
-											</span>
-										</div>
-									</div>
-
-									{/* Mini progress bar */}
-									<div className='h-1 bg-zinc-200 rounded-full overflow-hidden'>
-										<div
-											className='h-full rounded-full transition-all duration-500'
-											style={{ width: `${barPct}%`, background: color }}
-										/>
-									</div>
+			{months.map(({ key, label, items }) => (
+				<div key={key}>
+					<MonthHeader
+						label={label}
+						commission={items.reduce((s, i) => s + i.commission, 0)}
+					/>
+					<div className='divide-y divide-zinc-200 px-5'>
+						{items.map((ins) => (
+							<div key={ins.id} className='flex items-center gap-2 py-3'>
+								<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
+									<Image
+										src='https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Feerbunnlzzosgfxsuskw.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Finsurers%2F464ed884-ef62-4697-82bd-487b520272a3%2Flogo&w=64&q=75'
+										width={52}
+										height={52}
+										className='size-full object-center'
+										alt='Insurance'
+									/>
 								</div>
-
-								{/* Footer hint */}
-								<div className='px-4 pb-2.5 flex items-center justify-end gap-1'>
-									<span className='text-[10px] text-zinc-400'>
-										Ver detalhes do ano
+								<div className='flex-1 min-w-0'>
+									<p className='text-sm font-medium truncate text-zinc-900'>
+										{ins.client}
+									</p>
+									<p className='text-xs text-zinc-500'>{ins.id}</p>
+								</div>
+								<div className='flex flex-col items-end gap-1 shrink-0'>
+									<span className='text-sm font-semibold text-emerald-600'>
+										{fmt(ins.commission)}
 									</span>
-									<ArrowUpRight className='h-3 w-3 text-zinc-300' />
+									<span className='text-xs text-zinc-500 font-medium'>
+										{ins.issueDate}
+									</span>
 								</div>
-							</button>
-						);
-					})}
+							</div>
+						))}
+					</div>
 				</div>
-			)}
-		</>
+			))}
+		</BottomSheet>
 	);
 }
 
@@ -761,6 +639,8 @@ function ProducerDashboard() {
 	const period = PERIODS[periodIdx];
 	const canPrev = periodIdx > 0;
 	const canNext = periodIdx < PERIODS.length - 1;
+
+	const groupsCeps = buildCepGroups(ALL_YEAR_INSURANCES);
 
 	useEffect(() => {
 		const isVisibleBalance = localStorage.getItem('visible:balance');
@@ -950,16 +830,14 @@ function ProducerDashboard() {
 										<p className='text-sm font-medium truncate text-zinc-900'>
 											{ins.client}
 										</p>
-										<p className='text-xs text-zinc-500'>
-											{ins.id} · {ins.issueDate}
-										</p>
+										<p className='text-xs text-zinc-500'>{ins.id}</p>
 									</div>
 									<div className='flex flex-col items-end gap-1 shrink-0'>
-										<span className='text-sm font-semibold text-zinc-800'>
-											{fmt(ins.netPremium)}
-										</span>
-										<span className='text-xs font-semibold text-emerald-600'>
+										<span className='text-sm font-semibold text-emerald-600'>
 											+{fmt(ins.commission)}
+										</span>
+										<span className='text-xs text-zinc-500 font-medium'>
+											{ins.issueDate}
 										</span>
 									</div>
 								</div>
@@ -972,16 +850,46 @@ function ProducerDashboard() {
 								onClick={() => setShowAllInsurances(true)}
 							>
 								Ver todos os seguros
-								<ArrowUpRight className='size-3.5' />
+								<ArrowUpRightIcon className='size-3.5' />
 							</button>
 						</div>
 					</TabsContent>
 					<TabsContent value='cep' className='mt-0'>
-						<CepListing
-							periodInsurances={period.insurances}
-							periodLabel={period.label}
-							onSelectCep={(cep, state) => setSelectedCep({ cep, state })}
-						/>
+						<div className='divide-y divide-zinc-200 px-5'>
+							{groupsCeps.map((group) => (
+								// biome-ignore lint/a11y/noStaticElementInteractions: div
+								// biome-ignore lint/a11y/useKeyWithClickEvents: div
+								<div
+									key={group.cep}
+									className='flex items-center gap-2 py-3.5'
+									onClick={() =>
+										setSelectedCep({
+											cep: group.cep,
+											state: group.state,
+										})
+									}
+								>
+									<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
+										<Building2Icon />
+									</div>
+									<div className='flex-1 min-w-0'>
+										<p className='text-sm font-semibold truncate text-zinc-900'>
+											{group.cep}
+										</p>
+										<p className='text-xs text-zinc-500'>{group.state}</p>
+									</div>
+									<div className='flex flex-col items-end gap-1 shrink-0'>
+										<span className='text-sm font-semibold text-zinc-800'>
+											{group.count} Seguros
+										</span>
+										<span className='text-xs font-medium text-indigo-400 flex flex-row items-center justify-end'>
+											Ver detalhes{' '}
+											<ChevronRightIcon className='size-3.5 stroke-2.5' />
+										</span>
+									</div>
+								</div>
+							))}
+						</div>
 					</TabsContent>
 				</Tabs>
 			</div>
