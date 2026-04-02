@@ -657,7 +657,7 @@ function ProducerDashboard() {
 				<div className='absolute top-8 -left-12 h-36 w-36 rounded-full opacity-15 blur-3xl bg-[#8b5cf6]' />
 				<div className='relative flex items-center justify-between mb-8'>
 					<div className='flex items-center gap-3'>
-						<div className='h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 bg-indigo-500'>
+						<div className='h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold text-[#0f172a] shrink-0 bg-white'>
 							{PRODUCER.avatar}
 						</div>
 						<div>
