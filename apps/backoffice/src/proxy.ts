@@ -1,6 +1,5 @@
 import { unstable_cache } from 'next/cache';
 
-// import { getSessionCookie } from 'better-auth/cookies';
 import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from './libraries/auth';
 
@@ -53,9 +52,9 @@ async function proxy(request: NextRequest) {
 	}
 
 	if (session && pathname === '/dashboard') {
-		if (session?.user.role === 'admin') {
+		if (session.user.role === 'admin') {
 			return NextResponse.rewrite(
-				new URL(`/reports/${session.user.role}`, request.url),
+				new URL(`/${'producer' || session.user.role}`, request.url),
 			);
 		}
 	}
