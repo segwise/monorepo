@@ -1152,12 +1152,13 @@ function CepSheet({
 
 // ─── CEP Listing ─────────────────────────────────────────────────────────────
 
-function CepListing({ insurances }: { insurances: Insurance[] }) {
-	const [selectedCep, setSelectedCep] = useState<{
-		cep: string;
-		state: string;
-	} | null>(null);
-
+function CepListing({
+	insurances,
+	onSelectCep,
+}: {
+	insurances: Insurance[];
+	onSelectCep: (cep: string, state: string) => void;
+}) {
 	const grouped: Record<string, CepGroup> = {};
 	for (const ins of insurances) {
 		const cep = ins.cep ?? 'N/D';
@@ -1172,15 +1173,6 @@ function CepListing({ insurances }: { insurances: Insurance[] }) {
 
 	return (
 		<>
-			{selectedCep && (
-				<CepSheet
-					open={!!selectedCep}
-					cep={selectedCep.cep}
-					state={selectedCep.state}
-					onClose={() => setSelectedCep(null)}
-				/>
-			)}
-
 			<div className='divide-y divide-zinc-50 px-5'>
 				{entries.map((group) => {
 					const barPct = Math.round((group.count / maxCount) * 100);
@@ -1189,9 +1181,7 @@ function CepListing({ insurances }: { insurances: Insurance[] }) {
 						<button
 							key={group.cep}
 							className='w-full flex items-center gap-3 py-3.5 text-left hover:bg-zinc-50 transition-colors'
-							onClick={() =>
-								setSelectedCep({ cep: group.cep, state: group.state })
-							}
+							onClick={() => onSelectCep(group.cep, group.state)}
 						>
 							<div
 								className='h-9 w-9 rounded-xl flex items-center justify-center text-[10px] font-bold text-white shrink-0'
@@ -1236,6 +1226,10 @@ export default function ProducerDashboard() {
 	const [periodIdx, setPeriodIdx] = useState(PERIODS.length - 1);
 	const [showAllQuotations, setShowAllQuotations] = useState(false);
 	const [showAllInsurances, setShowAllInsurances] = useState(false);
+	const [selectedCep, setSelectedCep] = useState<{
+		cep: string;
+		state: string;
+	} | null>(null);
 
 	const period = PERIODS[periodIdx];
 	const canPrev = periodIdx > 0;
@@ -1243,7 +1237,7 @@ export default function ProducerDashboard() {
 
 	return (
 		<div className='min-h-screen bg-zinc-50 font-sans'>
-			{/* ── Global sheets ─────────────────────────────────────────────── */}
+			{/* ── Global sheets — rendered at root so fixed positioning works ── */}
 			<AllQuotationsSheet
 				open={showAllQuotations}
 				onClose={() => setShowAllQuotations(false)}
@@ -1251,6 +1245,12 @@ export default function ProducerDashboard() {
 			<AllInsurancesSheet
 				open={showAllInsurances}
 				onClose={() => setShowAllInsurances(false)}
+			/>
+			<CepSheet
+				open={!!selectedCep}
+				cep={selectedCep?.cep ?? ''}
+				state={selectedCep?.state ?? ''}
+				onClose={() => setSelectedCep(null)}
 			/>
 
 			{/* ── Hero Header ─────────────────────────────────────────────────── */}
@@ -1534,7 +1534,10 @@ export default function ProducerDashboard() {
 
 							{/* Tab: Por CEP */}
 							<TabsContent value='cep' className='mt-0'>
-								<CepListing insurances={period.insurances} />
+								<CepListing
+									insurances={period.insurances}
+									onSelectCep={(cep, state) => setSelectedCep({ cep, state })}
+								/>
 							</TabsContent>
 						</Tabs>
 					</div>
