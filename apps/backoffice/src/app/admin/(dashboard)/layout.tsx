@@ -10,8 +10,8 @@ import { cn } from '@/utils';
 
 export const metadata: Metadata = {
 	title: {
-		default: 'Segwise | Administrativo',
-		template: '%s - Segwise | Administrativo',
+		default: 'Segwise',
+		template: '%s - Segwise',
 	},
 };
 
