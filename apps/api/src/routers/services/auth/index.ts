@@ -54,8 +54,10 @@ function registerRoutersServicesAuth(server: Server) {
 			(isProducer && XClientApp !== 'producer') ||
 			(isCustomer && XClientApp !== 'customer')
 		) {
+			const cloneResponse = response.clone();
+
 			await ctx.auth.api.signOut({
-				headers: response.clone().headers,
+				headers: cloneResponse.headers,
 			});
 
 			return ctx.json(

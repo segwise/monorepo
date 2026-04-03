@@ -35,8 +35,10 @@ const replaceSession: MiddlewareHandler = async (ctx, next) => {
 
 	if (
 		cookies?.includes('backoffice.auth') ||
+		cookies?.includes('producer.auth') ||
 		cookies?.includes('customer.auth') ||
 		cookies?.includes(`backoffice.${ctx.environment.NODE_ENV}.auth`) ||
+		cookies?.includes(`producer.${ctx.environment.NODE_ENV}.auth`) ||
 		cookies?.includes(`customer.${ctx.environment.NODE_ENV}.auth`)
 	) {
 		const prefix =
@@ -48,6 +50,8 @@ const replaceSession: MiddlewareHandler = async (ctx, next) => {
 			cookies
 				?.replaceAll('backoffice.auth', prefix)
 				.replaceAll(`backoffice.${ctx.environment.NODE_ENV}.auth`, prefix)
+				.replaceAll(`producer.auth`, prefix)
+				.replaceAll(`producer.${ctx.environment.NODE_ENV}.auth`, prefix)
 				.replaceAll(`customer.auth`, prefix)
 				.replaceAll(`customer.${ctx.environment.NODE_ENV}.auth`, prefix) || '';
 
