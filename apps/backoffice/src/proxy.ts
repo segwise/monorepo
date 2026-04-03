@@ -8,20 +8,27 @@ const PUBLIC_ROUTES = ['/sign-in', '/forgot-password', '/reset-password'];
 const COOKIE_PREFIX = getCookiePrefix();
 
 const getSessionCached = unstable_cache(
-	async (headers: Headers) => {
-		const sessionCookie = getSessionCookie(new Headers(headers), {
-			cookiePrefix: COOKIE_PREFIX,
-		});
+	async (cookie: string) => {
+		const sessionCookie = getSessionCookie(
+			new Headers({
+				cookie,
+				'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
+			}),
+			{
+				cookiePrefix: COOKIE_PREFIX,
+			},
+		);
 
 		if (!sessionCookie) {
 			return null;
 		}
 
-		const cookieHeader = headers.get('cookie');
-
 		const session = await auth.getSession({
 			fetchOptions: {
-				headers: cookieHeader ? { cookie: cookieHeader } : {},
+				headers: {
+					cookie,
+					'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
+				},
 			},
 		});
 
@@ -37,7 +44,7 @@ const getSessionCached = unstable_cache(
 async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
-	const session = await getSessionCached(request.headers);
+	const session = await getSessionCached(request.cookies.toString());
 
 	if (session && pathname === '/') {
 		return NextResponse.redirect(new URL('/dashboard', request.url));

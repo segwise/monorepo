@@ -9,9 +9,13 @@ async function getSessionCache() {
 
 	const headerList = await headers();
 
+	const newHeader = new Headers(headerList);
+
+	newHeader.set('X-Client-App', process.env.NEXT_PUBLIC_ROLE_SYSTEM as string);
+
 	const { data } = await auth.getSession({
 		fetchOptions: {
-			headers: headerList,
+			headers: newHeader,
 		},
 	});
 
@@ -23,7 +27,7 @@ async function getSessionCache() {
 		});
 
 		return redirect(
-			`/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}/sign-in`,
+			`/${process.env.ROLE_SYSTEM}/sign-in`,
 			RedirectType.replace,
 		);
 	}
