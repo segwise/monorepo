@@ -22,7 +22,10 @@ async function getSessionCache() {
 			},
 		});
 
-		return redirect('/sign-in', RedirectType.replace);
+		return redirect(
+			`/${process.env.ROLE_SYSTEM}/sign-in`,
+			RedirectType.replace,
+		);
 	}
 
 	return data;

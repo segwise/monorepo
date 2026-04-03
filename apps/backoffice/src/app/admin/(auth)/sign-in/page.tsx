@@ -36,7 +36,7 @@ function SignInPage() {
 							Fazer Login
 						</h1>
 						<p className='text-muted-foreground font-medium text-sm leading-none'>
-							Informe as credenciais para acesso
+							Informe as credenciais para acesso ADMIN
 						</p>
 					</div>
 					<FormSignIn />

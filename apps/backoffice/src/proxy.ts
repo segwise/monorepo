@@ -3,7 +3,7 @@ import { unstable_cache } from 'next/cache';
 import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from './libraries/auth';
 
-const PUBLIC_ROUTES = ['/sign-in', '/forgot-password', '/reset-password'];
+const PUBLIC_ROUTES = ['/*/sign-in', '/*/forgot-password', '/*/reset-password'];
 
 const getSessionCached = unstable_cache(
 	async (cookieHeader: string | null) => {
@@ -28,7 +28,9 @@ async function proxy(request: NextRequest) {
 	const session = await getSessionCached(request.headers.get('cookie'));
 
 	if (session && pathname === '/') {
-		return NextResponse.redirect(new URL('/dashboard', request.url));
+		return NextResponse.redirect(
+			new URL(`/${process.env.ROLE_SYSTEM}/dashboard`, request.url),
+		);
 	}
 
 	const isPublicRoute = PUBLIC_ROUTES.some((route) =>
@@ -38,11 +40,21 @@ async function proxy(request: NextRequest) {
 	);
 
 	if (session && isPublicRoute) {
-		return NextResponse.redirect(new URL('/dashboard', request.url));
+		return NextResponse.redirect(
+			new URL(`/${process.env.ROLE_SYSTEM}/dashboard`, request.url),
+		);
 	}
 
+	console.log(!session && !isPublicRoute);
 	if (!session && !isPublicRoute) {
-		const redirectTo = new URL('/sign-in', request.url);
+		if (pathname === `/${process.env.ROLE_SYSTEM}/sign-in`) {
+			return NextResponse.next();
+		}
+
+		const redirectTo = new URL(
+			`/${process.env.ROLE_SYSTEM}/sign-in`,
+			request.url,
+		);
 
 		if (pathname !== '/') {
 			redirectTo.searchParams.set('callbackUrl', pathname);
@@ -51,19 +63,14 @@ async function proxy(request: NextRequest) {
 		return NextResponse.redirect(redirectTo);
 	}
 
-	if (session) {
-		let startPathname = '/admin';
-
-		if (session.user.role === 'producer') {
-			startPathname = `/${session.user.role}`;
-		}
-
-		return NextResponse.rewrite(
-			new URL(`${startPathname}${request.nextUrl.pathname}`, request.url),
+	if (!session && isPublicRoute) {
+		const redirectTo = new URL(
+			`/${process.env.ROLE_SYSTEM}${pathname}`,
+			request.url,
 		);
-	}
 
-	console.log(request.nextUrl.pathname);
+		return NextResponse.redirect(redirectTo);
+	}
 
 	return NextResponse.next();
 }
