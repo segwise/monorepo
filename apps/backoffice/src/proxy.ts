@@ -63,8 +63,7 @@ async function proxy(request: NextRequest) {
 		);
 	}
 
-	console.log(request.url);
-	console.log(request.nextUrl);
+	console.log(request.nextUrl.pathname);
 
 	return NextResponse.next();
 }
