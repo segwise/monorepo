@@ -51,10 +51,16 @@ async function proxy(request: NextRequest) {
 		return NextResponse.redirect(redirectTo);
 	}
 
-	if (session && pathname === '/dashboard') {
-		if (session.user.role === 'admin') {
-			return NextResponse.rewrite(new URL(`/${'producer'}`, request.url));
+	if (session) {
+		let startPathname = '/admin';
+
+		if (session.user.role === 'producer') {
+			startPathname = `/${session.user.role}`;
 		}
+
+		return NextResponse.rewrite(
+			new URL(`${startPathname}${request.nextUrl.pathname}`, request.url),
+		);
 	}
 
 	return NextResponse.next();
