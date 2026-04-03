@@ -63,19 +63,14 @@ async function proxy(request: NextRequest) {
 		);
 	}
 
-	console.log(request.nextUrl.host);
-
-	// if (process.env.NODE_ENV === 'development') {
-	// 	return NextResponse.rewrite(
-	// 		new URL(`/admin${request.nextUrl.pathname}`, request.url),
-	// 	);
-	// }
+	console.log(request.url);
+	console.log(request.nextUrl);
 
 	return NextResponse.next();
 }
 
 export const config = {
-	matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico).*)'],
+	matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
 
 export { proxy };
