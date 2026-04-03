@@ -56,16 +56,21 @@ function registerRoutersServicesAuth(server: Server) {
 		) {
 			const cloneResponse = response.clone();
 
-			await ctx.auth.api.signOut({
+			const responseSignOut = await ctx.auth.api.signOut({
 				headers: cloneResponse.headers,
+				asResponse: true,
 			});
 
-			return ctx.json(
-				{
+			return new Response(
+				JSON.stringify({
 					code: 'INVALID_EMAIL_OR_PASSWORD',
 					message: 'Invalid email or password',
+				}),
+				{
+					...responseSignOut,
+					status: 401,
+					statusText: 'Unauthorized',
 				},
-				401,
 			);
 		}
 
