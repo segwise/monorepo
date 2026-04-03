@@ -63,6 +63,14 @@ async function proxy(request: NextRequest) {
 		);
 	}
 
+	console.log(request.nextUrl.host);
+
+	// if (process.env.NODE_ENV === 'development') {
+	// 	return NextResponse.rewrite(
+	// 		new URL(`/admin${request.nextUrl.pathname}`, request.url),
+	// 	);
+	// }
+
 	return NextResponse.next();
 }
 
