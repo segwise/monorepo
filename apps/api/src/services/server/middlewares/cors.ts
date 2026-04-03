@@ -1,14 +1,36 @@
 import { cors } from 'hono/cors';
 import type { MiddlewareHandler } from '@/@types/server.d';
+import { getMainDomain } from '@/functions/hostname/get-main-domain';
 import { environment } from '@/libraries/environment';
 
+const mainDomain = getMainDomain(environment.APPLICATION_URL);
+
+const isAllowedOrigin = (origin: string | null | undefined): string | null => {
+	if (!origin) {
+		return null;
+	}
+
+	try {
+		const url = new URL(origin);
+		const hostname = url.hostname;
+
+		if (hostname === mainDomain || hostname.endsWith(`.${mainDomain}`)) {
+			return origin;
+		}
+
+		return null;
+	} catch {
+		return null;
+	}
+};
+
 const corsDefaultMiddleware: MiddlewareHandler = cors({
-	origin: environment.APPLICATION_URL,
+	origin: isAllowedOrigin,
 	credentials: true,
 });
 
 const corsAuthMiddleware: MiddlewareHandler = cors({
-	origin: environment.APPLICATION_URL,
+	origin: isAllowedOrigin,
 	credentials: true,
 	allowHeaders: ['Content-Type', 'Authorization'],
 	allowMethods: ['POST', 'GET', 'OPTIONS'],
