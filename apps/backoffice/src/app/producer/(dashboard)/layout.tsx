@@ -9,8 +9,8 @@ import { cn } from '@/utils';
 
 export const metadata: Metadata = {
 	title: {
-		default: 'Segwise',
-		template: '%s - Segwise',
+		default: 'Segwise | Produtor',
+		template: '%s - Segwise | Produtor',
 	},
 };
 
