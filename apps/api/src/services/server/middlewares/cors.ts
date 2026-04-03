@@ -12,6 +12,7 @@ const isAllowedOrigin = (origin: string | null | undefined): string | null => {
 
 	try {
 		const url = new URL(origin);
+
 		const hostname = url.hostname;
 
 		if (hostname === mainDomain || hostname.endsWith(`.${mainDomain}`)) {
