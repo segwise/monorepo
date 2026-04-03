@@ -49,6 +49,8 @@ function registerRoutersServicesAuth(server: Server) {
 
 		const isCustomer = role === Role.customer;
 
+		console.log(isBackoffice, XClientApp);
+
 		if (
 			(isBackoffice && XClientApp !== 'backoffice') ||
 			(isProducer && XClientApp !== 'producer') ||
