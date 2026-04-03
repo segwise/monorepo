@@ -10,6 +10,13 @@ const isAllowedOrigin = (origin: string | null | undefined): string | null => {
 		return null;
 	}
 
+	if (
+		environment.NODE_ENV === 'development' &&
+		(origin.includes('localhost') || origin.includes('127.0.0.1'))
+	) {
+		return origin;
+	}
+
 	try {
 		const url = new URL(origin);
 
