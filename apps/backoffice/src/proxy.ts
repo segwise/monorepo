@@ -1,12 +1,24 @@
+import { getSessionCookie } from 'better-auth/cookies';
 import { unstable_cache } from 'next/cache';
-
 import { type NextRequest, NextResponse } from 'next/server';
-import { auth } from './libraries/auth';
+import { auth, getCookiePrefix } from './libraries/auth';
 
 const PUBLIC_ROUTES = ['/sign-in', '/forgot-password', '/reset-password'];
 
+const COOKIE_PREFIX = getCookiePrefix();
+
 const getSessionCached = unstable_cache(
-	async (cookieHeader: string | null) => {
+	async (headers: Headers) => {
+		const sessionCookie = getSessionCookie(new Headers(headers), {
+			cookiePrefix: COOKIE_PREFIX,
+		});
+
+		if (!sessionCookie) {
+			return null;
+		}
+
+		const cookieHeader = headers.get('cookie');
+
 		const session = await auth.getSession({
 			fetchOptions: {
 				headers: cookieHeader ? { cookie: cookieHeader } : {},
@@ -15,9 +27,9 @@ const getSessionCached = unstable_cache(
 
 		return session.data;
 	},
-	['session-proxy'],
+	['session-proxy', COOKIE_PREFIX],
 	{
-		tags: ['session-proxy'],
+		tags: [`session-proxy-${COOKIE_PREFIX}`],
 		revalidate: 60 * 30,
 	},
 );
@@ -25,7 +37,7 @@ const getSessionCached = unstable_cache(
 async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
-	const session = await getSessionCached(request.headers.get('cookie'));
+	const session = await getSessionCached(request.headers);
 
 	if (session && pathname === '/') {
 		return NextResponse.redirect(new URL('/dashboard', request.url));
@@ -34,7 +46,7 @@ async function proxy(request: NextRequest) {
 	const isPublicRoute = PUBLIC_ROUTES.some((route) =>
 		route.endsWith(':path*')
 			? pathname.startsWith(
-					`/${process.env.ROLE_SYSTEM}${route.replace('/:path*', '')}`,
+					`/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}${route.replace('/:path*', '')}`,
 				)
 			: pathname === route,
 	);
@@ -45,7 +57,7 @@ async function proxy(request: NextRequest) {
 
 	if (!session && isPublicRoute) {
 		const redirectTo = new URL(
-			`/${process.env.ROLE_SYSTEM}${pathname}`,
+			`/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}${pathname}`,
 			request.url,
 		);
 
@@ -53,7 +65,7 @@ async function proxy(request: NextRequest) {
 	}
 
 	if (!session && !isPublicRoute) {
-		if (pathname === `/${process.env.ROLE_SYSTEM}/sign-in`) {
+		if (pathname === `/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}/sign-in`) {
 			return NextResponse.next();
 		}
 
@@ -67,7 +79,7 @@ async function proxy(request: NextRequest) {
 	}
 
 	const redirectTo = new URL(
-		`/${process.env.ROLE_SYSTEM}${pathname}`,
+		`/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}${pathname}`,
 		request.url,
 	);
 

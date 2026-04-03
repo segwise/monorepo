@@ -23,7 +23,7 @@ async function getSessionCache() {
 		});
 
 		return redirect(
-			`/${process.env.ROLE_SYSTEM}/sign-in`,
+			`/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}/sign-in`,
 			RedirectType.replace,
 		);
 	}

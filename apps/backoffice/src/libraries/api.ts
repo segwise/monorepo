@@ -3,6 +3,10 @@ import xior from 'xior';
 const api = xior.create({
 	baseURL: process.env.NEXT_PUBLIC_API_URL,
 	credentials: 'include',
+	headers: {
+		...xior.defaults.headers,
+		'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM,
+	},
 	paramsSerializer: (params) => {
 		const searchParams = new URLSearchParams();
 

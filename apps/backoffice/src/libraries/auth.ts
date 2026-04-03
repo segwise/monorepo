@@ -2,6 +2,7 @@ import type { BetterAuthClientPlugin } from 'better-auth';
 import { adminClient, organizationClient } from 'better-auth/client/plugins';
 import { nextCookies } from 'better-auth/next-js';
 import { createAuthClient } from 'better-auth/react';
+import xior from 'xior';
 
 const basePath = '/auth';
 
@@ -13,12 +14,10 @@ const roleApplication = {
 	customer: 'customer',
 };
 
-const cookiePrefix =
+const getCookiePrefix = () =>
 	process.env.NODE_ENV === 'production'
-		? `${roleApplication[process.env.ROLE_SYSTEM as keyof typeof roleApplication]}.auth`
-		: `${roleApplication[process.env.ROLE_SYSTEM as keyof typeof roleApplication]}.${process.env.NODE_ENV}.auth`;
-
-console.log(cookiePrefix);
+		? `${roleApplication[process.env.NEXT_PUBLIC_ROLE_SYSTEM as keyof typeof roleApplication]}.auth`
+		: `${roleApplication[process.env.NEXT_PUBLIC_ROLE_SYSTEM as keyof typeof roleApplication]}.${process.env.NODE_ENV}.auth`;
 
 const plugins: BetterAuthClientPlugin[] = [
 	nextCookies(),
@@ -33,11 +32,15 @@ const auth = createAuthClient({
 	fetchOptions: {
 		credentials: 'include',
 		priority: 'high',
+		headers: new Headers({
+			...xior.defaults.headers,
+			'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
+		}),
 	},
 	$InferAuth: {
 		basePath,
 		advanced: {
-			cookiePrefix,
+			cookiePrefix: getCookiePrefix(),
 			crossSubDomainCookies: {
 				enabled: true,
 			},
@@ -47,4 +50,4 @@ const auth = createAuthClient({
 	},
 });
 
-export { auth };
+export { auth, getCookiePrefix };
