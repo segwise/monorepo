@@ -1,5 +1,6 @@
+import type { Session } from 'better-auth';
 import type { Server } from '@/@types/server.d';
-import { Role } from '@/generated/prisma/enums';
+import { Role, RoleMember } from '@/generated/prisma/enums';
 
 const pathnameIgnoresSession = ['/auth/reset-password'];
 
@@ -7,6 +8,12 @@ function registerRoutersServicesAuth(server: Server) {
 	const base = server.basePath('/auth');
 
 	base.on(['POST', 'GET'], '*', async (ctx) => {
+		const XClientApp = (ctx.req.header('X-Client-App') ||
+			ctx.req.raw.headers.get('X-Client-App')) as
+			| 'backoffice'
+			| 'producer'
+			| 'customer';
+
 		const response = await ctx.auth.handler(ctx.req.raw);
 
 		const shouldIgnoreSession = pathnameIgnoresSession.some(
@@ -21,11 +28,44 @@ function registerRoutersServicesAuth(server: Server) {
 					user: {
 						role: Role;
 					};
+					session: Session & {
+						brokerRole?: RoleMember | null;
+					};
 				});
 
 		const setCookies = response.headers.getSetCookie();
 
 		const role = session?.user?.role || ctx?.session?.role;
+		const roleBroker = session?.session?.brokerRole || ctx?.session?.brokerRole;
+
+		const isBackoffice =
+			role === Role.admin ||
+			role === Role.manager ||
+			role === Role.finance ||
+			role === Role.counter;
+
+		const isProducer =
+			role === Role.producer || roleBroker === RoleMember.producer;
+
+		const isCustomer = role === Role.customer;
+
+		if (
+			(isBackoffice && XClientApp !== 'backoffice') ||
+			(isProducer && XClientApp !== 'producer') ||
+			(isCustomer && XClientApp !== 'customer')
+		) {
+			await ctx.auth.api.signOut({
+				headers: response.clone().headers,
+			});
+
+			return ctx.json(
+				{
+					code: 'INVALID_EMAIL_OR_PASSWORD',
+					message: 'Invalid email or password',
+				},
+				401,
+			);
+		}
 
 		if (setCookies.length) {
 			if (
@@ -36,14 +76,7 @@ function registerRoutersServicesAuth(server: Server) {
 				const modifiedCookies = setCookies.map((cookieStr) => {
 					let cookie = cookieStr;
 
-					if (
-						role === Role.owner ||
-						role === Role.admin ||
-						role === Role.broker ||
-						role === Role.counter ||
-						role === Role.finance ||
-						role === Role.producer
-					) {
+					if (isBackoffice) {
 						if (ctx.environment.NODE_ENV === 'production') {
 							cookie = cookie.replace(
 								'__Secure-auth.session_token',
@@ -66,7 +99,30 @@ function registerRoutersServicesAuth(server: Server) {
 						}
 					}
 
-					if (role === Role.customer) {
+					if (isProducer) {
+						if (ctx.environment.NODE_ENV === 'production') {
+							cookie = cookie.replace(
+								'__Secure-auth.session_token',
+								'__Secure-producer.auth.session_token',
+							);
+						}
+
+						if (ctx.environment.NODE_ENV === 'preview') {
+							cookie = cookie.replace(
+								'__Secure-preview.auth.session_token',
+								'__Secure-producer.preview.auth.session_token',
+							);
+						}
+
+						if (ctx.environment.NODE_ENV === 'development') {
+							cookie = cookie.replace(
+								'__Secure-development.auth.session_token',
+								'__Secure-producer.development.auth.session_token',
+							);
+						}
+					}
+
+					if (isCustomer) {
 						if (ctx.environment.NODE_ENV === 'production') {
 							cookie = cookie.replace(
 								'__Secure-auth.session_token',

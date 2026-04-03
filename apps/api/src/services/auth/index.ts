@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { admin, customSession } from 'better-auth/plugins';
+import { admin, customSession, organization } from 'better-auth/plugins';
 import { secondaryStorage } from '@/auth/adapters/secondary-storage';
 import { getMainDomain } from '@/functions/hostname/get-main-domain';
 import { environment } from '@/libraries/environment';
@@ -106,12 +106,6 @@ const auth = betterAuth({
 				unique: true,
 				returned: true,
 			},
-			brokerId: {
-				type: 'string',
-				required: false,
-				index: true,
-				returned: true,
-			},
 		},
 		changeEmail: {
 			enabled: true,
@@ -207,9 +201,71 @@ const auth = betterAuth({
 	},
 	plugins: [
 		admin(),
+		organization({
+			schema: {
+				organization: {
+					modelName: 'broker',
+				},
+				invitation: {
+					fields: {
+						organizationId: 'brokerId',
+						inviterId: 'userId',
+					},
+				},
+				member: {
+					fields: {
+						organizationId: 'brokerId',
+					},
+				},
+				organizationRole: {
+					modelName: 'brokerRole',
+					fields: {
+						organizationId: 'brokerId',
+					},
+				},
+				session: {
+					fields: {
+						activeOrganizationId: 'activeBrokerId',
+					},
+				},
+				team: {
+					fields: {
+						organizationId: 'brokerId',
+					},
+				},
+			},
+		}),
 		customSession(async ({ user, session }) => {
 			if (user?.image) {
 				user.image = getPresignedUrl(storage, user.image);
+			}
+
+			// @ts-expect-error
+			const activeOrganizationId = session?.activeOrganizationId as
+				| string
+				| null
+				| undefined;
+
+			if (activeOrganizationId) {
+				// @ts-expect-error
+				session.brokerId = activeOrganizationId;
+
+				await database.member
+					.findUnique({
+						where: {
+							brokerId_userId: {
+								brokerId: activeOrganizationId,
+								userId: user.id,
+							},
+						},
+						select: {
+							role: true,
+						},
+					})
+					.then((member) => {
+						// @ts-expect-error
+						session.brokerRole = member?.role;
+					});
 			}
 
 			return {

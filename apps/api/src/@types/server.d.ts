@@ -28,6 +28,8 @@ type Variables = {
 	};
 	session: Session & {
 		role: Role;
+		brokerId?: string | null;
+		brokerRole?: RoleMember | null;
 	};
 	browser: Awaited<typeof acquirePage>;
 };

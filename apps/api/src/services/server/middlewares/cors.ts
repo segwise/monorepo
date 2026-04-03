@@ -35,12 +35,19 @@ const isAllowedOrigin = (origin: string | null | undefined): string | null => {
 const corsDefaultMiddleware: MiddlewareHandler = cors({
 	origin: isAllowedOrigin,
 	credentials: true,
+	allowMethods: ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE', 'PATCH'],
+	allowHeaders: [
+		'Content-Type',
+		'Authorization',
+		'X-Client-App',
+		'X-Requested-With',
+	],
 });
 
 const corsAuthMiddleware: MiddlewareHandler = cors({
 	origin: isAllowedOrigin,
 	credentials: true,
-	allowHeaders: ['Content-Type', 'Authorization'],
+	allowHeaders: ['Content-Type', 'Authorization', 'X-Client-App'],
 	allowMethods: ['POST', 'GET', 'OPTIONS'],
 	exposeHeaders: ['Content-Length'],
 	maxAge: 600,

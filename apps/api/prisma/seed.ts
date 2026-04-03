@@ -1855,19 +1855,6 @@ async function seed() {
 			}),
 		]);
 
-		await database.broker
-			.create({
-				data: {
-					name: 'Xcar Corretora de Seguros e Empreendimentos Financeiros LTDA',
-					fantasy: 'Xcar Corretora de Seguros',
-					cnpj: '07581995000170',
-				},
-				select: {
-					id: true,
-				},
-			})
-			.then((response) => response.id);
-
 		for (let i = 0; i < 10; i++) {
 			const id = Bun.randomUUIDv7();
 

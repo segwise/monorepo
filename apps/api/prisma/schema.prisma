@@ -25,17 +25,19 @@ model User {
 
   referral String
 
-  role String
+  role Role
 
   banned     Boolean?
   banReason  String?   @map("ban_reason")
   banExpires DateTime? @map("ban_expires") @db.Date
 
-  brokerId String? @map("broker_id") @db.Uuid
-  broker   Broker? @relation("broker_to_user", fields: [brokerId], references: [id], onDelete: Restrict)
+  sessions             Session[] @relation("session_to_user")
+  sessionsImpersonated Session[] @relation("session_to_user_impersonated", map: "sessions_impersonated")
 
-  sessions Session[] @relation("session_to_user")
   accounts Account[] @relation("account_to_user")
+
+  members     Member[]     @relation("member_to_user")
+  invitations Invitation[] @relation("invitation_to_user")
 
   quotes Quote[] @relation("producer_quotes")
   safes  Safe[]  @relation("producer_safes")
@@ -63,13 +65,20 @@ model Session {
   userId String @map("user_id") @db.Uuid
   user   User   @relation("session_to_user", fields: [userId], references: [id], onDelete: Cascade)
 
-  impersonatedBy String? @map("impersonated_by")
+  activeBrokerId String? @map("active_broker_id") @db.Uuid
+  activeBroker   Broker? @relation("broker_to_session", fields: [activeBrokerId], references: [id], map: "active_broker", onDelete: Cascade)
+
+  impersonatedBy String? @map("impersonated_by") @db.Uuid
+  impersonated   User?   @relation("session_to_user_impersonated", fields: [impersonatedBy], references: [id], onDelete: Cascade)
 
   expiresAt DateTime @map("expires_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@unique([token])
+  @@index([userId])
+  @@index([activeBrokerId])
+  @@index([impersonatedBy])
   @@map("sessions")
 }
 
@@ -96,6 +105,7 @@ model Account {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique(id)
+  @@index([userId])
   @@map("accounts")
 }
 
@@ -109,6 +119,7 @@ model Verification {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@index([identifier])
   @@map("verifications")
 }
 
@@ -150,9 +161,6 @@ model Insured {
 
   qualificationTime Int?    @map("qualification_time") @db.Integer
   profession        String?
-
-  brokerId String? @map("broker_id") @db.Uuid
-  broker   Broker? @relation("broker_to_insured", fields: [brokerId], references: [id], onDelete: Restrict)
 
   quotes Quote[] @relation("insured_to_quote")
   safes  Safe[]  @relation("insured_to_safe")
@@ -398,6 +406,9 @@ model ManufacturerVehicle {
   vehicles              Vehicle[]             @relation("manufacturer_vehicle_to_vehicle")
   vehiclesWithoutPlates VehicleWithoutPlate[] @relation("manufacturer_vehicle_to_vehicle_without_plate", map: "vehicles_without_plate")
 
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
   @@map("manufacturer_vehicles")
 }
 
@@ -467,30 +478,90 @@ model Broker {
 
   name    String
   fantasy String?
-  icon    String?
-  image   String?
 
   cnpj String @db.VarChar(14)
 
-  insureds Insured[] @relation("broker_to_insured")
-  users    User[]    @relation("broker_to_user")
+  slug String
+
+  logo  String?
+  image String?
+
+  metadata Json? @db.JsonB
+
+  sessions Session[] @relation("broker_to_session")
+
+  members     Member[]     @relation("broker_to_member")
+  invitations Invitation[] @relation("broker_to_invitation")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique([cnpj])
-  @@index([name])
+  @@unique([slug])
   @@map("brokers")
 }
 
+model Member {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  brokerId String? @map("broker_id") @db.Uuid
+  broker   Broker? @relation("broker_to_member", fields: [brokerId], references: [id], onDelete: Cascade)
+
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation("member_to_user", fields: [userId], references: [id], onDelete: Cascade)
+
+  role RoleMember
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([brokerId, userId])
+  @@index([brokerId])
+  @@index([userId])
+  @@map("members")
+}
+
+model Invitation {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  brokerId String? @map("broker_id") @db.Uuid
+  broker   Broker? @relation("broker_to_invitation", fields: [brokerId], references: [id], onDelete: Cascade)
+
+  email String
+
+  role RoleMember?
+
+  status StatusInvitation @default(pending)
+
+  userId String @db.Uuid
+  user   User   @relation("invitation_to_user", fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([brokerId, email])
+  @@index([brokerId])
+  @@index([email])
+  @@map("invitation")
+}
+
 enum Role {
-  owner
   admin
-  customer
-  broker
-  producer
+  manager
   finance
   counter
+  producer
+  customer
+}
+
+enum RoleMember {
+  owner
+  admin
+  broker
+  finance
+  counter
+  producer
+  customer
 }
 
 enum ModalityInsurance {
@@ -579,4 +650,8 @@ enum TypeOfCommission {
 enum TypeOfInterest {
   simple
   compound
+}
+
+enum StatusInvitation {
+  pending
 }

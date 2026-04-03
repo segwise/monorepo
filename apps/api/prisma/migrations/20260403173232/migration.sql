@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('owner', 'admin', 'customer', 'broker', 'producer', 'finance', 'counter');
+CREATE TYPE "RoleMember" AS ENUM ('owner', 'admin', 'broker', 'finance', 'producer', 'customer');
 
 -- CreateEnum
 CREATE TYPE "ModalityInsurance" AS ENUM ('car');
@@ -34,6 +34,15 @@ CREATE TYPE "GarageSchool" AS ENUM ('yes', 'no', 'does_not_study', 'does_not_use
 -- CreateEnum
 CREATE TYPE "InsuranceCompanyContactCoverage" AS ENUM ('all_regions', 'capitals_and_metropolitan_regions');
 
+-- CreateEnum
+CREATE TYPE "TypeOfCommission" AS ENUM ('by_the_brokerage_commission', 'by_the_net_premium', 'fixed_value');
+
+-- CreateEnum
+CREATE TYPE "TypeOfInterest" AS ENUM ('simple', 'compound');
+
+-- CreateEnum
+CREATE TYPE "StatusInvitation" AS ENUM ('pending');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL,
@@ -43,11 +52,9 @@ CREATE TABLE "users" (
     "email_verified" BOOLEAN,
     "phone" VARCHAR(13),
     "referral" TEXT NOT NULL,
-    "role" TEXT NOT NULL,
     "banned" BOOLEAN,
     "ban_reason" TEXT,
     "ban_expires" DATE,
-    "broker_id" UUID,
     "updated_at" TIMESTAMPTZ NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -61,7 +68,8 @@ CREATE TABLE "sessions" (
     "ip_address" TEXT,
     "user_agent" TEXT,
     "user_id" UUID NOT NULL,
-    "impersonated_by" TEXT,
+    "active_broker_id" UUID,
+    "impersonated_by" UUID,
     "expires_at" TIMESTAMPTZ NOT NULL,
     "updated_at" TIMESTAMPTZ NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -128,7 +136,6 @@ CREATE TABLE "insureds" (
     "marital_status" "MaritalStatus" NOT NULL,
     "qualification_time" INTEGER,
     "profession" TEXT,
-    "broker_id" UUID,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -161,6 +168,7 @@ CREATE TABLE "quotes" (
 CREATE TABLE "safes" (
     "id" UUID NOT NULL,
     "is_external" BOOLEAN,
+    "producer_id" UUID,
     "temporary_insured_id" UUID,
     "insured_id" UUID,
     "modality" "ModalityInsurance" NOT NULL,
@@ -168,8 +176,19 @@ CREATE TABLE "safes" (
     "previous_safe_id" UUID,
     "insurance_company_id" UUID,
     "expiration" DATE NOT NULL,
+    "installments" INTEGER,
+    "award" DECIMAL(10,2),
     "franchise" DECIMAL(10,2),
-    "producer_id" UUID,
+    "commission" DECIMAL(10,2),
+    "commission_of_type" "TypeOfCommission",
+    "commission_percentage" INTEGER,
+    "commission_discount_percentage" INTEGER,
+    "commission_discount_fixed" DECIMAL(10,2),
+    "commission_installments" INTEGER,
+    "commission_monthly_interest" INTEGER,
+    "commission_pay_interest_starting" INTEGER,
+    "commission_type_of_interest" "TypeOfInterest",
+    "commission_payment_date" TIMESTAMPTZ,
     "status" "StatusSafe" NOT NULL DEFAULT 'active',
     "status_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status_message" TEXT,
@@ -265,6 +284,8 @@ CREATE TABLE "manufacturer_vehicles" (
     "icon" TEXT,
     "image" TEXT,
     "slugs" TEXT[],
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "manufacturer_vehicles_pkey" PRIMARY KEY ("id")
 );
@@ -313,13 +334,41 @@ CREATE TABLE "brokers" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "fantasy" TEXT,
-    "icon" TEXT,
-    "image" TEXT,
     "cnpj" VARCHAR(14) NOT NULL,
+    "slug" TEXT NOT NULL,
+    "logo" TEXT,
+    "image" TEXT,
+    "metadata" JSONB,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "brokers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "members" (
+    "id" UUID NOT NULL,
+    "broker_id" UUID,
+    "user_id" UUID NOT NULL,
+    "role" "RoleMember" NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "members_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "invitation" (
+    "id" UUID NOT NULL,
+    "broker_id" UUID,
+    "email" TEXT NOT NULL,
+    "role" "RoleMember",
+    "status" "StatusInvitation" NOT NULL DEFAULT 'pending',
+    "userId" UUID NOT NULL,
+    "expires_at" TIMESTAMPTZ NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "invitation_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -341,10 +390,25 @@ CREATE UNIQUE INDEX "users_referral_key" ON "users"("referral");
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
+CREATE INDEX "sessions_user_id_idx" ON "sessions"("user_id");
+
+-- CreateIndex
+CREATE INDEX "sessions_active_broker_id_idx" ON "sessions"("active_broker_id");
+
+-- CreateIndex
+CREATE INDEX "sessions_impersonated_by_idx" ON "sessions"("impersonated_by");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "sessions_token_key" ON "sessions"("token");
 
 -- CreateIndex
+CREATE INDEX "accounts_user_id_idx" ON "accounts"("user_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "accounts_id_key" ON "accounts"("id");
+
+-- CreateIndex
+CREATE INDEX "verifications_identifier_idx" ON "verifications"("identifier");
 
 -- CreateIndex
 CREATE INDEX "temporary_insureds_name_idx" ON "temporary_insureds"("name");
@@ -410,22 +474,40 @@ CREATE UNIQUE INDEX "insurance_companies_contacts_category_id_value_key" ON "ins
 CREATE UNIQUE INDEX "insurance_companies_contacts_category_id_index_key" ON "insurance_companies_contacts"("category_id", "index");
 
 -- CreateIndex
-CREATE INDEX "brokers_name_idx" ON "brokers"("name");
-
--- CreateIndex
 CREATE UNIQUE INDEX "brokers_cnpj_key" ON "brokers"("cnpj");
 
--- AddForeignKey
-ALTER TABLE "users" ADD CONSTRAINT "users_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- CreateIndex
+CREATE UNIQUE INDEX "brokers_slug_key" ON "brokers"("slug");
+
+-- CreateIndex
+CREATE INDEX "members_broker_id_idx" ON "members"("broker_id");
+
+-- CreateIndex
+CREATE INDEX "members_user_id_idx" ON "members"("user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "members_broker_id_user_id_key" ON "members"("broker_id", "user_id");
+
+-- CreateIndex
+CREATE INDEX "invitation_broker_id_idx" ON "invitation"("broker_id");
+
+-- CreateIndex
+CREATE INDEX "invitation_email_idx" ON "invitation"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "invitation_broker_id_email_key" ON "invitation"("broker_id", "email");
 
 -- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "sessions" ADD CONSTRAINT "active_broker" FOREIGN KEY ("active_broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "insureds" ADD CONSTRAINT "insureds_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_impersonated_by_fkey" FOREIGN KEY ("impersonated_by") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "quotes" ADD CONSTRAINT "temporary_insured" FOREIGN KEY ("temporary_insured_id") REFERENCES "temporary_insureds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -440,6 +522,9 @@ ALTER TABLE "quotes" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_
 ALTER TABLE "quotes" ADD CONSTRAINT "quotes_producer_id_fkey" FOREIGN KEY ("producer_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "safes" ADD CONSTRAINT "safes_producer_id_fkey" FOREIGN KEY ("producer_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "safes" ADD CONSTRAINT "temporary_insured" FOREIGN KEY ("temporary_insured_id") REFERENCES "temporary_insureds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -450,9 +535,6 @@ ALTER TABLE "safes" ADD CONSTRAINT "previous_safe" FOREIGN KEY ("previous_safe_i
 
 -- AddForeignKey
 ALTER TABLE "safes" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "safes" ADD CONSTRAINT "safes_producer_id_fkey" FOREIGN KEY ("producer_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "quote_vehicles" ADD CONSTRAINT "quote_vehicles_quote_id_fkey" FOREIGN KEY ("quote_id") REFERENCES "quotes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -483,3 +565,15 @@ ALTER TABLE "insurance_companies_categories_contacts" ADD CONSTRAINT "insurance_
 
 -- AddForeignKey
 ALTER TABLE "insurance_companies_contacts" ADD CONSTRAINT "insurance_companies_contacts_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "insurance_companies_categories_contacts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "members" ADD CONSTRAINT "members_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "members" ADD CONSTRAINT "members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invitation" ADD CONSTRAINT "invitation_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invitation" ADD CONSTRAINT "invitation_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
