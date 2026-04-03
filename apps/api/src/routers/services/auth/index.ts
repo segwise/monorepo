@@ -10,7 +10,7 @@ function registerRoutersServicesAuth(server: Server) {
 	base.on(['POST', 'GET'], '*', async (ctx) => {
 		const XClientApp = (ctx.req.header('X-Client-App') ||
 			ctx.req.raw.headers.get('X-Client-App')) as
-			| 'backoffice'
+			| 'admin'
 			| 'producer'
 			| 'customer';
 
@@ -52,13 +52,13 @@ function registerRoutersServicesAuth(server: Server) {
 		console.log(
 			isBackoffice,
 			XClientApp,
-			(isBackoffice && XClientApp !== 'backoffice') ||
+			(isBackoffice && XClientApp !== 'admin') ||
 				(isProducer && XClientApp !== 'producer') ||
 				(isCustomer && XClientApp !== 'customer'),
 		);
 
 		if (
-			(isBackoffice && XClientApp !== 'backoffice') ||
+			(isBackoffice && XClientApp !== 'admin') ||
 			(isProducer && XClientApp !== 'producer') ||
 			(isCustomer && XClientApp !== 'customer')
 		) {
