@@ -19,10 +19,28 @@ const api = xior.create({
 				value.forEach((item) => {
 					searchParams.append(key, String(item));
 				});
-			} else if (value && typeof value === 'object') {
+			} else if (value && typeof value === 'object' && !Array.isArray(value)) {
 				searchParams.append(key, JSON.stringify(value));
+			} else if (
+				value &&
+				typeof value === 'string' &&
+				value.includes(',') &&
+				value.split(',').length > 1 &&
+				!(value.includes('{') && value.includes('}'))
+			) {
+				const values = value.split(',');
+
+				for (const value of values) {
+					searchParams.append(key, String(value));
+				}
 			} else {
-				searchParams.append(key, String(value));
+				try {
+					const json = JSON.parse(value);
+
+					searchParams.append(key, JSON.stringify(json));
+				} catch {
+					searchParams.append(key, String(value));
+				}
 			}
 		});
 

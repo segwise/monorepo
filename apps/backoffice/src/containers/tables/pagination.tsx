@@ -2,7 +2,7 @@
 
 import { QueryObserver, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
 	Pagination,
@@ -136,100 +136,92 @@ function TablePagination({
 						</SelectContent>
 					</Select>
 				</div>
-				{!!(
-					(Number(Object.fromEntries(Object.entries(pages ?? {}))?.count) ||
-						0) > 1
-				) && (
-					<Fragment>
-						<Separator orientation='vertical' className='h-7 mx-2' />
-						<Pagination>
-							<PaginationContent>
+				<Separator orientation='vertical' className='h-7 mx-2' />
+				<Pagination>
+					<PaginationContent>
+						<Button
+							size='sm'
+							disabled={!previous}
+							onClick={() =>
+								setSearchParams({
+									cursor: Object.values(pages ?? {}).includes(previous)
+										? previous
+										: null,
+								})
+							}
+							variant='outline'
+							className='gap-1 pl-2.5'
+						>
+							<ChevronLeftIcon className='size-4' />
+							Anterior
+						</Button>
+						{!Object.entries(pages ?? {}).find(([key]) => key === '1') && (
+							<Button
+								size='icon-sm'
+								variant='outline'
+								onClick={() =>
+									setSearchParams({
+										cursor: pages?.first,
+									})
+								}
+							>
+								1
+							</Button>
+						)}
+						{!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
+						{Object.entries(pages ?? {})
+							.filter(
+								([key]) => key !== 'first' && key !== 'last' && key !== 'count',
+							)
+							.map(([key, value]) => (
 								<Button
-									size='sm'
-									disabled={!previous}
+									key={`${key}-${value}`}
+									size='icon-sm'
 									onClick={() =>
 										setSearchParams({
-											cursor: Object.values(pages ?? {}).includes(previous)
-												? previous
-												: null,
+											cursor: value,
+										})
+									}
+									variant={
+										searchParams.cursor === value ? 'default' : 'outline'
+									}
+								>
+									{key}
+								</Button>
+							))}
+						{!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
+						{!!Object.fromEntries(Object.entries(pages ?? {}))?.last &&
+							!Object.entries(pages ?? {}).find(
+								([key]) => key === pages?.count?.toString(),
+							) && (
+								<Button
+									size='icon-sm'
+									onClick={() =>
+										setSearchParams({
+											cursor: pages?.last,
 										})
 									}
 									variant='outline'
-									className='gap-1 pl-2.5'
 								>
-									<ChevronLeftIcon className='size-4' />
-									Anterior
+									{pages?.count}
 								</Button>
-								{!Object.entries(pages ?? {}).find(([key]) => key === '1') && (
-									<Button
-										size='icon-sm'
-										variant='outline'
-										onClick={() =>
-											setSearchParams({
-												cursor: pages?.first,
-											})
-										}
-									>
-										1
-									</Button>
-								)}
-								{!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
-								{Object.entries(pages ?? {})
-									.filter(
-										([key]) =>
-											key !== 'first' && key !== 'last' && key !== 'count',
-									)
-									.map(([key, value]) => (
-										<Button
-											key={`${key}-${value}`}
-											size='icon-sm'
-											onClick={() =>
-												setSearchParams({
-													cursor: value,
-												})
-											}
-											variant={
-												searchParams.cursor === value ? 'default' : 'outline'
-											}
-										>
-											{key}
-										</Button>
-									))}
-								{!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
-								{!!Object.fromEntries(Object.entries(pages ?? {}))?.last &&
-									!Object.entries(pages ?? {}).find(
-										([key]) => key === pages?.count?.toString(),
-									) && (
-										<Button
-											size='icon-sm'
-											onClick={() =>
-												setSearchParams({
-													cursor: pages?.last,
-												})
-											}
-											variant='outline'
-										>
-											{pages?.count}
-										</Button>
-									)}
-								<Button
-									size='sm'
-									disabled={!next}
-									onClick={() =>
-										setSearchParams({
-											cursor: next,
-										})
-									}
-									variant='outline'
-									className='gap-1 pr-2.5'
-								>
-									Próximo
-									<ChevronRightIcon className='size-4' />
-								</Button>
-							</PaginationContent>
-						</Pagination>
-					</Fragment>
-				)}
+							)}
+						<Button
+							size='sm'
+							disabled={!next}
+							onClick={() =>
+								setSearchParams({
+									cursor: next,
+								})
+							}
+							variant='outline'
+							className='gap-1 pr-2.5'
+						>
+							Próximo
+							<ChevronRightIcon className='size-4' />
+						</Button>
+					</PaginationContent>
+				</Pagination>
 			</div>
 		</div>
 	);

@@ -26,6 +26,9 @@ const useSearchParams = () =>
 			.withOptions({
 				clearOnDefault: true,
 			}),
+		brokers: parseAsArrayOf(parseAsString).withDefault([]).withOptions({
+			clearOnDefault: true,
+		}),
 		requestedAt: parseAsJson(SchemaSearchParamsQuoteSimple.shape.requestedAt),
 		status: parseAsArrayOf(parseAsStringEnum(SchemaQuoteStatus.options))
 			.withDefault([])

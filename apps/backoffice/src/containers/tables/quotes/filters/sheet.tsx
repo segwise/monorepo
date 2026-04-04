@@ -1,11 +1,13 @@
 'use client';
 
+import { maskCNPJ } from '@segwise/core/masks';
 import { SchemaModality, SchemaQuoteStatus } from '@segwise/core/schemas';
 import {
 	translateModality,
 	translateQuoteStatus,
 } from '@segwise/core/translate';
 import type {
+	BrokerSimple,
 	InsuranceCompanySimple,
 	Modality,
 	ProducerSimple,
@@ -65,6 +67,7 @@ import {
 	SheetTrigger,
 } from '@/components/ui/sheet';
 import { placeholder } from '@/config/placeholder';
+import { useBrokersSimple } from '@/libraries/hooks/brokers/use-brokers';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
@@ -102,6 +105,7 @@ function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
 							},
 		producers: searchParams.producers || [],
 		insuranceCompanies: searchParams.insuranceCompanies || [],
+		brokers: searchParams.brokers || [],
 		modalities: searchParams.modality || [],
 		status: searchParams.status || [],
 	};
@@ -113,6 +117,7 @@ function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
 	const [insuranceCompanies, setInsuranceCompanies] = useState<Array<string>>(
 		defaults.insuranceCompanies,
 	);
+	const [brokers, setBrokers] = useState<Array<string>>(defaults.brokers);
 	const [modalities, setModalities] = useState<Array<Modality>>(
 		defaults.modalities,
 	);
@@ -147,6 +152,7 @@ function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
 						},
 			producers: producers.length ? producers : null,
 			insuranceCompanies: insuranceCompanies.length ? insuranceCompanies : null,
+			brokers: brokers.length ? brokers : null,
 			modality: modalities.length ? modalities : null,
 			status: status.length ? status : null,
 		});
@@ -175,6 +181,9 @@ function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
 						value={insuranceCompanies}
 						onChange={setInsuranceCompanies}
 					/>
+					{process.env.NEXT_PUBLIC_ROLE_SYSTEM === 'admin' && (
+						<FilterBrokers value={brokers} onChange={setBrokers} />
+					)}
 					<FilterModality value={modalities} onChange={setModalities} />
 					<FilterStatus value={status} onChange={setStatus} />
 				</div>
@@ -347,6 +356,10 @@ function FilterProducers({
 		onChange([]);
 	}
 
+	if (!data?.length) {
+		return;
+	}
+
 	return (
 		<Field>
 			<FieldLabel>Produtores</FieldLabel>
@@ -450,6 +463,10 @@ function FilterInsuranceCompanies({
 		onChange([]);
 	}
 
+	if (!data?.length) {
+		return;
+	}
+
 	return (
 		<Field>
 			<FieldLabel>Seguradoras</FieldLabel>
@@ -478,7 +495,9 @@ function FilterInsuranceCompanies({
 													data
 														?.find((e) => e.id === value)
 														?.name.toUpperCase() as string,
-												).replace('S/a', 'S/A')}
+												)
+													.replace('S/a', 'S/A')
+													.replace('Ltda', 'LTDA')}
 											/>
 											<AvatarFallback>
 												{data
@@ -489,7 +508,9 @@ function FilterInsuranceCompanies({
 										</Avatar>
 										{capitalizeFirstLetters(
 											data?.find((e) => e.id === value)?.name as string,
-										).replace('S/a', 'S/A')}
+										)
+											.replace('S/a', 'S/A')
+											.replace('Ltda', 'LTDA')}
 									</ComboboxChip>
 								))}
 								<ComboboxChipsInput placeholder='Selecionar Seguradoras' />
@@ -516,7 +537,132 @@ function FilterInsuranceCompanies({
 										{item.name.toUpperCase().slice(0, 2)}
 									</AvatarFallback>
 								</Avatar>
-								{capitalizeFirstLetters(item.name).replace('S/a', 'S/A')}
+								{capitalizeFirstLetters(item.name)
+									.replace('S/a', 'S/A')
+									.replace('Ltda', 'LTDA')}
+							</ComboboxItem>
+						)}
+					</ComboboxList>
+					{!!value.length && (
+						<Fragment>
+							<Separator />
+							<div className='my-2 mx-2'>
+								<Button
+									variant='destructive'
+									size='sm'
+									onClick={onReset}
+									className='w-full'
+								>
+									Limpar <XCircleIcon />
+								</Button>
+							</div>
+						</Fragment>
+					)}
+				</ComboboxContent>
+			</Combobox>
+		</Field>
+	);
+}
+
+function FilterBrokers({
+	value,
+	onChange,
+}: {
+	value: Array<string>;
+	onChange: (value: Array<string>) => void;
+}) {
+	const { data } = useBrokersSimple();
+
+	const anchor = useComboboxAnchor();
+
+	function onReset() {
+		onChange([]);
+	}
+
+	if (!data?.length) {
+		return;
+	}
+
+	return (
+		<Field>
+			<FieldLabel>Corretoras</FieldLabel>
+			<Combobox
+				multiple
+				autoHighlight
+				items={data}
+				value={value}
+				onValueChange={onChange}
+			>
+				<ComboboxChips ref={anchor} className='w-full max-w-xs'>
+					<ComboboxValue>
+						{(values: Array<string>) => (
+							<Fragment>
+								{values.map((value) => (
+									<ComboboxChip key={value}>
+										<Avatar className='size-4'>
+											<AvatarImage
+												src={
+													data?.find((e) => e.id === value)?.icon ||
+													placeholder.company
+												}
+												width={512}
+												height={512}
+												alt={capitalizeFirstLetters(
+													data
+														?.find((e) => e.id === value)
+														?.name.toUpperCase() as string,
+												)
+													.replace('S/a', 'S/A')
+													.replace('Ltda', 'LTDA')}
+											/>
+											<AvatarFallback>
+												{data
+													?.find((e) => e.id === value)
+													?.name.toUpperCase()
+													.slice(0, 2)}
+											</AvatarFallback>
+										</Avatar>
+										{capitalizeFirstLetters(
+											(data?.find((e) => e.id === value)?.fantasy as string) ||
+												(data?.find((e) => e.id === value)?.name as string),
+										)
+											.replace('S/a', 'S/A')
+											.replace('Ltda', 'LTDA')}
+									</ComboboxChip>
+								))}
+								<ComboboxChipsInput placeholder='Selecionar Corretora' />
+							</Fragment>
+						)}
+					</ComboboxValue>
+				</ComboboxChips>
+				<ComboboxContent anchor={anchor} align='end'>
+					<ComboboxEmpty>Nenhum registro encontrado</ComboboxEmpty>
+					<ComboboxList>
+						{(item: BrokerSimple) => (
+							<ComboboxItem key={item.id} value={item.id} className='py-1.5'>
+								<Avatar className='size-6'>
+									<AvatarImage
+										src={item.icon || placeholder.company}
+										width={512}
+										height={512}
+										alt={capitalizeFirstLetters(item.name)
+											.replace('S/a', 'S/A')
+											.replace('Ltda', 'LTDA')}
+									/>
+									<AvatarFallback>
+										{item.name.toUpperCase().slice(0, 2)}
+									</AvatarFallback>
+								</Avatar>
+								<div>
+									<span className='block text-inherit text-sm font-medium leading-none mb-0.5'>
+										{capitalizeFirstLetters(item?.fantasy || item.name)
+											.replace('S/a', 'S/A')
+											.replace('Ltda', 'LTDA')}
+									</span>
+									<span className='block text-muted-foreground text-xs text-[10px] leading-none'>
+										{maskCNPJ(item.cnpj)}
+									</span>
+								</div>
 							</ComboboxItem>
 						)}
 					</ComboboxList>

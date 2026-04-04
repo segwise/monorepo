@@ -48,6 +48,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 		effectived: type === 'policies',
 		cursor: searchParams.cursor,
 		insuranceCompanies: searchParams.insuranceCompanies,
+		brokers: searchParams.brokers,
 		limit: searchParams.limit,
 		modality: searchParams.modality,
 		producers: searchParams.producers,
