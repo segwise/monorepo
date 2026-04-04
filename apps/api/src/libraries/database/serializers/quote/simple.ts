@@ -31,6 +31,7 @@ function serializer(
 		...(props.insuranceCompanyId && {
 			insuranceCompany: props.insuranceCompanyId,
 		}),
+		broker: props.brokerId,
 		...(!!props.quoteVehicle && {
 			vehicle: {
 				plate: props.quoteVehicle.vehicle?.plate,
