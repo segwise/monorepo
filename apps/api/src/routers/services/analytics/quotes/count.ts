@@ -53,7 +53,9 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 			const where: Prisma.QuoteWhereInput = {
 				...(!brokerId && {
 					producer: {
-						role: Role.producer,
+						role: {
+							not: Role.customer,
+						},
 					},
 					...(!!brokers?.length && {
 						broker: {

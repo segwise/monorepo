@@ -53,7 +53,9 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 			const where: Prisma.SafeWhereInput = {
 				...(!brokerId && {
 					producer: {
-						role: Role.producer,
+						role: {
+							not: Role.customer,
+						},
 					},
 					...(!!brokers?.length && {
 						broker: {
