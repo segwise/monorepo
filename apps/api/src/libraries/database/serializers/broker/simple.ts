@@ -1,0 +1,32 @@
+import type { BrokerSimple } from '@segwise/core/types';
+import type { selectPrisma } from '@/db-adapters/broker/simple';
+import type { Prisma } from '@/generated/prisma/client';
+import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
+
+interface SerializerProps {
+	storage: Bun.S3Client;
+}
+
+function serializer(
+	props: Prisma.BrokerGetPayload<{
+		select: typeof selectPrisma;
+	}>,
+	{ storage }: SerializerProps,
+): BrokerSimple {
+	return {
+		id: props.id,
+		name: props.name,
+		...(props.fantasy && {
+			fantasy: props.fantasy,
+		}),
+		cnpj: props.cnpj,
+		...(props.logo && {
+			icon: getPresignedUrl(storage, props.logo),
+		}),
+		...(props.image && {
+			image: getPresignedUrl(storage, props.image),
+		}),
+	} satisfies BrokerSimple;
+}
+
+export { serializer };

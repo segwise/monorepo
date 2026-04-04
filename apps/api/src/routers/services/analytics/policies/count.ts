@@ -27,6 +27,7 @@ function registerRoutersServicesAnalyticsPoliciesCount(server: Server) {
 					search: true,
 					producers: true,
 					insuranceCompanies: true,
+					brokers: true,
 					effectivedAt: true,
 					modality: true,
 					status: true,
@@ -35,11 +36,14 @@ function registerRoutersServicesAnalyticsPoliciesCount(server: Server) {
 				.strict(),
 		),
 		async (ctx) => {
+			const brokerId = ctx.session.brokerId;
+
 			const {
 				basisOfAnalysis,
 				search,
 				producers,
 				insuranceCompanies,
+				brokers,
 				effectivedAt,
 				modality,
 				status,
@@ -47,6 +51,17 @@ function registerRoutersServicesAnalyticsPoliciesCount(server: Server) {
 			} = ctx.req.valid('query');
 
 			const where: Prisma.SafeWhereInput = {
+				...(!brokerId &&
+					!!brokers?.length && {
+						broker: {
+							id: {
+								in: brokers,
+							},
+						},
+					}),
+				...(!!brokerId && {
+					brokerId,
+				}),
 				OR: [
 					{
 						isExternal: false,

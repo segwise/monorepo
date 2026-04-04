@@ -188,6 +188,9 @@ model Quote {
   insuranceCompanyId String?           @map("insurance_company_id") @db.Uuid
   insuranceCompany   InsuranceCompany? @relation("insurance_company_to_quote", fields: [insuranceCompanyId], references: [id], onDelete: Restrict, map: "insurance_company")
 
+  brokerId String @map("broker_id") @db.Uuid
+  broker   Broker @relation("broker_to_quote", fields: [brokerId], references: [id], onDelete: Cascade)
+
   expiration DateTime? @db.Date
   franchise  Decimal?  @db.Decimal(10, 2)
 
@@ -238,6 +241,9 @@ model Safe {
 
   insuranceCompanyId String?           @map("insurance_company_id") @db.Uuid
   insuranceCompany   InsuranceCompany? @relation("insurance_company_to_safe", fields: [insuranceCompanyId], references: [id], onDelete: Restrict, map: "insurance_company")
+
+  brokerId String @map("broker_id") @db.Uuid
+  broker   Broker @relation("broker_to_safe", fields: [brokerId], references: [id], onDelete: Cascade)
 
   expiration DateTime @db.Date
 
@@ -492,6 +498,9 @@ model Broker {
 
   members     Member[]     @relation("broker_to_member")
   invitations Invitation[] @relation("broker_to_invitation")
+
+  safes  Safe[]  @relation("broker_to_safe")
+  quotes Quote[] @relation("broker_to_quote")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz

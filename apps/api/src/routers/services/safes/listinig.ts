@@ -11,12 +11,15 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 		'/simple',
 		zValidator('query', SchemaSearchParamsSafeSimple),
 		async (ctx) => {
+			const brokerId = ctx.session.brokerId;
+
 			const {
 				cursor,
 				limit,
 				search,
 				producers,
 				insuranceCompanies,
+				brokers,
 				effectivedAt,
 				modality,
 				status,
@@ -27,6 +30,17 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 			const pageMargins = 2;
 
 			const where: Prisma.SafeWhereInput = {
+				...(!brokerId &&
+					!!brokers?.length && {
+						broker: {
+							id: {
+								in: brokers,
+							},
+						},
+					}),
+				...(!!brokerId && {
+					brokerId,
+				}),
 				OR: [
 					{
 						isExternal: false,

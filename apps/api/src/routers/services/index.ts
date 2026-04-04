@@ -2,6 +2,7 @@ import type { Server } from '@/@types/server.d';
 
 import { registerRoutersServicesAnalytics } from '@/routers/services/analytics';
 import { registerRoutersServicesAuth } from '@/routers/services/auth';
+import { registerRoutersServicesBrokers } from '@/routers/services/brokers';
 import { registerRoutersServicesInsuranceCompanies } from '@/routers/services/insurance-companies';
 import { registerRoutersServicesProducers } from '@/routers/services/producers';
 import { registerRoutersServicesProfessions } from '@/routers/services/professions';
@@ -19,6 +20,7 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesQuotes(base);
 	registerRoutersServicesSafes(base);
 	registerRoutersServicesInsuranceCompanies(base);
+	registerRoutersServicesBrokers(base);
 	registerRoutersServicesAnalytics(base);
 }
 

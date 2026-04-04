@@ -27,6 +27,7 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 					search: true,
 					producers: true,
 					insuranceCompanies: true,
+					brokers: true,
 					requestedAt: true,
 					modality: true,
 					status: true,
@@ -35,11 +36,14 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 				.strict(),
 		),
 		async (ctx) => {
+			const brokerId = ctx.session.brokerId;
+
 			const {
 				basisOfAnalysis,
 				search,
 				producers,
 				insuranceCompanies,
+				brokers,
 				requestedAt,
 				modality,
 				status,
@@ -47,6 +51,17 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 			} = ctx.req.valid('query');
 
 			const where: Prisma.QuoteWhereInput = {
+				...(!brokerId &&
+					!!brokers?.length && {
+						broker: {
+							id: {
+								in: brokers,
+							},
+						},
+					}),
+				...(!!brokerId && {
+					brokerId,
+				}),
 				...(!!renewal && {
 					renewal,
 				}),

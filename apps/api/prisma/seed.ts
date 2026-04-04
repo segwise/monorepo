@@ -1855,6 +1855,18 @@ async function seed() {
 			}),
 		]);
 
+		const broker = await database.broker.create({
+			data: {
+				name: 'XCar Corretora de Seguros LTDA',
+				fantasy: 'XCar Corretora',
+				cnpj: '07581995000170',
+				slug: 'xcarcorretora',
+			},
+			select: {
+				id: true,
+			},
+		});
+
 		for (let i = 0; i < 10; i++) {
 			const id = Bun.randomUUIDv7();
 
@@ -1919,6 +1931,11 @@ async function seed() {
 
 			await database.quote.create({
 				data: {
+					broker: {
+						connect: {
+							id: broker.id,
+						},
+					},
 					...(!!producer && {
 						producer: {
 							connect: {
@@ -2042,6 +2059,11 @@ async function seed() {
 
 			await database.safe.create({
 				data: {
+					broker: {
+						connect: {
+							id: broker.id,
+						},
+					},
 					...(!!producer && {
 						producer: {
 							connect: {

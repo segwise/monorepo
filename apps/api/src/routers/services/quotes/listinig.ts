@@ -11,12 +11,15 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 		'/simple',
 		zValidator('query', SchemaSearchParamsQuoteSimple),
 		async (ctx) => {
+			const brokerId = ctx.session.brokerId;
+
 			const {
 				cursor,
 				limit,
 				search,
 				producers,
 				insuranceCompanies,
+				brokers,
 				requestedAt,
 				modality,
 				status,
@@ -26,6 +29,17 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 			const pageMargins = 2;
 
 			const where: Prisma.QuoteWhereInput = {
+				...(!brokerId &&
+					!!brokers?.length && {
+						broker: {
+							id: {
+								in: brokers,
+							},
+						},
+					}),
+				...(!!brokerId && {
+					brokerId,
+				}),
 				...(!!renewal && {
 					renewal,
 				}),
