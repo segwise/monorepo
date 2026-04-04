@@ -1,6 +1,6 @@
 'use client';
 
-import { maskPhone, maskPlate } from '@segwise/core/masks';
+import { maskCNPJ, maskPhone, maskPlate } from '@segwise/core/masks';
 import {
 	translateModality,
 	translateQuoteStatus,
@@ -42,6 +42,7 @@ import {
 import { placeholder } from '@/config/placeholder';
 import { DialogQuoteDeleteById } from '@/containers/dialogs/quotes/delete';
 import { useQuotesSimple } from '@/hooks/quotes/use-quotes';
+import { useBrokersSimple } from '@/libraries/hooks/brokers/use-brokers';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useQuotesPrintById } from '@/libraries/hooks/quotes/use-quotes-print';
@@ -66,6 +67,7 @@ function TableQuotesSimple() {
 	});
 
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
+	const { data: brokers } = useBrokersSimple();
 	const { data: producers } = useProducersSimple();
 
 	const {
@@ -85,11 +87,12 @@ function TableQuotesSimple() {
 				<TableRow>
 					<TableHead className='text-left w-50'>Segurado</TableHead>
 					<TableHead className='text-left flex-1'>Dados</TableHead>
-					<TableHead className='text-left w-55' />
+					<TableHead className='text-left w-40' />
+					<TableHead className='text-center w-30'>Produtor</TableHead>
+					<TableHead className='text-center w-30'>Corretora</TableHead>
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
 					<TableHead className='text-center w-60'>Solicitado Em</TableHead>
-					<TableHead className='text-center w-30'>Produtor</TableHead>
 					<TableHead className='text-right w-30'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
@@ -115,20 +118,25 @@ function TableQuotesSimple() {
 									</div>
 								</div>
 							</TableCell>
-							<TableCell className='w-40'>
-								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
-							</TableCell>
-							<TableCell className='w-55' />
-							<TableCell className='w-40'>
-								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
-							</TableCell>
-							<TableCell className='w-60'>
-								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
+							<TableCell className='w-40' />
+							<TableCell className='w-30'>
+								<div className='flex flex-row items-center justify-center gap-x-2'>
+									<Skeleton className='size-8 rounded-full' />
+								</div>
 							</TableCell>
 							<TableCell className='w-30'>
 								<div className='flex flex-row items-center justify-center gap-x-2'>
 									<Skeleton className='size-8 rounded-full' />
 								</div>
+							</TableCell>
+							<TableCell className='w-40'>
+								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
+							</TableCell>
+							<TableCell className='w-40'>
+								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
+							</TableCell>
+							<TableCell className='w-60'>
+								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
 							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
 								<Skeleton className='size-9 rounded-sm' />
@@ -167,6 +175,7 @@ function TableQuotesSimple() {
 						insured,
 						vehicle,
 						insuranceCompany,
+						broker,
 						producer,
 						status,
 						requestedAt,
@@ -201,29 +210,49 @@ function TableQuotesSimple() {
 								<div className='flex flex-row items-center justify-start'>
 									{!!vehicle && (
 										<div className='flex flex-row items-center justify-start gap-x-3'>
-											<Avatar className='size-8 rounded-none bg-background'>
-												{!!manufacturers?.find(
-													(props) => props.id === vehicle.manufacturer,
-												)?.icon && (
-													<AvatarImage
-														src={
-															manufacturers?.find(
-																(props) => props.id === vehicle.manufacturer,
-															)?.icon as string
-														}
-														width={52}
-														height={52}
-														alt='Marca do veículo'
-														priority
-													/>
-												)}
-												<AvatarFallback>
-													{manufacturers
-														?.find((props) => props.id === vehicle.manufacturer)
-														?.name.slice(0, 2)
-														.toUpperCase() || 'SP'}
-												</AvatarFallback>
-											</Avatar>
+											<Tooltip>
+												<TooltipTrigger
+													asChild
+													className={cn(
+														'',
+														!vehicle.manufacturer && 'pointer-events-none',
+													)}
+												>
+													<Avatar className='size-8 rounded-none bg-background'>
+														{!!manufacturers?.find(
+															(props) => props.id === vehicle.manufacturer,
+														)?.icon && (
+															<AvatarImage
+																src={
+																	manufacturers?.find(
+																		(props) =>
+																			props.id === vehicle.manufacturer,
+																	)?.icon as string
+																}
+																width={52}
+																height={52}
+																alt='Marca do veículo'
+																priority
+															/>
+														)}
+														<AvatarFallback>
+															{manufacturers
+																?.find(
+																	(props) => props.id === vehicle.manufacturer,
+																)
+																?.name.slice(0, 2)
+																.toUpperCase() || 'SP'}
+														</AvatarFallback>
+													</Avatar>
+												</TooltipTrigger>
+												<TooltipContent>
+													{
+														manufacturers?.find(
+															(props) => props.id === vehicle.manufacturer,
+														)?.name as string
+													}
+												</TooltipContent>
+											</Tooltip>
 											<div>
 												<span className='block text-sm font-medium truncate line-clamp-1 capitalize'>
 													{vehicle.plate ? vehicle.model : 'Sem Placa'}
@@ -243,33 +272,47 @@ function TableQuotesSimple() {
 									)}
 								</div>
 							</TableCell>
-							<TableCell className='text-left w-55'>
+							<TableCell className='text-left w-40'>
 								<div className='flex flex-row items-center justify-start'>
 									{!!insuranceCompany && (
 										<div className='flex flex-row items-center justify-start gap-x-2'>
-											<Avatar className='size-7 rounded-full bg-background'>
-												{!!insuranceCompanies?.find(
-													(props) => props.id === insuranceCompany,
-												)?.icon && (
-													<AvatarImage
-														src={
-															insuranceCompanies?.find(
-																(props) => props.id === insuranceCompany,
-															)?.icon as string
-														}
-														width={52}
-														height={52}
-														alt='Marca do veículo'
-														priority
-													/>
-												)}
-												<AvatarFallback>
-													{insuranceCompanies
-														?.find((props) => props.id === insuranceCompany)
-														?.name.slice(0, 2)
-														.toUpperCase() || 'SS'}
-												</AvatarFallback>
-											</Avatar>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<Avatar className='size-7 rounded-full bg-background'>
+														{!!insuranceCompanies?.find(
+															(props) => props.id === insuranceCompany,
+														)?.icon && (
+															<AvatarImage
+																src={
+																	insuranceCompanies?.find(
+																		(props) => props.id === insuranceCompany,
+																	)?.icon as string
+																}
+																width={52}
+																height={52}
+																alt='Marca do veículo'
+																priority
+															/>
+														)}
+														<AvatarFallback>
+															{insuranceCompanies
+																?.find((props) => props.id === insuranceCompany)
+																?.name.slice(0, 2)
+																.toUpperCase() || 'SS'}
+														</AvatarFallback>
+													</Avatar>
+												</TooltipTrigger>
+												<TooltipContent>
+													{capitalizeFirstLetters(
+														insuranceCompanies?.find(
+															(props) => props.id === insuranceCompany,
+														)?.name as string,
+													)
+														.replace('S/a', 'S/A')
+														.replace('Bb ', 'BB ')
+														.replace('Aig ', 'AIG ')}
+												</TooltipContent>
+											</Tooltip>
 											{!!expiration && (
 												<div className='flex flex-col items-start justify-start'>
 													<span className='block text-xs font-medium truncate line-clamp-1'>
@@ -287,6 +330,89 @@ function TableQuotesSimple() {
 											)}
 										</div>
 									)}
+								</div>
+							</TableCell>
+							<TableCell className='text-center w-30'>
+								{!producer && '------------'}
+								{!!producer && !!producers?.length && (
+									<div className='flex flex-row items-center justify-center gap-x-2'>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Avatar className='size-8 border bg-background'>
+													<AvatarImage
+														src={
+															producers?.find((e) => e.id === producer)
+																?.avatar || placeholder.user
+														}
+														width={52}
+														height={52}
+														alt={capitalizeFirstLetters(
+															producers?.find((e) => e.id === producer)
+																?.name as string,
+														)}
+														priority
+													/>
+													<AvatarFallback>
+														{producers
+															?.find((e) => e.id === producer)
+															?.name.slice(0, 2)
+															.toUpperCase()}
+													</AvatarFallback>
+												</Avatar>
+											</TooltipTrigger>
+											<TooltipContent align='center'>
+												{capitalizeFirstLetters(
+													producers?.find((e) => e.id === producer)
+														?.name as string,
+												)}
+											</TooltipContent>
+										</Tooltip>
+									</div>
+								)}
+							</TableCell>
+							<TableCell className='text-center w-30'>
+								<div className='flex flex-row items-center justify-center'>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Avatar className='size-7 rounded-full bg-background'>
+												{!!brokers?.find((props) => props.id === broker)
+													?.icon && (
+													<AvatarImage
+														src={
+															brokers?.find((props) => props.id === broker)
+																?.icon as string
+														}
+														width={52}
+														height={52}
+														alt='Nome da Corretora'
+														priority
+													/>
+												)}
+												<AvatarFallback>
+													{brokers
+														?.find((props) => props.id === broker)
+														?.name.slice(0, 2)
+														.toUpperCase() || 'CT'}
+												</AvatarFallback>
+											</Avatar>
+										</TooltipTrigger>
+										<TooltipContent>
+											<span className='block text-center'>
+												{capitalizeFirstLetters(
+													brokers?.find((props) => props.id === broker)
+														?.fantasy ||
+														(brokers?.find((props) => props.id === broker)
+															?.name as string),
+												)}
+											</span>
+											<span className='block text-center opacity-80 text-[10px]!'>
+												{maskCNPJ(
+													brokers?.find((props) => props.id === broker)
+														?.cnpj as string,
+												)}
+											</span>
+										</TooltipContent>
+									</Tooltip>
 								</div>
 							</TableCell>
 							<TableCell className='text-center w-40'>
@@ -321,44 +447,6 @@ function TableQuotesSimple() {
 								<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
 									{formatDistanceToNowStrict(requestedAt)}
 								</Badge>
-							</TableCell>
-							<TableCell className='text-center w-30'>
-								{!producer && '------------'}
-								{!!producer && !!producers?.length && (
-									<div className='flex flex-row items-center justify-center gap-x-2'>
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<Avatar className='size-8 border bg-background cursor-pointer'>
-													<AvatarImage
-														src={
-															producers?.find((e) => e.id === producer)
-																?.avatar || placeholder.user
-														}
-														width={52}
-														height={52}
-														alt={capitalizeFirstLetters(
-															producers?.find((e) => e.id === producer)
-																?.name as string,
-														)}
-														priority
-													/>
-													<AvatarFallback>
-														{producers
-															?.find((e) => e.id === producer)
-															?.name.slice(0, 2)
-															.toUpperCase()}
-													</AvatarFallback>
-												</Avatar>
-											</TooltipTrigger>
-											<TooltipContent align='center'>
-												{capitalizeFirstLetters(
-													producers?.find((e) => e.id === producer)
-														?.name as string,
-												)}
-											</TooltipContent>
-										</Tooltip>
-									</div>
-								)}
 							</TableCell>
 							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
 								{/* <Button variant='outline' size='icon-sm' asChild>
