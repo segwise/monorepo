@@ -6,7 +6,7 @@ import {
 import { endOfDay, startOfDay, subMonths, subYears } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
-import type { Prisma } from '@/generated/prisma/client';
+import { type Prisma, Role } from '@/generated/prisma/client';
 
 function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 	const base = server.basePath('/status');
@@ -60,14 +60,18 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 			}
 
 			const where: Prisma.QuoteWhereInput = {
-				...(!brokerId &&
-					!!brokers?.length && {
+				...(!brokerId && {
+					producer: {
+						role: Role.producer,
+					},
+					...(!!brokers?.length && {
 						broker: {
 							id: {
 								in: brokers,
 							},
 						},
 					}),
+				}),
 				...(!!brokerId && {
 					brokerId,
 				}),

@@ -3,7 +3,7 @@ import { SchemaSearchParamsQuoteSimple } from '@segwise/core/schemas';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/quote/simple';
 import { serializer } from '@/db-serializers/quote/simple';
-import type { Prisma } from '@/generated/prisma/client';
+import { type Prisma, Role } from '@/generated/prisma/client';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 
 function registerRoutersServicesQuotesSimpleListining(server: Server) {
@@ -29,14 +29,18 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 			const pageMargins = 2;
 
 			const where: Prisma.QuoteWhereInput = {
-				...(!brokerId &&
-					!!brokers?.length && {
+				...(!brokerId && {
+					producer: {
+						role: Role.producer,
+					},
+					...(!!brokers?.length && {
 						broker: {
 							id: {
 								in: brokers,
 							},
 						},
 					}),
+				}),
 				...(!!brokerId && {
 					brokerId,
 				}),

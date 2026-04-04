@@ -5,10 +5,21 @@ function registerRoutersServicesQuotesByIdDelete(server: Server) {
 		try {
 			const id = ctx.req.param('id');
 
-			await ctx.database.quote.delete({
-				where: {
-					id,
-				},
+			const brokerId = ctx.session.brokerId;
+
+			await ctx.database.$transaction(async (transaction) => {
+				const quote = await transaction.quote.delete({
+					where: {
+						id,
+					},
+					select: {
+						brokerId: true,
+					},
+				});
+
+				if (quote.brokerId !== brokerId) {
+					throw new Error('Cotação não pode ser excluída pelo usuário');
+				}
 			});
 
 			return ctx.json(

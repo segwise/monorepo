@@ -5,15 +5,31 @@ function registerRoutersServicesSafesByIdDelete(server: Server) {
 		try {
 			const id = ctx.req.param('id');
 
-			await ctx.database.safe.delete({
-				where: {
-					id,
-				},
+			const brokerId = ctx.session.brokerId;
+
+			const safe = await ctx.database.$transaction(async (transaction) => {
+				const safe = await transaction.safe.delete({
+					where: {
+						id,
+					},
+					select: {
+						brokerId: true,
+						effectivedAt: true,
+					},
+				});
+
+				if (safe.brokerId !== brokerId) {
+					throw new Error(
+						`${safe.effectivedAt ? 'Apólice' : 'Proposata'} não pode ser excluída pelo usuário`,
+					);
+				}
+
+				return safe;
 			});
 
 			return ctx.json(
 				{
-					message: 'Seguro excluído com sucessos',
+					message: `${safe.effectivedAt ? 'Apólice' : 'Proposata'} excluída com sucesso`,
 				},
 				200,
 			);

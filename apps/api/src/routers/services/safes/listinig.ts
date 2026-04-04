@@ -3,7 +3,7 @@ import { SchemaSearchParamsSafeSimple } from '@segwise/core/schemas';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
 import { serializer } from '@/db-serializers/safe/simple';
-import type { Prisma } from '@/generated/prisma/client';
+import { type Prisma, Role } from '@/generated/prisma/client';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 
 function registerRoutersServicesSafesSimpleListining(server: Server) {
@@ -30,14 +30,18 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 			const pageMargins = 2;
 
 			const where: Prisma.SafeWhereInput = {
-				...(!brokerId &&
-					!!brokers?.length && {
+				...(!brokerId && {
+					producer: {
+						role: Role.producer,
+					},
+					...(!!brokers?.length && {
 						broker: {
 							id: {
 								in: brokers,
 							},
 						},
 					}),
+				}),
 				...(!!brokerId && {
 					brokerId,
 				}),
