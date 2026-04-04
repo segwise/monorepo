@@ -13,7 +13,14 @@ import {
 	formatDistanceToNowStrict,
 	isAfter,
 } from 'date-fns';
-import { CarIcon, InfoIcon, PrinterIcon, Trash2Icon } from 'lucide-react';
+import {
+	CarIcon,
+	EyeIcon,
+	InfoIcon,
+	PrinterIcon,
+	Trash2Icon,
+} from 'lucide-react';
+import Link from 'next/link';
 import { Fragment } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -93,7 +100,7 @@ function TableQuotesSimple() {
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
 					<TableHead className='text-center w-60'>Solicitado Em</TableHead>
-					<TableHead className='text-right w-30'>Ações</TableHead>
+					<TableHead className='text-right w-40'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -138,7 +145,8 @@ function TableQuotesSimple() {
 							<TableCell className='w-60'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
-							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
+								<Skeleton className='size-9 rounded-sm' />
 								<Skeleton className='size-9 rounded-sm' />
 								<Skeleton className='size-9 rounded-sm' />
 							</TableCell>
@@ -448,12 +456,12 @@ function TableQuotesSimple() {
 									{formatDistanceToNowStrict(requestedAt)}
 								</Badge>
 							</TableCell>
-							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
-								{/* <Button variant='outline' size='icon-sm' asChild>
+							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
+								<Button variant='outline' size='icon-sm' asChild>
 									<Link href={`/quotes/${id}`}>
 										<EyeIcon />
 									</Link>
-								</Button> */}
+								</Button>
 								<Button
 									variant='outline'
 									size='icon-sm'
@@ -471,33 +479,6 @@ function TableQuotesSimple() {
 										<Trash2Icon />
 									</Button>
 								</DialogQuoteDeleteById>
-								{/* <DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button
-										variant='outline'
-										size='icon-sm'
-										className='dark:bg-foreground/5 dark:border-input'
-									>
-										<MoreHorizontalIcon />
-									</Button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align='end'>
-									<DropdownMenuItem asChild>
-										<Link
-											target='_blank'
-											href={`${process.env.NEXT_PUBLIC_API_URL}/quotes/${id}/print`}
-										>
-											<PrinterIcon /> Imprimir
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuSeparator />
-									<DialogQuoteDeleteById id={id}>
-										<DropdownMenuItem variant='destructive'>
-											<Trash2Icon /> Apagar
-										</DropdownMenuItem>
-									</DialogQuoteDeleteById>
-								</DropdownMenuContent>
-							</DropdownMenu> */}
 							</TableCell>
 						</TableRow>
 					),
