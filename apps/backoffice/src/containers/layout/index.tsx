@@ -1,10 +1,7 @@
 import { ViewTransition } from 'react';
-import { Separator } from '@/components/ui/separator';
 import { SidebarInset } from '@/components/ui/sidebar';
-// import { ChangeTheme } from './change-theme';
 import { DropdownMenuProfile } from './dropdown-menu-profile';
 import { Header } from './header';
-import { SheetNotification } from './notifications';
 import { SidebarProvider } from './provider';
 import { Sidebar } from './sidebar';
 import { TitlePage } from './title-page';
@@ -27,8 +24,8 @@ function Layout({ children }: React.PropsWithChildren) {
 						{/* <Separator orientation='vertical' className='h-6' /> */}
 						{/* <ChangeTheme /> */}
 						{/* <Separator orientation='vertical' className='h-6' /> */}
-						<SheetNotification />
-						<Separator orientation='vertical' className='h-6' />
+						{/* <SheetNotification /> */}
+						{/* <Separator orientation='vertical' className='h-6' /> */}
 						<DropdownMenuProfile variant='topbar' />
 					</div>
 				</Header>
