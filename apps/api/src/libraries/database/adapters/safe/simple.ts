@@ -18,6 +18,7 @@ const selectPrisma = {
 		},
 	},
 	insuranceCompanyId: true,
+	brokerId: true,
 	safeVehicle: {
 		select: {
 			vehicle: {

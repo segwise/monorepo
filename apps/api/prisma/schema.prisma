@@ -249,10 +249,11 @@ model Safe {
 
   safeVehicle SafeVehicle? @relation("safe_to_safe_vehicle", map: "safe_vehicle")
 
-  installments Int?     @db.Integer
-  award        Decimal? @db.Decimal(10, 2)
-  franchise    Decimal? @db.Decimal(10, 2)
-  commission   Decimal? @db.Decimal(10, 2)
+  installments     Int?     @db.Integer
+  award            Decimal? @db.Decimal(10, 2)
+  franchise        Decimal? @db.Decimal(10, 2)
+  commission       Decimal? @db.Decimal(10, 2)
+  commissionAmount Decimal? @map("commission_amount") @db.Decimal(10, 2)
 
   commissionOfType              TypeOfCommission? @map("commission_of_type")
   commissionPercentage          Int?              @map("commission_percentage") @db.Integer
@@ -542,16 +543,84 @@ model Invitation {
 
   status StatusInvitation @default(pending)
 
-  userId String @db.Uuid
+  userId String @map("user_id") @db.Uuid
   user   User   @relation("invitation_to_user", fields: [userId], references: [id], onDelete: Cascade)
 
   expiresAt DateTime @map("expires_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique([brokerId, email])
   @@index([brokerId])
   @@index([email])
   @@map("invitation")
+}
+
+model PaymentPayer {
+  id String @id @db.Uuid
+
+  payments Payment[] @relation("payment_to_payment_payer")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("payment_payers")
+}
+
+model PaymentReceiver {
+  id String @id @db.Uuid
+
+  payments Payment[] @relation("payment_to_payment_receiver")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("payment_receivers")
+}
+
+model PaymentBridge {
+  id String @id @db.Uuid
+
+  payments Payment[] @relation("payment_to_payment_bridge")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("payment_bridges")
+}
+
+model Payment {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  type TypePayment
+
+  receiverId String?          @map("receiver_id") @db.Uuid
+  receiver   PaymentReceiver? @relation("payment_to_payment_receiver", fields: [receiverId], references: [id], onDelete: Restrict)
+
+  payerId String?       @map("payer_id") @db.Uuid
+  payer   PaymentPayer? @relation("payment_to_payment_payer", fields: [payerId], references: [id], onDelete: Restrict)
+
+  bridgeId String?        @map("bridge_id") @db.Uuid
+  bridge   PaymentBridge? @relation("payment_to_payment_bridge", fields: [bridgeId], references: [id], onDelete: Restrict)
+
+  amount     Decimal  @db.Decimal(10, 2)
+  amountPaid Decimal? @map("amount_paid") @db.Decimal(10, 2)
+
+  installment Int? @db.Integer
+
+  installments Payment[] @relation("related_installments")
+
+  relatedPaymentId String?  @map("related_payment_id") @db.Uuid
+  relatedPayment   Payment? @relation("related_installments", fields: [relatedPaymentId], references: [id], onDelete: Cascade, map: "related_payment")
+
+  status StatusPayment
+
+  expiration DateTime @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("payments")
 }
 
 enum Role {
@@ -663,4 +732,14 @@ enum TypeOfInterest {
 
 enum StatusInvitation {
   pending
+}
+
+enum StatusPayment {
+  waiting
+  paid
+}
+
+enum TypePayment {
+  commission
+  others
 }

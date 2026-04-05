@@ -19,6 +19,17 @@ import { ModalityInsurance } from '@/generated/prisma/browser';
 
 function registerRoutersServicesQuotesRegister(server: Server) {
 	server.post('/', zValidator('json', SchemaQuoteRegister), async (ctx) => {
+		const brokerId = ctx.session.brokerId;
+
+		if (!brokerId) {
+			return ctx.json(
+				{
+					message: 'Usuários sem corretora vinculada',
+				},
+				401,
+			);
+		}
+
 		const {
 			modality,
 			renewal,
@@ -53,6 +64,11 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 
 			await transaction.quote.create({
 				data: {
+					broker: {
+						connect: {
+							id: brokerId,
+						},
+					},
 					...(!!producer && {
 						producer: {
 							connect: {
@@ -187,7 +203,21 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 				insuranceCompany,
 				expiration,
 				franchise,
+				broker,
 			} = ctx.req.valid('json');
+
+			const brokerId =
+				broker ||
+				((await ctx.database.broker
+					.findFirst({
+						orderBy: {
+							id: 'asc',
+						},
+						select: {
+							id: true,
+						},
+					})
+					.then((response) => response?.id as string)) as string);
 
 			try {
 				let quote = null;
@@ -212,6 +242,11 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 
 					const response = await transaction.quote.create({
 						data: {
+							broker: {
+								connect: {
+									id: brokerId,
+								},
+							},
 							modality,
 							...(!!renewal && {
 								renewal,
@@ -280,6 +315,11 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 					if (renewal) {
 						const response = await transaction.safe.create({
 							data: {
+								broker: {
+									connect: {
+										id: brokerId,
+									},
+								},
 								isExternal: true,
 								temporaryInsured: {
 									connect: {
