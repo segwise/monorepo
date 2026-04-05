@@ -1,4 +1,4 @@
-import { FilterIcon, PrinterIcon } from 'lucide-react';
+import { FilterIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import { InputSearch } from '@/components/input-search';
 import { Button } from '@/components/ui/button';
@@ -33,9 +33,6 @@ function PoliciesPage() {
 							<FilterIcon /> Filtrar <TableSafesHeaderFiltersCount />
 						</Button>
 					</TableSafesSheetFilters>
-					<Button variant='outline' className='dark:bg-primary'>
-						<PrinterIcon /> Imprimir
-					</Button>
 				</div>
 			</div>
 			<Separator />

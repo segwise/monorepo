@@ -85,6 +85,7 @@ const sidebar: Array<{
 				title: 'Seguradoras',
 				pathname: '/insurance-company',
 				icon: Building2Icon,
+				disabled: true,
 			},
 		],
 	},

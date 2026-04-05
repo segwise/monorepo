@@ -1611,6 +1611,7 @@ function FormProposalRegister() {
 																				? 'commissions-discountPercentage'
 																				: 'commissions-discountFixed'
 																		}
+																		tabIndex={-1}
 																		aria-invalid={fieldState.invalid}
 																		className='-ml-3 rounded-r-none border-0 border-r w-20 pl-4'
 																	>

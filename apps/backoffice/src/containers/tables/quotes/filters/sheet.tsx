@@ -176,7 +176,6 @@ function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
 				<Separator />
 				<div className='px-4 space-y-3'>
 					<FilterrequestedAt value={requestedAt} onChange={setrequestedAt} />
-					<FilterProducers value={producers} onChange={setProducers} />
 					<FilterInsuranceCompanies
 						value={insuranceCompanies}
 						onChange={setInsuranceCompanies}
@@ -184,6 +183,7 @@ function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
 					{process.env.NEXT_PUBLIC_ROLE_SYSTEM === 'admin' && (
 						<FilterBrokers value={brokers} onChange={setBrokers} />
 					)}
+					<FilterProducers value={producers} onChange={setProducers} />
 					<FilterModality value={modalities} onChange={setModalities} />
 					<FilterStatus value={status} onChange={setStatus} />
 				</div>

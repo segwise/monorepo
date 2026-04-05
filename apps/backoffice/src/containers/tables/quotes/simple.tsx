@@ -94,9 +94,11 @@ function TableQuotesSimple() {
 				<TableRow>
 					<TableHead className='text-left w-50'>Segurado</TableHead>
 					<TableHead className='text-left flex-1'>Dados</TableHead>
-					<TableHead className='text-left w-40' />
+					<TableHead className='text-left w-50' />
 					<TableHead className='text-center w-30'>Produtor</TableHead>
-					<TableHead className='text-center w-30'>Corretora</TableHead>
+					{process.env.NEXT_PUBLIC_ROLE_SYSTEM === 'admin' && (
+						<TableHead className='text-center w-30'>Corretora</TableHead>
+					)}
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
 					<TableHead className='text-center w-60'>Solicitado Em</TableHead>
@@ -125,7 +127,7 @@ function TableQuotesSimple() {
 									</div>
 								</div>
 							</TableCell>
-							<TableCell className='w-40' />
+							<TableCell className='w-50' />
 							<TableCell className='w-30'>
 								<div className='flex flex-row items-center justify-center gap-x-2'>
 									<Skeleton className='size-8 rounded-full' />
@@ -280,7 +282,7 @@ function TableQuotesSimple() {
 									)}
 								</div>
 							</TableCell>
-							<TableCell className='text-left w-40'>
+							<TableCell className='text-left w-50'>
 								<div className='flex flex-row items-center justify-start'>
 									{!!insuranceCompany && (
 										<div className='flex flex-row items-center justify-start gap-x-2'>
@@ -378,51 +380,53 @@ function TableQuotesSimple() {
 									</div>
 								)}
 							</TableCell>
-							<TableCell className='text-center w-30'>
-								<div className='flex flex-row items-center justify-center'>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Avatar className='size-7 rounded-full bg-background'>
-												{!!brokers?.find((props) => props.id === broker)
-													?.icon && (
-													<AvatarImage
-														src={
-															brokers?.find((props) => props.id === broker)
-																?.icon as string
-														}
-														width={52}
-														height={52}
-														alt='Nome da Corretora'
-														priority
-													/>
-												)}
-												<AvatarFallback>
-													{brokers
-														?.find((props) => props.id === broker)
-														?.name.slice(0, 2)
-														.toUpperCase() || 'CT'}
-												</AvatarFallback>
-											</Avatar>
-										</TooltipTrigger>
-										<TooltipContent>
-											<span className='block text-center'>
-												{capitalizeFirstLetters(
-													brokers?.find((props) => props.id === broker)
-														?.fantasy ||
-														(brokers?.find((props) => props.id === broker)
-															?.name as string),
-												)}
-											</span>
-											<span className='block text-center opacity-80 text-[10px]!'>
-												{maskCNPJ(
-													brokers?.find((props) => props.id === broker)
-														?.cnpj as string,
-												)}
-											</span>
-										</TooltipContent>
-									</Tooltip>
-								</div>
-							</TableCell>
+							{process.env.NEXT_PUBLIC_ROLE_SYSTEM === 'admin' && (
+								<TableCell className='text-center w-30'>
+									<div className='flex flex-row items-center justify-center'>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Avatar className='size-7 rounded-full bg-background'>
+													{!!brokers?.find((props) => props.id === broker)
+														?.icon && (
+														<AvatarImage
+															src={
+																brokers?.find((props) => props.id === broker)
+																	?.icon as string
+															}
+															width={52}
+															height={52}
+															alt='Nome da Corretora'
+															priority
+														/>
+													)}
+													<AvatarFallback>
+														{brokers
+															?.find((props) => props.id === broker)
+															?.name.slice(0, 2)
+															.toUpperCase() || 'CT'}
+													</AvatarFallback>
+												</Avatar>
+											</TooltipTrigger>
+											<TooltipContent>
+												<span className='block text-center'>
+													{capitalizeFirstLetters(
+														brokers?.find((props) => props.id === broker)
+															?.fantasy ||
+															(brokers?.find((props) => props.id === broker)
+																?.name as string),
+													)}
+												</span>
+												<span className='block text-center opacity-80 text-[10px]!'>
+													{maskCNPJ(
+														brokers?.find((props) => props.id === broker)
+															?.cnpj as string,
+													)}
+												</span>
+											</TooltipContent>
+										</Tooltip>
+									</div>
+								</TableCell>
+							)}
 							<TableCell className='text-center w-40'>
 								<Badge className='dark:border-input'>
 									{modality === 'car' && (

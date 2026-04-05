@@ -1,6 +1,6 @@
 'use client';
 
-import { maskPhone, maskPlate } from '@segwise/core/masks';
+import { maskCNPJ, maskPhone, maskPlate } from '@segwise/core/masks';
 import {
 	translateModality,
 	translateSafeStatus,
@@ -13,7 +13,8 @@ import {
 	formatDistanceToNowStrict,
 	isAfter,
 } from 'date-fns';
-import { CarIcon, InfoIcon, Trash2Icon } from 'lucide-react';
+import { CarIcon, EyeIcon, InfoIcon, Trash2Icon } from 'lucide-react';
+import Link from 'next/link';
 import { Fragment } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -34,12 +35,20 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { placeholder } from '@/config/placeholder';
 import { DialogSafeDeleteById } from '@/containers/dialogs/safes/delete';
+import { useBrokersSimple } from '@/libraries/hooks/brokers/use-brokers';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
+import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSafesSimple } from '@/libraries/hooks/safes/use-safes';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 import { useSearchParams } from '@/libraries/search-params/safes';
+import { cn } from '@/libraries/utils';
 
 function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 	const [searchParams] = useSearchParams();
@@ -59,6 +68,8 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 	});
 
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
+	const { data: producers } = useProducersSimple();
+	const { data: brokers } = useBrokersSimple();
 
 	const { data: manufacturers } = useVehiclesManufacturers();
 
@@ -69,23 +80,26 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 		<Table>
 			<TableHeader>
 				<TableRow>
-					<TableHead className='text-left w-35'>Segurado</TableHead>
+					<TableHead className='text-left w-50'>Segurado</TableHead>
 					<TableHead className='text-left flex-1'>Dados</TableHead>
-					<TableHead className='text-left w-55'>Seguradora</TableHead>
+					<TableHead className='text-left w-50'>Seguradora</TableHead>
+					<TableHead className='text-center w-30'>Produtor</TableHead>
+					{process.env.NEXT_PUBLIC_ROLE_SYSTEM === 'admin' && (
+						<TableHead className='text-center w-30'>Corretora</TableHead>
+					)}
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
-					<TableHead className='text-center w-40'>Solicitado Em</TableHead>
-					{type === 'policies' && (
-						<TableHead className='text-center w-40'>Efetivado Em</TableHead>
-					)}
-					<TableHead className='text-right w-30'>Ações</TableHead>
+					<TableHead className='text-center w-60'>
+						{type === 'proposals' ? 'Solicitado' : 'Efetivado'} Em
+					</TableHead>
+					<TableHead className='text-right w-40'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
 				{isPending &&
 					Array.from({ length: 10 }).map((_, index) => (
 						<TableRow key={index.toString()} className='hover:bg-transparent'>
-							<TableCell className='w-35'>
+							<TableCell className='w-50'>
 								<div className='flex flex-row items-center justify-start gap-x-2'>
 									<Skeleton className='size-8 rounded-full' />
 									<div>
@@ -103,17 +117,28 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									</div>
 								</div>
 							</TableCell>
+							<TableCell className='w-50' />
+							<TableCell className='w-30'>
+								<div className='flex flex-row items-center justify-center gap-x-2'>
+									<Skeleton className='size-8 rounded-full' />
+								</div>
+							</TableCell>
+							<TableCell className='w-30'>
+								<div className='flex flex-row items-center justify-center gap-x-2'>
+									<Skeleton className='size-8 rounded-full' />
+								</div>
+							</TableCell>
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
-							<TableCell className='w-55' />
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
-							<TableCell className='w-40'>
+							<TableCell className='w-60'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
-							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
+								<Skeleton className='size-9 rounded-sm' />
 								<Skeleton className='size-9 rounded-sm' />
 								<Skeleton className='size-9 rounded-sm' />
 							</TableCell>
@@ -150,20 +175,22 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 						insured,
 						vehicle,
 						insuranceCompany,
+						broker,
+						producer,
 						status,
 						requestedAt,
-						effectivedAt,
 						expiration,
+						effectivedAt,
 					}) => (
 						<TableRow key={id}>
-							<TableCell className='text-left w-35'>
+							<TableCell className='text-left w-50'>
 								<div className='flex flex-row items-center justify-start gap-x-2'>
 									<Avatar className='size-8 border bg-background'>
 										<AvatarImage
 											src={insured.image || placeholder.user}
 											width={52}
 											height={52}
-											alt='Image do usuário'
+											alt={capitalizeFirstLetters(insured.name)}
 											priority
 										/>
 										<AvatarFallback>
@@ -171,7 +198,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 										</AvatarFallback>
 									</Avatar>
 									<div>
-										<span className='block text-sm font-medium truncate line-clamp-1 max-w-30'>
+										<span className='block text-sm font-medium truncate line-clamp-1 max-w-40'>
 											{capitalizeFirstLetters(insured.name)}
 										</span>
 										<span className='block text-xs text-muted-foreground font-normal leading-none'>
@@ -184,29 +211,49 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 								<div className='flex flex-row items-center justify-start'>
 									{!!vehicle && (
 										<div className='flex flex-row items-center justify-start gap-x-3'>
-											<Avatar className='size-8 rounded-none bg-background'>
-												{!!manufacturers?.find(
-													(props) => props.id === vehicle.manufacturer,
-												)?.icon && (
-													<AvatarImage
-														src={
-															manufacturers?.find(
-																(props) => props.id === vehicle.manufacturer,
-															)?.icon as string
-														}
-														width={52}
-														height={52}
-														alt='Marca do veículo'
-														priority
-													/>
-												)}
-												<AvatarFallback>
-													{manufacturers
-														?.find((props) => props.id === vehicle.manufacturer)
-														?.name.slice(0, 2)
-														.toUpperCase() || 'SP'}
-												</AvatarFallback>
-											</Avatar>
+											<Tooltip>
+												<TooltipTrigger
+													asChild
+													className={cn(
+														'',
+														!vehicle.manufacturer && 'pointer-events-none',
+													)}
+												>
+													<Avatar className='size-8 rounded-none bg-background'>
+														{!!manufacturers?.find(
+															(props) => props.id === vehicle.manufacturer,
+														)?.icon && (
+															<AvatarImage
+																src={
+																	manufacturers?.find(
+																		(props) =>
+																			props.id === vehicle.manufacturer,
+																	)?.icon as string
+																}
+																width={52}
+																height={52}
+																alt='Marca do veículo'
+																priority
+															/>
+														)}
+														<AvatarFallback>
+															{manufacturers
+																?.find(
+																	(props) => props.id === vehicle.manufacturer,
+																)
+																?.name.slice(0, 2)
+																.toUpperCase() || 'SP'}
+														</AvatarFallback>
+													</Avatar>
+												</TooltipTrigger>
+												<TooltipContent>
+													{
+														manufacturers?.find(
+															(props) => props.id === vehicle.manufacturer,
+														)?.name as string
+													}
+												</TooltipContent>
+											</Tooltip>
 											<div>
 												<span className='block text-sm font-medium truncate line-clamp-1 capitalize'>
 													{vehicle.plate ? vehicle.model : 'Sem Placa'}
@@ -226,50 +273,151 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									)}
 								</div>
 							</TableCell>
-							<TableCell className='text-left w-55'>
+							<TableCell className='text-left w-50'>
 								<div className='flex flex-row items-center justify-start'>
-									<div className='flex flex-row items-center justify-start gap-x-2'>
-										<Avatar className='size-7 rounded-full bg-background'>
-											{!!insuranceCompanies?.find(
-												(props) => props.id === insuranceCompany,
-											)?.icon && (
-												<AvatarImage
-													src={
+									{!!insuranceCompany && (
+										<div className='flex flex-row items-center justify-start gap-x-2'>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<Avatar className='size-7 rounded-full bg-background'>
+														{!!insuranceCompanies?.find(
+															(props) => props.id === insuranceCompany,
+														)?.icon && (
+															<AvatarImage
+																src={
+																	insuranceCompanies?.find(
+																		(props) => props.id === insuranceCompany,
+																	)?.icon as string
+																}
+																width={52}
+																height={52}
+																alt='Marca do veículo'
+																priority
+															/>
+														)}
+														<AvatarFallback>
+															{insuranceCompanies
+																?.find((props) => props.id === insuranceCompany)
+																?.name.slice(0, 2)
+																.toUpperCase() || 'SS'}
+														</AvatarFallback>
+													</Avatar>
+												</TooltipTrigger>
+												<TooltipContent>
+													{capitalizeFirstLetters(
 														insuranceCompanies?.find(
 															(props) => props.id === insuranceCompany,
-														)?.icon as string
-													}
-													width={52}
-													height={52}
-													alt='Marca do veículo'
-													priority
-												/>
+														)?.name as string,
+													)
+														.replace('S/a', 'S/A')
+														.replace('Bb ', 'BB ')
+														.replace('Aig ', 'AIG ')}
+												</TooltipContent>
+											</Tooltip>
+											{!!expiration && (
+												<div className='flex flex-col items-start justify-start'>
+													<span className='block text-xs font-medium truncate line-clamp-1'>
+														Final da Vigência
+													</span>
+													<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
+														{format(expiration, 'dd/MM/yyyy')}{' '}
+														{isAfter(expiration, new Date()) &&
+															differenceInDays(expiration, new Date()) <= 7 &&
+															`- ${formatDistanceToNow(expiration)
+																.replace('cerca de ', '')
+																.replace('mais de ', '')}`}
+													</span>
+												</div>
 											)}
-											<AvatarFallback>
-												{insuranceCompanies
-													?.find((props) => props.id === insuranceCompany)
-													?.name.slice(0, 2)
-													.toUpperCase() || 'SS'}
-											</AvatarFallback>
-										</Avatar>
-										{!!expiration && (
-											<div className='flex flex-col items-start justify-start'>
-												<span className='block text-xs font-medium truncate line-clamp-1'>
-													Final da Vigência
-												</span>
-												<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
-													{format(expiration, 'dd/MM/yyyy')}{' '}
-													{isAfter(expiration, new Date()) &&
-														differenceInDays(expiration, new Date()) <= 7 &&
-														`- ${formatDistanceToNow(expiration)
-															.replace('cerca de ', '')
-															.replace('mais de ', '')}`}
-												</span>
-											</div>
-										)}
-									</div>
+										</div>
+									)}
 								</div>
 							</TableCell>
+							<TableCell className='text-center w-30'>
+								{!producer && '------------'}
+								{!!producer && !!producers?.length && (
+									<div className='flex flex-row items-center justify-center gap-x-2'>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Avatar className='size-8 border bg-background'>
+													<AvatarImage
+														src={
+															producers?.find((e) => e.id === producer)
+																?.avatar || placeholder.user
+														}
+														width={52}
+														height={52}
+														alt={capitalizeFirstLetters(
+															producers?.find((e) => e.id === producer)
+																?.name as string,
+														)}
+														priority
+													/>
+													<AvatarFallback>
+														{producers
+															?.find((e) => e.id === producer)
+															?.name.slice(0, 2)
+															.toUpperCase()}
+													</AvatarFallback>
+												</Avatar>
+											</TooltipTrigger>
+											<TooltipContent align='center'>
+												{capitalizeFirstLetters(
+													producers?.find((e) => e.id === producer)
+														?.name as string,
+												)}
+											</TooltipContent>
+										</Tooltip>
+									</div>
+								)}
+							</TableCell>
+							{process.env.NEXT_PUBLIC_ROLE_SYSTEM === 'admin' && (
+								<TableCell className='text-center w-30'>
+									<div className='flex flex-row items-center justify-center'>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Avatar className='size-7 rounded-full bg-background'>
+													{!!brokers?.find((props) => props.id === broker)
+														?.icon && (
+														<AvatarImage
+															src={
+																brokers?.find((props) => props.id === broker)
+																	?.icon as string
+															}
+															width={52}
+															height={52}
+															alt='Nome da Corretora'
+															priority
+														/>
+													)}
+													<AvatarFallback>
+														{brokers
+															?.find((props) => props.id === broker)
+															?.name.slice(0, 2)
+															.toUpperCase() || 'CT'}
+													</AvatarFallback>
+												</Avatar>
+											</TooltipTrigger>
+											<TooltipContent>
+												<span className='block text-center'>
+													{capitalizeFirstLetters(
+														brokers?.find((props) => props.id === broker)
+															?.fantasy ||
+															(brokers?.find((props) => props.id === broker)
+																?.name as string),
+													)}
+												</span>
+												<span className='block text-center opacity-80 text-[10px]!'>
+													{maskCNPJ(
+														brokers?.find((props) => props.id === broker)
+															?.cnpj as string,
+													)}
+												</span>
+											</TooltipContent>
+										</Tooltip>
+									</div>
+								</TableCell>
+							)}
 							<TableCell className='text-center w-40'>
 								<Badge className='dark:border-input'>
 									{modality === 'car' && (
@@ -286,66 +434,38 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									variant={
 										status === 'active'
 											? 'success'
-											: status === 'suspended'
-												? 'warning'
-												: status === 'canceled'
-													? 'destructive'
+											: status === 'canceled'
+												? 'destructive'
+												: status === 'suspended'
+													? 'warning'
 													: 'default'
 									}
 								>
 									{translateSafeStatus(status)}
 								</Badge>
 							</TableCell>
-							<TableCell className='text-center w-40'>
+							<TableCell className='text-center w-60'>
 								<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
-									{formatDistanceToNowStrict(requestedAt)}
+									{formatDistanceToNowStrict(
+										type === 'proposals'
+											? requestedAt
+											: (effectivedAt as string),
+									)}
 								</Badge>
 							</TableCell>
-							{type === 'policies' && effectivedAt && (
-								<TableCell className='text-center w-40'>
-									<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
-										{formatDistanceToNowStrict(effectivedAt)}
-									</Badge>
-								</TableCell>
-							)}
-							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
-								{/* <Button variant='outline' size='icon-sm' asChild>
-									<Link href={`/${type}/${id}`}>
+							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
+								<Button variant='outline' size='icon-sm' asChild>
+									<Link
+										href={`/${effectivedAt ? 'policies' : 'proposals'}/${id}`}
+									>
 										<EyeIcon />
 									</Link>
-								</Button> */}
+								</Button>
 								<DialogSafeDeleteById id={id}>
 									<Button variant='destructive' size='icon-sm'>
 										<Trash2Icon />
 									</Button>
 								</DialogSafeDeleteById>
-								{/* <DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button
-										variant='outline'
-										size='icon-sm'
-										className='dark:bg-foreground/5 dark:border-input'
-									>
-										<MoreHorizontalIcon />
-									</Button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align='end'>
-									<DropdownMenuItem asChild>
-										<Link
-											target='_blank'
-											href={`${process.env.NEXT_PUBLIC_API_URL}/safes/${id}/print`}
-										>
-											<PrinterIcon /> Imprimir
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuSeparator />
-									<DialogSafeDeleteById id={id}>
-										<DropdownMenuItem variant='destructive'>
-											<Trash2Icon /> Apagar
-										</DropdownMenuItem>
-									</DialogSafeDeleteById>
-								</DropdownMenuContent>
-							</DropdownMenu> */}
 							</TableCell>
 						</TableRow>
 					),
