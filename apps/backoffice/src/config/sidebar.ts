@@ -8,7 +8,6 @@ import {
 	FileUserIcon,
 	FileXIcon,
 	HandCoinsIcon,
-	type Icon,
 	LandmarkIcon,
 	LayoutDashboardIcon,
 	Users2Icon,
@@ -20,7 +19,7 @@ const sidebar: Array<{
 	items: Array<{
 		title: string;
 		pathname: string;
-		icon: typeof Icon;
+		icon: typeof LayoutDashboardIcon;
 		disabled?: boolean;
 	}>;
 }> =
@@ -67,6 +66,7 @@ const sidebar: Array<{
 							title: 'Assinaturas',
 							pathname: '/signatures',
 							icon: FileTextIcon,
+							disabled: true,
 						},
 						{
 							title: 'Controle de Planos',

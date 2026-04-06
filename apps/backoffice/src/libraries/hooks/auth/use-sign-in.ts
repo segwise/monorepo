@@ -15,11 +15,7 @@ const useSignIn = () =>
 				},
 				{
 					onError({ error }) {
-						if (error.message.toLowerCase() === 'invalid email or password') {
-							throw new Error('Email ou senha inválidos');
-						}
-
-						throw error.error;
+						throw error;
 					},
 				},
 			),

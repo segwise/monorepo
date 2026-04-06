@@ -1,11 +1,19 @@
-import { ChevronDownIcon, MoreHorizontalIcon } from 'lucide-react';
+import {
+	ChevronDownIcon,
+	CogIcon,
+	LockIcon,
+	MoreHorizontalIcon,
+} from 'lucide-react';
 import Image from 'next/image';
 import { Activity } from 'react';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
 	DropdownMenuSeparator,
+	DropdownMenuShortcut,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { placeholder } from '@/config/placeholder';
@@ -91,6 +99,15 @@ async function DropdownMenuProfile({
 						</span>
 					</div>
 				</Button>
+				<DropdownMenuSeparator />
+				<DropdownMenuGroup>
+					<DropdownMenuItem disabled>
+						<CogIcon /> Configurações
+						<DropdownMenuShortcut className='[&>svg]:size-3 [&>svg]:opacity-50 pointer-events-none'>
+							<LockIcon />
+						</DropdownMenuShortcut>
+					</DropdownMenuItem>
+				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownmenuButtonSignOut />
 			</DropdownMenuContent>

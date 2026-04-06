@@ -21,13 +21,13 @@ function Pathnames() {
 					priority
 					quality={100}
 					alt='Cone'
-					className='w-fit h-64 mx-auto'
+					className='w-fit h-48 mx-auto'
 				/>
 				<div className='mt-10'>
 					<span className='text-center text-4xl font-semibold block'>
 						Página em Construção
 					</span>
-					<p className='text-center md:mx-80 mt-4 leading-snug'>
+					<p className='text-center md:mx-80 mt-4 leading-tight'>
 						O sistema está em desenvolvimento. Lançaremos mais atualizações em
 						breve. Agradecemos a compreensão.
 					</p>

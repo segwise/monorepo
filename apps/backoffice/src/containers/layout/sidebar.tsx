@@ -1,4 +1,4 @@
-import { LockIcon, SettingsIcon } from 'lucide-react';
+import { LockIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Activity, Suspense } from 'react';
@@ -92,24 +92,6 @@ function Sidebar() {
 					</div>
 				))}
 			</SidebarContent>
-			<SidebarSeparator />
-			<SidebarGroup>
-				<SidebarGroupContent>
-					<SidebarMenu>
-						<SidebarMenuItem aria-disabled className='pointer-events-none'>
-							<SidebarMenuButton asChild tooltip='Configurações' disabled>
-								<Link href='/settings' prefetch={false}>
-									<SettingsIcon />
-									<span>Configurações</span>
-								</Link>
-							</SidebarMenuButton>
-							<SidebarMenuAction className='[&>svg]:size-3 [&>svg]:opacity-50 pointer-events-none'>
-								<LockIcon />
-							</SidebarMenuAction>
-						</SidebarMenuItem>
-					</SidebarMenu>
-				</SidebarGroupContent>
-			</SidebarGroup>
 			<SidebarFooter className='p-0 mx-auto w-full'>
 				<SidebarSeparator />
 				<SidebarMenu className='w-full mx-auto p-0'>
