@@ -183,12 +183,6 @@ const sidebar: Array<{
 							disabled: true,
 						},
 						{
-							title: 'Corretoras',
-							pathname: '/brokers',
-							icon: BriefcaseBusinessIcon,
-							disabled: true,
-						},
-						{
 							title: 'Seguradoras',
 							pathname: '/insurance-companies',
 							icon: Building2Icon,
@@ -206,13 +200,13 @@ const sidebar: Array<{
 							disabled: true,
 						},
 						{
-							title: 'Receitas e Despesas',
+							title: 'A Pagar e Despesas',
 							pathname: '/finance/revenues-and-expenses',
 							icon: BanknoteArrowUpIcon,
 							disabled: true,
 						},
 						{
-							title: 'A Pagar e A Receber',
+							title: 'Receitas e A Receber',
 							pathname: '/finance/revenues-and-expenses',
 							icon: BanknoteArrowUpIcon,
 							disabled: true,
