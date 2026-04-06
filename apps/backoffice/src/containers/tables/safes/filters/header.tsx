@@ -35,7 +35,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { placeholder } from '@/config/placeholder';
-import { useBrokersSimple } from '@/libraries/hooks/brokers/use-brokers';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/safes';
@@ -45,7 +44,6 @@ function TableSafesHeaderFilters() {
 
 	const isSearchParams =
 		!!searchParams.insuranceCompanies?.length ||
-		!!searchParams.brokers?.length ||
 		!!searchParams.modality?.length ||
 		!!searchParams.producers?.length ||
 		searchParams.renewal === true ||
@@ -73,7 +71,6 @@ function TableSafesHeaderFilters() {
 		setSearchParams({
 			producers: null,
 			insuranceCompanies: null,
-			brokers: null,
 			effectivedAt: null,
 			modality: null,
 			status: null,
@@ -88,7 +85,6 @@ function TableSafesHeaderFilters() {
 				<FilterEffectivedAt />
 				<FilterProducers />
 				<FilterInsuranceCompanies />
-				{process.env.NEXT_PUBLIC_ROLE_SYSTEM === 'admin' && <FilterBrokers />}
 				<FilterModality />
 				<FilterStatus />
 				{isSearchParams && (
@@ -112,7 +108,6 @@ function TableSafesHeaderFiltersCount() {
 
 	const isSearchParams = [
 		!!searchParams.insuranceCompanies?.length,
-		!!searchParams.brokers?.length,
 		!!searchParams.modality?.length,
 		!!searchParams.producers?.length,
 		searchParams.renewal === true || searchParams.renewal === false,
@@ -597,129 +592,6 @@ function FilterInsuranceCompanies() {
 										</Avatar>
 										<span className='text-muted-foreground text-xs font-normal'>
 											{capitalizeFirstLetters(props.name as string)}
-										</span>
-									</div>
-									<XIcon
-										className='size-3 hover:text-destructive cursor-pointer ml-auto'
-										onClick={() => removeItem(props.id)}
-									/>
-								</div>
-							))}
-						</PopoverContent>
-					</Popover>
-				)}
-			</div>
-		</div>
-	);
-}
-
-function FilterBrokers() {
-	const [searchParams, setSearchParams] = useSearchParams();
-
-	const { data, isPending } = useBrokersSimple(undefined, {
-		enabled: !!searchParams.brokers?.length,
-	});
-
-	const items =
-		data?.filter((e) => searchParams.brokers?.some((id) => id === e.id)) || [];
-
-	function clearSearchParams() {
-		setSearchParams({
-			brokers: null,
-		});
-	}
-
-	function removeItem(item: string) {
-		setSearchParams({
-			brokers: searchParams.brokers?.filter((e) => e !== item) || null,
-		});
-	}
-
-	if (!searchParams.brokers?.length) {
-		return;
-	}
-
-	return (
-		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
-			<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
-				Corretoras:
-				{items.length > 1 && (
-					<XCircleIcon
-						className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive'
-						onClick={clearSearchParams}
-					/>
-				)}
-			</span>
-			<div className='flex flex-row items-center justify-start gap-x-2'>
-				{isPending
-					? Array.from({
-							length: searchParams.brokers.slice(0, 2).length,
-						}).map((_, index) => (
-							<div
-								key={index.toString()}
-								className='flex flex-row items-center justify-start gap-x-1 relative'
-							>
-								<Skeleton className='size-4 rounded-full' />
-								<Skeleton className='w-18 h-3' />
-							</div>
-						))
-					: items.slice(0, 2)?.map((props) => (
-							<div
-								key={props.id}
-								className='text-muted-foreground truncate flex flex-row items-center justify-start gap-x-1 relative line-clamp-1 max-w-28'
-							>
-								<Avatar className='size-4'>
-									<AvatarImage
-										src={props?.icon || placeholder.company}
-										width={512}
-										height={512}
-										alt={capitalizeFirstLetters(props.name.toUpperCase())}
-									/>
-									<AvatarFallback>
-										{props.name.toUpperCase().slice(0, 2)}
-									</AvatarFallback>
-								</Avatar>
-								<span className='truncate flex-1'>
-									{capitalizeFirstLetters(props.fantasy || props.name)}
-								</span>
-								<XIcon
-									className='size-3! hover:text-foreground cursor-pointer'
-									onClick={() => removeItem(props.id)}
-								/>
-							</div>
-						))}
-				{!!items.slice(2).length && (
-					<Popover>
-						<PopoverTrigger asChild>
-							<Badge className='py-0 cursor-pointer line-clamp-1 truncate'>
-								+ {items.slice(2).length}
-							</Badge>
-						</PopoverTrigger>
-						<PopoverContent
-							align='end'
-							className='w-fit px-1.5 py-1 space-y-0.5'
-						>
-							{items.slice(2)?.map((props) => (
-								<div
-									key={props.id}
-									className='flex flex-row items-center justify-start gap-x-2 relative rounded cursor-pointer px-1 py-0.5'
-								>
-									<div className='flex flex-row items-center justify-start gap-x-1.5'>
-										<Avatar className='size-4'>
-											<AvatarImage
-												src={props?.icon || placeholder.user}
-												width={512}
-												height={512}
-												alt={capitalizeFirstLetters(props.name.toUpperCase())}
-											/>
-											<AvatarFallback>
-												{props.name.toUpperCase().slice(0, 2)}
-											</AvatarFallback>
-										</Avatar>
-										<span className='text-muted-foreground text-xs font-normal'>
-											{capitalizeFirstLetters(
-												(props.fantasy as string) || (props.name as string),
-											)}
 										</span>
 									</div>
 									<XIcon

@@ -15,8 +15,8 @@ const roleApplication = {
 };
 
 const getCookiePrefix = () =>
-	process.env.NODE_ENV === 'production'
-		? `${roleApplication[process.env.NEXT_PUBLIC_ROLE_SYSTEM as keyof typeof roleApplication]}.auth`
+	process.env.NODE_ENV === 'development'
+		? `${process.env.NODE_ENV}.auth`
 		: `${roleApplication[process.env.NEXT_PUBLIC_ROLE_SYSTEM as keyof typeof roleApplication]}.${process.env.NODE_ENV}.auth`;
 
 const plugins: BetterAuthClientPlugin[] = [

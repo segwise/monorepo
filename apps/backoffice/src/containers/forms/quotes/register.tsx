@@ -211,7 +211,7 @@ function FormQuoteRegister() {
 				push('/quotes');
 			},
 			onError(error) {
-				toast.error(error.message || 'Falha ao registrar interesse de cotação');
+				toast.error(error.message || 'Falha ao registrar de cotação');
 			},
 		});
 	}

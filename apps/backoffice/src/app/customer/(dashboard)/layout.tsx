@@ -3,6 +3,7 @@ import '@/styles';
 import type { Metadata } from 'next';
 import { TopLoader } from '@/components/top-loader';
 import { Toaster } from '@/components/ui/sonner';
+import { Layout } from '@/containers/layout';
 import { inter } from '@/fonts/inter';
 import { Providers } from '@/providers/contexts';
 import { cn } from '@/utils';
@@ -21,9 +22,17 @@ function RootLayout({
 }>) {
 	return (
 		<html lang='pt-BR' suppressHydrationWarning>
-			<body className={cn(inter.variable, inter.className)}>
+			<body
+				className={cn(
+					'bg-sidebar overflow-hidden overscroll-none',
+					inter.variable,
+					inter.className,
+				)}
+			>
 				<TopLoader />
-				<Providers noTheme>{children}</Providers>
+				<Providers noTheme>
+					<Layout>{children}</Layout>
+				</Providers>
 				<Toaster />
 			</body>
 		</html>

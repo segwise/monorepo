@@ -1,6 +1,6 @@
 'use client';
 
-import { maskCNPJ, maskPhone, maskPlate } from '@segwise/core/masks';
+import { maskPhone, maskPlate } from '@segwise/core/masks';
 import {
 	translateModality,
 	translateSafeStatus,
@@ -42,7 +42,6 @@ import {
 } from '@/components/ui/tooltip';
 import { placeholder } from '@/config/placeholder';
 import { DialogSafeDeleteById } from '@/containers/dialogs/safes/delete';
-import { useBrokersSimple } from '@/libraries/hooks/brokers/use-brokers';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSafesSimple } from '@/libraries/hooks/safes/use-safes';
@@ -57,7 +56,6 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 		effectived: type === 'policies',
 		cursor: searchParams.cursor,
 		insuranceCompanies: searchParams.insuranceCompanies,
-		brokers: searchParams.brokers,
 		limit: searchParams.limit,
 		modality: searchParams.modality,
 		producers: searchParams.producers,
@@ -69,7 +67,6 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
 	const { data: producers } = useProducersSimple();
-	const { data: brokers } = useBrokersSimple();
 
 	const { data: manufacturers } = useVehiclesManufacturers();
 
@@ -84,12 +81,9 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 					<TableHead className='text-left flex-1'>Dados</TableHead>
 					<TableHead className='text-left w-50'>Seguradora</TableHead>
 					<TableHead className='text-center w-30'>Produtor</TableHead>
-					{process.env.NEXT_PUBLIC_ROLE_SYSTEM === 'admin' && (
-						<TableHead className='text-center w-30'>Corretora</TableHead>
-					)}
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
-					<TableHead className='text-center w-60'>
+					<TableHead className='text-center w-40'>
 						{type === 'proposals' ? 'Solicitado' : 'Efetivado'} Em
 					</TableHead>
 					<TableHead className='text-right w-40'>Ações</TableHead>
@@ -123,18 +117,13 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									<Skeleton className='size-8 rounded-full' />
 								</div>
 							</TableCell>
-							<TableCell className='w-30'>
-								<div className='flex flex-row items-center justify-center gap-x-2'>
-									<Skeleton className='size-8 rounded-full' />
-								</div>
-							</TableCell>
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
-							<TableCell className='w-60'>
+							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
 							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
@@ -175,7 +164,6 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 						insured,
 						vehicle,
 						insuranceCompany,
-						broker,
 						producer,
 						status,
 						requestedAt,
@@ -334,7 +322,6 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 								</div>
 							</TableCell>
 							<TableCell className='text-center w-30'>
-								{!producer && '------------'}
 								{!!producer && !!producers?.length && (
 									<div className='flex flex-row items-center justify-center gap-x-2'>
 										<Tooltip>
@@ -371,53 +358,6 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									</div>
 								)}
 							</TableCell>
-							{process.env.NEXT_PUBLIC_ROLE_SYSTEM === 'admin' && (
-								<TableCell className='text-center w-30'>
-									<div className='flex flex-row items-center justify-center'>
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<Avatar className='size-7 rounded-full bg-background'>
-													{!!brokers?.find((props) => props.id === broker)
-														?.icon && (
-														<AvatarImage
-															src={
-																brokers?.find((props) => props.id === broker)
-																	?.icon as string
-															}
-															width={52}
-															height={52}
-															alt='Nome da Corretora'
-															priority
-														/>
-													)}
-													<AvatarFallback>
-														{brokers
-															?.find((props) => props.id === broker)
-															?.name.slice(0, 2)
-															.toUpperCase() || 'CT'}
-													</AvatarFallback>
-												</Avatar>
-											</TooltipTrigger>
-											<TooltipContent>
-												<span className='block text-center'>
-													{capitalizeFirstLetters(
-														brokers?.find((props) => props.id === broker)
-															?.fantasy ||
-															(brokers?.find((props) => props.id === broker)
-																?.name as string),
-													)}
-												</span>
-												<span className='block text-center opacity-80 text-[10px]!'>
-													{maskCNPJ(
-														brokers?.find((props) => props.id === broker)
-															?.cnpj as string,
-													)}
-												</span>
-											</TooltipContent>
-										</Tooltip>
-									</div>
-								</TableCell>
-							)}
 							<TableCell className='text-center w-40'>
 								<Badge className='dark:border-input'>
 									{modality === 'car' && (
@@ -444,7 +384,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									{translateSafeStatus(status)}
 								</Badge>
 							</TableCell>
-							<TableCell className='text-center w-60'>
+							<TableCell className='text-center w-40'>
 								<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
 									{formatDistanceToNowStrict(
 										type === 'proposals'
@@ -453,7 +393,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									)}
 								</Badge>
 							</TableCell>
-							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
+							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
 								<Button variant='outline' size='icon-sm' asChild>
 									<Link
 										href={`/${effectivedAt ? 'policies' : 'proposals'}/${id}`}
