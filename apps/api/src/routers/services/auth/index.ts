@@ -42,27 +42,29 @@ function registerRoutersServicesAuth(server: Server) {
 			session?.session?.brokerRole ||
 			ctx?.session?.brokerRole ||
 			session?.user?.role === Role.customer
-				? await ctx.database.session
-						.findUnique({
-							where: {
-								token: session?.token || session?.session.token,
-							},
-							select: {
-								activeBroker: {
-									select: {
-										members: {
-											where: {
-												userId: session?.user?.id || ctx?.session?.id,
-											},
-											select: {
-												role: true,
+				? session?.token || session?.session?.token
+					? await ctx.database.session
+							.findUnique({
+								where: {
+									token: session?.token || session?.session?.token,
+								},
+								select: {
+									activeBroker: {
+										select: {
+											members: {
+												where: {
+													userId: session?.user?.id || ctx?.session?.id,
+												},
+												select: {
+													role: true,
+												},
 											},
 										},
 									},
 								},
-							},
-						})
-						.then((response) => response?.activeBroker?.members[0]?.role)
+							})
+							.then((response) => response?.activeBroker?.members[0]?.role)
+					: undefined
 				: undefined;
 
 		const isBackoffice =
