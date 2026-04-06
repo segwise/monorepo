@@ -288,6 +288,42 @@ const auth = betterAuth({
 			};
 		}),
 	],
+	databaseHooks: {
+		session: {
+			create: {
+				before: async (session) => {
+					const broker = await database.broker.findFirst({
+						where: {
+							members: {
+								some: {
+									userId: session.userId,
+								},
+							},
+						},
+						select: {
+							id: true,
+						},
+						orderBy: {
+							createdAt: 'desc',
+						},
+					});
+
+					if (!broker) {
+						return {
+							data: session,
+						};
+					}
+
+					return {
+						data: {
+							...session,
+							activeOrganizationId: broker.id,
+						},
+					};
+				},
+			},
+		},
+	},
 });
 
 export { auth };

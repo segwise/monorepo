@@ -44,14 +44,14 @@ function registerRoutersServicesAuth(server: Server) {
 			role === Role.finance ||
 			role === Role.counter;
 
-		const isProducer = roleBroker === Role.producer;
-
 		const isCustomer = role === Role.customer;
+
+		const isProducer = roleBroker === Role.producer;
 
 		if (
 			(isBackoffice && XClientApp !== 'admin') ||
-			(isProducer && XClientApp !== 'producer') ||
-			(isCustomer && XClientApp !== 'customer')
+			(isCustomer && XClientApp !== 'customer') ||
+			(isProducer && XClientApp !== 'producer')
 		) {
 			const cloneResponse = response.clone();
 
@@ -88,19 +88,10 @@ function registerRoutersServicesAuth(server: Server) {
 								'__Secure-auth.session_token',
 								'__Secure-backoffice.auth.session_token',
 							);
-						}
-
-						if (ctx.environment.NODE_ENV === 'preview') {
+						} else {
 							cookie = cookie.replace(
-								'__Secure-preview.auth.session_token',
-								'__Secure-backoffice.preview.auth.session_token',
-							);
-						}
-
-						if (ctx.environment.NODE_ENV === 'development') {
-							cookie = cookie.replace(
-								'__Secure-development.auth.session_token',
-								'__Secure-backoffice.development.auth.session_token',
+								`__Secure-${ctx.environment.NODE_ENV}.auth.session_token`,
+								`__Secure-backoffice.${ctx.environment.NODE_ENV}.auth.session_token`,
 							);
 						}
 					}
@@ -111,19 +102,10 @@ function registerRoutersServicesAuth(server: Server) {
 								'__Secure-auth.session_token',
 								'__Secure-producer.auth.session_token',
 							);
-						}
-
-						if (ctx.environment.NODE_ENV === 'preview') {
+						} else {
 							cookie = cookie.replace(
-								'__Secure-preview.auth.session_token',
-								'__Secure-producer.preview.auth.session_token',
-							);
-						}
-
-						if (ctx.environment.NODE_ENV === 'development') {
-							cookie = cookie.replace(
-								'__Secure-development.auth.session_token',
-								'__Secure-producer.development.auth.session_token',
+								`__Secure-${ctx.environment.NODE_ENV}.auth.session_token`,
+								`__Secure-producer.${ctx.environment.NODE_ENV}.auth.session_token`,
 							);
 						}
 					}
@@ -134,19 +116,10 @@ function registerRoutersServicesAuth(server: Server) {
 								'__Secure-auth.session_token',
 								'__Secure-customer.auth.session_token',
 							);
-						}
-
-						if (ctx.environment.NODE_ENV === 'preview') {
+						} else {
 							cookie = cookie.replace(
-								'__Secure-preview.auth.session_token',
-								'__Secure-customer.preview.auth.session_token',
-							);
-						}
-
-						if (ctx.environment.NODE_ENV === 'development') {
-							cookie = cookie.replace(
-								'__Secure-development.auth.session_token',
-								'__Secure-customer.development.auth.session_token',
+								`__Secure-${ctx.environment.NODE_ENV}.auth.session_token`,
+								`__Secure-customer.${ctx.environment.NODE_ENV}.auth.session_token`,
 							);
 						}
 					}

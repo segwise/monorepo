@@ -27,6 +27,12 @@ const INIT = {
 	password: 'Segwise123!',
 };
 
+const CUSTOMER_BROKER = {
+	name: 'Junior Melo',
+	email: 'contato@juniormelo.com',
+	password: 'Jr271101!',
+};
+
 async function seed() {
 	try {
 		const isInit = await database.user.findUnique({
@@ -1849,37 +1855,30 @@ async function seed() {
 			}),
 		]);
 
-		const adminBroker = (await auth.api
-			.createUser({
-				body: {
-					name: 'Junior Melo',
-					email: 'contato@juniormelo.com',
-					password: 'Jr271101!',
-					// @ts-expect-error
-					role: Role.owner,
-					data: {
-						emailVerified: true,
-					},
+		const adminBroker = await auth.api.createUser({
+			body: {
+				name: CUSTOMER_BROKER.name,
+				email: CUSTOMER_BROKER.email,
+				password: CUSTOMER_BROKER.password,
+				// @ts-expect-error
+				role: Role.customer,
+				data: {
+					emailVerified: true,
 				},
-				asResponse: true,
-			})
-			.then(async (response) => await response.json())) as { user: User };
+			},
+			returnHeaders: true,
+		});
 
-		const broker = (await auth.api
-			.createOrganization({
-				body: {
-					name: 'XCar Corretora de Seguros LTDA',
-					slug: 'xcarcorretora',
-					fantasy: 'XCar Corretora',
-					cnpj: '07581995000170',
-					userId: adminBroker.user.id,
-					keepCurrentActiveOrganization: false,
-				},
-				asResponse: true,
-			})
-			.then(
-				async (response) => await response.json(),
-			)) as typeof auth.$Infer.ActiveOrganization;
+		const broker = await auth.api.createOrganization({
+			body: {
+				name: 'XCar Corretora de Seguros LTDA',
+				slug: 'xcarcorretora',
+				fantasy: 'XCar Corretora',
+				cnpj: '07581995000170',
+				userId: adminBroker.response.user.id,
+				keepCurrentActiveOrganization: true,
+			},
+		});
 
 		for (let i = 0; i < 10; i++) {
 			const id = Bun.randomUUIDv7();
