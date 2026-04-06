@@ -21,7 +21,37 @@ function getCookiePrefix() {
 const plugins: BetterAuthClientPlugin[] = [
 	nextCookies(),
 	adminClient(),
-	organizationClient(),
+	organizationClient({
+		schema: {
+			organization: {
+				additionalFields: {
+					fantasy: {
+						type: 'string',
+						required: true,
+						returned: true,
+					},
+					cnpj: {
+						type: 'string',
+						required: true,
+						index: true,
+						unique: true,
+						returned: true,
+					},
+				},
+			},
+			member: {
+				additionalFields: {
+					referral: {
+						type: 'string',
+						required: true,
+						index: true,
+						unique: true,
+						returned: true,
+					},
+				},
+			},
+		},
+	}),
 ];
 
 const auth = createAuthClient({
