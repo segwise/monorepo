@@ -25,7 +25,9 @@ function registerRoutersServicesAuth(server: Server) {
 		const session = shouldIgnoreSession
 			? null
 			: ((await response.clone().json()) as {
+					token: string;
 					user: {
+						id: string;
 						role: Role;
 					};
 					session: Session & {
@@ -36,7 +38,30 @@ function registerRoutersServicesAuth(server: Server) {
 		const setCookies = response.headers.getSetCookie();
 
 		const role = session?.user?.role || ctx?.session?.role;
-		const roleBroker = session?.session?.brokerRole || ctx?.session?.brokerRole;
+		const roleBroker =
+			session?.session?.brokerRole ||
+			ctx?.session?.brokerRole ||
+			(await ctx.database.session
+				.findUnique({
+					where: {
+						token: session?.token,
+					},
+					select: {
+						activeBroker: {
+							select: {
+								members: {
+									where: {
+										userId: session?.user?.id || ctx?.session?.id,
+									},
+									select: {
+										role: true,
+									},
+								},
+							},
+						},
+					},
+				})
+				.then((response) => response?.activeBroker?.members[0]?.role));
 
 		const isBackoffice =
 			role === Role.admin ||
@@ -50,7 +75,7 @@ function registerRoutersServicesAuth(server: Server) {
 
 		if (
 			(isBackoffice && XClientApp !== 'admin') ||
-			(isCustomer && XClientApp !== 'customer') ||
+			(isCustomer && !isProducer && XClientApp !== 'customer') ||
 			(isProducer && XClientApp !== 'producer')
 		) {
 			const cloneResponse = response.clone();

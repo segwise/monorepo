@@ -27,9 +27,15 @@ const INIT = {
 	password: 'Segwise123!',
 };
 
-const CUSTOMER_BROKER = {
+const OWNER_BROKER = {
 	name: 'Junior Melo',
 	email: 'contato@juniormelo.com',
+	password: 'Jr271101!',
+};
+
+const PRODUCER_BROKER = {
+	name: 'Junior Melo',
+	email: 'juniormelo271101@icloud.com',
 	password: 'Jr271101!',
 };
 
@@ -1857,9 +1863,9 @@ async function seed() {
 
 		const adminBroker = await auth.api.createUser({
 			body: {
-				name: CUSTOMER_BROKER.name,
-				email: CUSTOMER_BROKER.email,
-				password: CUSTOMER_BROKER.password,
+				name: OWNER_BROKER.name,
+				email: OWNER_BROKER.email,
+				password: OWNER_BROKER.password,
 				// @ts-expect-error
 				role: Role.customer,
 				data: {
@@ -1877,6 +1883,32 @@ async function seed() {
 				cnpj: '07581995000170',
 				userId: adminBroker.response.user.id,
 				keepCurrentActiveOrganization: true,
+			},
+		});
+
+		const producerResponse = await auth.api
+			.createUser({
+				body: {
+					name: PRODUCER_BROKER.name,
+					email: PRODUCER_BROKER.email,
+					password: PRODUCER_BROKER.password,
+					// @ts-expect-error
+					role: Role.customer,
+					data: {
+						emailVerified: true,
+					},
+				},
+				asResponse: true,
+			})
+			.then(async (response) => (await response.json()) as { user: User });
+
+		await auth.api.addMember({
+			body: {
+				userId: producerResponse.user.id,
+				// @ts-expect-error
+				role: Role.producer,
+				organizationId: broker.id,
+				referral: generateReferral(),
 			},
 		});
 
@@ -1914,11 +1946,10 @@ async function seed() {
 						role: Role.customer,
 						data: {
 							id,
-							// referral: generateReferral(),
 							...(pathImage && {
 								image: pathImage,
 							}),
-							brokerId: broker.id,
+							emailVerified: true,
 						},
 					},
 					asResponse: true,

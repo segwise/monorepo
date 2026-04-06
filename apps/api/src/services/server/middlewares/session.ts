@@ -12,6 +12,8 @@ const sessionMiddleware: MiddlewareHandler = async (ctx, next) => {
 			...session.session,
 			// @ts-expect-error
 			role: session.user.role as unknown as Role,
+			// @ts-expect-error
+			roleBroker: session.session.brokerRole as unknown as Role | null,
 		};
 	}
 
