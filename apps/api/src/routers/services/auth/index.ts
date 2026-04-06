@@ -37,6 +37,7 @@ function registerRoutersServicesAuth(server: Server) {
 
 		const setCookies = response.headers.getSetCookie();
 
+		console.log(session, ctx.session);
 		const role = session?.user?.role || ctx?.session?.role;
 		const roleBroker =
 			session?.session?.brokerRole ||
