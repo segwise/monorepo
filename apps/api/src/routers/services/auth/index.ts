@@ -1,6 +1,6 @@
 import type { Session } from 'better-auth';
 import type { Server } from '@/@types/server.d';
-import { Role, RoleMember } from '@/generated/prisma/enums';
+import { Role } from '@/generated/prisma/enums';
 
 const pathnameIgnoresSession = ['/auth/reset-password'];
 
@@ -29,7 +29,7 @@ function registerRoutersServicesAuth(server: Server) {
 						role: Role;
 					};
 					session: Session & {
-						brokerRole?: RoleMember | null;
+						brokerRole?: Role | null;
 					};
 				});
 
@@ -44,8 +44,7 @@ function registerRoutersServicesAuth(server: Server) {
 			role === Role.finance ||
 			role === Role.counter;
 
-		const isProducer =
-			role === Role.producer || roleBroker === RoleMember.producer;
+		const isProducer = roleBroker === Role.producer;
 
 		const isCustomer = role === Role.customer;
 

@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker/locale/pt_BR';
+import type { User } from 'better-auth';
 import {
 	addDays,
 	endOfDay,
@@ -49,7 +50,6 @@ async function seed() {
 				role: Role.admin,
 				data: {
 					emailVerified: true,
-					referral: 'admin123',
 				},
 			},
 		});
@@ -1759,7 +1759,7 @@ async function seed() {
 		for (const insurance of insuranceCompaniesSeed) {
 			const idInsurance = Bun.randomUUIDv7();
 
-			let pathInsurance: string | null = `/insurance-companies/${idInsurance}`;
+			const pathInsurance: string = `/insurance-companies/${idInsurance}`;
 
 			const { data } = await xior
 				.get(insurance.image, {
@@ -1769,13 +1769,7 @@ async function seed() {
 					data: 'error',
 				}));
 
-			if (data !== 'error') {
-				await storage.write(pathInsurance as string, data);
-			}
-
-			if (data === 'error') {
-				pathInsurance = null;
-			}
+			await storage.write(pathInsurance as string, data);
 
 			const company = await database.insuranceCompany.create({
 				data: {
@@ -1855,17 +1849,37 @@ async function seed() {
 			}),
 		]);
 
-		const broker = await database.broker.create({
-			data: {
-				name: 'XCar Corretora de Seguros LTDA',
-				fantasy: 'XCar Corretora',
-				cnpj: '07581995000170',
-				slug: 'xcarcorretora',
-			},
-			select: {
-				id: true,
-			},
-		});
+		const adminBroker = (await auth.api
+			.createUser({
+				body: {
+					name: 'Junior Melo',
+					email: 'contato@juniormelo.com',
+					password: 'Jr271101!',
+					// @ts-expect-error
+					role: Role.owner,
+					data: {
+						emailVerified: true,
+					},
+				},
+				asResponse: true,
+			})
+			.then(async (response) => await response.json())) as { user: User };
+
+		const broker = (await auth.api
+			.createOrganization({
+				body: {
+					name: 'XCar Corretora de Seguros LTDA',
+					slug: 'xcarcorretora',
+					fantasy: 'XCar Corretora',
+					cnpj: '07581995000170',
+					userId: adminBroker.user.id,
+					keepCurrentActiveOrganization: false,
+				},
+				asResponse: true,
+			})
+			.then(
+				async (response) => await response.json(),
+			)) as typeof auth.$Infer.ActiveOrganization;
 
 		for (let i = 0; i < 10; i++) {
 			const id = Bun.randomUUIDv7();
@@ -1892,26 +1906,45 @@ async function seed() {
 				}
 			}
 
-			await auth.api.createUser({
+			const producerResponse = await auth.api
+				.createUser({
+					body: {
+						name: faker.person.fullName(),
+						email: faker.internet.email(),
+						// @ts-expect-error
+						role: Role.customer,
+						data: {
+							id,
+							// referral: generateReferral(),
+							...(pathImage && {
+								image: pathImage,
+							}),
+							brokerId: broker.id,
+						},
+					},
+					asResponse: true,
+				})
+				.then(async (response) => (await response.json()) as { user: User });
+
+			await auth.api.addMember({
 				body: {
-					name: faker.person.fullName(),
-					email: faker.internet.email(),
+					userId: producerResponse.user.id,
 					// @ts-expect-error
 					role: Role.producer,
-					data: {
-						id,
-						referral: generateReferral(),
-						...(pathImage && {
-							image: pathImage,
-						}),
-					},
+					organizationId: broker.id,
+					referral: generateReferral(),
 				},
 			});
 		}
 
 		const producers = await database.user.findMany({
 			where: {
-				role: Role.producer,
+				role: Role.customer,
+				members: {
+					some: {
+						role: Role.producer,
+					},
+				},
 			},
 			select: {
 				id: true,
@@ -1965,6 +1998,11 @@ async function seed() {
 					}),
 					temporaryInsured: {
 						create: {
+							broker: {
+								connect: {
+									id: broker.id,
+								},
+							},
 							name: faker.person.fullName(),
 							phone: faker.phone.number({ style: 'international' }).slice(1),
 						},
@@ -2100,6 +2138,11 @@ async function seed() {
 					]),
 					temporaryInsured: {
 						create: {
+							broker: {
+								connect: {
+									id: broker.id,
+								},
+							},
 							name: faker.person.fullName(),
 							phone: faker.phone.number({ style: 'international' }).slice(1),
 						},

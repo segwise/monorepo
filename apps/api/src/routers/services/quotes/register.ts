@@ -46,6 +46,11 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 		await ctx.database.$transaction(async (transaction) => {
 			const temporaryInsured = await transaction.temporaryInsured.create({
 				data: {
+					broker: {
+						connect: {
+							id: brokerId,
+						},
+					},
 					cpf: insured.cpf,
 					name: insured.name,
 					birth: insured.birth,
@@ -226,6 +231,11 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 				await ctx.database.$transaction(async (transaction) => {
 					const temporaryInsured = await transaction.temporaryInsured.create({
 						data: {
+							broker: {
+								connect: {
+									id: brokerId,
+								},
+							},
 							name: insured.name,
 							phone: insured.phone,
 						},

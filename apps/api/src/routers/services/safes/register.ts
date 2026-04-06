@@ -13,25 +13,21 @@ import {
 	startOfDay,
 } from 'date-fns';
 import type { Server } from '@/@types/server';
-import { Role, StatusPayment, TypePayment } from '@/generated/prisma/enums';
+import { StatusPayment } from '@/generated/prisma/enums';
 import { Decimal } from '@/generated/prisma/internal/prismaNamespace';
 
 function registerRoutersServicesSafesRegister(server: Server) {
 	server.post('/', zValidator('json', SchemaSafeRegister), async (ctx) => {
-		const broker = ctx.session.brokerId;
+		const brokerId = ctx.session.brokerId;
 
-		const brokerId =
-			broker ||
-			((await ctx.database.broker
-				.findFirst({
-					orderBy: {
-						id: 'asc',
-					},
-					select: {
-						id: true,
-					},
-				})
-				.then((response) => response?.id)) as string);
+		if (!brokerId) {
+			return ctx.json(
+				{
+					message: 'Usuários sem corretora vinculada',
+				},
+				401,
+			);
+		}
 
 		const {
 			modality,
@@ -68,12 +64,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 			if (!response) {
 				throw new Error('Produtor não encontrado!');
 			}
-
-			if (!!broker && response.role === Role.customer) {
-				if (!response.members.find((e) => e.brokerId === broker)) {
-					throw new Error('Produtor não encontrado!');
-				}
-			}
 		}
 
 		await ctx.database.$transaction(async (transaction) => {
@@ -92,6 +82,11 @@ function registerRoutersServicesSafesRegister(server: Server) {
 				insuredConfirmId = await transaction.insured
 					.create({
 						data: {
+							broker: {
+								connect: {
+									id: brokerId,
+								},
+							},
 							cpf: insured.cpf,
 							name: insured.name,
 							birth: insured.birth,
@@ -245,19 +240,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 			});
 
 			if (commissions && producer) {
-				const isProducerSystem = await transaction.user
-					.findUnique({
-						where: {
-							id: producer,
-						},
-						select: {
-							role: true,
-						},
-					})
-					.then((response) => response?.role !== Role.customer);
-
-				const commissionSystem = 0;
-
 				if (commissions?.type === 'fixed_value') {
 					throw new Error('Tipo de comissão fixa não disponível no momento');
 				}
@@ -270,24 +252,22 @@ function registerRoutersServicesSafesRegister(server: Server) {
 					throw new Error('Juros de pagamento não disponível no momento');
 				}
 
-				const amount = isProducerSystem
-					? 100
-					: new Decimal(
-							commissions.type === 'by_the_brokerage_commission'
-								? calculatePercentageOfValue(
-										calculatePercentageOfValue(
-											receivables.award,
-											receivables.commission,
-										),
-										commissions.percentage,
-									)
-								: commissions.type === 'by_the_net_premium'
-									? calculatePercentageOfValue(
-											receivables.award,
-											commissions.percentage,
-										)
-									: 0,
-						).div(commissions.installments);
+				const amount = new Decimal(
+					commissions.type === 'by_the_brokerage_commission'
+						? calculatePercentageOfValue(
+								calculatePercentageOfValue(
+									receivables.award,
+									receivables.commission,
+								),
+								commissions.percentage,
+							)
+						: commissions.type === 'by_the_net_premium'
+							? calculatePercentageOfValue(
+									receivables.award,
+									commissions.percentage,
+								)
+							: 0,
+				).div(commissions.installments);
 
 				if (
 					isSaturday(commissions.paymentDate) ||
@@ -311,18 +291,15 @@ function registerRoutersServicesSafesRegister(server: Server) {
 
 					await transaction.payment.create({
 						data: {
-							type: TypePayment.commission,
 							...(i === 0 && {
 								id: paymentPrimaryId,
 							}),
-							...(!isProducerSystem && {
-								payer: {
-									connectOrCreate: {
-										where: { id: brokerId },
-										create: { id: brokerId },
-									},
+							payer: {
+								connectOrCreate: {
+									where: { id: brokerId },
+									create: { id: brokerId },
 								},
-							}),
+							},
 							receiver: {
 								connectOrCreate: {
 									where: { id: producer },

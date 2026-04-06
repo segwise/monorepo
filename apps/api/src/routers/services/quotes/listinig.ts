@@ -29,23 +29,17 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 			const pageMargins = 2;
 
 			const where: Prisma.QuoteWhereInput = {
-				...(!brokerId && {
-					producer: {
-						role: {
-							not: Role.customer,
-						},
-					},
-					...(!!brokers?.length && {
+				...(!!brokerId && {
+					brokerId,
+				}),
+				...(ctx.session.role !== Role.customer &&
+					!!brokers?.length && {
 						broker: {
 							id: {
 								in: brokers,
 							},
 						},
 					}),
-				}),
-				...(!!brokerId && {
-					brokerId,
-				}),
 				...(!!renewal && {
 					renewal,
 				}),

@@ -23,8 +23,6 @@ model User {
 
   phone String? @db.VarChar(13)
 
-  referral String
-
   role Role
 
   banned     Boolean?
@@ -45,9 +43,7 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  @@unique([referral])
   @@unique([email])
-  @@index([referral])
   @@index([name])
   @@index([email])
   @@index([phone])
@@ -136,12 +132,16 @@ model TemporaryInsured {
   qualificationTime Int?           @map("qualification_time") @db.Integer
   profession        String?
 
+  brokerId String @map("broker_id") @db.Uuid
+  broker   Broker @relation("broker_to_temporary_insured", fields: [brokerId], references: [id], onDelete: Cascade)
+
   quotes Quote[] @relation("quote_to_temporary_insured")
   safes  Safe[]  @relation("safe_to_temporary_insured")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@unique([brokerId, cpf])
   @@index([name])
   @@index([phone])
   @@index([cpf])
@@ -162,12 +162,19 @@ model Insured {
   qualificationTime Int?    @map("qualification_time") @db.Integer
   profession        String?
 
+  brokerId String @map("broker_id") @db.Uuid
+  broker   Broker @relation("broker_to_insured", fields: [brokerId], references: [id], onDelete: Cascade)
+
   quotes Quote[] @relation("insured_to_quote")
   safes  Safe[]  @relation("insured_to_safe")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@unique([brokerId, cpf])
+  @@index([name])
+  @@index([phone])
+  @@index([cpf])
   @@map("insureds")
 }
 
@@ -500,6 +507,9 @@ model Broker {
   members     Member[]     @relation("broker_to_member")
   invitations Invitation[] @relation("broker_to_invitation")
 
+  temporaryInsureds TemporaryInsured[] @relation("broker_to_temporary_insured", map: "temporary_insureds")
+  insureds          Insured[]          @relation("broker_to_insured")
+
   safes  Safe[]  @relation("broker_to_safe")
   quotes Quote[] @relation("broker_to_quote")
 
@@ -514,18 +524,22 @@ model Broker {
 model Member {
   id String @id @default(uuid(7)) @db.Uuid
 
-  brokerId String? @map("broker_id") @db.Uuid
-  broker   Broker? @relation("broker_to_member", fields: [brokerId], references: [id], onDelete: Cascade)
-
   userId String @map("user_id") @db.Uuid
   user   User   @relation("member_to_user", fields: [userId], references: [id], onDelete: Cascade)
 
-  role RoleMember
+  brokerId String @map("broker_id") @db.Uuid
+  broker   Broker @relation("broker_to_member", fields: [brokerId], references: [id], onDelete: Cascade)
+
+  role Role
+
+  referral String?
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@unique([referral])
   @@unique([brokerId, userId])
+  @@index([referral])
   @@index([brokerId])
   @@index([userId])
   @@map("members")
@@ -539,7 +553,7 @@ model Invitation {
 
   email String
 
-  role RoleMember?
+  role Role
 
   status StatusInvitation @default(pending)
 
@@ -592,8 +606,6 @@ model PaymentBridge {
 model Payment {
   id String @id @default(uuid(7)) @db.Uuid
 
-  type TypePayment
-
   receiverId String?          @map("receiver_id") @db.Uuid
   receiver   PaymentReceiver? @relation("payment_to_payment_receiver", fields: [receiverId], references: [id], onDelete: Restrict)
 
@@ -624,17 +636,9 @@ model Payment {
 }
 
 enum Role {
-  admin
-  manager
-  finance
-  counter
-  producer
-  customer
-}
-
-enum RoleMember {
   owner
   admin
+  manager
   broker
   finance
   counter
@@ -732,14 +736,11 @@ enum TypeOfInterest {
 
 enum StatusInvitation {
   pending
+  expired
+  accepted
 }
 
 enum StatusPayment {
   waiting
   paid
-}
-
-enum TypePayment {
-  commission
-  others
 }

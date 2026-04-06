@@ -1,5 +1,5 @@
 import type { Server } from '@/@types/server.d';
-import { Role, RoleMember } from '@/generated/prisma/enums';
+import { Role } from '@/generated/prisma/enums';
 import { selectPrisma } from '@/libraries/database/adapters/producer/simple';
 import { serializer } from '@/libraries/database/serializers/producer/simple';
 
@@ -9,15 +9,12 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 
 		const producers = await ctx.database.user.findMany({
 			where: {
-				...(!brokerId && {
-					role: Role.producer,
-				}),
 				...(!!brokerId && {
 					role: Role.customer,
 					members: {
 						some: {
 							id: brokerId,
-							role: RoleMember.producer,
+							role: Role.producer,
 						},
 					},
 				}),

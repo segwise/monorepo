@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "RoleMember" AS ENUM ('owner', 'admin', 'broker', 'finance', 'producer', 'customer');
+CREATE TYPE "Role" AS ENUM ('owner', 'admin', 'manager', 'broker', 'finance', 'counter', 'producer', 'customer');
 
 -- CreateEnum
 CREATE TYPE "ModalityInsurance" AS ENUM ('car');
@@ -41,7 +41,10 @@ CREATE TYPE "TypeOfCommission" AS ENUM ('by_the_brokerage_commission', 'by_the_n
 CREATE TYPE "TypeOfInterest" AS ENUM ('simple', 'compound');
 
 -- CreateEnum
-CREATE TYPE "StatusInvitation" AS ENUM ('pending');
+CREATE TYPE "StatusInvitation" AS ENUM ('pending', 'expired', 'accepted');
+
+-- CreateEnum
+CREATE TYPE "StatusPayment" AS ENUM ('waiting', 'paid');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -51,7 +54,7 @@ CREATE TABLE "users" (
     "email" TEXT NOT NULL,
     "email_verified" BOOLEAN,
     "phone" VARCHAR(13),
-    "referral" TEXT NOT NULL,
+    "role" "Role" NOT NULL,
     "banned" BOOLEAN,
     "ban_reason" TEXT,
     "ban_expires" DATE,
@@ -119,6 +122,7 @@ CREATE TABLE "temporary_insureds" (
     "marital_status" "MaritalStatus",
     "qualification_time" INTEGER,
     "profession" TEXT,
+    "broker_id" UUID NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -136,6 +140,7 @@ CREATE TABLE "insureds" (
     "marital_status" "MaritalStatus" NOT NULL,
     "qualification_time" INTEGER,
     "profession" TEXT,
+    "broker_id" UUID NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -151,6 +156,7 @@ CREATE TABLE "quotes" (
     "renewal" BOOLEAN,
     "association" BOOLEAN,
     "insurance_company_id" UUID,
+    "broker_id" UUID NOT NULL,
     "expiration" DATE,
     "franchise" DECIMAL(10,2),
     "producer_id" UUID,
@@ -175,11 +181,13 @@ CREATE TABLE "safes" (
     "renewal" BOOLEAN,
     "previous_safe_id" UUID,
     "insurance_company_id" UUID,
+    "broker_id" UUID NOT NULL,
     "expiration" DATE NOT NULL,
     "installments" INTEGER,
     "award" DECIMAL(10,2),
     "franchise" DECIMAL(10,2),
     "commission" DECIMAL(10,2),
+    "commission_amount" DECIMAL(10,2),
     "commission_of_type" "TypeOfCommission",
     "commission_percentage" INTEGER,
     "commission_discount_percentage" INTEGER,
@@ -294,7 +302,7 @@ CREATE TABLE "manufacturer_vehicles" (
 CREATE TABLE "insurance_companies" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
-    "icon" TEXT,
+    "icon" TEXT NOT NULL,
     "image" TEXT,
     "cnpj" VARCHAR(14) NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -348,9 +356,10 @@ CREATE TABLE "brokers" (
 -- CreateTable
 CREATE TABLE "members" (
     "id" UUID NOT NULL,
-    "broker_id" UUID,
     "user_id" UUID NOT NULL,
-    "role" "RoleMember" NOT NULL,
+    "broker_id" UUID NOT NULL,
+    "role" "Role" NOT NULL,
+    "referral" TEXT,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -362,17 +371,60 @@ CREATE TABLE "invitation" (
     "id" UUID NOT NULL,
     "broker_id" UUID,
     "email" TEXT NOT NULL,
-    "role" "RoleMember",
+    "role" "Role" NOT NULL,
     "status" "StatusInvitation" NOT NULL DEFAULT 'pending',
-    "userId" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
     "expires_at" TIMESTAMPTZ NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "invitation_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE INDEX "users_referral_idx" ON "users"("referral");
+-- CreateTable
+CREATE TABLE "payment_payers" (
+    "id" UUID NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "payment_payers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "payment_receivers" (
+    "id" UUID NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "payment_receivers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "payment_bridges" (
+    "id" UUID NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "payment_bridges_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "payments" (
+    "id" UUID NOT NULL,
+    "receiver_id" UUID,
+    "payer_id" UUID,
+    "bridge_id" UUID,
+    "amount" DECIMAL(10,2) NOT NULL,
+    "amount_paid" DECIMAL(10,2),
+    "installment" INTEGER,
+    "related_payment_id" UUID,
+    "status" "StatusPayment" NOT NULL,
+    "expiration" TIMESTAMPTZ NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateIndex
 CREATE INDEX "users_name_idx" ON "users"("name");
@@ -382,9 +434,6 @@ CREATE INDEX "users_email_idx" ON "users"("email");
 
 -- CreateIndex
 CREATE INDEX "users_phone_idx" ON "users"("phone");
-
--- CreateIndex
-CREATE UNIQUE INDEX "users_referral_key" ON "users"("referral");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
@@ -418,6 +467,21 @@ CREATE INDEX "temporary_insureds_phone_idx" ON "temporary_insureds"("phone");
 
 -- CreateIndex
 CREATE INDEX "temporary_insureds_cpf_idx" ON "temporary_insureds"("cpf");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "temporary_insureds_broker_id_cpf_key" ON "temporary_insureds"("broker_id", "cpf");
+
+-- CreateIndex
+CREATE INDEX "insureds_name_idx" ON "insureds"("name");
+
+-- CreateIndex
+CREATE INDEX "insureds_phone_idx" ON "insureds"("phone");
+
+-- CreateIndex
+CREATE INDEX "insureds_cpf_idx" ON "insureds"("cpf");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "insureds_broker_id_cpf_key" ON "insureds"("broker_id", "cpf");
 
 -- CreateIndex
 CREATE INDEX "quotes_requested_at_idx" ON "quotes"("requested_at");
@@ -480,10 +544,16 @@ CREATE UNIQUE INDEX "brokers_cnpj_key" ON "brokers"("cnpj");
 CREATE UNIQUE INDEX "brokers_slug_key" ON "brokers"("slug");
 
 -- CreateIndex
+CREATE INDEX "members_referral_idx" ON "members"("referral");
+
+-- CreateIndex
 CREATE INDEX "members_broker_id_idx" ON "members"("broker_id");
 
 -- CreateIndex
 CREATE INDEX "members_user_id_idx" ON "members"("user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "members_referral_key" ON "members"("referral");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "members_broker_id_user_id_key" ON "members"("broker_id", "user_id");
@@ -510,6 +580,12 @@ ALTER TABLE "sessions" ADD CONSTRAINT "sessions_impersonated_by_fkey" FOREIGN KE
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "temporary_insureds" ADD CONSTRAINT "temporary_insureds_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "insureds" ADD CONSTRAINT "insureds_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "quotes" ADD CONSTRAINT "temporary_insured" FOREIGN KEY ("temporary_insured_id") REFERENCES "temporary_insureds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -517,6 +593,9 @@ ALTER TABLE "quotes" ADD CONSTRAINT "quotes_insured_id_fkey" FOREIGN KEY ("insur
 
 -- AddForeignKey
 ALTER TABLE "quotes" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "quotes" ADD CONSTRAINT "quotes_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "quotes" ADD CONSTRAINT "quotes_producer_id_fkey" FOREIGN KEY ("producer_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -535,6 +614,9 @@ ALTER TABLE "safes" ADD CONSTRAINT "previous_safe" FOREIGN KEY ("previous_safe_i
 
 -- AddForeignKey
 ALTER TABLE "safes" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "safes" ADD CONSTRAINT "safes_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "quote_vehicles" ADD CONSTRAINT "quote_vehicles_quote_id_fkey" FOREIGN KEY ("quote_id") REFERENCES "quotes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -567,13 +649,25 @@ ALTER TABLE "insurance_companies_categories_contacts" ADD CONSTRAINT "insurance_
 ALTER TABLE "insurance_companies_contacts" ADD CONSTRAINT "insurance_companies_contacts_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "insurance_companies_categories_contacts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "members" ADD CONSTRAINT "members_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "members" ADD CONSTRAINT "members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "members" ADD CONSTRAINT "members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "members" ADD CONSTRAINT "members_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "invitation" ADD CONSTRAINT "invitation_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "invitation" ADD CONSTRAINT "invitation_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "invitation" ADD CONSTRAINT "invitation_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payments" ADD CONSTRAINT "payments_receiver_id_fkey" FOREIGN KEY ("receiver_id") REFERENCES "payment_receivers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payments" ADD CONSTRAINT "payments_payer_id_fkey" FOREIGN KEY ("payer_id") REFERENCES "payment_payers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payments" ADD CONSTRAINT "payments_bridge_id_fkey" FOREIGN KEY ("bridge_id") REFERENCES "payment_bridges"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payments" ADD CONSTRAINT "related_payment" FOREIGN KEY ("related_payment_id") REFERENCES "payments"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -30,23 +30,17 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 			const pageMargins = 2;
 
 			const where: Prisma.SafeWhereInput = {
-				...(!brokerId && {
-					producer: {
-						role: {
-							not: Role.customer,
-						},
-					},
-					...(!!brokers?.length && {
+				...(!!brokerId && {
+					brokerId,
+				}),
+				...(ctx.session.role !== Role.customer &&
+					!!brokers?.length && {
 						broker: {
 							id: {
 								in: brokers,
 							},
 						},
 					}),
-				}),
-				...(!!brokerId && {
-					brokerId,
-				}),
 				OR: [
 					{
 						isExternal: false,

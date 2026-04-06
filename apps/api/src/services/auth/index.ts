@@ -98,15 +98,6 @@ const auth = betterAuth({
 		expiresIn: 60 * 60,
 	},
 	user: {
-		additionalFields: {
-			referral: {
-				type: 'string',
-				required: true,
-				index: true,
-				unique: true,
-				returned: true,
-			},
-		},
 		changeEmail: {
 			enabled: true,
 			async sendChangeEmailConfirmation({ newEmail, url, token }) {
@@ -205,6 +196,20 @@ const auth = betterAuth({
 			schema: {
 				organization: {
 					modelName: 'broker',
+					additionalFields: {
+						fantasy: {
+							type: 'string',
+							required: true,
+							returned: true,
+						},
+						cnpj: {
+							type: 'string',
+							required: true,
+							index: true,
+							unique: true,
+							returned: true,
+						},
+					},
 				},
 				invitation: {
 					fields: {
@@ -215,6 +220,15 @@ const auth = betterAuth({
 				member: {
 					fields: {
 						organizationId: 'brokerId',
+					},
+					additionalFields: {
+						referral: {
+							type: 'string',
+							required: true,
+							index: true,
+							unique: true,
+							returned: true,
+						},
 					},
 				},
 				organizationRole: {
