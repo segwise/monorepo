@@ -37,7 +37,6 @@ function registerRoutersServicesAuth(server: Server) {
 
 		const setCookies = response.headers.getSetCookie();
 
-		console.log(session, ctx.session);
 		const role = session?.user?.role || ctx?.session?.role;
 		const roleBroker =
 			session?.session?.brokerRole ||
@@ -46,7 +45,7 @@ function registerRoutersServicesAuth(server: Server) {
 				? await ctx.database.session
 						.findUnique({
 							where: {
-								token: session?.token,
+								token: session?.token || session?.session.token,
 							},
 							select: {
 								activeBroker: {
