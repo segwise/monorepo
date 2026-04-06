@@ -83,7 +83,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 					<TableHead className='text-center w-30'>Produtor</TableHead>
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
-					<TableHead className='text-center w-40'>
+					<TableHead className='text-center w-40 truncate'>
 						{type === 'proposals' ? 'Solicitado' : 'Efetivado'} Em
 					</TableHead>
 					<TableHead className='text-right w-40'>Ações</TableHead>

@@ -7,8 +7,6 @@ const PUBLIC_ROUTES = ['/sign-in', '/forgot-password', '/reset-password'];
 
 const COOKIE_PREFIX = getCookiePrefix();
 
-console.log('COOKIE_PREFIX:', COOKIE_PREFIX);
-
 const getSessionCached = unstable_cache(
 	async (cookie: string) => {
 		const sessionCookie = getSessionCookie(
@@ -20,8 +18,6 @@ const getSessionCached = unstable_cache(
 				cookiePrefix: COOKIE_PREFIX,
 			},
 		);
-
-		console.log('sessionCookie:', sessionCookie);
 
 		if (!sessionCookie) {
 			return null;
@@ -35,8 +31,6 @@ const getSessionCached = unstable_cache(
 				},
 			},
 		});
-
-		console.log('session:', session);
 
 		return session.data;
 	},
