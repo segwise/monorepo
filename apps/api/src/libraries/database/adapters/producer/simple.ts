@@ -6,7 +6,11 @@ const selectPrisma = {
 	email: true,
 	phone: true,
 	image: true,
-	referral: true,
+	members: {
+		select: {
+			referral: true,
+		},
+	},
 } as const satisfies Prisma.UserSelect;
 
 export { selectPrisma };

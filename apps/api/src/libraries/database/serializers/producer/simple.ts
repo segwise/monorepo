@@ -25,7 +25,7 @@ function serializer(
 				phone: props.phone,
 			}),
 		},
-		referral: props.referral,
+		referral: props.members[0]?.referral as string,
 	} satisfies ProducerSimple;
 }
 
