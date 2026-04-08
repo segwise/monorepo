@@ -240,7 +240,6 @@ function FormQuoteRegister() {
 			setValue('vehicle.chassi', vehicleSearch?.chassi || null);
 			clearErrors('vehicle.chassi');
 
-			// @ts-expect-error
 			setValue('vehicle.exchange', vehicleSearch.exchange || null);
 
 			setTimeout(() => {
@@ -935,7 +934,6 @@ function FormQuoteRegister() {
 															}
 
 															if (getValues('vehicle.exchange')) {
-																// @ts-expect-error
 																setValue('vehicle.exchange', null);
 
 																setTimeout(() => {
@@ -1194,7 +1192,11 @@ function FormQuoteRegister() {
 														( Opcional )
 													</sup>
 												</FieldLabel>
-												<Select {...field} onValueChange={field.onChange}>
+												<Select
+													{...field}
+													value={field.value || ''}
+													onValueChange={field.onChange}
+												>
 													<SelectTrigger
 														id='vehicle-exchange'
 														aria-invalid={fieldState.invalid}
