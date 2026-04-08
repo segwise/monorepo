@@ -52,9 +52,14 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 			async onSuccess(_data, _variables, _mutate, ctx) {
 				toast.success('CADASTRADO COM SUCESSO!');
 
-				await ctx.client.invalidateQueries({
-					queryKey: ['producers', 'simple'],
-				});
+				await Promise.all([
+					ctx.client.invalidateQueries({
+						queryKey: ['producers', 'simple'],
+					}),
+					ctx.client.invalidateQueries({
+						queryKey: ['producers', 'simple', 'full'],
+					}),
+				]);
 
 				setOpen(false);
 			},
