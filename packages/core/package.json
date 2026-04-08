@@ -1,6 +1,6 @@
 {
   "name": "@segwise/core",
-  "version": "1.1.235",
+  "version": "1.1.236",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "module": "./dist/index.js",
@@ -67,5 +67,8 @@
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0"
   }
 }
