@@ -10,6 +10,7 @@ import {
 	HandCoinsIcon,
 	LandmarkIcon,
 	LayoutDashboardIcon,
+	UserStarIcon,
 	Users2Icon,
 	UsersRoundIcon,
 } from 'lucide-react';
@@ -187,6 +188,11 @@ const sidebar: Array<{
 							pathname: '/insurance-companies',
 							icon: Building2Icon,
 						},
+						{
+							title: 'Produtores',
+							pathname: '/producers',
+							icon: UserStarIcon,
+						},
 					],
 				},
 				{
@@ -241,7 +247,7 @@ const sidebar: Array<{
 						{
 							title: 'Usuários',
 							pathname: '/configurations/users',
-							icon: LandmarkIcon,
+							icon: Users2Icon,
 							disabled: true,
 						},
 					],

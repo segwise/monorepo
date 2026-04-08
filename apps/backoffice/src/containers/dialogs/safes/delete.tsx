@@ -33,7 +33,7 @@ function DialogSafeDeleteById({
 
 	function onSubmit() {
 		mutate(undefined, {
-			async onSuccess() {
+			onSuccess() {
 				toast.success('REGISTRO DELETADO COM SUCESSO!', {
 					description: 'O registro não poderá mais ser recuperado',
 				});

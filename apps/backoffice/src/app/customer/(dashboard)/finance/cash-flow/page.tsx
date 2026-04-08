@@ -4,7 +4,7 @@ import { InputSearch } from '@/components/input-search';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { TableFinanceSimple } from '@/containers/tables/finance/simple';
+import { TableFinancesSimple } from '@/containers/tables/finance/simple';
 import { TablePagination } from '@/containers/tables/pagination';
 
 export const metadata: Metadata = {
@@ -31,7 +31,7 @@ function FinanceCashFlowPage() {
 			<div className='space-y-3'>
 				<Card className='p-0 overflow-hidden'>
 					<CardContent className='p-0'>
-						<TableFinanceSimple />
+						<TableFinancesSimple />
 					</CardContent>
 				</Card>
 				<TablePagination type='payments-cash-flow' />

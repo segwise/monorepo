@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useSearchParams as useSearchParamsPayments } from '@/libraries/search-params/payments';
+import { useSearchParams as useSearchParamsProducers } from '@/libraries/search-params/producers';
 import { useSearchParams as useSearchParamsQuotes } from '@/libraries/search-params/quotes';
 import { useSearchParams as useSearchParamsSafes } from '@/libraries/search-params/safes';
 
@@ -26,6 +27,7 @@ const queryKeys = {
 	proposals: ['proposals', 'simple'],
 	policies: ['policies', 'simple'],
 	'payments-cash-flow': ['payments', 'simple', 'cash-flow'],
+	producers: ['producers', 'simple'],
 } as const;
 
 function TablePagination({ type }: { type: keyof typeof queryKeys }) {
@@ -35,13 +37,17 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 	const [searchParamsSafes, setSearchParamsSafes] = useSearchParamsSafes();
 	const [searchParamsPayments, setSearchParamsPayments] =
 		useSearchParamsPayments();
+	const [searchParamsProducers, setSearchParamsProducers] =
+		useSearchParamsProducers();
 
 	const [searchParams, setSearchParams] =
 		type === 'quotes'
 			? [searchParamsQuotes, setSearchParamsQuotes]
 			: type === 'proposals' || type === 'policies'
 				? [searchParamsSafes, setSearchParamsSafes]
-				: [searchParamsPayments, setSearchParamsPayments];
+				: type === 'payments-cash-flow'
+					? [searchParamsPayments, setSearchParamsPayments]
+					: [searchParamsProducers, setSearchParamsProducers];
 
 	const [{ total, previous, next, pages }, setState] = useState<{
 		total: number;

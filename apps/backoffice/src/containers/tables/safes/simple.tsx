@@ -43,7 +43,7 @@ import {
 import { placeholder } from '@/config/placeholder';
 import { DialogSafeDeleteById } from '@/containers/dialogs/safes/delete';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
-import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
+import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useSafesSimple } from '@/libraries/hooks/safes/use-safes';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 import { useSearchParams } from '@/libraries/search-params/safes';
@@ -66,7 +66,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 	});
 
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
-	const { data: producers } = useProducersSimple();
+	const { data: producers } = useProducersSimpleFull();
 
 	const { data: manufacturers } = useVehiclesManufacturers();
 

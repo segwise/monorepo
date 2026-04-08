@@ -29,7 +29,7 @@ import {
 	capitalizeFirstLetters,
 	getNumericValueMoney,
 } from '@segwise/core/utils';
-import { isDateString } from '@segwise/core/valids';
+import { isDateString, isPlate } from '@segwise/core/valids';
 import {
 	addYears,
 	differenceInYears,
@@ -50,7 +50,7 @@ import {
 	XCircleIcon,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { withMask } from 'use-mask-input';
@@ -95,18 +95,21 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { placeholder } from '@/config/placeholder';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
-import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
+import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useSafesRegister } from '@/libraries/hooks/safes/use-safes-register';
 import { useProfessionsSimple } from '@/libraries/hooks/use-professions';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
+import { useVehiclesPlate } from '@/libraries/hooks/vehicles/use-vehicles-plate';
+import { cn } from '@/libraries/utils';
 
 function FormProposalRegister() {
 	const { push } = useRouter();
 
-	const { data: producers } = useProducersSimple();
+	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
 	const { data: professions } = useProfessionsSimple();
-	const { data: manufacturers } = useVehiclesManufacturers();
+	const { data: manufacturers, refetch: refetchManufacturers } =
+		useVehiclesManufacturers();
 
 	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
 		useState<boolean>(false);
@@ -155,6 +158,11 @@ function FormProposalRegister() {
 			},
 		},
 	});
+
+	const plate = watch('vehicle.plate');
+
+	const { data: vehicleSearch, isPending: isPendingVehicleSearch } =
+		useVehiclesPlate(plate || '');
 
 	const existsProducer = !!watch('producer');
 
@@ -249,6 +257,30 @@ function FormProposalRegister() {
 			},
 		});
 	}
+
+	useEffect(() => {
+		if (vehicleSearch) {
+			refetchManufacturers();
+
+			setValue('vehicle.manufacturer', vehicleSearch.manufacturer.id);
+			clearErrors('vehicle.manufacturer');
+
+			setValue('vehicle.model', capitalizeFirstLetters(vehicleSearch.model));
+			clearErrors('vehicle.model');
+
+			setValue('vehicle.modelYear', vehicleSearch.modelYear);
+			clearErrors('vehicle.modelYear');
+
+			setValue('vehicle.chassi', vehicleSearch?.chassi || null);
+			clearErrors('vehicle.chassi');
+
+			setValue('vehicle.exchange', vehicleSearch.exchange || null);
+
+			setTimeout(() => {
+				clearErrors('vehicle.exchange');
+			}, 100);
+		}
+	}, [vehicleSearch, setValue, clearErrors, refetchManufacturers]);
 
 	return (
 		<Fragment>
@@ -850,9 +882,37 @@ function FormProposalRegister() {
 													placeholder='AAA-0000 / AAA0A00'
 													aria-invalid={fieldState.invalid}
 													value={field.value || ''}
-													onChange={({ target: { value } }) =>
-														field.onChange(!value ? null : maskPlate(value))
-													}
+													onChange={({ target: { value } }) => {
+														field.onChange(!value ? null : maskPlate(value));
+
+														if (!isPlate(value)) {
+															if (getValues('vehicle.manufacturer')) {
+																// @ts-expect-error
+																setValue('vehicle.manufacturer', null);
+															}
+
+															if (getValues('vehicle.model')) {
+																// @ts-expect-error
+																setValue('vehicle.model', null);
+															}
+
+															if (getValues('vehicle.modelYear')) {
+																setValue('vehicle.modelYear', null);
+															}
+
+															if (getValues('vehicle.chassi')) {
+																setValue('vehicle.chassi', null);
+															}
+
+															if (getValues('vehicle.exchange')) {
+																setValue('vehicle.exchange', null);
+
+																setTimeout(() => {
+																	clearErrors('vehicle.exchange');
+																}, 100);
+															}
+														}
+													}}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -865,7 +925,13 @@ function FormProposalRegister() {
 										name='vehicle.manufacturer'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='vehicle-manufacturer'>
+												<FieldLabel
+													htmlFor='vehicle-manufacturer'
+													className={cn(
+														'',
+														!!plate?.length && 'pointer-events-none',
+													)}
+												>
 													Fabricante:
 												</FieldLabel>
 												<Combobox
@@ -877,12 +943,23 @@ function FormProposalRegister() {
 													}
 													items={manufacturers}
 													onValueChange={field.onChange}
-													itemToStringLabel={(item) => item.name}
+													itemToStringLabel={(item) =>
+														item?.name
+															? capitalizeFirstLetters(item.name.toUpperCase())
+															: item.name
+													}
 													itemToStringValue={(item) => item.id}
 												>
 													<ComboboxInput
 														aria-invalid={fieldState.invalid}
 														placeholder='Selecionar'
+														className={cn(
+															'',
+															(!!plate?.length ||
+																(isPlate(plate || '') &&
+																	!isPendingVehicleSearch)) &&
+																'pointer-events-none',
+														)}
 													/>
 													<ComboboxContent>
 														<ComboboxEmpty>
@@ -891,7 +968,9 @@ function FormProposalRegister() {
 														<ComboboxList>
 															{(item: VehicleManufacturer) => (
 																<ComboboxItem key={item.id} value={item.id}>
-																	{item.name}
+																	{capitalizeFirstLetters(
+																		item.name.toUpperCase(),
+																	)}
 																</ComboboxItem>
 															)}
 														</ComboboxList>
@@ -908,15 +987,31 @@ function FormProposalRegister() {
 										name='vehicle.model'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='vehicle-model'>Modelo:</FieldLabel>
+												<FieldLabel
+													htmlFor='vehicle-model'
+													className={cn(
+														'',
+														!!plate?.length && 'pointer-events-none',
+													)}
+												>
+													Modelo:
+												</FieldLabel>
 												<Input
 													{...field}
 													id='vehicle-model'
+													value={field.value || ''}
 													aria-invalid={fieldState.invalid}
 													placeholder='Modelo'
 													onChange={({ target: { value } }) =>
 														field.onChange(capitalizeFirstLetters(value))
 													}
+													className={cn(
+														'',
+														(!!plate?.length ||
+															(isPlate(plate || '') &&
+																!isPendingVehicleSearch)) &&
+															'pointer-events-none',
+													)}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -928,7 +1023,13 @@ function FormProposalRegister() {
 										control={control}
 										name='vehicle.modelYear'
 										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
+											<Field
+												data-invalid={fieldState.invalid}
+												className={cn(
+													'',
+													!!plate?.length && 'pointer-events-none',
+												)}
+											>
 												<FieldLabel htmlFor='vehicle-model-year'>
 													Ano do Modelo:
 												</FieldLabel>
@@ -937,10 +1038,17 @@ function FormProposalRegister() {
 													id='vehicle-model-year'
 													aria-invalid={fieldState.invalid}
 													placeholder='0000'
-													value={String(field.value || '')}
+													value={field.value ? String(field.value) : ''}
 													onChange={({ target: { value } }) =>
 														field.onChange(maskNumber(value).slice(0, 4))
 													}
+													className={cn(
+														'',
+														(!!plate?.length ||
+															(isPlate(plate || '') &&
+																!isPendingVehicleSearch)) &&
+															'pointer-events-none',
+													)}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -953,7 +1061,13 @@ function FormProposalRegister() {
 										name='vehicle.chassi'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='vehicle-chassi'>
+												<FieldLabel
+													htmlFor='vehicle-chassi'
+													className={cn(
+														'',
+														!!plate?.length && 'pointer-events-none',
+													)}
+												>
 													Chassi:
 													<sup className='text-muted-foreground ml-2'>
 														( Opcional )
@@ -961,13 +1075,20 @@ function FormProposalRegister() {
 												</FieldLabel>
 												<Input
 													{...field}
-													value={field.value || ''}
 													id='vehicle-chassi'
+													value={field.value || ''}
 													aria-invalid={fieldState.invalid}
 													placeholder='Chassi'
 													onChange={({ target: { value } }) =>
 														field.onChange(!value ? null : value)
 													}
+													className={cn(
+														'',
+														(!!plate?.length ||
+															(isPlate(plate || '') &&
+																!isPendingVehicleSearch)) &&
+															'pointer-events-none',
+													)}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -1028,13 +1149,36 @@ function FormProposalRegister() {
 										name='vehicle.exchange'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='vehicle-exchange'>
+												<FieldLabel
+													htmlFor='vehicle-exchange'
+													className={cn(
+														'',
+														!!plate?.length &&
+															!!vehicleSearch?.exchange &&
+															'pointer-events-none',
+													)}
+												>
 													Câmbio:
+													<sup className='text-muted-foreground ml-2'>
+														( Opcional )
+													</sup>
 												</FieldLabel>
-												<Select {...field} onValueChange={field.onChange}>
+												<Select
+													{...field}
+													value={field.value || ''}
+													onValueChange={field.onChange}
+												>
 													<SelectTrigger
 														id='vehicle-exchange'
 														aria-invalid={fieldState.invalid}
+														className={cn(
+															'',
+															((!!plate?.length && !!vehicleSearch?.exchange) ||
+																(!!vehicleSearch?.exchange &&
+																	isPlate(plate || '') &&
+																	!isPendingVehicleSearch)) &&
+																'pointer-events-none',
+														)}
 													>
 														<SelectValue placeholder='Selecionar' />
 													</SelectTrigger>

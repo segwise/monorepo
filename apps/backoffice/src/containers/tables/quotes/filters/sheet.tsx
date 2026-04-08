@@ -57,7 +57,7 @@ import {
 } from '@/components/ui/sheet';
 import { placeholder } from '@/config/placeholder';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
-import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
+import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 
 function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
@@ -330,7 +330,7 @@ function FilterProducers({
 	value: Array<string>;
 	onChange: (value: Array<string>) => void;
 }) {
-	const { data } = useProducersSimple();
+	const { data } = useProducersSimpleFull();
 
 	const anchor = useComboboxAnchor();
 

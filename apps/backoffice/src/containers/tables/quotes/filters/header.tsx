@@ -29,7 +29,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { placeholder } from '@/config/placeholder';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
-import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
+import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 
 function TableQuotesHeaderFilters() {
@@ -348,7 +348,7 @@ function FilterrequestedAt() {
 function FilterProducers() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const { data, isPending } = useProducersSimple({
+	const { data, isPending } = useProducersSimpleFull({
 		enabled: !!searchParams.producers?.length,
 	});
 

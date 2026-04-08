@@ -56,7 +56,7 @@ import { placeholder } from '@/config/placeholder';
 import { usePaymentsCashFlowSimple } from '@/libraries/hooks/payments/use-payments';
 import { useSearchParams } from '@/libraries/search-params/payments';
 
-function TableFinanceSimple() {
+function TableFinancesSimple() {
 	const [searchParams] = useSearchParams();
 
 	const { data, isPending, isSuccess } = usePaymentsCashFlowSimple({
@@ -347,4 +347,4 @@ function TableFinanceSimple() {
 	);
 }
 
-export { TableFinanceSimple };
+export { TableFinancesSimple };
