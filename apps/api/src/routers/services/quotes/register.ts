@@ -47,7 +47,7 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 			const temporaryInsured = await transaction.temporaryInsured.upsert({
 				where: {
 					brokerId_cpf: {
-						brokerId: brokerId,
+						brokerId,
 						cpf: insured.cpf,
 					},
 				},
@@ -83,7 +83,27 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 				},
 			});
 
-			await transaction.quote.create({
+			const vehicleId = vehicle?.plate
+				? await transaction.vehicle
+						.findFirst({
+							where: {
+								OR: [
+									{
+										plate: vehicle.plate,
+									},
+									{
+										plateAlternative: vehicle.plate,
+									},
+								],
+							},
+							select: {
+								id: true,
+							},
+						})
+						.then((response) => response?.id)
+				: null;
+
+			const { quoteVehicle } = await transaction.quote.create({
 				data: {
 					broker: {
 						connect: {
@@ -129,28 +149,14 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 					...(vehicle && {
 						quoteVehicle: {
 							create: {
-								...(vehicle.plate && {
-									vehicle: {
-										connectOrCreate: {
-											where: {
-												plate: vehicle.plate,
-											},
-											create: {
-												plate: vehicle.plate,
-												plateAlternative: vehicle.plate,
-												manufacturer: {
-													connect: {
-														id: vehicle.manufacturer,
-													},
-												},
-												model: vehicle.model,
-												modelYear: vehicle.modelYear,
-												exchange: vehicle.exchange,
-												chassi: vehicle.chassi,
+								...(vehicle.plate &&
+									vehicleId && {
+										vehicle: {
+											connect: {
+												id: vehicleId,
 											},
 										},
-									},
-								}),
+									}),
 								...(!vehicle.plate && {
 									vehicleWithoutPlate: {
 										create: {
@@ -161,7 +167,9 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 											},
 											model: vehicle.model,
 											modelYear: vehicle.modelYear,
-											exchange: vehicle.exchange,
+											...(vehicle.exchange && {
+												exchange: vehicle.exchange,
+											}),
 										},
 									},
 								}),
@@ -185,7 +193,38 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 						},
 					}),
 				},
+				select: {
+					quoteVehicle: {
+						select: {
+							vehicleId: true,
+							vehicleWithoutPlateId: true,
+						},
+					},
+				},
+				relationLoadStrategy: 'join',
 			});
+
+			if (quoteVehicle?.vehicleId && vehicle?.exchange) {
+				await transaction.vehicle.update({
+					where: {
+						id: quoteVehicle.vehicleId,
+					},
+					data: {
+						exchange: vehicle.exchange,
+					},
+				});
+			}
+
+			if (quoteVehicle?.vehicleWithoutPlateId && vehicle?.exchange) {
+				await transaction.vehicleWithoutPlate.update({
+					where: {
+						id: quoteVehicle.vehicleWithoutPlateId,
+					},
+					data: {
+						exchange: vehicle.exchange,
+					},
+				});
+			}
 		});
 
 		return ctx.json(
@@ -303,8 +342,12 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 													},
 													model: vehicle.model,
 													modelYear: vehicle.modelYear,
-													exchange: vehicle.exchange,
-													chassi: vehicle.chassi,
+													...(vehicle.exchange && {
+														exchange: vehicle.exchange,
+													}),
+													...(vehicle.chassi && {
+														chassi: vehicle.chassi,
+													}),
 												},
 											},
 										},
@@ -378,8 +421,12 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 														},
 														model: vehicle.model,
 														modelYear: vehicle.modelYear,
-														exchange: vehicle.exchange,
-														chassi: vehicle.chassi,
+														...(vehicle.exchange && {
+															exchange: vehicle.exchange,
+														}),
+														...(vehicle.chassi && {
+															chassi: vehicle.chassi,
+														}),
 													},
 												},
 											},

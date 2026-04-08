@@ -152,6 +152,7 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 			const { data } = await xior.get<VehicleResponse>(
 				`https://wdapi2.com.br/consulta/${plate}/${environment.APIPLACAS_TOKEN}`,
 			);
+
 			if (data.situacao === null) {
 				throw new Error('Veículo não existe');
 			}
@@ -186,7 +187,9 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 					data: {
 						id: manufacturerId,
 						name: data.marca.toLowerCase(),
-						icon: icon ? pathIcon : null,
+						...(pathIcon && {
+							icon: pathIcon,
+						}),
 						slugs: [data.marca.toLowerCase()],
 					},
 					select: {

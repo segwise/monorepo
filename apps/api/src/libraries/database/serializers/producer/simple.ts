@@ -16,6 +16,9 @@ function serializer(
 		...(props.image && {
 			avatar: getPresignedUrl(storage, props.image),
 		}),
+		...(props.cpf && {
+			cpf: props.cpf,
+		}),
 		contact: {
 			email: props.email,
 			...(props.phone && {

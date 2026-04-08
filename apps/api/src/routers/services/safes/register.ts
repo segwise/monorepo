@@ -159,7 +159,27 @@ function registerRoutersServicesSafesRegister(server: Server) {
 					)
 				: startOfDay(requestedAt);
 
-			const { id: safeId } = await transaction.safe.create({
+			const vehicleId = vehicle?.plate
+				? await transaction.vehicle
+						.findFirst({
+							where: {
+								OR: [
+									{
+										plate: vehicle.plate,
+									},
+									{
+										plateAlternative: vehicle.plate,
+									},
+								],
+							},
+							select: {
+								id: true,
+							},
+						})
+						.then((response) => response?.id)
+				: null;
+
+			const { id: safeId, safeVehicle } = await transaction.safe.create({
 				data: {
 					broker: {
 						connect: {
@@ -191,28 +211,14 @@ function registerRoutersServicesSafesRegister(server: Server) {
 					...(vehicle && {
 						safeVehicle: {
 							create: {
-								...(vehicle.plate && {
-									vehicle: {
-										connectOrCreate: {
-											where: {
-												plate: vehicle.plate,
-											},
-											create: {
-												plate: vehicle.plate,
-												plateAlternative: vehicle.plate,
-												manufacturer: {
-													connect: {
-														id: vehicle.manufacturer,
-													},
-												},
-												model: vehicle.model,
-												modelYear: vehicle.modelYear,
-												exchange: vehicle.exchange,
-												chassi: vehicle.chassi,
+								...(vehicle.plate &&
+									vehicleId && {
+										vehicle: {
+											connect: {
+												id: vehicleId,
 											},
 										},
-									},
-								}),
+									}),
 								...(!vehicle.plate && {
 									vehicleWithoutPlate: {
 										create: {
@@ -223,7 +229,9 @@ function registerRoutersServicesSafesRegister(server: Server) {
 											},
 											model: vehicle.model,
 											modelYear: vehicle.modelYear,
-											exchange: vehicle.exchange,
+											...(vehicle.exchange && {
+												exchange: vehicle.exchange,
+											}),
 										},
 									},
 								}),
@@ -263,8 +271,37 @@ function registerRoutersServicesSafesRegister(server: Server) {
 				},
 				select: {
 					id: true,
+					safeVehicle: {
+						select: {
+							vehicleId: true,
+							vehicleWithoutPlateId: true,
+						},
+					},
 				},
+				relationLoadStrategy: 'join',
 			});
+
+			if (safeVehicle?.vehicleId && vehicle?.exchange) {
+				await transaction.vehicle.update({
+					where: {
+						id: safeVehicle.vehicleId,
+					},
+					data: {
+						exchange: vehicle.exchange,
+					},
+				});
+			}
+
+			if (safeVehicle?.vehicleWithoutPlateId && vehicle?.exchange) {
+				await transaction.vehicleWithoutPlate.update({
+					where: {
+						id: safeVehicle.vehicleWithoutPlateId,
+					},
+					data: {
+						exchange: vehicle.exchange,
+					},
+				});
+			}
 
 			let dueDate = startOfDay(
 				addDays(addMonths(startOfMonth(requestedAtUpdate), 1), 10),

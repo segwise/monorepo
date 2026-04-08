@@ -6,6 +6,7 @@ const selectPrisma = {
 	email: true,
 	phone: true,
 	image: true,
+	cpf: true,
 	members: {
 		select: {
 			referral: true,

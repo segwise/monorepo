@@ -1,8 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
-import { maskPlate } from '@segwise/core/masks';
 import { SchemaPlate } from '@segwise/core/schemas';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
+import { vehicleByPlate } from '@/functions/vehicle/by-plate';
 
 function registerRoutersServicesVehiclesPlate(server: Server) {
 	server.get(
@@ -19,16 +19,9 @@ function registerRoutersServicesVehiclesPlate(server: Server) {
 		async (ctx) => {
 			const { plate } = ctx.req.valid('param');
 
-			return ctx.json(
-				{
-					plate: maskPlate(plate),
-					alternative: maskPlate(plate),
-					vehicle: {
-						model: '',
-					},
-				},
-				200,
-			);
+			const vehicle = await vehicleByPlate(plate);
+
+			return ctx.json(vehicle, 200);
 		},
 	);
 }
