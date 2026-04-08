@@ -17,6 +17,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { useSearchParams as useSearchParamsPayments } from '@/libraries/search-params/payments';
 import { useSearchParams as useSearchParamsQuotes } from '@/libraries/search-params/quotes';
 import { useSearchParams as useSearchParamsSafes } from '@/libraries/search-params/safes';
 
@@ -24,22 +25,23 @@ const queryKeys = {
 	quotes: ['quotes', 'simple'],
 	proposals: ['proposals', 'simple'],
 	policies: ['policies', 'simple'],
-};
+	'payments-cash-flow': ['payments', 'simple', 'cash-flow'],
+} as const;
 
-function TablePagination({
-	type,
-}: {
-	type: 'quotes' | 'proposals' | 'policies';
-}) {
+function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 	const queryCllient = useQueryClient();
 
 	const [searchParamsQuotes, setSearchParamsQuotes] = useSearchParamsQuotes();
 	const [searchParamsSafes, setSearchParamsSafes] = useSearchParamsSafes();
+	const [searchParamsPayments, setSearchParamsPayments] =
+		useSearchParamsPayments();
 
 	const [searchParams, setSearchParams] =
 		type === 'quotes'
 			? [searchParamsQuotes, setSearchParamsQuotes]
-			: [searchParamsSafes, setSearchParamsSafes];
+			: type === 'proposals' || type === 'policies'
+				? [searchParamsSafes, setSearchParamsSafes]
+				: [searchParamsPayments, setSearchParamsPayments];
 
 	const [{ total, previous, next, pages }, setState] = useState<{
 		total: number;
@@ -55,6 +57,7 @@ function TablePagination({
 
 	useEffect(() => {
 		const {
+			// @ts-expect-error
 			basisOfAnalysis: _basisOfAnalysis,
 			// @ts-expect-error
 			effectived: _effectived,

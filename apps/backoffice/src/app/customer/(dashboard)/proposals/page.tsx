@@ -29,7 +29,7 @@ import { TableSafesSheetFilters } from '@/containers/tables/safes/filters/sheet'
 import { TableSafesSimple } from '@/containers/tables/safes/simple';
 
 export const metadata: Metadata = {
-	title: 'Apólices',
+	title: 'Propostas',
 };
 
 function ProposalsPage() {

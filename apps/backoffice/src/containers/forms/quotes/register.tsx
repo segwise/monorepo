@@ -127,6 +127,7 @@ function FormQuoteRegister() {
 				name: '',
 				birth: '',
 				phone: '',
+				qualificationTime: null,
 			},
 			vehicle: {
 				plate: null,
@@ -172,6 +173,7 @@ function FormQuoteRegister() {
 						phone: '',
 						profession: null,
 						maritalStatus: null,
+						qualificationTime: null,
 					},
 					vehicle: {
 						plate: null,
@@ -767,11 +769,18 @@ function FormQuoteRegister() {
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='insured-qualification-time'>
 													Tempo de Habilitação:
+													<sup className='text-muted-foreground ml-2'>
+														( Opcional )
+													</sup>
 												</FieldLabel>
 												<Select
 													{...field}
 													value={field.value ? String(field.value) : ''}
-													onValueChange={field.onChange}
+													onValueChange={(value) =>
+														field.onChange(
+															!value || value === 'null' ? null : value,
+														)
+													}
 												>
 													<SelectTrigger
 														id='insured-qualification-time'
@@ -793,7 +802,7 @@ function FormQuoteRegister() {
 														<SelectItem value='7'>7 anos</SelectItem>
 														<SelectItem value='8'>8 anos</SelectItem>
 														<SelectItem value='9'>9 anos</SelectItem>
-														<SelectItem value='99'>+10 anos</SelectItem>
+														<SelectItem value='10'>+10 anos</SelectItem>
 													</SelectContent>
 												</Select>
 												{fieldState.invalid && (
@@ -809,6 +818,9 @@ function FormQuoteRegister() {
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='insured-profession'>
 													Profissões:
+													<sup className='text-muted-foreground ml-2'>
+														( Opcional )
+													</sup>
 												</FieldLabel>
 												<Combobox
 													{...field}

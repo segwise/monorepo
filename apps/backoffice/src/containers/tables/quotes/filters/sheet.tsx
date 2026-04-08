@@ -11,17 +11,8 @@ import type {
 	ProducerSimple,
 	QuoteStatus,
 } from '@segwise/core/types';
-import { capitalizeFirstLetters } from '@segwise/core/utils';
-import {
-	endOfDay,
-	endOfToday,
-	format,
-	isSameDay,
-	parseISO,
-	startOfDay,
-	startOfMonth,
-	startOfToday,
-} from 'date-fns';
+import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
+import { endOfDay, format, isSameDay, parseISO, startOfDay } from 'date-fns';
 import {
 	CalendarIcon,
 	CarIcon,
@@ -77,8 +68,8 @@ function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
 	const defaults = {
 		requestedAt: !searchParams.requestedAt
 			? {
-					from: startOfMonth(startOfToday()),
-					to: endOfToday(),
+					from: defaultFilterDate.start,
+					to: defaultFilterDate.end,
 				}
 			: typeof searchParams.requestedAt === 'string'
 				? {
@@ -138,8 +129,8 @@ function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
 		setSearchParams({
 			requestedAt: !requestedAt.to
 				? requestedAt.from
-				: isSameDay(requestedAt.from as Date, startOfMonth(startOfToday())) &&
-						isSameDay(requestedAt.to as Date, endOfToday())
+				: isSameDay(requestedAt.from as Date, defaultFilterDate.start) &&
+						isSameDay(requestedAt.to as Date, defaultFilterDate.end)
 					? null
 					: {
 							start: requestedAt.from as Date,
@@ -206,8 +197,8 @@ function FilterrequestedAt({
 
 	const defaultDate = !searchParams.requestedAt
 		? {
-				from: startOfMonth(startOfToday()),
-				to: endOfToday(),
+				from: defaultFilterDate.start,
+				to: defaultFilterDate.end,
 			}
 		: typeof searchParams.requestedAt === 'string'
 			? {
@@ -232,14 +223,14 @@ function FilterrequestedAt({
 
 	const isDateDefault =
 		value.from &&
-		isSameDay(value.from, startOfMonth(startOfToday())) &&
+		isSameDay(value.from, defaultFilterDate.start) &&
 		value.to &&
-		isSameDay(value.to, endOfToday());
+		isSameDay(value.to, defaultFilterDate.end);
 
 	function onReset() {
 		onChange({
-			from: startOfMonth(startOfToday()),
-			to: endOfToday(),
+			from: defaultFilterDate.start,
+			to: defaultFilterDate.end,
 		});
 
 		setOpen(false);

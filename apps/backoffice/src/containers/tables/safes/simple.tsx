@@ -86,7 +86,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 					<TableHead className='text-center w-40 truncate'>
 						{type === 'proposals' ? 'Solicitado' : 'Efetivado'} Em
 					</TableHead>
-					<TableHead className='text-right w-40'>Ações</TableHead>
+					<TableHead className='text-right w-30'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -126,7 +126,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
-							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
+							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
 								<Skeleton className='size-9 rounded-sm' />
 								<Skeleton className='size-9 rounded-sm' />
 								<Skeleton className='size-9 rounded-sm' />
@@ -393,7 +393,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									)}
 								</Badge>
 							</TableCell>
-							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+							<TableCell className='flex flex-row justify-end gap-x-2 w-30'>
 								<Button variant='outline' size='icon-sm' asChild>
 									<Link
 										href={`/${effectivedAt ? 'policies' : 'proposals'}/${id}`}

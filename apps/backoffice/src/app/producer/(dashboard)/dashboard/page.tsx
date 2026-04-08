@@ -12,7 +12,6 @@ import {
 	EyeOff,
 	Loader2Icon,
 	LogOut,
-	User2Icon,
 	X,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -54,13 +53,6 @@ type Period = {
 type CepGroup = {
 	cep: string;
 	state: string;
-	count: number;
-	commission: number;
-	insurances: Insurance[];
-};
-
-type NameGroup = {
-	name: string;
 	count: number;
 	commission: number;
 	insurances: Insurance[];
@@ -335,24 +327,6 @@ function buildCepGroups(insurances: Insurance[]): CepGroup[] {
 		map[cep].count++;
 		map[cep].commission += ins.commission;
 		map[cep].insurances.push(ins);
-	}
-
-	return Object.values(map).sort((a, b) => b.count - a.count);
-}
-
-function buildNameGroups(insurances: Insurance[]): NameGroup[] {
-	const map: Record<string, NameGroup> = {};
-
-	for (const ins of insurances) {
-		const name = ins.client ?? 'N/D';
-
-		if (!map[name]) {
-			map[name] = { name, count: 0, commission: 0, insurances: [] };
-		}
-
-		map[name].count++;
-		map[name].commission += ins.commission;
-		map[name].insurances.push(ins);
 	}
 
 	return Object.values(map).sort((a, b) => b.count - a.count);
@@ -639,76 +613,6 @@ function CepSheet({
 	);
 }
 
-function NameSheet({
-	open,
-	onClose,
-	name,
-}: {
-	open: boolean;
-	onClose: () => void;
-	name: string;
-}) {
-	const yearInsurances = ALL_YEAR_INSURANCES.filter((i) => i.client === name);
-	const months = groupByMonth(yearInsurances, (i) => i.issueDate);
-	const annualCommission = yearInsurances.reduce((s, i) => s + i.commission, 0);
-
-	return (
-		<BottomSheet
-			open={open}
-			onClose={onClose}
-			title={name}
-			subtitle={`${yearInsurances.length} Seguro${yearInsurances.length !== 1 ? 's' : ''} no Ano`}
-			footer={
-				yearInsurances.length > 0 ? (
-					<AnnualFooter
-						count={yearInsurances.length}
-						label={`seguro${yearInsurances.length !== 1 ? 's' : ''}`}
-						commission={annualCommission}
-					/>
-				) : undefined
-			}
-		>
-			{months.map(({ key, label, items }) => (
-				<div key={key}>
-					<MonthHeader
-						label={label}
-						commission={items.reduce((s, i) => s + i.commission, 0)}
-					/>
-					<div className='divide-y divide-zinc-200 px-5'>
-						{items.map((ins) => (
-							<div key={ins.id} className='flex items-center gap-2 py-3'>
-								<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
-									<Image
-										src='https://xcarcorretora.com.br/_next/image?url=https%3A%2F%2Feerbunnlzzosgfxsuskw.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Finsurers%2F464ed884-ef62-4697-82bd-487b520272a3%2Flogo&w=64&q=75'
-										width={52}
-										height={52}
-										className='size-full object-center'
-										alt='Insurance'
-									/>
-								</div>
-								<div className='flex-1 min-w-0'>
-									<p className='text-sm font-medium truncate text-zinc-900'>
-										{ins.client}
-									</p>
-									<p className='text-xs text-zinc-500'>{ins.id}</p>
-								</div>
-								<div className='flex flex-col items-end gap-1 shrink-0'>
-									<span className='text-sm font-semibold text-emerald-600'>
-										{fmt(ins.commission)}
-									</span>
-									<span className='text-xs text-zinc-500 font-medium'>
-										{ins.issueDate}
-									</span>
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			))}
-		</BottomSheet>
-	);
-}
-
 function ProducerDashboard() {
 	const [hidden, setHidden] = useState(true);
 
@@ -719,13 +623,10 @@ function ProducerDashboard() {
 		cep: string;
 		state: string;
 	} | null>(null);
-	const [selectedName, setSelectedName] = useState<string | null>(null);
 
 	const period = PERIODS[periodIdx];
 	const canPrev = periodIdx > 0;
 	const canNext = periodIdx < PERIODS.length - 1;
-
-	const groupsName = buildNameGroups(ALL_YEAR_INSURANCES);
 
 	const groupsCeps = buildCepGroups(ALL_YEAR_INSURANCES);
 
@@ -767,11 +668,6 @@ function ProducerDashboard() {
 				cep={selectedCep?.cep ?? ''}
 				state={selectedCep?.state ?? ''}
 				onClose={() => setSelectedCep(null)}
-			/>
-			<NameSheet
-				open={!!selectedName}
-				name={selectedName ?? ''}
-				onClose={() => setSelectedName(null)}
 			/>
 			<div
 				className='relative overflow-hidden px-3 pt-12 pb-6'
@@ -915,16 +811,10 @@ function ProducerDashboard() {
 							Seguros
 						</TabsTrigger>
 						<TabsTrigger
-							value='name'
-							className='flex-1 text-sm rounded-sm h-full data-[state=active]:bg-[#1e293b] data-[state=active]:text-white data-[state=active]:shadow-sm'
-						>
-							Por Nome / Anual
-						</TabsTrigger>
-						<TabsTrigger
 							value='cep'
 							className='flex-1 text-sm rounded-sm h-full data-[state=active]:bg-[#1e293b] data-[state=active]:text-white data-[state=active]:shadow-sm'
 						>
-							Por CEP / Anual
+							Por CEP
 						</TabsTrigger>
 					</TabsList>
 					<TabsContent value='insurances' className='mt-0'>
@@ -966,40 +856,6 @@ function ProducerDashboard() {
 								Ver todos os seguros
 								<ArrowUpRightIcon className='size-3.5' />
 							</button>
-						</div>
-					</TabsContent>
-					<TabsContent value='name' className='mt-0'>
-						<div className='divide-y divide-zinc-200 px-3'>
-							{groupsName
-								.sort((a, b) => a.name.localeCompare(b.name))
-								.map((group) => (
-									// biome-ignore lint/a11y/noStaticElementInteractions: div
-									// biome-ignore lint/a11y/useKeyWithClickEvents: div
-									<div
-										key={group.name}
-										className='flex items-center gap-2 py-3.5'
-										onClick={() => setSelectedName(group.name)}
-									>
-										<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
-											<User2Icon />
-										</div>
-										<div className='flex-1 min-w-0'>
-											<p className='text-sm font-semibold truncate text-zinc-900'>
-												{group.name}
-											</p>
-											{/* <p className='text-xs text-zinc-500'>{group.state}</p> */}
-										</div>
-										<div className='flex flex-col items-end gap-1 shrink-0'>
-											<span className='text-sm font-semibold text-zinc-800'>
-												{group.count} Seguros
-											</span>
-											<span className='text-xs font-medium text-indigo-400 flex flex-row items-center justify-end'>
-												Ver detalhes{' '}
-												<ChevronRightIcon className='size-3.5 stroke-2.5' />
-											</span>
-										</div>
-									</div>
-								))}
 						</div>
 					</TabsContent>
 					<TabsContent value='cep' className='mt-0'>

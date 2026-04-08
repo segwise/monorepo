@@ -24,7 +24,11 @@ import {
 	translateVehicleUsage,
 } from '@segwise/core/translate';
 import type { SafeRegister, VehicleManufacturer } from '@segwise/core/types';
-import { capitalizeFirstLetters } from '@segwise/core/utils';
+import {
+	calculatePercentageOfValue,
+	capitalizeFirstLetters,
+	getNumericValueMoney,
+} from '@segwise/core/utils';
 import { isDateString } from '@segwise/core/valids';
 import {
 	addYears,
@@ -35,6 +39,7 @@ import {
 	startOfToday,
 } from 'date-fns';
 import {
+	Building2Icon,
 	CarIcon,
 	ChevronLeftIcon,
 	CircleDollarSignIcon,
@@ -94,7 +99,6 @@ import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
 import { useSafesRegister } from '@/libraries/hooks/safes/use-safes-register';
 import { useProfessionsSimple } from '@/libraries/hooks/use-professions';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
-import { cn } from '@/libraries/utils';
 
 function FormProposalRegister() {
 	const { push } = useRouter();
@@ -106,10 +110,6 @@ function FormProposalRegister() {
 
 	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
 		useState<boolean>(false);
-
-	const [typeOfCommissionDiscount, setTypeOfCommissionDiscount] = useState<
-		'percentage' | 'fixed'
-	>('percentage');
 
 	const { mutate, isPending } = useSafesRegister();
 
@@ -157,6 +157,34 @@ function FormProposalRegister() {
 	});
 
 	const existsProducer = !!watch('producer');
+
+	const installments = Number(watch('receivables.installments') || 0);
+	const award =
+		getNumericValueMoney(
+			// @ts-expect-error
+			watch('receivables.award'),
+		) || 0;
+	const commissionPercentage = Number(watch('receivables.commission') || 0);
+	const commissionAmount = calculatePercentageOfValue(
+		award,
+		commissionPercentage,
+	);
+
+	const installmentsProducer = Number(watch('commissions.installments') || 0);
+	const commissionPercentageProducer = Number(
+		watch('commissions.percentage') || 0,
+	);
+	const commissionAmountProducer = calculatePercentageOfValue(
+		watch('commissions.type') === 'by_the_brokerage_commission'
+			? commissionAmount
+			: watch('commissions.type') === 'by_the_net_premium'
+				? award
+				: 0,
+		commissionPercentageProducer,
+	);
+
+	const commissionGross = commissionAmount;
+	const commissionNet = commissionAmount - commissionAmountProducer;
 
 	function onSubmit(props: SafeRegister) {
 		mutate(props, {
@@ -743,7 +771,7 @@ function FormProposalRegister() {
 														<SelectItem value='7'>7 anos</SelectItem>
 														<SelectItem value='8'>8 anos</SelectItem>
 														<SelectItem value='9'>9 anos</SelectItem>
-														<SelectItem value='99'>+10 anos</SelectItem>
+														<SelectItem value='10'>+10 anos</SelectItem>
 													</SelectContent>
 												</Select>
 												{fieldState.invalid && (
@@ -1494,409 +1522,282 @@ function FormProposalRegister() {
 								</FieldGroup>
 							</FieldGroup>
 							{existsProducer && (
-								<Fragment>
-									<div className='bg-muted-foreground/10 flex flex-col gap-4 -mx-4 p-4'>
+								<div className='bg-muted-foreground/10 flex flex-col gap-4 -mx-4 p-4'>
+									<FieldSet>
+										<FieldContent>
+											<FieldTitle className='text-base'>
+												<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+													<User2Icon />
+												</div>
+												Comissionamento
+											</FieldTitle>
+										</FieldContent>
+									</FieldSet>
+									<FieldGroup className='grid grid-cols-4'>
+										<Controller
+											control={control}
+											name='commissions.type'
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor='commissions-type'>
+														Tipo de Comissão:
+													</FieldLabel>
+													<Select {...field} onValueChange={field.onChange}>
+														<SelectTrigger
+															id='commissions-type'
+															aria-invalid={fieldState.invalid}
+														>
+															<SelectValue placeholder='Selecionar' />
+														</SelectTrigger>
+														<SelectContent align='start'>
+															{SchemaSafeCommission.shape.type.options.map(
+																(item) => (
+																	<SelectItem key={item} value={item}>
+																		{translateSafeCommissionType(item)}
+																	</SelectItem>
+																),
+															)}
+														</SelectContent>
+													</Select>
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+										<Controller
+											control={control}
+											name='commissions.percentage'
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor='receivables-commission'>
+														Percentual:
+													</FieldLabel>
+													<Input
+														{...field}
+														id='receivables-commission'
+														value={field.value ? Number(field.value) : ''}
+														placeholder='% 0'
+														type='number'
+														aria-invalid={fieldState.invalid}
+														onChange={({ target: { value } }) =>
+															field.onChange(maskNumber(value))
+														}
+													/>
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+										<Controller
+											control={control}
+											name='commissions.installments'
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor='commissions-installments'>
+														Pagar em X Parcelas:
+													</FieldLabel>
+													<Input
+														{...field}
+														id='commissions-installments'
+														value={field.value ? Number(field.value) : ''}
+														placeholder='X vezes'
+														type='number'
+														aria-invalid={fieldState.invalid}
+														onChange={({ target: { value } }) =>
+															field.onChange(maskNumber(value))
+														}
+													/>
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+										<Controller
+											control={control}
+											name='commissions.paymentDate'
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor='commissions-payment-date'>
+														Data de Pagamento:
+													</FieldLabel>
+													<Input
+														{...field}
+														id='commissions-payment-date'
+														aria-invalid={fieldState.invalid}
+														placeholder='00/00/0000'
+														value={
+															typeof field.value === 'string'
+																? isDateString(field.value)
+																	? format(
+																			parse(
+																				field.value,
+																				'dd/MM/yyyy',
+																				new Date(),
+																			),
+																			'dd/MM/yyyy',
+																		)
+																	: maskDateString(field.value)
+																: field.value instanceof Date
+																	? format(field.value, 'dd/MM/yyyy')
+																	: ''
+														}
+														onChange={({ target: { value } }) =>
+															field.onChange(
+																isDateString(value)
+																	? parse(value, 'dd/MM/yyyy', new Date())
+																	: maskDateString(value),
+															)
+														}
+														maxLength={10}
+													/>
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+									</FieldGroup>
+								</div>
+							)}
+							<Separator />
+							<FieldGroup className='grid grid-cols-4 gap-8!'>
+								<FieldGroup>
+									<FieldSet>
+										<FieldContent>
+											<FieldTitle className='text-base'>
+												<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+													<Building2Icon />
+												</div>
+												Corretora
+											</FieldTitle>
+										</FieldContent>
+									</FieldSet>
+									<FieldGroup className='gap-0! space-y-1'>
+										<Field orientation='horizontal'>
+											<FieldLabel>Parcelas</FieldLabel>
+											<FieldLabel className='text-right'>
+												{installments > 0 ? `${installments}X` : '---------'}
+											</FieldLabel>
+										</Field>
+										<Field orientation='horizontal'>
+											<FieldLabel>Prêmio Líquido</FieldLabel>
+											<FieldLabel className='text-right'>
+												{commissionPercentage > 0
+													? `${commissionPercentage}% | `
+													: undefined}
+												{award > 0
+													? new Intl.NumberFormat('pt-BR', {
+															style: 'currency',
+															currency: 'BRL',
+														}).format(award)
+													: '---------'}
+											</FieldLabel>
+										</Field>
+										<Field orientation='horizontal'>
+											<FieldLabel>Comissão da Corretora</FieldLabel>
+											<FieldLabel className='text-right'>
+												{commissionAmount > 0
+													? new Intl.NumberFormat('pt-BR', {
+															style: 'currency',
+															currency: 'BRL',
+														}).format(commissionAmount)
+													: '---------'}
+											</FieldLabel>
+										</Field>
+									</FieldGroup>
+								</FieldGroup>
+								{existsProducer && (
+									<FieldGroup>
 										<FieldSet>
 											<FieldContent>
 												<FieldTitle className='text-base'>
 													<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
 														<User2Icon />
 													</div>
-													Comissionamento
+													Produtor
 												</FieldTitle>
 											</FieldContent>
 										</FieldSet>
-										<FieldGroup className='grid grid-cols-4'>
-											<Controller
-												control={control}
-												name='commissions.type'
-												render={({ field, fieldState }) => (
-													<Field data-invalid={fieldState.invalid}>
-														<FieldLabel htmlFor='commissions-type'>
-															Tipo de Comissão:
-														</FieldLabel>
-														<Select {...field} onValueChange={field.onChange}>
-															<SelectTrigger
-																id='commissions-type'
-																aria-invalid={fieldState.invalid}
-															>
-																<SelectValue placeholder='Selecionar' />
-															</SelectTrigger>
-															<SelectContent align='start'>
-																{SchemaSafeCommission.shape.type.options.map(
-																	(item) => (
-																		<SelectItem key={item} value={item}>
-																			{translateSafeCommissionType(item)}
-																		</SelectItem>
-																	),
-																)}
-															</SelectContent>
-														</Select>
-														{fieldState.invalid && (
-															<FieldError errors={[fieldState.error]} />
-														)}
-													</Field>
-												)}
-											/>
-											<Controller
-												control={control}
-												name='commissions.percentage'
-												render={({ field, fieldState }) => (
-													<Field data-invalid={fieldState.invalid}>
-														<FieldLabel htmlFor='receivables-commission'>
-															Percentual:
-														</FieldLabel>
-														<Input
-															{...field}
-															id='receivables-commission'
-															value={field.value ? Number(field.value) : ''}
-															placeholder='% 0'
-															type='number'
-															aria-invalid={fieldState.invalid}
-															onChange={({ target: { value } }) =>
-																field.onChange(maskNumber(value))
-															}
-														/>
-														{fieldState.invalid && (
-															<FieldError errors={[fieldState.error]} />
-														)}
-													</Field>
-												)}
-											/>
-											<Controller
-												control={control}
-												name={
-													typeOfCommissionDiscount === 'percentage'
-														? 'commissions.discountPercentage'
-														: 'commissions.discountFixed'
-												}
-												render={({ field, fieldState }) => (
-													<Field data-invalid={fieldState.invalid}>
-														<FieldLabel
-															htmlFor={
-																typeOfCommissionDiscount === 'percentage'
-																	? 'commissions-discountPercentage'
-																	: 'commissions-discountFixed'
-															}
-														>
-															Desconto:{' '}
-															<sup
-																className={cn(
-																	'text-muted-foreground ml-2',
-																	fieldState.invalid && 'text-destructive',
-																)}
-															>
-																( Opcional )
-															</sup>
-														</FieldLabel>
-														<InputGroup>
-															<InputGroupAddon align='inline-start'>
-																<Select
-																	value={typeOfCommissionDiscount}
-																	onValueChange={(
-																		value: typeof typeOfCommissionDiscount,
-																	) => {
-																		setTypeOfCommissionDiscount(value);
-
-																		setValue('commissions.discountFixed', null);
-																		setValue(
-																			'commissions.discountPercentage',
-																			null,
-																		);
-																	}}
-																>
-																	<SelectTrigger
-																		id={
-																			typeOfCommissionDiscount === 'percentage'
-																				? 'commissions-discountPercentage'
-																				: 'commissions-discountFixed'
-																		}
-																		tabIndex={-1}
-																		aria-invalid={fieldState.invalid}
-																		className='-ml-3 rounded-r-none border-0 border-r w-20 pl-4'
-																	>
-																		<SelectValue placeholder='%' />
-																	</SelectTrigger>
-																	<SelectContent align='start'>
-																		<SelectItem value='percentage'>
-																			%
-																		</SelectItem>
-																		<SelectItem value='fixed'>R$</SelectItem>
-																	</SelectContent>
-																</Select>
-															</InputGroupAddon>
-															<InputGroupInput
-																{...field}
-																key={
-																	typeOfCommissionDiscount === 'percentage'
-																		? 'input-commissions-discountPercentage'
-																		: 'input-commissions-discountFixed'
-																}
-																value={String(field.value || '')}
-																aria-invalid={fieldState.invalid}
-																className='bg-background text-left!'
-																ref={
-																	typeOfCommissionDiscount === 'fixed'
-																		? withMask('brl-currency')
-																		: undefined
-																}
-																type={
-																	typeOfCommissionDiscount === 'percentage'
-																		? 'number'
-																		: undefined
-																}
-																placeholder={
-																	typeOfCommissionDiscount === 'percentage'
-																		? '0'
-																		: '000,00'
-																}
-																onChange={({ target: { value } }) =>
-																	field.onChange(!value ? null : value)
-																}
-															/>
-														</InputGroup>
-														{fieldState.invalid && (
-															<FieldError errors={[fieldState.error]} />
-														)}
-													</Field>
-												)}
-											/>
-											<Controller
-												control={control}
-												name='commissions.installments'
-												render={({ field, fieldState }) => (
-													<Field data-invalid={fieldState.invalid}>
-														<FieldLabel htmlFor='commissions-installments'>
-															Pagar em X Parcelas:
-														</FieldLabel>
-														<Input
-															{...field}
-															id='commissions-installments'
-															value={field.value ? Number(field.value) : ''}
-															placeholder='X vezes'
-															type='number'
-															aria-invalid={fieldState.invalid}
-															onChange={({ target: { value } }) =>
-																field.onChange(maskNumber(value))
-															}
-														/>
-														{fieldState.invalid && (
-															<FieldError errors={[fieldState.error]} />
-														)}
-													</Field>
-												)}
-											/>
-											<Controller
-												control={control}
-												name='commissions.monthlyInterest'
-												render={({ field, fieldState }) => (
-													<Field data-invalid={fieldState.invalid}>
-														<FieldLabel htmlFor='commissions-monthly-interest'>
-															Juros ao Mês:{' '}
-															<sup className='text-muted-foreground ml-2'>
-																( Opcional )
-															</sup>
-														</FieldLabel>
-														<Input
-															{...field}
-															id='commissions-monthly-interest'
-															value={field.value ? Number(field.value) : ''}
-															placeholder='% 0'
-															type='number'
-															aria-invalid={fieldState.invalid}
-															onChange={({ target: { value } }) =>
-																field.onChange(
-																	!value ? null : maskNumber(value),
-																)
-															}
-														/>
-														{fieldState.invalid && (
-															<FieldError errors={[fieldState.error]} />
-														)}
-													</Field>
-												)}
-											/>
-											<Controller
-												control={control}
-												name='commissions.payInterestStarting'
-												render={({ field, fieldState }) => (
-													<Field data-invalid={fieldState.invalid}>
-														<FieldLabel htmlFor='commissions-pay-interest-starting'>
-															Juros Pago a Partir do Mês:{' '}
-															<sup className='text-muted-foreground ml-2'>
-																( Opcional )
-															</sup>
-														</FieldLabel>
-														<Input
-															{...field}
-															id='commissions-pay-interest-starting'
-															value={field.value ? Number(field.value) : ''}
-															placeholder='Mês'
-															type='number'
-															aria-invalid={fieldState.invalid}
-															onChange={({ target: { value } }) =>
-																field.onChange(
-																	!value ? null : maskNumber(value),
-																)
-															}
-														/>
-														{fieldState.invalid && (
-															<FieldError errors={[fieldState.error]} />
-														)}
-													</Field>
-												)}
-											/>
-											<Controller
-												control={control}
-												name='commissions.typeOfInterest'
-												render={({ field, fieldState }) => (
-													<Field data-invalid={fieldState.invalid}>
-														<FieldLabel htmlFor='commissions.type-of-interest'>
-															Tipo de Juros:{' '}
-															<sup className='text-muted-foreground ml-2'>
-																( Opcional )
-															</sup>
-														</FieldLabel>
-														{/* @ts-expect-error */}
-														<Select {...field} onValueChange={field.onChange}>
-															<SelectTrigger id='commissions.type-of-interest'>
-																<SelectValue placeholder='Selecionar' />
-															</SelectTrigger>
-															<SelectContent>
-																<SelectItem value='simple'>Simples</SelectItem>
-																<SelectItem value='compound'>
-																	Composto
-																</SelectItem>
-															</SelectContent>
-														</Select>
-													</Field>
-												)}
-											/>
-											<Controller
-												control={control}
-												name='commissions.paymentDate'
-												render={({ field, fieldState }) => (
-													<Field data-invalid={fieldState.invalid}>
-														<FieldLabel htmlFor='commissions-payment-date'>
-															Data de Pagamento:
-														</FieldLabel>
-														<Input
-															{...field}
-															id='commissions-payment-date'
-															aria-invalid={fieldState.invalid}
-															placeholder='00/00/0000'
-															value={
-																typeof field.value === 'string'
-																	? isDateString(field.value)
-																		? format(
-																				parse(
-																					field.value,
-																					'dd/MM/yyyy',
-																					new Date(),
-																				),
-																				'dd/MM/yyyy',
-																			)
-																		: maskDateString(field.value)
-																	: field.value instanceof Date
-																		? format(field.value, 'dd/MM/yyyy')
-																		: ''
-															}
-															onChange={({ target: { value } }) =>
-																field.onChange(
-																	isDateString(value)
-																		? parse(value, 'dd/MM/yyyy', new Date())
-																		: maskDateString(value),
-																)
-															}
-															maxLength={10}
-														/>
-														{fieldState.invalid && (
-															<FieldError errors={[fieldState.error]} />
-														)}
-													</Field>
-												)}
-											/>
+										<FieldGroup className='gap-0! space-y-1'>
+											<Field orientation='horizontal'>
+												<FieldLabel>Parcelas de Comissão</FieldLabel>
+												<FieldLabel className='text-right'>
+													{installmentsProducer > 0
+														? `${installmentsProducer}X`
+														: '---------'}
+												</FieldLabel>
+											</Field>
+											<Field orientation='horizontal'>
+												<FieldLabel>Porcentagem do Produtor</FieldLabel>
+												<FieldLabel className='text-right'>
+													{commissionPercentageProducer > 0
+														? `${commissionPercentageProducer}%`
+														: undefined}
+												</FieldLabel>
+											</Field>
+											<Field orientation='horizontal'>
+												<FieldLabel>Comissão do Produtor</FieldLabel>
+												<FieldLabel className='text-right'>
+													{commissionAmountProducer > 0
+														? new Intl.NumberFormat('pt-BR', {
+																style: 'currency',
+																currency: 'BRL',
+															}).format(commissionAmountProducer)
+														: '---------'}
+												</FieldLabel>
+											</Field>
 										</FieldGroup>
-									</div>
-									{/* <Separator />
-									<FieldGroup className='grid grid-cols-4'>
-										<FieldGroup>
-											<FieldSet>
-												<FieldContent>
-													<FieldTitle className='text-base'>
-														<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-															<Building2Icon />
-														</div>
-														Corretora
-													</FieldTitle>
-												</FieldContent>
-											</FieldSet>
-											<FieldGroup className='gap-0! space-y-1'>
-												<Field orientation='horizontal'>
-													<FieldLabel>Parcelas</FieldLabel>
-													<FieldLabel className='text-right'>---------</FieldLabel>
-												</Field>
-												<Field orientation='horizontal'>
-													<FieldLabel>Prêmio Líquido</FieldLabel>
-													<FieldLabel className='text-right'>---------</FieldLabel>
-												</Field>
-												<Field orientation='horizontal'>
-													<FieldLabel>Comissão sobre a venda</FieldLabel>
-													<FieldLabel className='text-right'>---------</FieldLabel>
-												</Field>
-											</FieldGroup>
-										</FieldGroup>
-										<FieldGroup>
-											<FieldSet>
-												<FieldContent>
-													<FieldTitle className='text-base'>
-														<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-															<User2Icon />
-														</div>
-														Produtor
-													</FieldTitle>
-												</FieldContent>
-											</FieldSet>
-											<FieldGroup className='gap-0! space-y-1'>
-												<Field orientation='horizontal'>
-													<FieldLabel>Parcelas de Comissão</FieldLabel>
-													<FieldLabel className='text-right'>---------</FieldLabel>
-												</Field>
-												<Field orientation='horizontal'>
-													<FieldLabel>Comissão do Produtor</FieldLabel>
-													<FieldLabel className='text-right'>---------</FieldLabel>
-												</Field>
-												<Field orientation='horizontal'>
-													<FieldLabel>Subtotal</FieldLabel>
-													<FieldLabel className='text-right'>---------</FieldLabel>
-												</Field>
-												<Field orientation='horizontal'>
-													<FieldLabel>Total</FieldLabel>
-													<FieldLabel className='text-right'>---------</FieldLabel>
-												</Field>
-											</FieldGroup>
-										</FieldGroup>
-										<FieldGroup className='col-start-4'>
-											<FieldSet className='opacity-0 pointer-events-auto'>
-												<FieldContent>
-													<FieldTitle className='text-base'>
-														<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
-															<Building2Icon />
-														</div>
-														Corretora
-													</FieldTitle>
-												</FieldContent>
-											</FieldSet>
-											<FieldGroup className='gap-0! space-y-1'>
-												<Field orientation='horizontal'>
-													<FieldLabel>Total</FieldLabel>
-													<FieldLabel className='text-right'>---------</FieldLabel>
-												</Field>
-											</FieldGroup>
-										</FieldGroup>
-									</FieldGroup> */}
-								</Fragment>
-							)}
+									</FieldGroup>
+								)}
+								<FieldGroup className='col-start-4'>
+									<FieldSet className='opacity-0 pointer-events-auto'>
+										<FieldContent>
+											<FieldTitle className='text-base'>
+												<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
+													<Building2Icon />
+												</div>
+												Corretora
+											</FieldTitle>
+										</FieldContent>
+									</FieldSet>
+									<FieldGroup className='gap-0! space-y-1'>
+										{existsProducer && (
+											<Field orientation='horizontal'>
+												<FieldLabel>
+													Total Bruto{' '}
+													<sup className='text-muted-foreground ml-2'>
+														( Sem Comissão do Produtor )
+													</sup>
+												</FieldLabel>
+												<FieldLabel className='text-right'>
+													{commissionGross
+														? new Intl.NumberFormat('pt-BR', {
+																style: 'currency',
+																currency: 'BRL',
+															}).format(commissionGross)
+														: '---------'}
+												</FieldLabel>
+											</Field>
+										)}
+										<Field orientation='horizontal'>
+											<FieldLabel>
+												Total {existsProducer && 'Líquido'}
+											</FieldLabel>
+											<FieldLabel className='text-right'>
+												{commissionPercentageProducer >= 100 || commissionNet
+													? new Intl.NumberFormat('pt-BR', {
+															style: 'currency',
+															currency: 'BRL',
+														}).format(commissionNet)
+													: '---------'}
+											</FieldLabel>
+										</Field>
+									</FieldGroup>
+								</FieldGroup>
+							</FieldGroup>
 						</FieldGroup>
 					</form>
 				</CardContent>

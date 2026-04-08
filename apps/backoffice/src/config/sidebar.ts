@@ -186,7 +186,6 @@ const sidebar: Array<{
 							title: 'Seguradoras',
 							pathname: '/insurance-companies',
 							icon: Building2Icon,
-							disabled: true,
 						},
 					],
 				},
@@ -195,19 +194,18 @@ const sidebar: Array<{
 					items: [
 						{
 							title: 'Fluxo de Caixa',
-							pathname: '/finance',
+							pathname: '/finance/cash-flow',
 							icon: LandmarkIcon,
-							disabled: true,
 						},
 						{
-							title: 'A Pagar e Despesas',
-							pathname: '/finance/revenues-and-expenses',
+							title: 'Receitas e A Receber',
+							pathname: '/finance/revenues-and-to-receive',
 							icon: BanknoteArrowUpIcon,
 							disabled: true,
 						},
 						{
-							title: 'Receitas e A Receber',
-							pathname: '/finance/revenues-and-expenses',
+							title: 'Despesas e A Pagar',
+							pathname: '/finance/expenses-and-payable',
 							icon: BanknoteArrowUpIcon,
 							disabled: true,
 						},
@@ -242,7 +240,7 @@ const sidebar: Array<{
 					items: [
 						{
 							title: 'Usuários',
-							pathname: '/finance',
+							pathname: '/configurations/users',
 							icon: LandmarkIcon,
 							disabled: true,
 						},

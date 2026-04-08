@@ -5,15 +5,8 @@ import {
 	translateModality,
 	translateQuoteStatus,
 } from '@segwise/core/translate';
-import { capitalizeFirstLetters } from '@segwise/core/utils';
-import {
-	endOfToday,
-	format,
-	isSameDay,
-	parseISO,
-	startOfMonth,
-	startOfToday,
-} from 'date-fns';
+import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
+import { format, isSameDay, parseISO } from 'date-fns';
 import {
 	CarIcon,
 	ChevronsUpDownIcon,
@@ -56,14 +49,14 @@ function TableQuotesHeaderFilters() {
 							typeof searchParams.requestedAt === 'string'
 							? searchParams.requestedAt
 							: searchParams.requestedAt.start,
-						startOfMonth(startOfToday()),
+						defaultFilterDate.start,
 					) &&
 					isSameDay(
 						searchParams.requestedAt instanceof Date ||
 							typeof searchParams.requestedAt === 'string'
 							? searchParams.requestedAt
 							: searchParams.requestedAt.end,
-						endOfToday(),
+						defaultFilterDate.end,
 					)
 				) || !!searchParams.status?.length;
 
@@ -119,14 +112,14 @@ function TableQuotesHeaderFiltersCount() {
 							typeof searchParams.requestedAt === 'string'
 							? searchParams.requestedAt
 							: searchParams.requestedAt.start,
-						startOfMonth(startOfToday()),
+						defaultFilterDate.start,
 					) &&
 					isSameDay(
 						searchParams.requestedAt instanceof Date ||
 							typeof searchParams.requestedAt === 'string'
 							? searchParams.requestedAt
 							: searchParams.requestedAt.end,
-						endOfToday(),
+						defaultFilterDate.end,
 					)
 				),
 		!!searchParams.status?.length,
@@ -157,8 +150,8 @@ function FilterrequestedAt() {
 		() =>
 			!searchParams.requestedAt
 				? {
-						from: startOfMonth(startOfToday()),
-						to: endOfToday(),
+						from: defaultFilterDate.start,
+						to: defaultFilterDate.end,
 					}
 				: typeof searchParams.requestedAt === 'string'
 					? {
@@ -192,14 +185,14 @@ function FilterrequestedAt() {
 					typeof searchParams.requestedAt === 'string'
 					? searchParams.requestedAt
 					: searchParams.requestedAt.start,
-				startOfMonth(startOfToday()),
+				defaultFilterDate.start,
 			) &&
 			isSameDay(
 				searchParams.requestedAt instanceof Date ||
 					typeof searchParams.requestedAt === 'string'
 					? searchParams.requestedAt
 					: searchParams.requestedAt.end,
-				endOfToday(),
+				defaultFilterDate.end,
 			);
 
 	function onChange() {
@@ -255,8 +248,8 @@ function FilterrequestedAt() {
 				<PopoverTrigger>
 					<span className='text-muted-foreground truncate cursor-pointer flex flex-row items-center justify-start gap-x-1'>
 						{!searchParams.requestedAt &&
-							`${format(startOfMonth(startOfToday()), 'dd/MM/yyyy')} - ${format(
-								endOfToday(),
+							`${format(defaultFilterDate.start, 'dd/MM/yyyy')} - ${format(
+								defaultFilterDate.end,
 								'dd/MM/yyyy',
 							)}`}
 						{!!searchParams.requestedAt && (

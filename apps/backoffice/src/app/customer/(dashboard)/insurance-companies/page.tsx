@@ -1,6 +1,11 @@
+import type { Metadata } from 'next';
 import { InputSearch } from '@/components/input-search';
 import { Separator } from '@/components/ui/separator';
 import { TableInsuranceCompaniesSimple } from '@/containers/tables/insurance-companies/simple';
+
+export const metadata: Metadata = {
+	title: 'Seguradoras',
+};
 
 function InsuranceCompanyPage() {
 	return (
