@@ -275,8 +275,8 @@ model Safe {
   commissionTypeOfInterest      TypeOfInterest?   @map("commission_type_of_interest")
   commissionPaymentDate         DateTime?         @map("commission_payment_date") @db.Timestamptz
 
-  commissionGross Decimal @map("commission_gross") @db.Decimal(10, 2)
-  commissionNet   Decimal @map("commission_net") @db.Decimal(10, 2)
+  commissionGross Decimal? @map("commission_gross") @db.Decimal(10, 2)
+  commissionNet   Decimal? @map("commission_net") @db.Decimal(10, 2)
 
   status        StatusSafe @default(active)
   statusAt      DateTime   @default(now()) @map("status_at") @db.Timestamptz

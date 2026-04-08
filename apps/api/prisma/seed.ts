@@ -34,11 +34,18 @@ const INIT: AuthProfile = {
 	password: 'Segwise123!',
 };
 
-const OWNER_BROKER: AuthProfile = {
-	name: 'Fernando Sena',
-	email: 'fernando.sena_@hotmail.com',
-	password: '248827Bac',
-};
+const OWNER_BROKER: AuthProfile =
+	environment.NODE_ENV === 'production'
+		? {
+				name: 'Fernando Sena',
+				email: 'fernando.sena_@hotmail.com',
+				password: '248827Bac',
+			}
+		: {
+				name: 'Junior Melo',
+				email: 'contato@juniormelo.com',
+				password: 'Jr271101!',
+			};
 
 const PRODUCER_BROKER: AuthProfile | null = null;
 

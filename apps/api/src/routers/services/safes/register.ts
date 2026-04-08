@@ -266,6 +266,14 @@ function registerRoutersServicesSafesRegister(server: Server) {
 				},
 			});
 
+			let dueDate = startOfDay(
+				addDays(addMonths(startOfMonth(requestedAtUpdate), 1), 10),
+			);
+
+			if (isSaturday(dueDate) || isSunday(dueDate)) {
+				dueDate = addDays(dueDate, isSaturday(dueDate) ? 2 : 1);
+			}
+
 			await transaction.payment.create({
 				data: {
 					payer: {
@@ -288,9 +296,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 					},
 					installment: 1,
 					amount: commissionAmount,
-					expiration: startOfDay(
-						addDays(addMonths(startOfMonth(requestedAtUpdate), 1), 15),
-					),
+					expiration: dueDate,
 					status: StatusPayment.waiting,
 					method: MethodPayment.pix,
 					description: 'Comissão sobre venda de seguro',
