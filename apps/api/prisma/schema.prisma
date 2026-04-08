@@ -435,9 +435,10 @@ model ManufacturerVehicle {
 model InsuranceCompany {
   id String @id @default(uuid(7)) @db.Uuid
 
-  name  String
-  icon  String
-  image String?
+  name    String
+  fantasy String?
+  icon    String
+  image   String?
 
   cnpj String @db.VarChar(14)
 

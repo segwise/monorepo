@@ -308,6 +308,7 @@ CREATE TABLE "manufacturer_vehicles" (
 CREATE TABLE "insurance_companies" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
+    "fantasy" TEXT,
     "icon" TEXT NOT NULL,
     "image" TEXT,
     "cnpj" VARCHAR(14) NOT NULL,
@@ -390,6 +391,9 @@ CREATE TABLE "invitation" (
 -- CreateTable
 CREATE TABLE "payment_payers" (
     "id" UUID NOT NULL,
+    "broker_id" UUID,
+    "insurance_company_id" UUID,
+    "user_id" UUID,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -410,6 +414,7 @@ CREATE TABLE "payments" (
     "status" "StatusPayment" NOT NULL,
     "expiration" TIMESTAMPTZ NOT NULL,
     "paid_at" TIMESTAMPTZ,
+    "metadata" JSONB,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -654,13 +659,13 @@ ALTER TABLE "invitation" ADD CONSTRAINT "invitation_broker_id_fkey" FOREIGN KEY 
 ALTER TABLE "invitation" ADD CONSTRAINT "invitation_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "payment_payers" ADD CONSTRAINT "broker" FOREIGN KEY ("id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "payment_payers" ADD CONSTRAINT "payment_payers_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "payment_payers" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("id") REFERENCES "insurance_companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "payment_payers" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("insurance_company_id") REFERENCES "insurance_companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "payment_payers" ADD CONSTRAINT "user" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "payment_payers" ADD CONSTRAINT "payment_payers_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "payments" ADD CONSTRAINT "payments_receiver_id_fkey" FOREIGN KEY ("receiver_id") REFERENCES "payment_payers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
