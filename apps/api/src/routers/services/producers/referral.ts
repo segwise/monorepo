@@ -9,13 +9,13 @@ function registerRoutersServicesProducersReferral(server: Server) {
 		async (ctx) => {
 			const { referral } = ctx.req.valid('param');
 
-			const producer = await ctx.database.user.findUnique({
+			const producer = await ctx.database.member.findUnique({
 				where: {
 					referral,
 				},
 				select: {
-					id: true,
 					referral: true,
+					userId: true,
 				},
 			});
 
@@ -30,7 +30,7 @@ function registerRoutersServicesProducersReferral(server: Server) {
 
 			return ctx.json(
 				{
-					userId: producer.id,
+					userId: producer.userId,
 					referral: producer.referral,
 				},
 				200,

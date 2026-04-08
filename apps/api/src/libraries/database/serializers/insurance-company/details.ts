@@ -1,11 +1,8 @@
 import type { InsuranceCompany } from '@segwise/core/types';
+import type { SerializerProps } from '@/@types/serializer';
 import type { selectPrisma } from '@/db-adapters/insurance-company/details';
 import type { Prisma } from '@/generated/prisma/client';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
-
-interface SerializerProps {
-	storage: Bun.S3Client;
-}
 
 function serializer(
 	props: Prisma.InsuranceCompanyGetPayload<{

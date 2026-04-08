@@ -79,8 +79,8 @@ function registerRoutersServicesAuth(server: Server) {
 
 		if (
 			(isBackoffice && XClientApp !== 'admin') ||
-			(isCustomer && !isProducer && XClientApp !== 'customer') ||
-			(isProducer && XClientApp !== 'producer')
+			(isProducer && XClientApp !== 'producer') ||
+			(isCustomer && !isProducer && XClientApp !== 'customer')
 		) {
 			const cloneResponse = response.clone();
 

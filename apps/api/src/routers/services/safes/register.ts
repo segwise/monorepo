@@ -1,5 +1,9 @@
 import { zValidator } from '@hono/zod-validator';
-import { calculatePercentageOfValue, SchemaSafeRegister } from '@segwise/core';
+import {
+	calculateInstallmentAmount,
+	calculatePercentageOfValue,
+	SchemaSafeRegister,
+} from '@segwise/core';
 import {
 	addDays,
 	addMonths,
@@ -11,9 +15,10 @@ import {
 	setHours,
 	setMinutes,
 	startOfDay,
+	startOfMonth,
 } from 'date-fns';
 import type { Server } from '@/@types/server';
-import { StatusPayment } from '@/generated/prisma/enums';
+import { MethodPayment, StatusPayment } from '@/generated/prisma/enums';
 import { Decimal } from '@/generated/prisma/internal/prismaNamespace';
 
 function registerRoutersServicesSafesRegister(server: Server) {
@@ -125,6 +130,28 @@ function registerRoutersServicesSafesRegister(server: Server) {
 				});
 			}
 
+			const installments = receivables.installments;
+			const award = receivables.award;
+			const commissionPercentage = receivables.commission;
+			const commissionAmount = calculatePercentageOfValue(
+				award,
+				commissionPercentage,
+			);
+
+			const installmentsProducer = commissions?.installments || 0;
+			const commissionPercentageProducer = commissions?.percentage || 0;
+			const commissionAmountProducer = calculatePercentageOfValue(
+				commissions?.type === 'by_the_brokerage_commission'
+					? commissionAmount
+					: commissions?.type === 'by_the_net_premium'
+						? award
+						: 0,
+				commissionPercentageProducer,
+			);
+
+			const commissionGross = commissionAmount;
+			const commissionNet = commissionAmount - commissionAmountProducer;
+
 			const requestedAtUpdate = isSameDay(new Date(), requestedAt)
 				? setMinutes(
 						setHours(startOfDay(requestedAt), new Date().getHours()),
@@ -210,32 +237,63 @@ function registerRoutersServicesSafesRegister(server: Server) {
 							},
 						},
 					}),
-					installments: receivables.installments,
-					award: receivables.award,
+					installments,
+					award,
 					franchise: receivables.franchise,
-					commission: receivables.commission,
-					commissionAmount: calculatePercentageOfValue(
-						receivables.award,
-						receivables.commission,
-					),
+					commission: commissionPercentage,
+					commissionAmount,
 					...(commissions && {
+						commissionAmountProducer,
 						commissionOfType: commissions.type,
-						commissionPercentage: commissions.percentage,
+						commissionPercentage: commissionPercentageProducer,
 						...(commissions.discountPercentage && {
 							commissionDiscountPercentage: commissions.discountPercentage,
 						}),
 						...(commissions.discountFixed && {
 							commissionDiscountFixed: commissions.discountFixed,
 						}),
-						commissionInstallments: commissions.installments,
+						commissionInstallments: installmentsProducer,
 						commissionMonthlyInterest: commissions.monthlyInterest,
 						commissionPayInterestStarting: commissions.payInterestStarting,
 						commissionTypeOfInterest: commissions.typeOfInterest,
 						commissionPaymentDate: commissions.paymentDate,
 					}),
+					commissionGross,
+					commissionNet,
 				},
 				select: {
 					id: true,
+				},
+			});
+
+			await transaction.payment.create({
+				data: {
+					payer: {
+						connectOrCreate: {
+							where: { id: insuranceCompany },
+							create: {
+								id: insuranceCompany,
+								insuranceCompanyId: insuranceCompany,
+							},
+						},
+					},
+					receiver: {
+						connectOrCreate: {
+							where: { id: brokerId },
+							create: { id: brokerId, brokerId },
+						},
+					},
+					metadata: {
+						safeId,
+					},
+					installment: 1,
+					amount: commissionAmount,
+					expiration: startOfDay(
+						addDays(addMonths(startOfMonth(requestedAtUpdate), 1), 15),
+					),
+					status: StatusPayment.waiting,
+					method: MethodPayment.pix,
+					description: 'Comissão sobre venda de seguro',
 				},
 			});
 
@@ -267,20 +325,13 @@ function registerRoutersServicesSafesRegister(server: Server) {
 									commissions.percentage,
 								)
 							: 0,
-				).div(commissions.installments);
+				);
 
-				if (
-					isSaturday(commissions.paymentDate) ||
-					isSunday(commissions.paymentDate)
-				) {
-					throw new Error(
-						'Data de pagamento de comissão não pode ser final de semana',
-					);
-				}
+				const installments = installmentsProducer;
 
 				const paymentPrimaryId = Bun.randomUUIDv7();
 
-				for (let i = 0; i < commissions.installments; i++) {
+				for (let i = 0; i < installments; i++) {
 					let dueDate = addMonths(commissions.paymentDate, i);
 
 					dueDate = startOfDay(dueDate);
@@ -297,23 +348,20 @@ function registerRoutersServicesSafesRegister(server: Server) {
 							payer: {
 								connectOrCreate: {
 									where: { id: brokerId },
-									create: { id: brokerId },
+									create: { id: brokerId, brokerId },
 								},
 							},
 							receiver: {
 								connectOrCreate: {
 									where: { id: producer },
-									create: { id: producer },
+									create: { id: producer, userId: producer },
 								},
 							},
-							bridge: {
-								connectOrCreate: {
-									where: { id: safeId },
-									create: { id: safeId },
-								},
+							metadata: {
+								safeId,
 							},
 							installment: i + 1,
-							amount,
+							amount: calculateInstallmentAmount(amount, i, installments),
 							expiration: dueDate,
 							status: StatusPayment.waiting,
 							...(paymentPrimaryId &&
@@ -324,6 +372,8 @@ function registerRoutersServicesSafesRegister(server: Server) {
 										},
 									},
 								}),
+							method: MethodPayment.pix,
+							description: 'Comissão de produção sobre venda de seguro',
 						},
 					});
 				}

@@ -13,7 +13,7 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 					role: Role.customer,
 					members: {
 						some: {
-							id: brokerId,
+							brokerId: brokerId,
 							role: Role.producer,
 						},
 					},

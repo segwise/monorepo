@@ -40,6 +40,8 @@ model User {
   quotes Quote[] @relation("producer_quotes")
   safes  Safe[]  @relation("producer_safes")
 
+  paymentPayerAndReceivers PaymentPayerAndReceiver[] @relation("payment_payer_and_receiver_to_user", map: "payment_payer_and_receivers")
+
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
@@ -267,10 +269,14 @@ model Safe {
   commissionDiscountPercentage  Int?              @map("commission_discount_percentage") @db.Integer
   commissionDiscountFixed       Decimal?          @map("commission_discount_fixed") @db.Decimal(10, 2)
   commissionInstallments        Int?              @map("commission_installments") @db.Integer
+  commissionAmountProducer      Decimal?          @map("commission_amount_producer") @db.Decimal(10, 2)
   commissionMonthlyInterest     Int?              @map("commission_monthly_interest") @db.Integer
   commissionPayInterestStarting Int?              @map("commission_pay_interest_starting") @db.Integer
   commissionTypeOfInterest      TypeOfInterest?   @map("commission_type_of_interest")
   commissionPaymentDate         DateTime?         @map("commission_payment_date") @db.Timestamptz
+
+  commissionGross Decimal @map("commission_gross") @db.Decimal(10, 2)
+  commissionNet   Decimal @map("commission_net") @db.Decimal(10, 2)
 
   status        StatusSafe @default(active)
   statusAt      DateTime   @default(now()) @map("status_at") @db.Timestamptz
@@ -440,6 +446,8 @@ model InsuranceCompany {
 
   contacts InsuranceCompanyCategoryContact[] @relation("insurance_company_to_insurance_company_category_contact")
 
+  paymentPayerAndReceivers PaymentPayerAndReceiver[] @relation("insurance_company_to_payment_payer_and_receiver", map: "payment_payer_and_receivers")
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -513,6 +521,8 @@ model Broker {
   safes  Safe[]  @relation("broker_to_safe")
   quotes Quote[] @relation("broker_to_quote")
 
+  paymentPayerAndReceivers PaymentPayerAndReceiver[] @relation("broker_to_payment_payer_and_receiver")
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -570,53 +580,43 @@ model Invitation {
   @@map("invitation")
 }
 
-model PaymentPayer {
+model PaymentPayerAndReceiver {
   id String @id @db.Uuid
 
-  payments Payment[] @relation("payment_to_payment_payer")
+  brokerId String? @map("broker_id") @db.Uuid
+  broker   Broker? @relation("broker_to_payment_payer_and_receiver", fields: [brokerId], references: [id], onDelete: Cascade)
+
+  insuranceCompanyId String?           @map("insurance_company_id") @db.Uuid
+  insuranceCompany   InsuranceCompany? @relation("insurance_company_to_payment_payer_and_receiver", fields: [insuranceCompanyId], references: [id], onDelete: Cascade, map: "insurance_company")
+
+  userId String? @map("user_id") @db.Uuid
+  user   User?   @relation("payment_payer_and_receiver_to_user", fields: [userId], references: [id], onDelete: Cascade)
+
+  paymentsPayer    Payment[] @relation("payment_to_payment_payer")
+  paymentsReceiver Payment[] @relation("payment_to_payment_receiver")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@unique([id])
   @@map("payment_payers")
-}
-
-model PaymentReceiver {
-  id String @id @db.Uuid
-
-  payments Payment[] @relation("payment_to_payment_receiver")
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@map("payment_receivers")
-}
-
-model PaymentBridge {
-  id String @id @db.Uuid
-
-  payments Payment[] @relation("payment_to_payment_bridge")
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@map("payment_bridges")
 }
 
 model Payment {
   id String @id @default(uuid(7)) @db.Uuid
 
-  receiverId String?          @map("receiver_id") @db.Uuid
-  receiver   PaymentReceiver? @relation("payment_to_payment_receiver", fields: [receiverId], references: [id], onDelete: Restrict)
+  receiverId String?                  @map("receiver_id") @db.Uuid
+  receiver   PaymentPayerAndReceiver? @relation("payment_to_payment_receiver", fields: [receiverId], references: [id], onDelete: Restrict)
 
-  payerId String?       @map("payer_id") @db.Uuid
-  payer   PaymentPayer? @relation("payment_to_payment_payer", fields: [payerId], references: [id], onDelete: Restrict)
+  payerId String?                  @map("payer_id") @db.Uuid
+  payer   PaymentPayerAndReceiver? @relation("payment_to_payment_payer", fields: [payerId], references: [id], onDelete: Restrict)
 
-  bridgeId String?        @map("bridge_id") @db.Uuid
-  bridge   PaymentBridge? @relation("payment_to_payment_bridge", fields: [bridgeId], references: [id], onDelete: Restrict)
+  method MethodPayment
 
   amount     Decimal  @db.Decimal(10, 2)
   amountPaid Decimal? @map("amount_paid") @db.Decimal(10, 2)
+
+  description String?
 
   installment Int? @db.Integer
 
@@ -627,7 +627,10 @@ model Payment {
 
   status StatusPayment
 
-  expiration DateTime @db.Timestamptz
+  expiration DateTime  @db.Timestamptz
+  paidAt     DateTime? @map("paid_at") @db.Timestamptz
+
+  metadata Json? @db.JsonB
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -743,4 +746,14 @@ enum StatusInvitation {
 enum StatusPayment {
   waiting
   paid
+  expired
+  canceled
+}
+
+enum MethodPayment {
+  pix
+  billet
+  transfer
+  species
+  credit_card
 }

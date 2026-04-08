@@ -44,7 +44,10 @@ CREATE TYPE "TypeOfInterest" AS ENUM ('simple', 'compound');
 CREATE TYPE "StatusInvitation" AS ENUM ('pending', 'expired', 'accepted');
 
 -- CreateEnum
-CREATE TYPE "StatusPayment" AS ENUM ('waiting', 'paid');
+CREATE TYPE "StatusPayment" AS ENUM ('waiting', 'paid', 'expired', 'canceled');
+
+-- CreateEnum
+CREATE TYPE "MethodPayment" AS ENUM ('pix', 'billet', 'transfer', 'species', 'credit_card');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -193,10 +196,13 @@ CREATE TABLE "safes" (
     "commission_discount_percentage" INTEGER,
     "commission_discount_fixed" DECIMAL(10,2),
     "commission_installments" INTEGER,
+    "commission_amount_producer" DECIMAL(10,2),
     "commission_monthly_interest" INTEGER,
     "commission_pay_interest_starting" INTEGER,
     "commission_type_of_interest" "TypeOfInterest",
     "commission_payment_date" TIMESTAMPTZ,
+    "commission_gross" DECIMAL(10,2) NOT NULL,
+    "commission_net" DECIMAL(10,2) NOT NULL,
     "status" "StatusSafe" NOT NULL DEFAULT 'active',
     "status_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status_message" TEXT,
@@ -391,35 +397,19 @@ CREATE TABLE "payment_payers" (
 );
 
 -- CreateTable
-CREATE TABLE "payment_receivers" (
-    "id" UUID NOT NULL,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
-
-    CONSTRAINT "payment_receivers_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "payment_bridges" (
-    "id" UUID NOT NULL,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
-
-    CONSTRAINT "payment_bridges_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "payments" (
     "id" UUID NOT NULL,
     "receiver_id" UUID,
     "payer_id" UUID,
-    "bridge_id" UUID,
+    "method" "MethodPayment" NOT NULL,
     "amount" DECIMAL(10,2) NOT NULL,
     "amount_paid" DECIMAL(10,2),
+    "description" TEXT,
     "installment" INTEGER,
     "related_payment_id" UUID,
     "status" "StatusPayment" NOT NULL,
     "expiration" TIMESTAMPTZ NOT NULL,
+    "paid_at" TIMESTAMPTZ,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -567,6 +557,9 @@ CREATE INDEX "invitation_email_idx" ON "invitation"("email");
 -- CreateIndex
 CREATE UNIQUE INDEX "invitation_broker_id_email_key" ON "invitation"("broker_id", "email");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "payment_payers_id_key" ON "payment_payers"("id");
+
 -- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -661,13 +654,19 @@ ALTER TABLE "invitation" ADD CONSTRAINT "invitation_broker_id_fkey" FOREIGN KEY 
 ALTER TABLE "invitation" ADD CONSTRAINT "invitation_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "payments" ADD CONSTRAINT "payments_receiver_id_fkey" FOREIGN KEY ("receiver_id") REFERENCES "payment_receivers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "payment_payers" ADD CONSTRAINT "broker" FOREIGN KEY ("id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payment_payers" ADD CONSTRAINT "insurance_company" FOREIGN KEY ("id") REFERENCES "insurance_companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payment_payers" ADD CONSTRAINT "user" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payments" ADD CONSTRAINT "payments_receiver_id_fkey" FOREIGN KEY ("receiver_id") REFERENCES "payment_payers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "payments" ADD CONSTRAINT "payments_payer_id_fkey" FOREIGN KEY ("payer_id") REFERENCES "payment_payers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "payments" ADD CONSTRAINT "payments_bridge_id_fkey" FOREIGN KEY ("bridge_id") REFERENCES "payment_bridges"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "payments" ADD CONSTRAINT "related_payment" FOREIGN KEY ("related_payment_id") REFERENCES "payments"("id") ON DELETE CASCADE ON UPDATE CASCADE;

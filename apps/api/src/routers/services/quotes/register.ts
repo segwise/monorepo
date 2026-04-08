@@ -44,14 +44,30 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 		} = ctx.req.valid('json');
 
 		await ctx.database.$transaction(async (transaction) => {
-			const temporaryInsured = await transaction.temporaryInsured.create({
-				data: {
+			const temporaryInsured = await transaction.temporaryInsured.upsert({
+				where: {
+					brokerId_cpf: {
+						brokerId: brokerId,
+						cpf: insured.cpf,
+					},
+				},
+				create: {
 					broker: {
 						connect: {
 							id: brokerId,
 						},
 					},
-					cpf: insured.cpf,
+					name: insured.name,
+					birth: insured.birth,
+					age: differenceInYears(new Date(), insured.birth),
+					phone: insured.phone,
+					maritalStatus: insured.maritalStatus,
+					qualificationTime: insured.qualificationTime,
+					...(insured.profession && {
+						profession: insured.profession,
+					}),
+				},
+				update: {
 					name: insured.name,
 					birth: insured.birth,
 					age: differenceInYears(new Date(), insured.birth),

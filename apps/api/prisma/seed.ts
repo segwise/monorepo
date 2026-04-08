@@ -2234,6 +2234,8 @@ async function seed() {
 					...((status === 'canceled' || status === 'suspended') && {
 						statusMessage: faker.lorem.lines(1),
 					}),
+					commissionGross: faker.number.int({ min: 100, max: 1000 }),
+					commissionNet: faker.number.int({ min: 100, max: 1000 }),
 				},
 			});
 		}

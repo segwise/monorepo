@@ -4,6 +4,7 @@ import { registerRoutersServicesAnalytics } from '@/routers/services/analytics';
 import { registerRoutersServicesAuth } from '@/routers/services/auth';
 import { registerRoutersServicesBrokers } from '@/routers/services/brokers';
 import { registerRoutersServicesInsuranceCompanies } from '@/routers/services/insurance-companies';
+import { registerRoutersServicesPayments } from '@/routers/services/payments';
 import { registerRoutersServicesProducers } from '@/routers/services/producers';
 import { registerRoutersServicesProfessions } from '@/routers/services/professions';
 import { registerRoutersServicesQuotes } from '@/routers/services/quotes';
@@ -22,6 +23,7 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesInsuranceCompanies(base);
 	registerRoutersServicesBrokers(base);
 	registerRoutersServicesAnalytics(base);
+	registerRoutersServicesPayments(base);
 }
 
 export { registerRoutersServices };
