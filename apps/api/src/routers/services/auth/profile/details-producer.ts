@@ -59,12 +59,14 @@ function registerRoutersServicesAuthProfileDetailsProducer(server: Server) {
 				},
 				select: {
 					startOfProductionPayment: true,
+					referral: true,
 				},
 			}),
 		]);
 
 		return ctx.json(
 			{
+				referral: member?.referral,
 				valueToReceive:
 					safes.some(
 						(a, b) => a.commissionAmountProducer?.toNumber() || 0 + b,
