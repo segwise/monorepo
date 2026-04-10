@@ -97,7 +97,6 @@ import { placeholder } from '@/config/placeholder';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useSafesRegister } from '@/libraries/hooks/safes/use-safes-register';
-import { useProfessionsSimple } from '@/libraries/hooks/use-professions';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 import { useVehiclesPlate } from '@/libraries/hooks/vehicles/use-vehicles-plate';
 import { cn } from '@/libraries/utils';
@@ -107,7 +106,6 @@ function FormProposalRegister() {
 
 	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
-	const { data: professions } = useProfessionsSimple();
 	const { data: manufacturers, refetch: refetchManufacturers } =
 		useVehiclesManufacturers();
 
@@ -213,7 +211,6 @@ function FormProposalRegister() {
 						name: '',
 						birth: '',
 						phone: '',
-						profession: null,
 						maritalStatus: null,
 					},
 					vehicle: {
@@ -806,44 +803,6 @@ function FormProposalRegister() {
 														<SelectItem value='10'>+10 anos</SelectItem>
 													</SelectContent>
 												</Select>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
-												)}
-											</Field>
-										)}
-									/>
-									<Controller
-										control={control}
-										name='insured.profession'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='insured-profession'>
-													Profissões:
-													<sup className='text-muted-foreground ml-2'>
-														( Opcional )
-													</sup>
-												</FieldLabel>
-												<Combobox
-													{...field}
-													id='insured-profession'
-													value={field.value || null}
-													items={professions?.flatMap((e) => e.name)}
-													onValueChange={field.onChange}
-												>
-													<ComboboxInput placeholder='Selecionar' />
-													<ComboboxContent>
-														<ComboboxEmpty>
-															Nenhum registro encontrado.
-														</ComboboxEmpty>
-														<ComboboxList>
-															{(item, key) => (
-																<ComboboxItem key={key.toString()} value={item}>
-																	{item}
-																</ComboboxItem>
-															)}
-														</ComboboxList>
-													</ComboboxContent>
-												</Combobox>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}

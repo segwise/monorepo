@@ -1,8 +1,5 @@
+import { SchemaPassword, SchemaPasswordConfirm } from '@segwise/core/schemas';
 import z from 'zod';
-import {
-	SchemaPassword,
-	SchemaPasswordConfirm,
-} from '@/schemas/utils/password';
 
 const SchemaAuthResetPassword = z
 	.object({

@@ -3,7 +3,12 @@ import { unstable_cache } from 'next/cache';
 import { type NextRequest, NextResponse } from 'next/server';
 import { auth, getCookiePrefix } from './libraries/auth';
 
-const PUBLIC_ROUTES = ['/sign-in', '/forgot-password', '/reset-password'];
+const PUBLIC_ROUTES = [
+	'/sign-in',
+	'/forgot-password',
+	'/reset-password',
+	'/accept-invitation',
+];
 
 const COOKIE_PREFIX = getCookiePrefix();
 

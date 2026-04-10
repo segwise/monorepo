@@ -1,5 +1,5 @@
+import { SchemaEmail } from '@segwise/core/schemas';
 import z from 'zod';
-import { SchemaEmail } from '@/schemas/utils/email';
 
 const SchemaAuthForgotPassword = z.object({
 	email: SchemaEmail,

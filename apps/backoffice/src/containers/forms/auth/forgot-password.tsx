@@ -47,7 +47,7 @@ function FormForgotPassword() {
 				onSuccess() {
 					toast.success('E-mail enviado com sucesso!');
 
-					router.push('/');
+					router.replace('/');
 				},
 				onError(error) {
 					toast.error(error.message);

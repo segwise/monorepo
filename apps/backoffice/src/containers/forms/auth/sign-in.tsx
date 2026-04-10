@@ -54,12 +54,12 @@ function FormSignIn() {
 					);
 
 					if (callbackUrl) {
-						router.push(callbackUrl);
+						router.replace(callbackUrl);
 
 						return;
 					}
 
-					router.push('/');
+					router.replace('/');
 				},
 				onError(error) {
 					toast.error(error.message);

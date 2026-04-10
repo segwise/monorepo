@@ -1,6 +1,12 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+	SchemaPasswordIncludeNumber,
+	SchemaPasswordIncludeSpecial,
+	SchemaPasswordIncludeUppercase,
+	SchemaPasswordLengthMin,
+} from '@segwise/core/schemas';
 import { Activity, CheckCircleIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -20,12 +26,6 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { SchemaAuthResetPassword } from '@/schemas/auth/reset-password';
-import {
-	SchemaPasswordIncludeNumber,
-	SchemaPasswordIncludeSpecial,
-	SchemaPasswordIncludeUppercase,
-	SchemaPasswordLengthMin,
-} from '@/schemas/utils/password';
 import { cn } from '@/utils';
 
 function FormResetPassword() {
@@ -56,7 +56,7 @@ function FormResetPassword() {
 			description: 'Você será redirecionado para o dashboard',
 		});
 
-		router.push('/');
+		router.replace('/');
 	}
 
 	return (

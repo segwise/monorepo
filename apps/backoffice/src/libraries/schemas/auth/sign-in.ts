@@ -1,7 +1,9 @@
+import {
+	SchemaEmail,
+	SchemaPasswordDefault,
+	SchemaRememberPassword,
+} from '@segwise/core/schemas';
 import z from 'zod';
-import { SchemaEmail } from '@/schemas/utils/email';
-import { SchemaPasswordDefault } from '@/schemas/utils/password';
-import { SchemaRememberPassword } from '@/schemas/utils/remember-password';
 
 const SchemaAuthSignIn = z.object({
 	email: SchemaEmail,
