@@ -11,7 +11,18 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 		'/simple',
 		zValidator('query', SchemaSearchParamsSafeSimple),
 		async (ctx) => {
-			const brokerId = ctx.session.brokerId;
+			const brokerId =
+				ctx?.session?.brokerId ||
+				(await ctx.database.broker
+					.findFirst({
+						orderBy: {
+							createdAt: 'asc',
+						},
+						select: {
+							id: true,
+						},
+					})
+					.then((response) => response?.id));
 
 			const {
 				cursor,
