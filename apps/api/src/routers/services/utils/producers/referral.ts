@@ -2,7 +2,7 @@ import { zValidator } from '@hono/zod-validator';
 import { SchemaProducerReferral } from '@segwise/core';
 import type { Server } from '@/@types/server';
 
-function registerRoutersServicesProducersReferral(server: Server) {
+function registerRoutersServicesUtilsProducersReferral(server: Server) {
 	server.get(
 		'/referral/:referral',
 		zValidator('param', SchemaProducerReferral),
@@ -39,4 +39,4 @@ function registerRoutersServicesProducersReferral(server: Server) {
 	);
 }
 
-export { registerRoutersServicesProducersReferral };
+export { registerRoutersServicesUtilsProducersReferral };
