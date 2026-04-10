@@ -6,6 +6,7 @@ import { registerRoutersServicesAuthProfile } from './profile';
 const pathnameIgnoresSession = [
 	'/auth/reset-password',
 	'/auth/verify-email',
+	'/auth/sign-out',
 	'/auth/profile',
 ];
 
@@ -111,14 +112,10 @@ function registerRoutersServicesAuth(server: Server) {
 		}
 
 		if (setCookies.length) {
-			if (
-				(ctx.req.url?.includes('/auth/sign-out') ||
-					ctx.req.url?.includes('/auth/sign-in/email')) &&
-				role
-			) {
-				const modifiedCookies = setCookies.map((cookieStr) => {
-					let cookie = cookieStr;
+			const modifiedCookies = setCookies.map((cookieStr) => {
+				let cookie = cookieStr;
 
+				if (isBackoffice || isCustomer || isProducer) {
 					if (isBackoffice) {
 						if (ctx.environment.NODE_ENV === 'production') {
 							cookie = cookie.replace(
@@ -147,7 +144,7 @@ function registerRoutersServicesAuth(server: Server) {
 						}
 					}
 
-					if (isCustomer) {
+					if (isCustomer && !isProducer) {
 						if (ctx.environment.NODE_ENV === 'production') {
 							cookie = cookie.replace(
 								'__Secure-auth.session_token',
@@ -160,16 +157,34 @@ function registerRoutersServicesAuth(server: Server) {
 							);
 						}
 					}
+				}
 
-					return cookie;
-				});
+				return cookie;
+			});
 
-				response.headers.delete('set-cookie');
+			response.headers.delete('set-cookie');
 
-				modifiedCookies.forEach((ctx) => {
+			if (ctx.req.url?.includes('/auth/sign-out')) {
+				const cookies = [
+					`__Secure-backoffice.${ctx.environment.NODE_ENV}.auth.session_token=; Max-Age=0; Domain=localhost; Path=/; HttpOnly; Secure; SameSite=Lax`,
+					`__Secure-${ctx.environment.NODE_ENV}.auth.session_data=; Max-Age=0; Domain=localhost; Path=/; HttpOnly; Secure; SameSite=Lax`,
+					`__Secure-${ctx.environment.NODE_ENV}.auth.dont_remember=; Max-Age=0; Domain=localhost; Path=/; HttpOnly; Secure; SameSite=Lax`,
+					`__Secure-customer.${ctx.environment.NODE_ENV}.auth.session_token=; Max-Age=0; Domain=localhost; Path=/; HttpOnly; Secure; SameSite=Lax`,
+					`__Secure-${ctx.environment.NODE_ENV}.auth.session_data=; Max-Age=0; Domain=localhost; Path=/; HttpOnly; Secure; SameSite=Lax`,
+					`__Secure-${ctx.environment.NODE_ENV}.auth.dont_remember=; Max-Age=0; Domain=localhost; Path=/; HttpOnly; Secure; SameSite=Lax`,
+					`__Secure-producer.${ctx.environment.NODE_ENV}.auth.session_token=; Max-Age=0; Domain=localhost; Path=/; HttpOnly; Secure; SameSite=Lax`,
+					`__Secure-${ctx.environment.NODE_ENV}.auth.session_data=; Max-Age=0; Domain=localhost; Path=/; HttpOnly; Secure; SameSite=Lax`,
+					`__Secure-${ctx.environment.NODE_ENV}.auth.dont_remember=; Max-Age=0; Domain=localhost; Path=/; HttpOnly; Secure; SameSite=Lax`,
+				];
+
+				cookies.forEach((ctx) => {
 					response.headers.append('set-cookie', ctx);
 				});
 			}
+
+			modifiedCookies.forEach((ctx) => {
+				response.headers.append('set-cookie', ctx);
+			});
 		}
 
 		return response;
