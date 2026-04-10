@@ -29,7 +29,9 @@ function registerRoutersServicesAuth(server: Server) {
 				ctx.req.url.startsWith(ignoredPath),
 		);
 
-		console.log(await response.json());
+		if (response.clone().body) {
+			console.log(await response.clone().json());
+		}
 
 		const session = shouldIgnoreSession
 			? null
