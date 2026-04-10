@@ -9,7 +9,6 @@ import { registerRoutersServicesQuotes } from '@/routers/services/quotes';
 import { registerRoutersServicesSafes } from '@/routers/services/safes';
 import { registerRoutersServicesUtils } from '@/routers/services/utils';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
-import { requireSession } from '@/services/server/middlewares/session';
 
 function registerRoutersServices(server: Server) {
 	const base = server.basePath('/services');
@@ -17,7 +16,7 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesAuth(base);
 	registerRoutersServicesUtils(base);
 
-	base.use(requireSession);
+	// base.use(requireSession);
 
 	registerRoutersServicesProducers(base);
 	registerRoutersServicesVehicles(base);
