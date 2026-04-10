@@ -1,7 +1,7 @@
 'use client';
 
 import { LogOutIcon } from 'lucide-react';
-import { Activity } from 'react';
+import { Fragment } from 'react';
 import { toast } from 'sonner';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/ui/spinner';
@@ -27,14 +27,18 @@ function DropdownmenuButtonSignOut() {
 
 	return (
 		<DropdownMenuItem variant='destructive' onClick={handler}>
-			<Activity mode={!isPending ? 'visible' : 'visible'}>
-				<LogOutIcon />
-				<span>Deslogar</span>
-			</Activity>
-			<Activity mode={isPending ? 'visible' : 'hidden'}>
-				<Spinner />
-				<span>Deslogando</span>
-			</Activity>
+			{!isPending && (
+				<Fragment>
+					<LogOutIcon />
+					<span>Deslogar</span>
+				</Fragment>
+			)}
+			{isPending && (
+				<Fragment>
+					<Spinner />
+					<span>Deslogando</span>
+				</Fragment>
+			)}
 		</DropdownMenuItem>
 	);
 }

@@ -3,7 +3,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Activity } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { SignIn } from '@/@types/auth/sign-in';
@@ -18,7 +17,6 @@ import {
 	FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
 import { useSignIn } from '@/hooks/auth/use-sign-in';
 import { SchemaAuthSignIn } from '@/schemas/auth/sign-in';
 
@@ -131,12 +129,14 @@ function FormSignIn() {
 						Esqueceu a senha?
 					</Link>
 				</div>
-				<Button className='w-full' type='submit' disabled={!isSubmit}>
-					<Activity mode={!isPending ? 'visible' : 'hidden'}>Acessar</Activity>
-					<Activity mode={isPending ? 'visible' : 'hidden'}>
-						Acessando
-						<Spinner />
-					</Activity>
+				<Button
+					className='w-full'
+					type='submit'
+					disabled={!isSubmit}
+					isPending={isPending}
+					textPending='Acessando'
+				>
+					Acessar
 				</Button>
 			</form>
 		</Form>

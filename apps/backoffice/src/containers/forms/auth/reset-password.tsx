@@ -7,7 +7,7 @@ import {
 	SchemaPasswordIncludeUppercase,
 	SchemaPasswordLengthMin,
 } from '@segwise/core/schemas';
-import { Activity, CheckCircleIcon } from 'lucide-react';
+import { CheckCircleIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -24,7 +24,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Spinner } from '@/components/ui/spinner';
 import { SchemaAuthResetPassword } from '@/schemas/auth/reset-password';
 import { cn } from '@/utils';
 
@@ -90,14 +89,14 @@ function FormResetPassword() {
 				/>
 				<Separator />
 				<PasswordMustContain value={password} />
-				<Button className='w-full' type='submit' disabled={!isSubmit}>
-					<Activity mode={!isPending ? 'visible' : 'hidden'}>
-						Redefinir senha
-					</Activity>
-					<Activity mode={isPending ? 'visible' : 'hidden'}>
-						Resetando
-						<Spinner />
-					</Activity>
+				<Button
+					className='w-full'
+					type='submit'
+					disabled={!isSubmit}
+					isPending={isPending}
+					textPending='Resetando'
+				>
+					Redefinir senha
 				</Button>
 			</form>
 		</Form>
