@@ -1,13 +1,20 @@
 import type { Session } from 'better-auth';
 import type { Server } from '@/@types/server.d';
 import { Role } from '@/generated/prisma/enums';
+import { registerRoutersServicesAuthProfile } from './profile';
 
-const pathnameIgnoresSession = ['/auth/reset-password'];
+const pathnameIgnoresSession = [
+	'/auth/reset-password',
+	'/auth/verify-email',
+	'/auth/profile',
+];
 
 function registerRoutersServicesAuth(server: Server) {
 	const base = server.basePath('/auth');
 
-	base.on(['POST', 'GET'], '*', async (ctx) => {
+	registerRoutersServicesAuthProfile(base);
+
+	base.on(['POST', 'GET'], '/*', async (ctx) => {
 		const XClientApp = (ctx.req.header('X-Client-App') ||
 			ctx.req.raw.headers.get('X-Client-App')) as
 			| 'admin'
@@ -78,9 +85,10 @@ function registerRoutersServicesAuth(server: Server) {
 		const isProducer = roleBroker === Role.producer;
 
 		if (
-			(isBackoffice && XClientApp !== 'admin') ||
-			(isProducer && XClientApp !== 'producer') ||
-			(isCustomer && !isProducer && XClientApp !== 'customer')
+			session &&
+			((isBackoffice && XClientApp !== 'admin') ||
+				(isProducer && XClientApp !== 'producer') ||
+				(isCustomer && !isProducer && XClientApp !== 'customer'))
 		) {
 			const cloneResponse = response.clone();
 

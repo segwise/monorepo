@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker/locale/pt_BR';
+import { generateReferral } from '@segwise/core/utils';
 import type { User } from 'better-auth';
 import {
 	addDays,
@@ -9,7 +10,6 @@ import {
 	subYears,
 } from 'date-fns';
 import xior from 'xior';
-import { generateReferral } from '@/functions/generate-referral';
 import {
 	ModalityInsurance,
 	Role,
@@ -1870,7 +1870,7 @@ async function seed() {
 			body: {
 				name: 'XCar Corretora de Seguros LTDA',
 				slug: 'xcarcorretora',
-				fantasy: 'XCar Corretora',
+				fantasy: 'xcar corretora',
 				cnpj: '07581995000170',
 				userId: adminBroker.response.user.id,
 				keepCurrentActiveOrganization: true,
@@ -1917,7 +1917,6 @@ async function seed() {
 				await auth.api.addMember({
 					body: {
 						userId: producerResponse.user.id,
-						// @ts-expect-error
 						role: Role.producer,
 						organizationId: broker.id,
 						referral: generateReferral(),
@@ -1972,7 +1971,6 @@ async function seed() {
 				await auth.api.addMember({
 					body: {
 						userId: producerResponse.user.id,
-						// @ts-expect-error
 						role: Role.producer,
 						organizationId: broker.id,
 						referral: generateReferral(),

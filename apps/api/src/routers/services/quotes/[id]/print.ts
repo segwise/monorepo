@@ -612,13 +612,13 @@ const htmlText = `
                     >{{condutor.marital_status}}</th>
                     <th
                       class='p-2 text-left text-xs h-7 uppercase items-center flex w-full border-r border-black'
-                    >{{condutor.profession}}</th>
+                    ></th>
                     <th
                       class='p-2 text-left text-xs h-7 uppercase items-center flex w-full border-r border-black'
-                    >{{condutor.profession}}</th>
+                    ></th>
                     <th
                       class='p-2 text-left text-xs h-7 uppercase items-center flex w-full border-black'
-                    >{{condutor.profession}}</th>
+                    ></th>
                   </tr>
                 </thead>
               </table>
@@ -694,7 +694,6 @@ async function compile(
 			// marital_status: '',
 			// first_license: '',
 			// owner_vehicle: '',
-			// profession: '',
 			// additional_information: {
 			// 	bonus_class: quote.insured.additional_information?.bonus_class,
 			// 	office: quote.insured.additional_information?.office,

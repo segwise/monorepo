@@ -1,6 +1,16 @@
+import { capitalizeFirstLetters } from '@segwise/core';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { admin, customSession, organization } from 'better-auth/plugins';
+import {
+	admin,
+	createAccessControl,
+	customSession,
+	organization,
+} from 'better-auth/plugins';
+import {
+	defaultRoles,
+	defaultStatements,
+} from 'better-auth/plugins/organization/access';
 import { secondaryStorage } from '@/auth/adapters/secondary-storage';
 import { getMainDomain } from '@/functions/hostname/get-main-domain';
 import { environment } from '@/libraries/environment';
@@ -10,6 +20,12 @@ import { email } from '@/services/email';
 import { storage } from '../storage/images';
 
 const mainDomain = getMainDomain(environment.BASE_URL);
+
+const accessControlOrganization = createAccessControl(defaultStatements);
+
+const accessControlOrganizationProducer = accessControlOrganization.newRole({
+	...defaultStatements,
+});
 
 const auth = betterAuth({
 	appName: 'Segwise',
@@ -193,6 +209,12 @@ const auth = betterAuth({
 	plugins: [
 		admin(),
 		organization({
+			ac: accessControlOrganization,
+			roles: {
+				owner: defaultRoles.owner,
+				admin: defaultRoles.admin,
+				producer: accessControlOrganizationProducer,
+			},
 			schema: {
 				organization: {
 					modelName: 'broker',
@@ -214,7 +236,28 @@ const auth = betterAuth({
 				invitation: {
 					fields: {
 						organizationId: 'brokerId',
-						inviterId: 'userId',
+					},
+					additionalFields: {
+						referral: {
+							type: 'string',
+							required: false,
+						},
+						typeOfProduction: {
+							type: 'string',
+							required: false,
+						},
+						percentageOfProduction: {
+							type: 'number',
+							required: false,
+						},
+						typeOfProductionPayment: {
+							type: 'string',
+							required: false,
+						},
+						startOfProductionPayment: {
+							type: 'number',
+							required: false,
+						},
 					},
 				},
 				member: {
@@ -247,6 +290,39 @@ const auth = betterAuth({
 						organizationId: 'brokerId',
 					},
 				},
+			},
+			requireEmailVerificationOnInvitation: false,
+			async sendInvitationEmail(data) {
+				const user = await database.user.findUnique({
+					where: {
+						id: data.invitation.inviterId,
+					},
+					select: {
+						name: true,
+					},
+				});
+
+				const url = new URL(
+					`http${environment.NODE_ENV !== 'development' ? 's' : ''}://${environment.NODE_ENV !== 'development' ? 'services.' : ''}${getMainDomain(environment.APPLICATION_URL)}${environment.NODE_ENV === 'development' ? `:${environment.PORT}` : ''}`,
+				);
+
+				url.pathname = '/accept-invitation';
+
+				url.searchParams.set('token', data.id);
+
+				const urlString = url.toJSON();
+
+				await email.emails.send({
+					from: 'Segwise <no-reply@segwise.com.br>',
+					to: data.email,
+					subject: 'Aceitar convite de produção',
+					html: `
+						Nome: ${user?.name}
+						Organização: ${capitalizeFirstLetters(data.organization.name).replace('Ltda', 'LTDA').replace('ltda', 'LTDA')}
+
+						URL: ${urlString}
+					`,
+				});
 			},
 		}),
 		customSession(async ({ user, session }) => {

@@ -19,12 +19,12 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 			const pageMargins = 2;
 
 			const where: Prisma.UserWhereInput = {
-				// ...(!!search && {
-				// 	name: {
-				// 		mode: 'insensitive',
-				// 		search: search.replaceAll(' ', '&'),
-				// 	},
-				// }),
+				...(!!search && {
+					name: {
+						mode: 'insensitive',
+						search: search.replaceAll(' ', '&'),
+					},
+				}),
 				...(!!brokerId && {
 					role: Role.customer,
 					members: {

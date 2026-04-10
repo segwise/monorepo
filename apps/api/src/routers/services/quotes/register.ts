@@ -63,9 +63,6 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 					phone: insured.phone,
 					maritalStatus: insured.maritalStatus,
 					qualificationTime: insured.qualificationTime,
-					...(insured.profession && {
-						profession: insured.profession,
-					}),
 				},
 				update: {
 					name: insured.name,
@@ -74,9 +71,6 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 					phone: insured.phone,
 					maritalStatus: insured.maritalStatus,
 					qualificationTime: insured.qualificationTime,
-					...(insured.profession && {
-						profession: insured.profession,
-					}),
 				},
 				select: {
 					id: true,
@@ -149,6 +143,7 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 					...(vehicle && {
 						quoteVehicle: {
 							create: {
+								plate: vehicle.plate,
 								...(vehicle.plate &&
 									vehicleId && {
 										vehicle: {
@@ -405,6 +400,7 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 								}),
 								safeVehicle: {
 									create: {
+										plate,
 										...(!!vehicle && {
 											vehicle: {
 												connectOrCreate: {

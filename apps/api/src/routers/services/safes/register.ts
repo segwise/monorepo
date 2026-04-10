@@ -99,9 +99,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 							phone: insured.phone,
 							maritalStatus: insured.maritalStatus,
 							qualificationTime: insured.qualificationTime,
-							...(insured.profession && {
-								profession: insured.profession,
-							}),
 						},
 						select: {
 							id: true,
@@ -120,9 +117,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 						phone: insured.phone,
 						maritalStatus: insured.maritalStatus,
 						qualificationTime: insured.qualificationTime,
-						...(insured.profession && {
-							profession: insured.profession,
-						}),
 					},
 					select: {
 						id: true,
@@ -211,6 +205,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 					...(vehicle && {
 						safeVehicle: {
 							create: {
+								plate: vehicle.plate,
 								...(vehicle.plate &&
 									vehicleId && {
 										vehicle: {
