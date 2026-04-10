@@ -5,7 +5,9 @@ import type { Prisma } from '@/generated/prisma/client';
 import { selectPrisma as selectPrismaSimple } from '@/libraries/database/adapters/insurance-company/simple';
 import { serializer as serializerSimple } from '@/libraries/database/serializers/insurance-company/simple';
 
-function registerRoutersServicesInsuranceCompaniesListining(server: Server) {
+function registerRoutersServicesUtilsInsuranceCompaniesListining(
+	server: Server,
+) {
 	server.get(
 		'/simple',
 		zValidator('query', SchemaSearchParamsInsuranceCompanySimple),
@@ -41,4 +43,4 @@ function registerRoutersServicesInsuranceCompaniesListining(server: Server) {
 	);
 }
 
-export { registerRoutersServicesInsuranceCompaniesListining };
+export { registerRoutersServicesUtilsInsuranceCompaniesListining };

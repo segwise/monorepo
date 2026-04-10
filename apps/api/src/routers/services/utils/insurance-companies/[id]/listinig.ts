@@ -3,7 +3,7 @@ import type { InsuranceCompanyWhereUniqueInput } from '@/generated/prisma/models
 import { selectPrisma as selectPrismaDetails } from '@/libraries/database/adapters/insurance-company/details';
 import { serializer as serializerDetails } from '@/libraries/database/serializers/insurance-company/details';
 
-function registerRoutersServicesInsuranceCompaniesByIdListining(
+function registerRoutersServicesUtilsInsuranceCompaniesByIdListining(
 	server: Server,
 ) {
 	server.get(`/`, async (ctx) => {
@@ -35,4 +35,4 @@ function registerRoutersServicesInsuranceCompaniesByIdListining(
 	});
 }
 
-export { registerRoutersServicesInsuranceCompaniesByIdListining };
+export { registerRoutersServicesUtilsInsuranceCompaniesByIdListining };

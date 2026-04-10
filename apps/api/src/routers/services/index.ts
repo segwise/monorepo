@@ -3,7 +3,6 @@ import type { Server } from '@/@types/server.d';
 import { registerRoutersServicesAnalytics } from '@/routers/services/analytics';
 import { registerRoutersServicesAuth } from '@/routers/services/auth';
 import { registerRoutersServicesCpfOrCnpj } from '@/routers/services/cpf-or-cnpj';
-import { registerRoutersServicesInsuranceCompanies } from '@/routers/services/insurance-companies';
 import { registerRoutersServicesPayments } from '@/routers/services/payments';
 import { registerRoutersServicesProducers } from '@/routers/services/producers';
 import { registerRoutersServicesQuotes } from '@/routers/services/quotes';
@@ -25,7 +24,6 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesCpfOrCnpj(base);
 	registerRoutersServicesQuotes(base);
 	registerRoutersServicesSafes(base);
-	registerRoutersServicesInsuranceCompanies(base);
 	registerRoutersServicesAnalytics(base);
 	registerRoutersServicesPayments(base);
 }
