@@ -50,6 +50,7 @@ import { placeholder } from '@/config/placeholder';
 import { DialogQuoteDeleteById } from '@/containers/dialogs/quotes/delete';
 import { useQuotesSimple } from '@/hooks/quotes/use-quotes';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
+import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useQuotesPrintById } from '@/libraries/hooks/quotes/use-quotes-print';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 import { useSearchParams } from '@/libraries/search-params/quotes';
@@ -71,6 +72,7 @@ function TableQuotesSimple() {
 		status: searchParams.status,
 	});
 
+	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
 
 	const {
@@ -91,6 +93,7 @@ function TableQuotesSimple() {
 					<TableHead className='text-left w-50'>Segurado</TableHead>
 					<TableHead className='text-left flex-1'>Dados</TableHead>
 					<TableHead className='text-left w-50' />
+					<TableHead className='text-left w-30'>Produtor</TableHead>
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-center w-40'>Status</TableHead>
 					<TableHead className='text-center w-40 truncate'>
@@ -122,6 +125,9 @@ function TableQuotesSimple() {
 								</div>
 							</TableCell>
 							<TableCell className='w-50' />
+							<TableCell className='w-30'>
+								<Skeleton className='size-8 rounded-full mx-auto' />
+							</TableCell>
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
@@ -172,6 +178,7 @@ function TableQuotesSimple() {
 						status,
 						requestedAt,
 						expiration,
+						producer,
 					}) => (
 						<TableRow key={id}>
 							<TableCell className='text-left w-50'>
@@ -322,6 +329,41 @@ function TableQuotesSimple() {
 											)}
 										</div>
 									</div>
+								)}
+							</TableCell>
+							<TableCell className='text-center w-30'>
+								{!!producers?.find((e) => e.id === producer) && (
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Avatar className='size-8 border bg-background mx-auto'>
+												<AvatarImage
+													src={
+														producers?.find((e) => e.id === producer)?.avatar ||
+														placeholder.user
+													}
+													width={52}
+													height={52}
+													alt={capitalizeFirstLetters(
+														producers?.find((e) => e.id === producer)
+															?.name as string,
+													)}
+													priority
+												/>
+												<AvatarFallback>
+													{producers
+														?.find((e) => e.id === producer)
+														?.name.slice(0, 2)
+														.toUpperCase()}
+												</AvatarFallback>
+											</Avatar>
+										</TooltipTrigger>
+										<TooltipContent>
+											{capitalizeFirstLetters(
+												producers?.find((e) => e.id === producer)
+													?.name as string,
+											)}
+										</TooltipContent>
+									</Tooltip>
 								)}
 							</TableCell>
 							<TableCell className='text-center w-40'>
