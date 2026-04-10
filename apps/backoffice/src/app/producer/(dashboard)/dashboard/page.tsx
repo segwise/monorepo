@@ -13,6 +13,7 @@ import {
 	ChevronRight,
 	ChevronRightIcon,
 	Clock,
+	CopyIcon,
 	Eye,
 	EyeOff,
 	FileIcon,
@@ -23,6 +24,7 @@ import {
 import Image from 'next/image';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
 	Empty,
 	EmptyDescription,
@@ -88,6 +90,7 @@ function ProducerDashboard() {
 		queryFn: async ({ signal }) =>
 			(
 				await api.get<{
+					referral: string;
 					valueToReceive: number;
 					dateOfReceipt: string;
 					safes: Array<{
@@ -572,6 +575,20 @@ function ProducerDashboard() {
 		});
 	}
 
+	async function copyReferral() {
+		try {
+			const url = new URL('https://segwise.com.br/download/appplication');
+
+			url.searchParams.set('referral', data?.referral as string);
+
+			await navigator.clipboard.writeText(url.toString());
+
+			toast.success('LINK DE INDICAÇÃO COPIADO');
+		} catch {
+			toast.error('FALHA AO COPIAR LINK');
+		}
+	}
+
 	useEffect(() => {
 		const isVisibleBalance = localStorage.getItem('visible:balance');
 
@@ -640,36 +657,48 @@ function ProducerDashboard() {
 							)}
 						</button>
 					</div>
-					<div
-						className='flex items-center rounded-full px-1 py-1'
-						style={{
-							background: 'rgba(255,255,255,0.08)',
-							border: '1px solid rgba(255,255,255,0.1)',
-						}}
-					>
-						<button
-							type='button'
-							onClick={() => canPrev && setPeriodIdx((i) => i - 1)}
-							disabled={!canPrev}
-							className='size-6 flex items-center justify-center rounded-full transition-colors disabled:opacity-30'
-							style={{ color: 'rgba(255,255,255,0.7)' }}
+					<div>
+						<div
+							className='flex items-center rounded-full px-1 py-1 w-fit ml-auto'
+							style={{
+								background: 'rgba(255,255,255,0.08)',
+								border: '1px solid rgba(255,255,255,0.1)',
+							}}
 						>
-							<ChevronLeft className='size-3.5' />
-						</button>
-						<Suspense>
-							<span className='text-white text-xs font-medium px-1 text-center'>
-								{period?.label || 'Abril 2026'}
-							</span>
-						</Suspense>
-						<button
-							type='button'
-							onClick={() => canNext && setPeriodIdx((i) => i + 1)}
-							disabled={!canNext}
-							className='size-6 flex items-center justify-center rounded-full transition-colors disabled:opacity-30'
-							style={{ color: 'rgba(255,255,255,0.7)' }}
+							<button
+								type='button'
+								onClick={() => canPrev && setPeriodIdx((i) => i - 1)}
+								disabled={!canPrev}
+								className='size-6 flex items-center justify-center rounded-full transition-colors disabled:opacity-30'
+								style={{ color: 'rgba(255,255,255,0.7)' }}
+							>
+								<ChevronLeft className='size-3.5' />
+							</button>
+							<Suspense>
+								<span className='text-white text-xs font-medium px-1 text-center'>
+									{period?.label || 'Abril 2026'}
+								</span>
+							</Suspense>
+							<button
+								type='button'
+								onClick={() => canNext && setPeriodIdx((i) => i + 1)}
+								disabled={!canNext}
+								className='size-6 flex items-center justify-center rounded-full transition-colors disabled:opacity-30'
+								style={{ color: 'rgba(255,255,255,0.7)' }}
+							>
+								<ChevronRight className='size-3.5' />
+							</button>
+						</div>
+						<Button
+							variant='link'
+							size='sm'
+							className='text-white text-xs text-right mt-2'
+							onClick={copyReferral}
 						>
-							<ChevronRight className='size-3.5' />
-						</button>
+							<CopyIcon /> Link de indicação:
+							<br />
+							{data?.referral.toUpperCase()}
+						</Button>
 					</div>
 				</div>
 				<div className='relative'>
