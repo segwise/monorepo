@@ -164,7 +164,6 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 					200,
 				);
 			} catch (error) {
-				console.log(error);
 				let message = 'Falha ao aceitar convite';
 
 				if (error instanceof Error) {
