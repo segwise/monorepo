@@ -14,7 +14,7 @@ function registerRoutersServicesAuth(server: Server) {
 
 	registerRoutersServicesAuthProfile(base);
 
-	base.on(['POST', 'GET'], '/*', async (ctx) => {
+	base.on(['POST', 'GET'], '*', async (ctx) => {
 		const XClientApp = (ctx.req.header('X-Client-App') ||
 			ctx.req.raw.headers.get('X-Client-App')) as
 			| 'admin'
