@@ -21,6 +21,8 @@ function registerRoutersServicesAuth(server: Server) {
 			| 'producer'
 			| 'customer';
 
+		console.log(ctx.req.url, XClientApp, ctx.req.raw.headers.get('cookie'));
+
 		const response = await ctx.auth.handler(ctx.req.raw);
 
 		const shouldIgnoreSession = pathnameIgnoresSession.some(
