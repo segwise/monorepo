@@ -44,7 +44,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				...(!!brokerId && {
 					brokerId,
 				}),
-				...(ctx.session.role !== Role.customer &&
+				...(ctx?.session?.role !== Role.customer &&
 					!!brokers?.length && {
 						broker: {
 							id: {
