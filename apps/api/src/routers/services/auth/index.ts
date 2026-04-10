@@ -21,8 +21,6 @@ function registerRoutersServicesAuth(server: Server) {
 			| 'producer'
 			| 'customer';
 
-		console.log(ctx.req.url, XClientApp, ctx.req.raw.headers.get('cookie'));
-
 		const response = await ctx.auth.handler(ctx.req.raw);
 
 		const shouldIgnoreSession = pathnameIgnoresSession.some(
@@ -30,6 +28,8 @@ function registerRoutersServicesAuth(server: Server) {
 				ctx.req.url.includes(ignoredPath) ||
 				ctx.req.url.startsWith(ignoredPath),
 		);
+
+		console.log(await response.json());
 
 		const session = shouldIgnoreSession
 			? null
