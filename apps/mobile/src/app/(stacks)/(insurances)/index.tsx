@@ -5,7 +5,7 @@ import { useSafesRegistration } from '@/libraries/hooks/api/safe';
 import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { maskCPF, maskDateString } from '@segwise/core/masks';
-import { SchemaSearchQueriesSafeRegistration } from '@segwise/core/schemas';
+import { SchemaSearchParamsSafeRegistration } from '@segwise/core/schemas';
 import type { SafeRegistration } from '@segwise/core/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -29,7 +29,7 @@ function InsurancesScreen() {
 		mode: 'all',
 		criteriaMode: 'all',
 		reValidateMode: 'onChange',
-		resolver: zodResolver(SchemaSearchQueriesSafeRegistration),
+		resolver: zodResolver(SchemaSearchParamsSafeRegistration),
 		defaultValues: {
 			registration: '',
 			birth: '',
@@ -80,9 +80,9 @@ function InsurancesScreen() {
 					<Text
 						allowFontScaling={false}
 						accessible={false}
-						className='text-base font-medium leading-none mb-2 text-center'
+						className='text-xl font-bold leading-none mb-2 text-center uppercase'
 					>
-						Cliente de outra seguradora ou banco acesse:
+						Cliente de outra corretora ou banco acesse:
 					</Text>
 					<TouchableOpacity
 						className='py-2 bg-transparent border border-primary rounded-sm'
@@ -133,9 +133,9 @@ function InsurancesScreen() {
 				<Text
 					allowFontScaling={false}
 					accessible={false}
-					className='text-center text-xl font-bold leading-none -mb-2'
+					className='text-center text-xl font-bold leading-none -mb-2 uppercase'
 				>
-					SOU CLIENTE DA CORRETORA
+					SOU CLIENTE DA XCAR
 				</Text>
 				<Controller
 					control={control}

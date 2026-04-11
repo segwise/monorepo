@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -6,7 +7,7 @@ function NativeOnlyAnimatedView(
 		React.RefAttributes<Animated.View>,
 ) {
 	if (Platform.OS === 'web') {
-		return props.children as React.ReactNode;
+		return <Fragment>{props.children as React.ReactNode}</Fragment>;
 	} else {
 		return <Animated.View {...props} />;
 	}

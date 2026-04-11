@@ -1,5 +1,4 @@
 import LOGO from '@/assets/images/logo/segwise.png';
-import XCAR from '@/assets/images/logo/xcar-light-full.png';
 import { cn } from '@/libraries/classname';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
@@ -99,28 +98,6 @@ function Header({
 				>
 					{title}
 				</Text>
-				{!showReturn && (
-					<View className='flex flex-row items-center justify-end gap-x-2'>
-						<Text
-							allowFontScaling={false}
-							className='text-white font-medium text-xs'
-						>
-							Operado por:
-						</Text>
-						<Image
-							source={XCAR}
-							cachePolicy='memory-disk'
-							priority='high'
-							contentFit='contain'
-							style={{
-								width: 80,
-								height: 25,
-							}}
-							allowDownscaling={false}
-							accessible={false}
-						/>
-					</View>
-				)}
 			</View>
 		</View>
 	);

@@ -26,7 +26,7 @@ function StackLayout() {
 			<Stack.Screen
 				name='home'
 				options={{
-					title: 'Bem-vindo!',
+					title: 'Bem-vindo a:    XCAR CORRETORA',
 					header: (props) => (
 						<Header {...props} titlePosition='left' showReturn={false} />
 					),

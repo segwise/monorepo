@@ -1,4 +1,3 @@
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
 import { TextClassContext } from '@/components/ui/text';
 import { cn } from '@/libraries/classname';
 import * as SelectPrimitive from '@rn-primitives/select';
@@ -12,7 +11,6 @@ import {
 	useWindowDimensions,
 	View,
 } from 'react-native';
-import { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
 import { Label } from './label';
 
@@ -35,7 +33,7 @@ function SelectValue({
 		<SelectPrimitive.Value
 			ref={ref}
 			className={cn(
-				'text-foreground line-clamp-1 flex flex-row items-center gap-2 text-base leading-tight font-semibold px-1.5',
+				'text-foreground line-clamp-1 flex flex-row items-center gap-2 text-base leading-tight font-semibold px-1.5 truncate max-w-[85%]',
 				!value && 'text-muted-foreground/40',
 				className,
 			)}
@@ -120,52 +118,46 @@ function SelectContent({
 					className='bg-black/50'
 				>
 					<TextClassContext.Provider value='text-popover-foreground'>
-						<NativeOnlyAnimatedView
-							className='z-50'
-							entering={FadeIn.duration(200)}
-							exiting={FadeOut.duration(100)}
-						>
-							<SelectPrimitive.Content
-								className={cn(
-									'bg-popover border border-border relative z-50 min-w-[8rem] rounded-sm',
+						<SelectPrimitive.Content
+							className={cn(
+								'bg-popover border border-border relative z-50 min-w-[8rem] rounded-sm',
+								Platform.select({
+									web: cn(
+										'animate-in fade-in-0 zoom-in-95 origin-(--radix-select-content-transform-origin) max-h-52 overflow-y-auto overflow-x-hidden',
+										props.side === 'bottom' && 'slide-in-from-top-2',
+										props.side === 'top' && 'slide-in-from-bottom-2',
+									),
+									native: 'p-1',
+								}),
+								position === 'popper' &&
 									Platform.select({
 										web: cn(
-											'animate-in fade-in-0 zoom-in-95 origin-(--radix-select-content-transform-origin) max-h-52 overflow-y-auto overflow-x-hidden',
-											props.side === 'bottom' && 'slide-in-from-top-2',
-											props.side === 'top' && 'slide-in-from-bottom-2',
+											props.side === 'bottom' && 'translate-y-1',
+											props.side === 'top' && '-translate-y-1',
 										),
-										native: 'p-1',
 									}),
+								className,
+							)}
+							position={position}
+							{...props}
+						>
+							<SelectScrollUpButton />
+							<SelectPrimitive.Viewport
+								className={cn(
+									'p-1',
 									position === 'popper' &&
-										Platform.select({
-											web: cn(
-												props.side === 'bottom' && 'translate-y-1',
-												props.side === 'top' && '-translate-y-1',
-											),
-										}),
-									className,
+										cn(
+											'w-full',
+											Platform.select({
+												web: 'h-[var(--radix-select-trigger-height)] min-w-[var(--radix-select-trigger-width)]',
+											}),
+										),
 								)}
-								position={position}
-								{...props}
 							>
-								<SelectScrollUpButton />
-								<SelectPrimitive.Viewport
-									className={cn(
-										'p-1',
-										position === 'popper' &&
-											cn(
-												'w-full',
-												Platform.select({
-													web: 'h-[var(--radix-select-trigger-height)] min-w-[var(--radix-select-trigger-width)]',
-												}),
-											),
-									)}
-								>
-									{children}
-								</SelectPrimitive.Viewport>
-								<SelectScrollDownButton />
-							</SelectPrimitive.Content>
-						</NativeOnlyAnimatedView>
+								{children}
+							</SelectPrimitive.Viewport>
+							<SelectScrollDownButton />
+						</SelectPrimitive.Content>
 					</TextClassContext.Provider>
 				</SelectPrimitive.Overlay>
 			</FullWindowOverlay>
@@ -227,7 +219,7 @@ function SelectItem({
 			)}
 			<SelectPrimitive.ItemText
 				className={cn(
-					'text-foreground group-active:text-accent-foreground select-none text-base font-semibold',
+					'text-foreground group-active:text-accent-foreground select-none text-base font-semibold truncate line-clamp-1 max-w-[85%]',
 					classNameText,
 				)}
 			/>
@@ -327,12 +319,15 @@ function NativeSelectScrollView({
 	...props
 }: React.ComponentProps<typeof ScrollView>) {
 	if (Platform.OS === 'web') {
-		return <>{props.children}</>;
+		return <React.Fragment>{props.children}</React.Fragment>;
 	}
+
 	return (
 		<ScrollView
-			className={cn('max-h-52', className)}
 			showsVerticalScrollIndicator={false}
+			nestedScrollEnabled
+			scrollEnabled
+			className={cn('max-h-52', className)}
 			{...props}
 		/>
 	);

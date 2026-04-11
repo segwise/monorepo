@@ -4,7 +4,7 @@ import { environment } from './environment';
 
 const api = xior.create({
 	baseURL: environment.API_URL,
-	timeout: 5000,
+	timeout: 15000,
 	fetch,
 });
 

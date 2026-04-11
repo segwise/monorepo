@@ -13,11 +13,14 @@ import {
 	TouchableOpacity,
 	View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function InsuranceCompaniesDetailsScreen() {
 	const { id } = useLocalSearchParams<{
 		id: string;
 	}>();
+
+	const { bottom } = useSafeAreaInsets();
 
 	const { data } = useInsuranceCompaniesDetailsById(id);
 
@@ -29,7 +32,12 @@ function InsuranceCompaniesDetailsScreen() {
 				}}
 			/>
 			<ScrollView>
-				<View className='p-4'>
+				<View
+					className='p-4'
+					style={{
+						marginBottom: bottom + 20,
+					}}
+				>
 					<View className='border border-border rounded-md px-4 pt-3 pb-4'>
 						<Text
 							allowFontScaling={false}
@@ -49,11 +57,11 @@ function InsuranceCompaniesDetailsScreen() {
 									className='aspect-square'
 								/>
 							</View>
-							<View>
+							<View className='flex-1'>
 								<Text
 									allowFontScaling={false}
 									accessible={false}
-									className='text-sm text-inherit uppercase font-semibold line-clamp-1 opacity-70 leading-none'
+									className='text-sm text-inherit uppercase truncate font-semibold line-clamp-1 opacity-70 leading-none'
 								>
 									{data?.name}
 								</Text>
@@ -138,7 +146,7 @@ function InsuranceCompaniesDetailsScreen() {
 																	? 'phone.circle.fill'
 																	: 'phone.fill.arrow.up.right',
 																android: isWhatsapp
-																	? 'smartphone'
+																	? 'message'
 																	: 'phone_in_talk',
 															}}
 															tintColor={isWhatsapp ? '#16a34a' : '#232323'}

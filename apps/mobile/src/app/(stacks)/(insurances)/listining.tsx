@@ -19,6 +19,7 @@ import { replace } from 'expo-router/build/global-state/routing';
 import { SymbolView } from 'expo-symbols';
 import { useEffect } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function List({ label, value }: { label: string; value: string }) {
 	return (
@@ -43,8 +44,10 @@ function List({ label, value }: { label: string; value: string }) {
 
 function Item(props: SafeSimple) {
 	const queryClient = useQueryClient();
-	const { push } = useRouter();
+
 	const { data: insurances } = useInsuranceCompaniesSimple();
+
+	const { push } = useRouter();
 
 	const insurance = insurances?.find((e) => e.id === props.insuranceCompany);
 
@@ -91,7 +94,7 @@ function Item(props: SafeSimple) {
 							<Text
 								allowFontScaling={false}
 								accessible={false}
-								className='font-bold text-base leading-none uppercase'
+								className='font-bold text-base leading-none uppercase truncate line-clamp-1 max-w-[95%]'
 							>
 								{insurance?.name}
 							</Text>
@@ -116,6 +119,15 @@ function Item(props: SafeSimple) {
 			</TouchableOpacity>
 			<Separator />
 			<View className='bg-muted p-4 gap-y-3'>
+				{props.insured && (
+					<List label='SEGURADO(A)' value={props.insured.name.toUpperCase()} />
+				)}
+				{props.vehicle?.driver && (
+					<List
+						label='PRINCIPAL CONDUTOR'
+						value={props.vehicle.driver.name.toUpperCase()}
+					/>
+				)}
 				{props.vehicle?.plate && (
 					<List label='PLACA' value={maskPlate(props.vehicle.plate)} />
 				)}
@@ -148,6 +160,12 @@ function Item(props: SafeSimple) {
 						props.vehicle?.usage || 'leisure_and_work',
 					).toUpperCase()}
 				/>
+				{props.vehicle?.overnightPostalCode && (
+					<List
+						label='CEP DE PERNOITE'
+						value={maskPostalCode(props.vehicle.overnightPostalCode)}
+					/>
+				)}
 				{props.franchise && (
 					<List
 						label='FRÂNQUIA'
@@ -155,21 +173,6 @@ function Item(props: SafeSimple) {
 							style: 'currency',
 							currency: 'BRL',
 						}).format(props.franchise)}
-					/>
-				)}
-				{props.insured && (
-					<List label='SEGURADO(A)' value={props.insured.name.toUpperCase()} />
-				)}
-				{props.vehicle?.driver && (
-					<List
-						label='PRINCIPAL CONDUTOR'
-						value={props.vehicle.driver.name.toUpperCase()}
-					/>
-				)}
-				{props.vehicle?.overnightPostalCode && (
-					<List
-						label='CEP DE PERNOITE'
-						value={maskPostalCode(props.vehicle.overnightPostalCode)}
 					/>
 				)}
 				<Separator />
@@ -204,6 +207,8 @@ function Item(props: SafeSimple) {
 }
 
 function InsurancesListiningScreen() {
+	const { bottom } = useSafeAreaInsets();
+
 	const { data } = useSafes();
 
 	const { push } = useRouter();
@@ -216,7 +221,12 @@ function InsurancesListiningScreen() {
 
 	return (
 		<ScrollView showsVerticalScrollIndicator={false}>
-			<View className='p-4'>
+			<View
+				className='p-4'
+				style={{
+					marginBottom: bottom + 20,
+				}}
+			>
 				<View className='flex-row items-center justify-between'>
 					<Text
 						allowFontScaling={false}
@@ -247,13 +257,9 @@ function InsurancesListiningScreen() {
 					</TouchableOpacity>
 				</View>
 				<View className='gap-y-4 mt-4 mb-20'>
-					{data?.data
-						// @ts-expect-error
-						.sort((a, b) => parseISO(a.expiration) - parseISO(b.expiration))
-						.filter((e) => parseISO(e.expiration as string) >= new Date())
-						.map((props) => (
-							<Item key={props.id} {...props} />
-						))}
+					{data?.data.map((props) => (
+						<Item key={props.id} {...props} />
+					))}
 				</View>
 			</View>
 		</ScrollView>

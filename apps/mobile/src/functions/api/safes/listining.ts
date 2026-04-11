@@ -5,7 +5,7 @@ import type {
 	SafeRegistration,
 	SafeSimple,
 } from '@segwise/core/types';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { XiorError } from 'xior';
 
 async function safesListining({ signal }: { signal: AbortSignal }) {
@@ -34,7 +34,13 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 		},
 	);
 
-	return data;
+	return {
+		...data,
+		data: data.data
+			// @ts-expect-error
+			.sort((a, b) => parseISO(a.expiration) - parseISO(b.expiration))
+			.filter((e) => parseISO(e.expiration as string) >= new Date()),
+	};
 }
 
 async function safesListiningRegistration({

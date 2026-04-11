@@ -18,7 +18,7 @@ function Item({ id, name, cnpj, icon }: InsuranceCompanySimple) {
 			className='bg-background border border-border h-fit rounded-sm px-4 py-2.5 flex flex-row items-center justify-between gap-x-6'
 			onPress={navigate}
 		>
-			<View className='flex-row items-center justify-start gap-x-3'>
+			<View className='flex-row items-center justify-start gap-x-3 flex-1'>
 				<View className='rounded overflow-hidden size-14'>
 					<Image
 						source={icon}
@@ -28,18 +28,18 @@ function Item({ id, name, cnpj, icon }: InsuranceCompanySimple) {
 						className='aspect-square'
 					/>
 				</View>
-				<View>
+				<View className='flex-1 truncate'>
 					<Text
 						allowFontScaling={false}
 						accessible={false}
-						className='text-base text-inherit uppercase font-semibold line-clamp-1 opacity-70 leading-none'
+						className='text-base text-inherit uppercase font-semibold line-clamp-1 leading-none'
 					>
 						{name}
 					</Text>
 					<Text
 						allowFontScaling={false}
 						accessible={false}
-						className='text-xl text-inherit uppercase font-semibold line-clamp-1 leading-none mt-1'
+						className='text-sm text-inherit uppercase font-semibold line-clamp-1 opacity-70 leading-none mt-1'
 					>
 						{maskCNPJ(cnpj)}
 					</Text>

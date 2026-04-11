@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input, InputError } from '@/components/ui/input';
 import {
+	NativeSelectScrollView,
 	Select,
 	SelectContent,
 	SelectItem,
@@ -40,6 +41,7 @@ import { Controller, useForm } from 'react-hook-form';
 import {
 	ActivityIndicator,
 	Keyboard,
+	Platform,
 	Text,
 	TouchableOpacity,
 	useWindowDimensions,
@@ -84,17 +86,17 @@ function RequestQuote() {
 	const { back, replace } = useRouter();
 
 	const { width } = useWindowDimensions();
-	const { bottom } = useSafeAreaInsets();
+	const { top, bottom } = useSafeAreaInsets();
 
 	const { mutate, isPending } = useQuoteSimpleRegister();
-
-	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
 
 	const searchParams = useLocalSearchParams();
 
 	const iHaveInsurance = !!searchParams['i-have-insurance'];
 	const firstInit = !!searchParams['first-init'];
 	const storeFirstQuote = storage.getBoolean('first-quote');
+
+	const referral = storage.getString('referral');
 
 	const {
 		control,
@@ -112,21 +114,30 @@ function RequestQuote() {
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaQuoteSimpleRegister),
 		defaultValues: {
+			referral,
 			modality: 'car',
 			vehicleWithLicensePlate: true,
+			...(iHaveInsurance && {
+				type: {
+					label: 'Renovação',
+					value: 'renewal',
+				},
+			}),
 		},
 	});
+
+	// @ts-expect-error
+	const type = watch('type')?.value || undefined;
+
+	const isRenewal = type === 'renewal';
+
+	const { data: insuranceCompanies } = useInsuranceCompaniesSimple(isRenewal);
 
 	const plate = watch('plate') || null;
 
 	const { data: quoteIsPlate } = useQuoteIsPlate(plate || '');
 
 	const vehicleWithLicensePlate = watch('vehicleWithLicensePlate');
-
-	// @ts-expect-error
-	const type = watch('type')?.value || undefined;
-
-	const isRenewal = type === 'renewal';
 
 	function onSubmit(props: QuoteSimpleRegister) {
 		Keyboard.dismiss();
@@ -156,7 +167,8 @@ function RequestQuote() {
 				if (props.renewal) {
 					setOpenDialog(true);
 				} else {
-					back();
+					// back();
+					replace('/(stacks)/home');
 
 					toast.success(
 						'Aguarde até 24 horas para ter um retorno'.toUpperCase(),
@@ -175,7 +187,7 @@ function RequestQuote() {
 		if (quoteIsPlate) {
 			setTimeout(() => {
 				setError('plate', {
-					message: 'Veículo já está sendo cotado',
+					message: 'Veículo já registrado',
 				});
 			}, 100);
 		}
@@ -206,7 +218,7 @@ function RequestQuote() {
 									android: 'car_tag',
 								}}
 							/>
-							<View className='flex flex-row items-center justify-start gap-x-6'>
+							<View className='flex flex-col justify-start gap-x-6 gap-y-2'>
 								<Controller
 									control={control}
 									name='vehicleWithLicensePlate'
@@ -537,58 +549,59 @@ function RequestQuote() {
 							)}
 						/>
 						<Separator />
-						<Controller
-							control={control}
-							name='type'
-							render={({ field }) => (
-								// @ts-expect-error
-								<Select
-									{...field}
-									onOpenChange={() => Keyboard.dismiss()}
-									onValueChange={(value) => {
-										field.onChange(value);
+						{!iHaveInsurance && (
+							<Controller
+								control={control}
+								name='type'
+								render={({ field }) => (
+									// @ts-expect-error
+									<Select
+										{...field}
+										onOpenChange={() => Keyboard.dismiss()}
+										onValueChange={(value) => {
+											field.onChange(value);
 
-										if (
-											value?.value === 'renewal' ||
-											value?.value === 'association'
-										) {
-											const { invalid, isDirty } =
-												getFieldState('insuranceCompany');
+											if (
+												value?.value === 'renewal' ||
+												value?.value === 'association'
+											) {
+												const { invalid, isDirty } =
+													getFieldState('insuranceCompany');
 
-											if (!isDirty || invalid) {
-												setTimeout(() => {
-													scrollViewRef.current?.scrollToEnd({
-														animated: true,
-													});
-												}, 100);
+												if (!isDirty || invalid) {
+													setTimeout(() => {
+														scrollViewRef.current?.scrollToEnd({
+															animated: true,
+														});
+													}, 100);
 
-												setTimeout(() => {
-													if (value.value === 'renewal') {
-														selectTriggerRefInsuranceCompany.current?.open();
-													}
+													setTimeout(() => {
+														if (value.value === 'renewal') {
+															selectTriggerRefInsuranceCompany.current?.open();
+														}
 
-													if (value.value === 'association') {
-														selectTriggerRefInsuranceAssociationCompany.current?.open();
-													}
-												}, 500);
+														if (value.value === 'association') {
+															selectTriggerRefInsuranceAssociationCompany.current?.open();
+														}
+													}, 500);
+												}
 											}
-										}
-									}}
-								>
-									<SelectTrigger
-										ref={selectTriggerRefType}
-										label='Tipo de Cotação'
+										}}
 									>
-										<SelectValue placeholder='Selecionar' />
-									</SelectTrigger>
-									<SelectContent style={{ width: width - 32 }}>
-										<SelectItem value='new' label='SEGURO NOVO' />
-										<SelectItem value='renewal' label='RENOVAÇÃO' />
-										<SelectItem value='association' label='ASSOCIAÇÃO' />
-									</SelectContent>
-								</Select>
-							)}
-						/>
+										<SelectTrigger
+											ref={selectTriggerRefType}
+											label='Tipo de Cotação'
+										>
+											<SelectValue placeholder='Selecionar' />
+										</SelectTrigger>
+										<SelectContent style={{ width: width - 32 }}>
+											<SelectItem value='new' label='SEGURO NOVO' />
+											<SelectItem value='renewal' label='RENOVAÇÃO' />
+										</SelectContent>
+									</Select>
+								)}
+							/>
+						)}
 						{isRenewal && (
 							<Fragment>
 								<Controller
@@ -618,15 +631,28 @@ function RequestQuote() {
 												>
 													<SelectValue placeholder='Selecionar' />
 												</SelectTrigger>
-												<SelectContent style={{ width: width - 32 }}>
-													{insuranceCompanies?.map(({ id, name, icon }) => (
-														<SelectItem
-															key={id}
-															value={id}
-															label={name.toUpperCase()}
-															image={icon}
-														/>
-													))}
+												<SelectContent
+													style={{ width: width - 32 }}
+													insets={{
+														top: top,
+														bottom: Platform.select({
+															ios: bottom,
+															android: bottom + 24,
+														}),
+														left: 12,
+														right: 12,
+													}}
+												>
+													<NativeSelectScrollView>
+														{insuranceCompanies?.map(({ id, name, icon }) => (
+															<SelectItem
+																key={id}
+																value={id}
+																label={name.toUpperCase()}
+																image={icon}
+															/>
+														))}
+													</NativeSelectScrollView>
 												</SelectContent>
 											</Select>
 											{fieldState.error?.message && (
