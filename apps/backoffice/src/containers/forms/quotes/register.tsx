@@ -2,6 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+	maskCNPJ,
 	maskCPF,
 	maskDateString,
 	maskNumber,
@@ -22,12 +23,13 @@ import {
 } from '@segwise/core/translate';
 import type { QuoteRegister, VehicleManufacturer } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
-import { isDateString, isPlate } from '@segwise/core/valids';
+import { isCPF, isDateString, isPlate } from '@segwise/core/valids';
 import {
 	differenceInYears,
 	format,
 	isDate,
 	parse,
+	parseISO,
 	startOfToday,
 } from 'date-fns';
 import {
@@ -85,6 +87,7 @@ import { placeholder } from '@/config/placeholder';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useQuotesRegister } from '@/libraries/hooks/quotes/use-quotes-register';
+import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 import { useVehiclesPlate } from '@/libraries/hooks/vehicles/use-vehicles-plate';
 import { cn } from '@/libraries/utils';
@@ -149,6 +152,10 @@ function FormQuoteRegister() {
 			},
 		},
 	});
+
+	const cpfOrCnpj = watch('insured.cpf');
+
+	const { data: cpfOrCnpjSearch } = useCpfOrCnpj(cpfOrCnpj);
 
 	const plate = watch('vehicle.plate');
 
@@ -220,6 +227,30 @@ function FormQuoteRegister() {
 			},
 		});
 	}
+
+	useEffect(() => {
+		if (cpfOrCnpjSearch) {
+			const name = capitalizeFirstLetters(cpfOrCnpjSearch.name);
+			const birth = format(
+				parseISO(cpfOrCnpjSearch.birth as unknown as string),
+				'dd/MM/yyyy',
+			);
+
+			setValue('insured.name', name);
+			setValue('insured.birth', birth);
+
+			clearErrors('insured.name');
+			clearErrors('insured.birth');
+
+			if (theInsuredPartyIsTheDriver) {
+				setValue('driver.name', name);
+				setValue('driver.birth', birth);
+
+				clearErrors('driver.name');
+				clearErrors('driver.birth');
+			}
+		}
+	}, [cpfOrCnpjSearch, theInsuredPartyIsTheDriver, setValue, clearErrors]);
 
 	useEffect(() => {
 		if (vehicleSearch) {
@@ -611,18 +642,36 @@ function FormQuoteRegister() {
 										name='insured.cpf'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='insured-cpf'>CPF:</FieldLabel>
+												<FieldLabel htmlFor='insured-cpf'>CPF/CNPJ:</FieldLabel>
 												<Input
 													{...field}
 													id='insured-cpf'
 													aria-invalid={fieldState.invalid}
 													placeholder='000.000.000-00'
-													onChange={({ target: { value } }) => [
-														field.onChange(maskCPF(value)),
-														theInsuredPartyIsTheDriver
-															? setValue('driver.cpf', maskCPF(value))
-															: undefined,
-													]}
+													onChange={({ target: { value } }) => {
+														const valueMask =
+															value.length >= 11
+																? isCPF(value)
+																	? maskCPF(value)
+																	: maskCNPJ(value)
+																: value;
+
+														field.onChange(valueMask);
+
+														if (theInsuredPartyIsTheDriver) {
+															setValue('driver.cpf', valueMask);
+														}
+
+														if (value.length === 0) {
+															setValue('insured.name', '');
+															setValue('insured.birth', '');
+
+															if (theInsuredPartyIsTheDriver) {
+																setValue('driver.name', '');
+																setValue('driver.birth', '');
+															}
+														}
+													}}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />

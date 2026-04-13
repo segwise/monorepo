@@ -14,8 +14,8 @@ import {
 import type { ProducerRegister } from '@segwise/core/types';
 import { capitalizeFirstLetters, generateReferral } from '@segwise/core/utils';
 import { isCPF } from '@segwise/core/valids';
-import { SaveIcon, Trash2Icon, XCircleIcon } from 'lucide-react';
-import { Fragment, useEffect, useState } from 'react';
+import { SaveIcon, XCircleIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -61,19 +61,15 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 			reValidateMode: 'onChange',
 			resolver: zodResolver(SchemaProducerRegister),
 			defaultValues: {
-				type: null,
 				cpfOrCnpj: '',
 				name: '',
 				phone: '',
 				email: '',
-				percentage: null,
-				typeOfPayment: 'monthly',
-				startOfPayment: 16,
 				referral: '',
 			},
 		});
 
-	const { data } = useCpfOrCnpj(watch('cpfOrCnpj'));
+	const { data: cpfOrCnpj } = useCpfOrCnpj(watch('cpfOrCnpj'));
 
 	function onSubmit(props: ProducerRegister) {
 		mutate(props, {
@@ -98,12 +94,12 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 	}
 
 	useEffect(() => {
-		if (data) {
-			setValue('name', capitalizeFirstLetters(data.name));
+		if (cpfOrCnpj) {
+			setValue('name', capitalizeFirstLetters(cpfOrCnpj.name));
 
 			clearErrors('name');
 		}
-	}, [data, setValue, clearErrors]);
+	}, [cpfOrCnpj, setValue, clearErrors]);
 
 	return (
 		<Dialog open={open} onOpenChange={(open) => [setOpen(open), reset()]}>
@@ -305,41 +301,38 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 							name='type'
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid} className='col-span-1'>
-									<FieldLabel htmlFor='type'>
-										Tipo do Parceiro:{' '}
-										<sup className='text-muted-foreground'>( Opcional )</sup>
-									</FieldLabel>
+									<FieldLabel htmlFor='type'>Tipo do Parceiro:</FieldLabel>
 									<Select
 										{...field}
 										value={field.value || ''}
-										onValueChange={(value) =>
-											field.onChange(value === 'clear' ? null : value)
-										}
+										onValueChange={field.onChange}
 									>
 										<SelectTrigger id='type' aria-invalid={fieldState.invalid}>
 											<SelectValue placeholder='Selecionar' />
 										</SelectTrigger>
-										<SelectContent>
-											{SchemaProducerType.options.map((item) => (
-												<SelectItem key={item} value={item}>
-													{capitalizeFirstLetters(translateProducerType(item))}
-												</SelectItem>
-											))}
-											{field.value && (
-												<Fragment>
-													<SelectSeparator />
-													<SelectItem
-														value='clear'
-														variant='destructive'
-														className='text-center items-center justify-center'
-														showIndicator={false}
-													>
-														<div className='flex flex-row items-center justify-center text-center gap-x-3'>
-															<Trash2Icon /> Limpar
-														</div>
+										<SelectContent className='max-h-70'>
+											<SelectItem value={SchemaProducerType.enum.producer}>
+												{capitalizeFirstLetters(
+													translateProducerType(
+														SchemaProducerType.enum.producer,
+													),
+												)}
+											</SelectItem>
+											<SelectSeparator />
+											{SchemaProducerType.options
+												.filter((e) => e !== SchemaProducerType.enum.producer)
+												.sort((a, b) =>
+													translateProducerType(a).localeCompare(
+														translateProducerType(b),
+													),
+												)
+												.map((item) => (
+													<SelectItem key={item} value={item}>
+														{capitalizeFirstLetters(
+															translateProducerType(item),
+														)}
 													</SelectItem>
-												</Fragment>
-											)}
+												))}
 										</SelectContent>
 									</Select>
 									{fieldState.invalid && (
