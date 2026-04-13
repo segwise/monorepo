@@ -74,7 +74,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						in: ids,
 					},
 				}),
-				...((!ids?.length || isExternal === false) && {
+				...((!ids?.length || !isExternal) && {
 					OR: [
 						{
 							isExternal: false,
