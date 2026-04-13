@@ -142,6 +142,8 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				}),
 			};
 
+			console.log(where);
+
 			const [safes, total, itemsBefore] = await ctx.database.$transaction([
 				ctx.database.safe.findMany({
 					where,

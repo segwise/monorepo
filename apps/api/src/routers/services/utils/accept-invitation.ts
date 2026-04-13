@@ -157,12 +157,19 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 					});
 				});
 
-				return ctx.json(
-					{
-						message: 'Convite aceito',
+				const responseSignIn = await ctx.auth.api.signInEmail({
+					body: {
+						email: invitation.email,
+						password,
 					},
-					200,
-				);
+					asResponse: true,
+				});
+
+				console.log(responseSignIn);
+
+				console.log(await responseSignIn.clone().json());
+
+				return responseSignIn;
 			} catch (error) {
 				let message = 'Falha ao aceitar convite';
 
