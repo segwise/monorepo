@@ -53,6 +53,11 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 							},
 						},
 					}),
+				...(!!ids?.length && {
+					id: {
+						in: ids,
+					},
+				}),
 				...(!ids?.length && {
 					OR: [
 						{
