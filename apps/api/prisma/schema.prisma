@@ -784,6 +784,21 @@ enum MethodPayment {
 }
 
 enum TypeOfProduction {
+  gym
+  accountants
+  driving_school
+  university
+  condominium_management
+  oil_change
+  youtuber
+  promoters
+  digital_marketing
+  buying_group
+  gas_station
+  restaurant
+  producers
+  influencer
+  producer
   condominium_administrator
   accounting
 }

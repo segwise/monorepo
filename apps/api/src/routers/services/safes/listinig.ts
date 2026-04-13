@@ -36,6 +36,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				status,
 				renewal,
 				effectived,
+				ids,
 			} = ctx.req.valid('query');
 
 			const pageMargins = 2;
@@ -52,14 +53,16 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 							},
 						},
 					}),
-				OR: [
-					{
-						isExternal: false,
-					},
-					{
-						isExternal: null,
-					},
-				],
+				...(!ids?.length && {
+					OR: [
+						{
+							isExternal: false,
+						},
+						{
+							isExternal: null,
+						},
+					],
+				}),
 				...(effectived === true && {
 					effectivedAt: {
 						gte: effectivedAt.start,

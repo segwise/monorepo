@@ -35,8 +35,14 @@ function serializer(
 		typeOfProduction: member?.typeOfProduction as TypeOfProduction,
 		typeOfProductionPayment:
 			member?.typeOfProductionPayment as TypeOfProductionPayment,
-		percentageOfProduction: member?.percentageOfProduction,
-		startOfProductionPayment: member?.startOfProductionPayment,
+		percentageOfProduction: member?.percentageOfProduction as number,
+		startOfProductionPayment: member?.startOfProductionPayment as
+			| 1
+			| 10
+			| 5
+			| 8
+			| 3
+			| 16,
 	} satisfies ProducerSimple;
 }
 
