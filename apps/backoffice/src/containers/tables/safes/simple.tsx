@@ -13,8 +13,7 @@ import {
 	formatDistanceToNowStrict,
 	isAfter,
 } from 'date-fns';
-import { CarIcon, EyeIcon, InfoIcon, Trash2Icon } from 'lucide-react';
-import Link from 'next/link';
+import { CarIcon, InfoIcon, Trash2Icon } from 'lucide-react';
 import { Fragment } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -394,13 +393,13 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 								</Badge>
 							</TableCell>
 							<TableCell className='flex flex-row justify-end gap-x-2 w-30'>
-								<Button variant='outline' size='icon-sm' asChild>
+								{/* <Button variant='outline' size='icon-sm' asChild>
 									<Link
 										href={`/${effectivedAt ? 'policies' : 'proposals'}/${id}`}
 									>
 										<EyeIcon />
 									</Link>
-								</Button>
+								</Button> */}
 								<DialogSafeDeleteById id={id}>
 									<Button variant='destructive' size='icon-sm'>
 										<Trash2Icon />

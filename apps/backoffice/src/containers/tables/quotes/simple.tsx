@@ -13,14 +13,7 @@ import {
 	formatDistanceToNowStrict,
 	isAfter,
 } from 'date-fns';
-import {
-	CarIcon,
-	EyeIcon,
-	InfoIcon,
-	PrinterIcon,
-	Trash2Icon,
-} from 'lucide-react';
-import Link from 'next/link';
+import { CarIcon, InfoIcon, PrinterIcon, Trash2Icon } from 'lucide-react';
 import { Fragment } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -400,11 +393,11 @@ function TableQuotesSimple() {
 								</Badge>
 							</TableCell>
 							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
-								<Button variant='outline' size='icon-sm' asChild>
+								{/* <Button variant='outline' size='icon-sm' asChild>
 									<Link href={`/quotes/${id}`}>
 										<EyeIcon />
 									</Link>
-								</Button>
+								</Button> */}
 								<Button
 									variant='outline'
 									size='icon-sm'

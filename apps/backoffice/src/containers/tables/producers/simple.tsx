@@ -2,7 +2,7 @@
 
 import { maskCNPJ, maskCPF, maskPhone } from '@segwise/core/masks';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
-import { EyeIcon, InfoIcon, MoreHorizontalIcon } from 'lucide-react';
+import { InfoIcon, MoreHorizontalIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -168,9 +168,9 @@ function TableProducersSimple() {
 							</Badge>
 						</TableCell>
 						<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
-							<Button size='icon-sm' variant='outline'>
+							{/* <Button size='icon-sm' variant='outline'>
 								<EyeIcon />
-							</Button>
+							</Button> */}
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button size='icon-sm' variant='outline'>

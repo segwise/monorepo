@@ -13,7 +13,6 @@ import {
 	BanknoteIcon,
 	CheckIcon,
 	CreditCardIcon,
-	EyeIcon,
 	InfoIcon,
 	LandmarkIcon,
 	MoreHorizontalIcon,
@@ -324,9 +323,9 @@ function TableFinancesSimple() {
 								</Badge>
 							</TableCell>
 							<TableCell className='justify-end flex flex-row gap-x-2 w-40'>
-								<Button size='icon-sm' variant='outline'>
+								{/* <Button size='icon-sm' variant='outline'>
 									<EyeIcon />
-								</Button>
+								</Button> */}
 								<Button size='icon-sm' variant='outline'>
 									<PrinterIcon />
 								</Button>
