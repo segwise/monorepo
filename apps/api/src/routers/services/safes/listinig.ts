@@ -1,5 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsSafeSimple } from '@segwise/core/schemas';
+import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
 import { serializer } from '@/db-serializers/safe/simple';
@@ -9,7 +10,18 @@ import { serializerCursor } from '@/libraries/database/serializers/cursor';
 function registerRoutersServicesSafesSimpleListining(server: Server) {
 	server.get(
 		'/simple',
-		zValidator('query', SchemaSearchParamsSafeSimple),
+		zValidator(
+			'query',
+			SchemaSearchParamsSafeSimple.extend({
+				isExternal: z
+					.literal(['true', 'false'])
+					.or(z.boolean())
+					.transform((value) =>
+						value === 'true' ? true : value === 'false' ? false : value,
+					)
+					.nullish(),
+			}),
+		),
 		async (ctx) => {
 			const brokerId =
 				ctx?.session?.brokerId ||
@@ -37,6 +49,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				renewal,
 				effectived,
 				ids,
+				isExternal,
 			} = ctx.req.valid('query');
 
 			const pageMargins = 2;
@@ -53,12 +66,15 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 							},
 						},
 					}),
+				...(!!isExternal && {
+					isExternal: true,
+				}),
 				...(!!ids?.length && {
 					id: {
 						in: ids,
 					},
 				}),
-				...(!ids?.length && {
+				...((!ids?.length || isExternal === false) && {
 					OR: [
 						{
 							isExternal: false,
@@ -68,13 +84,13 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						},
 					],
 				}),
-				...(effectived === true && {
+				...(!!effectived && {
 					effectivedAt: {
 						gte: effectivedAt.start,
 						lte: effectivedAt.end,
 					},
 				}),
-				...(effectived === false && {
+				...(!effectived && {
 					requestedAt: {
 						gte: effectivedAt.start,
 						lte: effectivedAt.end,
