@@ -17,6 +17,7 @@ const useSafesSimple = ({
 					params: {
 						...props,
 						effectived,
+						isExternal: false,
 					},
 					signal,
 				})
