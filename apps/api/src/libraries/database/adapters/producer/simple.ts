@@ -10,6 +10,10 @@ const selectPrisma = {
 	members: {
 		select: {
 			referral: true,
+			typeOfProduction: true,
+			typeOfProductionPayment: true,
+			percentageOfProduction: true,
+			startOfProductionPayment: true,
 		},
 	},
 } as const satisfies Prisma.UserSelect;
