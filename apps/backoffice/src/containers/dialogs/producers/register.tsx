@@ -111,7 +111,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 					<DialogDescription>Atenção ao realizar a ação</DialogDescription>
 				</DialogHeader>
 				<Separator />
-				<form onSubmit={handleSubmit(onSubmit)}>
+				<form onSubmit={handleSubmit(onSubmit)} autoComplete='off'>
 					<FieldGroup className='grid grid-cols-2 gap-4'>
 						<Controller
 							control={control}
@@ -139,6 +139,9 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										}}
 										maxLength={18}
 										autoComplete='off'
+										autoCapitalize='off'
+										autoCorrect='off'
+										autoFocus={false}
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -161,6 +164,9 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 											field.onChange(capitalizeFirstLetters(value))
 										}
 										autoComplete='off'
+										autoCapitalize='off'
+										autoCorrect='off'
+										autoFocus={false}
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -181,6 +187,9 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										placeholder='exemplo@hospedage.com'
 										className='lowercase'
 										autoComplete='off'
+										autoCapitalize='off'
+										autoCorrect='off'
+										autoFocus={false}
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -203,6 +212,9 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 											field.onChange(maskPhone(value))
 										}
 										autoComplete='off'
+										autoCapitalize='off'
+										autoCorrect='off'
+										autoFocus={false}
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -262,6 +274,9 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										max={100}
 										maxLength={3}
 										autoComplete='off'
+										autoCapitalize='off'
+										autoCorrect='off'
+										autoFocus={false}
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -382,6 +397,9 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 											field.onChange(value.trim())
 										}
 										autoComplete='off'
+										autoCapitalize='off'
+										autoCorrect='off'
+										autoFocus={false}
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
