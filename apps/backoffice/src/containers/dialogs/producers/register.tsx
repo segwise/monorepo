@@ -111,7 +111,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 					<DialogDescription>Atenção ao realizar a ação</DialogDescription>
 				</DialogHeader>
 				<Separator />
-				<form onSubmit={handleSubmit(onSubmit)}>
+				<form onSubmit={handleSubmit(onSubmit)} autoComplete='off'>
 					<FieldGroup className='grid grid-cols-2 gap-4'>
 						<Controller
 							control={control}
