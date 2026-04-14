@@ -22,6 +22,7 @@ import {
 	X,
 } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,8 @@ type CepGroup = {
 };
 
 function ProducerDashboard() {
+	const { replace } = useRouter();
+
 	const [hidden, setHidden] = useState(true);
 
 	const [periodIdx, setPeriodIdx] = useState(0);
@@ -565,9 +568,11 @@ function ProducerDashboard() {
 
 		signOut(undefined, {
 			onSuccess(_data, _variables, _result, ctx) {
-				ctx.client.clear();
+				setTimeout(() => {
+					ctx.client.clear();
+				}, 1000);
 
-				window.location.reload();
+				replace('/sign-in');
 			},
 			onError(error) {
 				toast.error(error.message);

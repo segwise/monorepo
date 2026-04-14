@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { maskCNPJ, maskCPF, maskPhone } from '@segwise/core/masks';
 import {
 	SchemaProducerRegister,
+	SchemaProducerStartOfProductionPayment,
 	SchemaProducerType,
 	SchemaProducerTypeOfPayment,
 } from '@segwise/core/schemas';
@@ -283,11 +284,14 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 											<SelectValue placeholder='Selecionar' />
 										</SelectTrigger>
 										<SelectContent>
-											{[1, 3, 5, 8, 10, 16].map((item) => (
-												<SelectItem key={item} value={String(item)}>
-													Dia {item}
-												</SelectItem>
-											))}
+											{SchemaProducerStartOfProductionPayment.values
+												.values()
+												.toArray()
+												.map((item) => (
+													<SelectItem key={item} value={String(item)}>
+														Dia {item}
+													</SelectItem>
+												))}
 										</SelectContent>
 									</Select>
 									{fieldState.invalid && (
