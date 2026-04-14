@@ -7,8 +7,9 @@ import {
 	SchemaPasswordIncludeUppercase,
 	SchemaPasswordLengthMin,
 } from '@segwise/core/schemas';
-import { CheckCircleIcon } from 'lucide-react';
+import { CheckCircleIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { AcceptInvitation } from '@/@types/auth/accept-invitation';
@@ -21,7 +22,12 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAcceptInvitation } from '@/libraries/hooks/auth/use-accept-invitation';
@@ -32,6 +38,8 @@ function FormAcceptInvitation() {
 	const router = useRouter();
 
 	const searchParams = useSearchParams();
+
+	const [showPassword, setShowPassword] = useState<boolean>(false);
 
 	const token = searchParams.get('token') as string;
 
@@ -77,11 +85,30 @@ function FormAcceptInvitation() {
 				<FormField
 					control={form.control}
 					name='password'
-					render={({ field }) => (
+					render={({ field, fieldState }) => (
 						<FormItem>
 							<FormLabel>Senha</FormLabel>
 							<FormControl>
-								<Input {...field} autoComplete='off' type='password' />
+								<InputGroup>
+									<InputGroupInput
+										{...field}
+										id='password'
+										type={showPassword ? 'text' : 'password'}
+										placeholder='**********'
+										autoComplete='off'
+										aria-invalid={fieldState.invalid}
+									/>
+									<InputGroupAddon align='inline-end'>
+										<InputGroupButton
+											size='icon-xs'
+											onClick={() => setShowPassword((show) => !show)}
+											tabIndex={-1}
+										>
+											{!showPassword && <EyeIcon />}
+											{showPassword && <EyeOffIcon />}
+										</InputGroupButton>
+									</InputGroupAddon>
+								</InputGroup>
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -90,11 +117,30 @@ function FormAcceptInvitation() {
 				<FormField
 					control={form.control}
 					name='passwordConfirm'
-					render={({ field }) => (
+					render={({ field, fieldState }) => (
 						<FormItem>
 							<FormLabel>Confirmar senha</FormLabel>
 							<FormControl>
-								<Input {...field} autoComplete='off' type='password' />
+								<InputGroup>
+									<InputGroupInput
+										{...field}
+										id='password'
+										type={showPassword ? 'text' : 'password'}
+										placeholder='**********'
+										autoComplete='off'
+										aria-invalid={fieldState.invalid}
+									/>
+									<InputGroupAddon align='inline-end'>
+										<InputGroupButton
+											size='icon-xs'
+											onClick={() => setShowPassword((show) => !show)}
+											tabIndex={-1}
+										>
+											{!showPassword && <EyeIcon />}
+											{showPassword && <EyeOffIcon />}
+										</InputGroupButton>
+									</InputGroupAddon>
+								</InputGroup>
 							</FormControl>
 							<FormMessage />
 						</FormItem>
