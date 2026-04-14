@@ -43,7 +43,7 @@ function RequestReferralScreen() {
 			onSuccess(_, { referral }) {
 				storage.set('referral', referral);
 
-				replace('/(stacks)/request-quote?first-init=true');
+				replace('/(stacks)/home');
 			},
 			onError(error) {
 				toast.error(error.message, {

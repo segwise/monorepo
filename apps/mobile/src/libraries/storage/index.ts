@@ -1,5 +1,8 @@
-import { createMMKV } from 'react-native-mmkv';
+import { createMMKV, useMMKVBoolean, useMMKVString } from 'react-native-mmkv';
 
 const storage = createMMKV();
 
-export { storage };
+const useStorageString = (name: string) => useMMKVString(name);
+const useStorageBoolean = (name: string) => useMMKVBoolean(name);
+
+export { storage, useStorageBoolean, useStorageString };

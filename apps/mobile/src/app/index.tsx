@@ -15,15 +15,8 @@ function IndexScreen() {
 
 	const navigation = useCallback(() => {
 		const storeReferral = storage.getString('referral');
-		const storeFirstQuote = storage.getBoolean('first-quote');
 
-		replace(
-			!storeReferral
-				? '/(stacks)/request-referral'
-				: !storeFirstQuote
-					? '/(stacks)/request-quote?first-init=true'
-					: '/(stacks)/home',
-		);
+		replace(!storeReferral ? '/(stacks)/request-referral' : '/(stacks)/home');
 	}, [replace]);
 
 	useEffect(() => {

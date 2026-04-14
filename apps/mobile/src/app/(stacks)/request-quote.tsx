@@ -31,8 +31,14 @@ import {
 	maskPlate,
 	maskPostalCode,
 } from '@segwise/core/masks';
-import { SchemaQuoteSimpleRegister } from '@segwise/core/schemas';
-import { translateVehicleUsage } from '@segwise/core/translate';
+import {
+	SchemaMaritalStatus,
+	SchemaQuoteSimpleRegister,
+} from '@segwise/core/schemas';
+import {
+	translateMaritalStatus,
+	translateVehicleUsage,
+} from '@segwise/core/translate';
 import type { QuoteSimpleRegister } from '@segwise/core/types';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
@@ -41,7 +47,6 @@ import { Controller, useForm } from 'react-hook-form';
 import {
 	ActivityIndicator,
 	Keyboard,
-	Platform,
 	Text,
 	TouchableOpacity,
 	useWindowDimensions,
@@ -51,6 +56,7 @@ import CurrencyInput from 'react-native-currency-input';
 import {
 	KeyboardAwareScrollView,
 	type KeyboardAwareScrollViewRef,
+	useKeyboardState,
 } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -79,6 +85,7 @@ function RequestQuote() {
 	const scrollViewRef = useRef<KeyboardAwareScrollViewRef>(null);
 
 	const selectTriggerRefUse = useRef<TriggerRef>(null);
+	const selectTriggerRefMaritalStatus = useRef<TriggerRef>(null);
 	const selectTriggerRefType = useRef<TriggerRef>(null);
 	const selectTriggerRefInsuranceCompany = useRef<TriggerRef>(null);
 	const selectTriggerRefInsuranceAssociationCompany = useRef<TriggerRef>(null);
@@ -86,7 +93,7 @@ function RequestQuote() {
 	const { back, replace } = useRouter();
 
 	const { width } = useWindowDimensions();
-	const { top, bottom } = useSafeAreaInsets();
+	const { bottom } = useSafeAreaInsets();
 
 	const { mutate, isPending } = useQuoteSimpleRegister();
 
@@ -133,11 +140,17 @@ function RequestQuote() {
 
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple(isRenewal);
 
+	const [insuranceCompanySearch, setInsuranceCompanySearch] =
+		useState<string>('');
+
 	const plate = watch('plate') || null;
 
 	const { data: quoteIsPlate } = useQuoteIsPlate(plate || '');
 
 	const vehicleWithLicensePlate = watch('vehicleWithLicensePlate');
+
+	const { isVisible: keyboardIsVisible, height: keyboardHeight } =
+		useKeyboardState();
 
 	function onSubmit(props: QuoteSimpleRegister) {
 		Keyboard.dismiss();
@@ -206,7 +219,7 @@ function RequestQuote() {
 				ref={scrollViewRef}
 				bottomOffset={bottom + 62}
 				showsVerticalScrollIndicator={false}
-				keyboardShouldPersistTaps='handled'
+				keyboardShouldPersistTaps='always'
 			>
 				<View className='pt-4 pb-6 px-4 gap-6'>
 					<View className='gap-y-5'>
@@ -336,7 +349,11 @@ function RequestQuote() {
 									{/* @ts-ignore */}
 									<Select
 										{...field}
-										onOpenChange={() => Keyboard.dismiss()}
+										onOpenChange={(open) => {
+											if (open) {
+												Keyboard.dismiss();
+											}
+										}}
 										onValueChange={(value) => {
 											field.onChange(value);
 
@@ -535,13 +552,60 @@ function RequestQuote() {
 												return;
 											}
 
+											const { invalid, isDirty } = getFieldState(
+												'insured.maritalStatus',
+											);
+
+											if (!isDirty || invalid) {
+												selectTriggerRefMaritalStatus.current?.open();
+											}
+										}}
+									/>
+									{fieldState.error?.message && (
+										<InputError>{fieldState.error.message}</InputError>
+									)}
+								</View>
+							)}
+						/>
+						<Controller
+							control={control}
+							name='insured.maritalStatus'
+							render={({ field, fieldState }) => (
+								<View>
+									{/* @ts-ignore */}
+									<Select
+										{...field}
+										onOpenChange={(open) => {
+											if (open) {
+												Keyboard.dismiss();
+											}
+										}}
+										onValueChange={(value) => {
+											field.onChange(value);
+
 											const { invalid, isDirty } = getFieldState('type.value');
 
 											if (!isDirty || invalid) {
 												selectTriggerRefType.current?.open();
 											}
 										}}
-									/>
+									>
+										<SelectTrigger
+											ref={selectTriggerRefMaritalStatus}
+											label='Estado Civil'
+										>
+											<SelectValue placeholder='Selecionar' />
+										</SelectTrigger>
+										<SelectContent style={{ width: width - 32 }}>
+											{SchemaMaritalStatus.options.map((item) => (
+												<SelectItem
+													key={item}
+													value={item}
+													label={translateMaritalStatus(item).toUpperCase()}
+												/>
+											))}
+										</SelectContent>
+									</Select>
 									{fieldState.error?.message && (
 										<InputError>{fieldState.error.message}</InputError>
 									)}
@@ -557,7 +621,11 @@ function RequestQuote() {
 									// @ts-expect-error
 									<Select
 										{...field}
-										onOpenChange={() => Keyboard.dismiss()}
+										onOpenChange={(open) => {
+											if (open) {
+												Keyboard.dismiss();
+											}
+										}}
 										onValueChange={(value) => {
 											field.onChange(value);
 
@@ -613,9 +681,15 @@ function RequestQuote() {
 												{...field}
 												// @ts-expect-error
 												value={field.value || undefined}
-												onOpenChange={() => Keyboard.dismiss()}
+												onOpenChange={(open) => {
+													if (open) {
+														Keyboard.dismiss();
+													}
+												}}
 												onValueChange={(value) => {
 													field.onChange(value);
+
+													setInsuranceCompanySearch('');
 
 													const { invalid, isDirty } =
 														getFieldState('expiration');
@@ -634,24 +708,60 @@ function RequestQuote() {
 												<SelectContent
 													style={{ width: width - 32 }}
 													insets={{
-														top: top,
-														bottom: Platform.select({
-															ios: bottom,
-															android: bottom + 24,
+														...(keyboardIsVisible && {
+															// top: keyboardHeight,
+															bottom: keyboardHeight + 24,
 														}),
 														left: 12,
 														right: 12,
 													}}
 												>
-													<NativeSelectScrollView>
-														{insuranceCompanies?.map(({ id, name, icon }) => (
-															<SelectItem
-																key={id}
-																value={id}
-																label={name.toUpperCase()}
-																image={icon}
-															/>
-														))}
+													<Input
+														value={insuranceCompanySearch}
+														onChangeText={setInsuranceCompanySearch}
+														className='h-10'
+													/>
+													<NativeSelectScrollView keyboardShouldPersistTaps='always'>
+														{insuranceCompanies
+															?.filter((item) => {
+																if (!insuranceCompanySearch.trim()) {
+																	return true;
+																}
+
+																const normalizeText = (
+																	text: string,
+																): string => {
+																	return text
+																		.toLowerCase()
+																		.normalize('NFD')
+																		.replace(/[\u0300-\u036f]/g, '')
+																		.trim();
+																};
+
+																const searchTerms = normalizeText(
+																	insuranceCompanySearch,
+																)
+																	.split(/\s+/)
+																	.filter((term) => term.length > 0);
+
+																if (searchTerms.length === 0) {
+																	return true;
+																}
+
+																const companyName = normalizeText(item.name);
+
+																return searchTerms.every((term) =>
+																	companyName.includes(term),
+																);
+															})
+															?.map(({ id, name, icon }) => (
+																<SelectItem
+																	key={id}
+																	value={id}
+																	label={name.toUpperCase()}
+																	image={icon}
+																/>
+															))}
 													</NativeSelectScrollView>
 												</SelectContent>
 											</Select>
