@@ -49,6 +49,12 @@ CREATE TYPE "StatusPayment" AS ENUM ('waiting', 'paid', 'expired', 'canceled');
 -- CreateEnum
 CREATE TYPE "MethodPayment" AS ENUM ('pix', 'billet', 'transfer', 'species', 'credit_card');
 
+-- CreateEnum
+CREATE TYPE "TypeOfProduction" AS ENUM ('gym', 'accountants', 'driving_school', 'university', 'condominium_management', 'oil_change', 'youtuber', 'promoters', 'digital_marketing', 'buying_group', 'gas_station', 'restaurant', 'producers', 'influencer', 'producer', 'syndicate');
+
+-- CreateEnum
+CREATE TYPE "TypeOfProductionPayment" AS ENUM ('weekly', 'bi_weekly', 'monthly');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL,
@@ -56,6 +62,8 @@ CREATE TABLE "users" (
     "image" TEXT,
     "email" TEXT NOT NULL,
     "email_verified" BOOLEAN,
+    "cpf" VARCHAR(11),
+    "cnpj" VARCHAR(14),
     "phone" VARCHAR(13),
     "role" "Role" NOT NULL,
     "banned" BOOLEAN,
@@ -120,11 +128,11 @@ CREATE TABLE "temporary_insureds" (
     "name" TEXT NOT NULL,
     "phone" VARCHAR(13) NOT NULL,
     "cpf" VARCHAR(11),
+    "cnpj" VARCHAR(14),
     "birth" DATE,
-    "age" INTEGER,
+    "age" SMALLINT,
     "marital_status" "MaritalStatus",
-    "qualification_time" INTEGER,
-    "profession" TEXT,
+    "qualification_time" SMALLINT,
     "broker_id" UUID NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
@@ -137,12 +145,12 @@ CREATE TABLE "insureds" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "phone" VARCHAR(13) NOT NULL,
-    "cpf" VARCHAR(11) NOT NULL,
+    "cpf" VARCHAR(11),
+    "cnpj" VARCHAR(14),
     "birth" DATE NOT NULL,
-    "age" INTEGER NOT NULL,
+    "age" SMALLINT NOT NULL,
     "marital_status" "MaritalStatus" NOT NULL,
-    "qualification_time" INTEGER,
-    "profession" TEXT,
+    "qualification_time" SMALLINT,
     "broker_id" UUID NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
@@ -186,23 +194,23 @@ CREATE TABLE "safes" (
     "insurance_company_id" UUID,
     "broker_id" UUID NOT NULL,
     "expiration" DATE NOT NULL,
-    "installments" INTEGER,
+    "installments" SMALLINT,
     "award" DECIMAL(10,2),
     "franchise" DECIMAL(10,2),
     "commission" DECIMAL(10,2),
     "commission_amount" DECIMAL(10,2),
     "commission_of_type" "TypeOfCommission",
-    "commission_percentage" INTEGER,
-    "commission_discount_percentage" INTEGER,
+    "commission_percentage" SMALLINT,
+    "commission_discount_percentage" SMALLINT,
     "commission_discount_fixed" DECIMAL(10,2),
-    "commission_installments" INTEGER,
+    "commission_installments" SMALLINT,
     "commission_amount_producer" DECIMAL(10,2),
-    "commission_monthly_interest" INTEGER,
-    "commission_pay_interest_starting" INTEGER,
+    "commission_monthly_interest" SMALLINT,
+    "commission_pay_interest_starting" SMALLINT,
     "commission_type_of_interest" "TypeOfInterest",
     "commission_payment_date" TIMESTAMPTZ,
-    "commission_gross" DECIMAL(10,2) NOT NULL,
-    "commission_net" DECIMAL(10,2) NOT NULL,
+    "commission_gross" DECIMAL(10,2),
+    "commission_net" DECIMAL(10,2),
     "status" "StatusSafe" NOT NULL DEFAULT 'active',
     "status_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status_message" TEXT,
@@ -218,6 +226,7 @@ CREATE TABLE "safes" (
 CREATE TABLE "quote_vehicles" (
     "id" UUID NOT NULL,
     "quote_id" UUID NOT NULL,
+    "plate" VARCHAR(7),
     "vehicle_id" UUID,
     "vehicle_without_plate_id" UUID,
     "usage" "VehicleUsage" NOT NULL,
@@ -234,7 +243,7 @@ CREATE TABLE "quote_vehicles" (
     "driver_cpf" VARCHAR(11),
     "driver_name" TEXT,
     "driver_birth" DATE,
-    "driver_age" INTEGER,
+    "driver_age" SMALLINT,
     "driver_phone" VARCHAR(13),
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
@@ -246,6 +255,7 @@ CREATE TABLE "quote_vehicles" (
 CREATE TABLE "safe_vehicles" (
     "id" UUID NOT NULL,
     "safe_id" UUID NOT NULL,
+    "plate" VARCHAR(7),
     "vehicle_id" UUID,
     "vehicle_without_plate_id" UUID,
     "usage" "VehicleUsage" NOT NULL,
@@ -253,7 +263,7 @@ CREATE TABLE "safe_vehicles" (
     "driver_cpf" VARCHAR(11),
     "driver_name" TEXT,
     "driver_birth" DATE,
-    "driver_age" INTEGER,
+    "driver_age" SMALLINT,
     "driver_phone" VARCHAR(13),
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
@@ -268,7 +278,7 @@ CREATE TABLE "vehicles" (
     "plate_alternative" VARCHAR(7) NOT NULL,
     "manufacturer_id" UUID NOT NULL,
     "model" TEXT NOT NULL,
-    "model_year" INTEGER NOT NULL,
+    "model_year" SMALLINT NOT NULL,
     "exchange" "VehicleExchange",
     "chassi" TEXT,
     "image" TEXT,
@@ -283,7 +293,7 @@ CREATE TABLE "vehicles_without_plate" (
     "id" UUID NOT NULL,
     "manufacturer_id" UUID,
     "model" TEXT,
-    "model_year" INTEGER,
+    "model_year" SMALLINT,
     "exchange" "VehicleExchange",
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
@@ -321,7 +331,7 @@ CREATE TABLE "insurance_companies" (
 -- CreateTable
 CREATE TABLE "insurance_companies_categories_contacts" (
     "id" UUID NOT NULL,
-    "index" INTEGER NOT NULL,
+    "index" SMALLINT NOT NULL,
     "label" TEXT NOT NULL,
     "insurance_company_id" UUID NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -333,7 +343,7 @@ CREATE TABLE "insurance_companies_categories_contacts" (
 -- CreateTable
 CREATE TABLE "insurance_companies_contacts" (
     "id" UUID NOT NULL,
-    "index" INTEGER NOT NULL,
+    "index" SMALLINT NOT NULL,
     "coverage" "InsuranceCompanyContactCoverage" NOT NULL,
     "value" VARCHAR(13) NOT NULL,
     "is_whatsapp" BOOLEAN,
@@ -367,6 +377,10 @@ CREATE TABLE "members" (
     "broker_id" UUID NOT NULL,
     "role" "Role" NOT NULL,
     "referral" TEXT,
+    "type_of_production" "TypeOfProduction",
+    "percentage_of_production" SMALLINT,
+    "type_of_production_payment" "TypeOfProductionPayment",
+    "start_of_production_payment" SMALLINT,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
@@ -379,8 +393,13 @@ CREATE TABLE "invitation" (
     "broker_id" UUID,
     "email" TEXT NOT NULL,
     "role" "Role" NOT NULL,
+    "referral" TEXT,
+    "type_of_production" "TypeOfProduction",
+    "percentage_of_production" SMALLINT,
+    "type_of_production_payment" "TypeOfProductionPayment",
+    "start_of_production_payment" SMALLINT,
     "status" "StatusInvitation" NOT NULL DEFAULT 'pending',
-    "user_id" UUID NOT NULL,
+    "inviter_id" UUID NOT NULL,
     "expires_at" TIMESTAMPTZ NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
@@ -409,7 +428,7 @@ CREATE TABLE "payments" (
     "amount" DECIMAL(10,2) NOT NULL,
     "amount_paid" DECIMAL(10,2),
     "description" TEXT,
-    "installment" INTEGER,
+    "installment" SMALLINT,
     "related_payment_id" UUID,
     "status" "StatusPayment" NOT NULL,
     "expiration" TIMESTAMPTZ NOT NULL,
@@ -432,6 +451,12 @@ CREATE INDEX "users_phone_idx" ON "users"("phone");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_cpf_key" ON "users"("cpf");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_cnpj_key" ON "users"("cnpj");
 
 -- CreateIndex
 CREATE INDEX "sessions_user_id_idx" ON "sessions"("user_id");
@@ -464,6 +489,9 @@ CREATE INDEX "temporary_insureds_phone_idx" ON "temporary_insureds"("phone");
 CREATE INDEX "temporary_insureds_cpf_idx" ON "temporary_insureds"("cpf");
 
 -- CreateIndex
+CREATE INDEX "temporary_insureds_cnpj_idx" ON "temporary_insureds"("cnpj");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "temporary_insureds_broker_id_cpf_key" ON "temporary_insureds"("broker_id", "cpf");
 
 -- CreateIndex
@@ -476,7 +504,13 @@ CREATE INDEX "insureds_phone_idx" ON "insureds"("phone");
 CREATE INDEX "insureds_cpf_idx" ON "insureds"("cpf");
 
 -- CreateIndex
+CREATE INDEX "insureds_cnpj_idx" ON "insureds"("cnpj");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "insureds_broker_id_cpf_key" ON "insureds"("broker_id", "cpf");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "insureds_broker_id_cnpj_key" ON "insureds"("broker_id", "cnpj");
 
 -- CreateIndex
 CREATE INDEX "quotes_requested_at_idx" ON "quotes"("requested_at");
@@ -656,7 +690,7 @@ ALTER TABLE "members" ADD CONSTRAINT "members_broker_id_fkey" FOREIGN KEY ("brok
 ALTER TABLE "invitation" ADD CONSTRAINT "invitation_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "invitation" ADD CONSTRAINT "invitation_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "invitation" ADD CONSTRAINT "invitation_inviter_id_fkey" FOREIGN KEY ("inviter_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "payment_payers" ADD CONSTRAINT "payment_payers_broker_id_fkey" FOREIGN KEY ("broker_id") REFERENCES "brokers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
