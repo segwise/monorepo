@@ -110,7 +110,6 @@ function RequestReferralScreen() {
 										enablesReturnKeyAutomatically
 										keyboardAppearance='dark'
 										enterKeyHint='send'
-										maxLength={10}
 										onSubmitEditing={handleSubmit(onSubmit)}
 									/>
 									{fieldState.error?.message && (
