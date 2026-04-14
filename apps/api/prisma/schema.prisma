@@ -799,8 +799,7 @@ enum TypeOfProduction {
   producers
   influencer
   producer
-  condominium_administrator
-  accounting
+  syndicate
 }
 
 enum TypeOfProductionPayment {
