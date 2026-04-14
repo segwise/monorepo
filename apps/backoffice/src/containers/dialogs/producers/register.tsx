@@ -138,6 +138,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 											}
 										}}
 										maxLength={18}
+										autoComplete='off'
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -159,6 +160,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										onChange={({ target: { value } }) =>
 											field.onChange(capitalizeFirstLetters(value))
 										}
+										autoComplete='off'
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -178,6 +180,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										aria-invalid={fieldState.invalid}
 										placeholder='exemplo@hospedage.com'
 										className='lowercase'
+										autoComplete='off'
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -199,6 +202,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										onChange={({ target: { value } }) =>
 											field.onChange(maskPhone(value))
 										}
+										autoComplete='off'
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -257,6 +261,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										min={1}
 										max={100}
 										maxLength={3}
+										autoComplete='off'
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -376,6 +381,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										onChange={({ target: { value } }) =>
 											field.onChange(value.trim())
 										}
+										autoComplete='off'
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
