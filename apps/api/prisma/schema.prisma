@@ -796,7 +796,6 @@ enum TypeOfProduction {
   buying_group
   gas_station
   restaurant
-  producers
   influencer
   producer
   syndicate
