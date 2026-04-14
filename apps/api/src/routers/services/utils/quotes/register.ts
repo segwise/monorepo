@@ -58,8 +58,11 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 									id: referralResponse?.brokerId,
 								},
 							},
-							name: insured.name,
-							phone: insured.phone,
+							name: insured?.name as string,
+							phone: insured?.phone as string,
+							...(insured?.maritalStatus && {
+								maritalStatus: insured?.maritalStatus,
+							}),
 						},
 						select: {
 							id: true,

@@ -84,18 +84,20 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						},
 					],
 				}),
-				...(!!effectived && {
-					effectivedAt: {
-						gte: effectivedAt.start,
-						lte: effectivedAt.end,
-					},
-				}),
-				...(!effectived && {
-					requestedAt: {
-						gte: effectivedAt.start,
-						lte: effectivedAt.end,
-					},
-					effectivedAt: null,
+				...(!ids?.length && {
+					...(!!effectived && {
+						effectivedAt: {
+							gte: effectivedAt.start,
+							lte: effectivedAt.end,
+						},
+					}),
+					...(!effectived && {
+						requestedAt: {
+							gte: effectivedAt.start,
+							lte: effectivedAt.end,
+						},
+						effectivedAt: null,
+					}),
 				}),
 				...(!!renewal && {
 					renewal,
@@ -141,8 +143,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					},
 				}),
 			};
-
-			console.log(where);
 
 			const [safes, total, itemsBefore] = await ctx.database.$transaction([
 				ctx.database.safe.findMany({

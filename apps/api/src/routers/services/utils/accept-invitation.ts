@@ -3,6 +3,7 @@ import { SchemaPassword } from '@segwise/core';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { getMainDomain } from '@/functions/hostname/get-main-domain';
+import { responseReplaceSession } from '@/functions/response/replace-session';
 import { Role } from '@/generated/prisma/enums';
 
 function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
@@ -165,11 +166,9 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 					asResponse: true,
 				});
 
-				console.log(responseSignIn);
+				const response = await responseReplaceSession(responseSignIn, ctx);
 
-				console.log(await responseSignIn.clone().json());
-
-				return responseSignIn;
+				return response;
 			} catch (error) {
 				let message = 'Falha ao aceitar convite';
 
