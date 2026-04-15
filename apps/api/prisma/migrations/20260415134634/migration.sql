@@ -50,7 +50,7 @@ CREATE TYPE "StatusPayment" AS ENUM ('waiting', 'paid', 'expired', 'canceled');
 CREATE TYPE "MethodPayment" AS ENUM ('pix', 'billet', 'transfer', 'species', 'credit_card');
 
 -- CreateEnum
-CREATE TYPE "TypeOfProduction" AS ENUM ('gym', 'accountants', 'driving_school', 'university', 'condominium_management', 'oil_change', 'youtuber', 'promoters', 'digital_marketing', 'buying_group', 'gas_station', 'restaurant', 'producers', 'influencer', 'producer', 'syndicate');
+CREATE TYPE "TypeOfProduction" AS ENUM ('gym', 'accountants', 'driving_school', 'university', 'condominium_management', 'oil_change', 'youtuber', 'promoters', 'digital_marketing', 'buying_group', 'gas_station', 'restaurant', 'influencer', 'syndicate');
 
 -- CreateEnum
 CREATE TYPE "TypeOfProductionPayment" AS ENUM ('weekly', 'bi_weekly', 'monthly');

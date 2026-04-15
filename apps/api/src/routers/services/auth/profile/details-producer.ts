@@ -12,7 +12,39 @@ function registerRoutersServicesAuthProfileDetailsProducer(server: Server) {
 			throw new Error('Corretora não vinculada!');
 		}
 
-		const [safes, member] = await ctx.database.$transaction([
+		const [quotes, safes, member] = await ctx.database.$transaction([
+			ctx.database.quote.findMany({
+				where: {
+					producerId: userId,
+					brokerId,
+				},
+				select: {
+					insuranceCompany: {
+						select: {
+							name: true,
+							icon: true,
+						},
+					},
+					insured: {
+						select: {
+							name: true,
+						},
+					},
+					temporaryInsured: {
+						select: {
+							name: true,
+						},
+					},
+					quoteVehicle: {
+						select: {
+							plate: true,
+							overnightPostalCode: true,
+						},
+					},
+					status: true,
+					requestedAt: true,
+				},
+			}),
 			ctx.database.safe.findMany({
 				where: {
 					status: StatusSafe.active,
@@ -78,6 +110,26 @@ function registerRoutersServicesAuthProfileDetailsProducer(server: Server) {
 					),
 					1,
 				),
+				quotes: quotes.map((props) => ({
+					...(props.insuranceCompany && {
+						...(props.insuranceCompany?.icon && {
+							image: getPresignedUrl(
+								ctx.storage.images,
+								props.insuranceCompany.icon,
+							),
+						}),
+						name: props.insuranceCompany?.name,
+					}),
+					insured: {
+						name: props.temporaryInsured?.name || props.insured?.name,
+					},
+					vehicle: {
+						plate: props.quoteVehicle?.plate,
+						overnightPostalCode: props.quoteVehicle?.overnightPostalCode,
+					},
+					status: props.status,
+					requestAt: props.requestedAt,
+				})),
 				safes: safes.map((props) => ({
 					insuranceCompany: {
 						...(props.insuranceCompany?.icon && {
