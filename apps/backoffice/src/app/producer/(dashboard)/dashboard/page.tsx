@@ -1,6 +1,8 @@
 'use client';
 
 import { maskPlate, maskPostalCode } from '@segwise/core/masks';
+import { translateQuoteStatus } from '@segwise/core/translate';
+import type { QuoteStatus } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { isPlate } from '@segwise/core/valids';
 import { useQuery } from '@tanstack/react-query';
@@ -19,12 +21,14 @@ import {
 	FileIcon,
 	Loader2Icon,
 	LogOut,
+	User2Icon,
 	X,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
 	Empty,
@@ -48,6 +52,7 @@ type Insurance = {
 	issueDate: string;
 	cep?: string;
 	state?: string;
+	status?: QuoteStatus;
 };
 
 type Period = {
@@ -65,6 +70,7 @@ type Period = {
 	paymentDate?: string;
 	commission: number;
 	insurances: Insurance[];
+	quotes: Insurance[];
 };
 
 type CepGroup = {
@@ -82,6 +88,7 @@ function ProducerDashboard() {
 
 	const [periodIdx, setPeriodIdx] = useState(0);
 
+	const [showAllQuotes, setShowAllQuotes] = useState(false);
 	const [showAllInsurances, setShowAllInsurances] = useState(false);
 	const [selectedCep, setSelectedCep] = useState<{
 		cep: string;
@@ -105,11 +112,27 @@ function ProducerDashboard() {
 							name: string;
 						};
 						vehicle: {
-							plate: string;
+							plate?: string;
 							overnightPostalCode: string;
 						};
 						amount: number;
 						requestAt: string;
+					}>;
+					quotes: Array<{
+						insuranceCompany: {
+							image: string;
+							name: string;
+						};
+						insured: {
+							name: string;
+						};
+						vehicle: {
+							plate?: string;
+							overnightPostalCode: string;
+						};
+						amount: number;
+						requestAt: string;
+						effectivedAt: string;
 					}>;
 				}>('/auth/profile/details-producer', {
 					signal,
@@ -117,17 +140,16 @@ function ProducerDashboard() {
 			).data,
 	});
 
-	const transformToPeriods = (safes: any[]): Period[] => {
-		if (!safes || safes.length === 0) return [];
-
-		const grouped = safes.reduce<Record<string, any>>((acc, safe) => {
-			// Ajuste aqui conforme o campo de data que vem da sua API
-			// Exemplos comuns:
+	const transformToPeriods = (
+		safes: any[] = [],
+		quotes: any[] = [],
+	): Period[] => {
+		const groupedSafes = safes?.reduce<Record<string, any>>((acc, safe) => {
 			const dateStr = safe.requestAt || safe.dateOfReceipt || safe.issueDate;
 			const date = new Date(dateStr);
 
 			const year = date.getFullYear();
-			const month = date.getMonth() + 1; // 1 = Janeiro, 4 = Abril...
+			const month = date.getMonth() + 1;
 
 			const key = `${year}-${month.toString().padStart(2, '0')}`;
 
@@ -135,17 +157,17 @@ function ProducerDashboard() {
 				acc[key] = {
 					label: date
 						.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-						.replace(/^\w/, (c) => c.toUpperCase()), // "Abril 2025"
+						.replace(/^\w/, (c) => c.toUpperCase()),
 					month,
 					year,
 					totalInsurances: 0,
 					netPremium: 0,
 					totalCommission: 0,
-					commissionRate: 15, // ajuste se variar
-					goalPremium: 0, // preencha se tiver meta
-					vsLastMonth: 0, // calcular depois se quiser
-					paid: false, // ajuste conforme sua lógica
-					paymentDate: '', // ajuste
+					commissionRate: 15,
+					goalPremium: 0,
+					vsLastMonth: 0,
+					paid: false,
+					paymentDate: '',
 					commission: 0,
 					insurances: [],
 				};
@@ -164,7 +186,7 @@ function ProducerDashboard() {
 				commission,
 				issueDate: dateStr.split('T')[0].split('-').reverse().join('/'), // formata dd/mm/yyyy
 				cep: safe.vehicle?.overnightPostalCode || '',
-				insurance: safe.insuranceCompany.image,
+				insurance: safe?.insuranceCompany?.image,
 			});
 
 			// Agrega os totais
@@ -176,19 +198,78 @@ function ProducerDashboard() {
 			return acc;
 		}, {});
 
-		// Converte para array e ordena do mais recente para o mais antigo
-		return Object.values(grouped).sort((a, b) => {
+		const groupedQuotes = quotes?.reduce<Record<string, any>>((acc, quote) => {
+			const dateStr = quote.requestAt || quote.dateOfReceipt || quote.issueDate;
+			const date = new Date(dateStr);
+
+			const year = date.getFullYear();
+			const month = date.getMonth() + 1;
+
+			const key = `${year}-${month.toString().padStart(2, '0')}`;
+
+			if (!acc[key]) {
+				acc[key] = {
+					label: date
+						.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+						.replace(/^\w/, (c) => c.toUpperCase()),
+					month,
+					year,
+					totalInsurances: 0,
+					netPremium: 0,
+					totalCommission: 0,
+					commissionRate: 15,
+					goalPremium: 0,
+					vsLastMonth: 0,
+					paid: false,
+					paymentDate: '',
+					commission: 0,
+					insurances: [],
+					quotes: [],
+				};
+			}
+
+			const period = acc[key];
+
+			const netPremium = quote.amount || 0;
+			const commission = quote.amount || 0;
+
+			period.quotes.push({
+				id: quote.vehicle?.plate,
+				client: quote.insured?.name || 'Cliente não informado',
+				type: 'car',
+				netPremium,
+				commission,
+				issueDate: dateStr.split('T')[0].split('-').reverse().join('/'),
+				cep: quote.vehicle?.overnightPostalCode || '',
+				insurance: quote?.insuranceCompany?.image,
+				status: quote?.status,
+			});
+
+			period.totalInsurances += 1;
+			period.netPremium += netPremium;
+			period.totalCommission += commission;
+			period.commission = period.totalCommission;
+
+			return acc;
+		}, {});
+
+		return [
+			...(Object.values(groupedSafes) || []),
+			...(Object.values(groupedQuotes) || []),
+		].sort((a, b) => {
 			if (a.year !== b.year) return b.year - a.year;
+
 			return b.month - a.month;
 		});
 	};
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: useMemo
 	const periods: Period[] = useMemo(() => {
-		return data?.safes.length ? transformToPeriods(data.safes) : [];
+		return transformToPeriods(data?.safes || [], data?.quotes || []);
 	}, [data?.safes]);
 
 	const ALL_YEAR_INSURANCES = periods.flatMap((p) => p.insurances);
+	const ALL_YEAR_QUOTES = periods.flatMap((p) => p.quotes);
 
 	const MONTH_NAMES: Record<string, string> = {
 		'01': 'Janeiro',
@@ -353,9 +434,11 @@ function ProducerDashboard() {
 	function MonthHeader({
 		label,
 		commission,
+		number = false,
 	}: {
 		label: string;
 		commission: number;
+		number?: boolean;
 	}) {
 		return (
 			<div className='px-5 py-2.5 bg-zinc-50 border-y border-zinc-100 flex items-center justify-between'>
@@ -363,7 +446,9 @@ function ProducerDashboard() {
 					{label}
 				</span>
 				<div className='flex items-center gap-1 text-zinc-800'>
-					<span className='text-xs font-semibold'>{fmt(commission)}</span>
+					<span className='text-xs font-semibold'>
+						{number ? commission : fmt(commission)}
+					</span>
 				</div>
 			</div>
 		);
@@ -373,10 +458,12 @@ function ProducerDashboard() {
 		count,
 		label,
 		commission,
+		number = false,
 	}: {
 		count: number;
 		label: string;
 		commission: number;
+		number?: boolean;
 	}) {
 		return (
 			<div className='px-5 py-4 bg-zinc-50'>
@@ -384,15 +471,98 @@ function ProducerDashboard() {
 					<span className='text-xs text-zinc-500'>
 						{count} {label} no Ano
 					</span>
-					<span className='text-xs font-bold text-zinc-800'>
-						{fmt(commission)}
-					</span>
+					{!number && (
+						<span className='text-xs font-bold text-zinc-800'>
+							{fmt(commission)}
+						</span>
+					)}
+					{number && (
+						<span className='text-xs font-bold text-zinc-800'>
+							Cotações Anual
+						</span>
+					)}
 				</div>
 				<div className='h-1.5 w-full bg-zinc-200 rounded-full overflow-hidden'>
 					<div className='h-full rounded-full bg-emerald-500 w-full' />
 				</div>
-				<p className='text-xs text-zinc-500 text-right mt-1'>Comissão Anual</p>
+				{!number && (
+					<p className='text-xs text-zinc-500 text-right mt-1'>
+						Comissão Anual
+					</p>
+				)}
 			</div>
+		);
+	}
+
+	function AllQuotesSheet({
+		open,
+		onClose,
+	}: {
+		open: boolean;
+		onClose: () => void;
+	}) {
+		const months = groupByMonth(ALL_YEAR_QUOTES, (i) => i.issueDate);
+
+		return (
+			<BottomSheet
+				open={open}
+				onClose={onClose}
+				title='Todos as Cotações'
+				subtitle={`${ALL_YEAR_QUOTES.length} Cotações · Ano Todo`}
+				footer={
+					<AnnualFooter
+						count={ALL_YEAR_QUOTES.length}
+						label='Cotações'
+						commission={ALL_YEAR_QUOTES.length}
+						number
+					/>
+				}
+			>
+				{months.map(({ key, label, items }) => (
+					<div key={key}>
+						<MonthHeader label={label} commission={items.length} number />
+						<div className='divide-y divide-zinc-200 px-5'>
+							{items.map((ins) => (
+								<div key={ins.id} className='flex items-center gap-2 py-3'>
+									<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
+										<User2Icon />
+									</div>
+									<div className='flex-1 min-w-0'>
+										<p className='text-sm font-medium truncate text-zinc-900'>
+											{capitalizeFirstLetters(ins.client)}
+										</p>
+										<p className='text-xs text-zinc-500'>
+											{ins.id
+												? isPlate(ins.id)
+													? maskPlate(ins.id)
+													: ins.id
+												: 'Sem Placa'}
+										</p>
+									</div>
+									<div className='flex flex-col items-end gap-1 shrink-0'>
+										<Badge
+											variant={
+												ins.status === 'waiting'
+													? 'warning'
+													: ins.status === 'confirmed'
+														? 'success'
+														: ins.status === 'recused'
+															? 'destructive'
+															: 'outline'
+											}
+										>
+											{translateQuoteStatus(ins.status as QuoteStatus)}
+										</Badge>
+										<span className='text-xs text-zinc-500 font-medium'>
+											{ins.issueDate}
+										</span>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				))}
+			</BottomSheet>
 		);
 	}
 
@@ -604,6 +774,14 @@ function ProducerDashboard() {
 
 	return (
 		<div className='min-h-screen font-sans max-w-md mx-auto'>
+			<AllQuotesSheet
+				open={showAllQuotes}
+				onClose={() => setShowAllQuotes(false)}
+			/>
+			<AllInsurancesSheet
+				open={showAllInsurances}
+				onClose={() => setShowAllInsurances(false)}
+			/>
 			<AllInsurancesSheet
 				open={showAllInsurances}
 				onClose={() => setShowAllInsurances(false)}
@@ -774,8 +952,14 @@ function ProducerDashboard() {
 				</div>
 			</div>
 			<div className='rounded-2xl overflow-hidden'>
-				<Tabs defaultValue='insurances'>
+				<Tabs defaultValue='quotes'>
 					<TabsList className='w-full bg-white rounded-none py-1 px-2 h-11.5 border-b'>
+						<TabsTrigger
+							value='quotes'
+							className='flex-1 text-sm rounded-sm h-full data-[state=active]:bg-[#1e293b] data-[state=active]:text-white data-[state=active]:shadow-sm'
+						>
+							Cotações
+						</TabsTrigger>
 						<TabsTrigger
 							value='insurances'
 							className='flex-1 text-sm rounded-sm h-full data-[state=active]:bg-[#1e293b] data-[state=active]:text-white data-[state=active]:shadow-sm'
@@ -789,6 +973,73 @@ function ProducerDashboard() {
 							Por CEP
 						</TabsTrigger>
 					</TabsList>
+					<TabsContent value='quotes' className='mt-0'>
+						{!period?.quotes || period?.quotes.length === 0 ? (
+							<Empty>
+								<EmptyHeader>
+									<EmptyMedia variant='icon' className='rounded-full'>
+										<FileIcon />
+									</EmptyMedia>
+									<EmptyTitle>Nenhum registro encontrada!</EmptyTitle>
+									<EmptyDescription>
+										Você não tem nenhum registro no momento
+									</EmptyDescription>
+								</EmptyHeader>
+							</Empty>
+						) : (
+							period?.quotes.map((ins) => (
+								<div key={ins.id} className='divide-y divide-zinc-200 px-3'>
+									<div className='flex items-center gap-2 py-3.5'>
+										<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
+											<User2Icon />
+										</div>
+										<div className='flex-1 min-w-0'>
+											<p className='text-sm font-medium truncate text-zinc-900'>
+												{capitalizeFirstLetters(ins.client)}
+											</p>
+											<p className='text-xs text-zinc-500'>
+												{ins.id
+													? isPlate(ins.id)
+														? maskPlate(ins.id)
+														: ins.id
+													: 'Sem Placa'}
+											</p>
+										</div>
+										<div className='flex flex-col items-end gap-1 shrink-0'>
+											<Badge
+												variant={
+													ins.status === 'waiting'
+														? 'warning'
+														: ins.status === 'confirmed'
+															? 'success'
+															: ins.status === 'recused'
+																? 'destructive'
+																: 'outline'
+												}
+											>
+												{translateQuoteStatus(ins.status as QuoteStatus)}
+											</Badge>
+											<span className='text-xs text-zinc-500 font-medium'>
+												{ins.issueDate}
+											</span>
+										</div>
+									</div>
+								</div>
+							))
+						)}
+						{!!period?.quotes?.length && (
+							<div className='px-5 pb-4 pt-1'>
+								<button
+									type='button'
+									className='w-full text-sm text-primary underline underline-offset-4 font-medium flex items-center justify-center gap-1 py-2 hover:text-primary transition-colors'
+									onClick={() => setShowAllQuotes(true)}
+								>
+									Ver todas as cotações
+									<ArrowUpRightIcon className='size-3.5' />
+								</button>
+							</div>
+						)}
+					</TabsContent>
 					<TabsContent value='insurances' className='mt-0'>
 						{!period?.insurances || period?.insurances.length === 0 ? (
 							<Empty>
