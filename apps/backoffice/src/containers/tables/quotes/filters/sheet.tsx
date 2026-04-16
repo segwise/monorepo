@@ -12,7 +12,14 @@ import type {
 	QuoteStatus,
 } from '@segwise/core/types';
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
-import { endOfDay, format, isSameDay, parseISO, startOfDay } from 'date-fns';
+import {
+	addDays,
+	endOfDay,
+	format,
+	isSameDay,
+	parseISO,
+	startOfDay,
+} from 'date-fns';
 import {
 	CalendarIcon,
 	CarIcon,
@@ -291,7 +298,7 @@ function FilterrequestedAt({
 						}
 						numberOfMonths={2}
 						disabled={{
-							after: new Date(),
+							after: addDays(new Date(), 30),
 						}}
 					/>
 					{!isDateDefault && (

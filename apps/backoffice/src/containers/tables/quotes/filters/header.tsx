@@ -6,7 +6,7 @@ import {
 	translateQuoteStatus,
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
-import { format, isSameDay, parseISO } from 'date-fns';
+import { addDays, format, isSameDay, parseISO } from 'date-fns';
 import {
 	CarIcon,
 	ChevronsUpDownIcon,
@@ -319,7 +319,7 @@ function FilterrequestedAt() {
 						selected={date}
 						onSelect={setDate}
 						disabled={{
-							after: new Date(),
+							after: addDays(new Date(), 30),
 						}}
 						numberOfMonths={2}
 					/>
