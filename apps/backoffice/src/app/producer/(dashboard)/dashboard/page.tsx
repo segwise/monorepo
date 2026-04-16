@@ -777,7 +777,15 @@ function ProducerDashboard() {
 
 	useEffect(() => {
 		if (isSuccess) {
-			console.log(periods);
+			console.log(
+				periods.findIndex(
+					(e) =>
+						e.label
+							.toLowerCase()
+							.includes(format(new Date(), 'MMMM').toLowerCase()) &&
+						e.label.toLowerCase().includes(new Date().getFullYear().toString()),
+				),
+			);
 		}
 	}, [periods, isSuccess]);
 
