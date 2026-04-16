@@ -144,7 +144,8 @@ function ProducerDashboard() {
 		quotes: any[] = [],
 		safes: any[] = [],
 	): Period[] => {
-		const groupedQuotes = quotes?.reduce<Record<string, any>>((acc, quote) => {
+		// Usamos UM único objeto para agrupar tudo (evita duplicar períodos do mesmo mês)
+		const groupedPeriods = quotes?.reduce<Record<string, any>>((acc, quote) => {
 			const dateStr =
 				quote?.requestAt || quote?.dateOfReceipt || quote?.issueDate;
 			const date = parseISO(dateStr);
@@ -200,7 +201,8 @@ function ProducerDashboard() {
 			return acc;
 		}, {});
 
-		const groupedSafes = safes?.reduce<Record<string, any>>((acc, safe) => {
+		// Agora processamos os safes e MESCLAMOS no mesmo objeto (se o mês já existir)
+		safes?.forEach((safe) => {
 			const dateStr = safe?.requestAt || safe?.dateOfReceipt || safe?.issueDate;
 			const date = parseISO(dateStr);
 
@@ -209,8 +211,9 @@ function ProducerDashboard() {
 
 			const key = `${year}-${month.toString().padStart(2, '0')}`;
 
-			if (!acc[key]) {
-				acc[key] = {
+			// Se o período ainda não existe (não veio de quote), criamos com a estrutura completa
+			if (!groupedPeriods[key]) {
+				groupedPeriods[key] = {
 					label: date
 						.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 						.replace(/^\w/, (c) => c.toUpperCase()),
@@ -226,10 +229,11 @@ function ProducerDashboard() {
 					paymentDate: '',
 					commission: 0,
 					insurances: [],
+					quotes: [], // ← importante: criamos também o array de quotes vazio
 				};
 			}
 
-			const period = acc[key];
+			const period = groupedPeriods[key];
 
 			const netPremium = safe.amount || 0;
 			const commission = safe.amount || 0;
@@ -249,27 +253,15 @@ function ProducerDashboard() {
 			period.netPremium += netPremium;
 			period.totalCommission += commission;
 			period.commission = period.totalCommission;
+		});
 
-			return acc;
-		}, {});
-
-		console.log([
-			...(Object.values(groupedQuotes) || []),
-			...(Object.values(groupedSafes) || []),
-		]);
-
-		return [];
-
-		// return [
-		// 	...(Object.values(groupedQuotes) || []),
-		// 	...(Object.values(groupedSafes) || []),
-		// ].sort((a, b) => {
-		// 	if (a.year !== b.year) {
-		// 		return b.year - a.year;
-		// 	}
-
-		// 	return b.month - a.month;
-		// });
+		// Retorna os períodos ordenados (mais recentes primeiro)
+		return Object.values(groupedPeriods).sort((a, b) => {
+			if (a.year !== b.year) {
+				return b.year - a.year;
+			}
+			return b.month - a.month;
+		});
 	};
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: useMemo
