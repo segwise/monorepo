@@ -144,6 +144,9 @@ function ProducerDashboard() {
 		quotes: any[] = [],
 		safes: any[] = [],
 	): Period[] => {
+		console.log(quotes, safes);
+		return [];
+
 		const groupedQuotes = quotes?.reduce<Record<string, any>>((acc, quote) => {
 			const dateStr =
 				quote?.requestAt || quote?.dateOfReceipt || quote?.issueDate;
@@ -265,8 +268,7 @@ function ProducerDashboard() {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: useMemo
 	const periods: Period[] = useMemo(() => {
-		return [];
-		// return transformToPeriods(data?.quotes || [], data?.safes || []);
+		return transformToPeriods(data?.quotes || [], data?.safes || []);
 	}, [data?.quotes, data?.safes]);
 
 	const ALL_YEAR_INSURANCES = periods.flatMap((p) => p.insurances);
