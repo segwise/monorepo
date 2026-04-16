@@ -502,7 +502,7 @@ function ProducerDashboard() {
 		open: boolean;
 		onClose: () => void;
 	}) {
-		const months = groupByMonth(ALL_YEAR_QUOTES, (i) => i.issueDate);
+		const months = groupByMonth(ALL_YEAR_QUOTES, (i) => i?.issueDate);
 
 		return (
 			<BottomSheet
@@ -555,7 +555,7 @@ function ProducerDashboard() {
 											{translateQuoteStatus(ins.status as QuoteStatus)}
 										</Badge>
 										<span className='text-xs text-zinc-500 font-medium'>
-											{ins.issueDate}
+											{ins?.issueDate}
 										</span>
 									</div>
 								</div>
@@ -574,7 +574,7 @@ function ProducerDashboard() {
 		open: boolean;
 		onClose: () => void;
 	}) {
-		const months = groupByMonth(ALL_YEAR_INSURANCES, (i) => i.issueDate);
+		const months = groupByMonth(ALL_YEAR_INSURANCES, (i) => i?.issueDate);
 		const annualCommission = ALL_YEAR_INSURANCES.reduce(
 			(s, i) => s + i.commission,
 			0,
@@ -630,7 +630,7 @@ function ProducerDashboard() {
 											{fmt(ins.commission)}
 										</span>
 										<span className='text-xs text-zinc-500 font-medium'>
-											{ins.issueDate}
+											{ins?.issueDate}
 										</span>
 									</div>
 								</div>
@@ -654,7 +654,7 @@ function ProducerDashboard() {
 		state: string;
 	}) {
 		const yearInsurances = ALL_YEAR_INSURANCES.filter((i) => i.cep === cep);
-		const months = groupByMonth(yearInsurances, (i) => i.issueDate);
+		const months = groupByMonth(yearInsurances, (i) => i?.issueDate);
 		const annualCommission = yearInsurances.reduce(
 			(s, i) => s + i.commission,
 			0,
@@ -712,7 +712,7 @@ function ProducerDashboard() {
 											{fmt(ins.commission)}
 										</span>
 										<span className='text-xs text-zinc-500 font-medium'>
-											{ins.issueDate}
+											{ins?.issueDate}
 										</span>
 									</div>
 								</div>
@@ -1021,7 +1021,7 @@ function ProducerDashboard() {
 												{translateQuoteStatus(ins.status as QuoteStatus)}
 											</Badge>
 											<span className='text-xs text-zinc-500 font-medium'>
-												{ins.issueDate}
+												{ins?.issueDate}
 											</span>
 										</div>
 									</div>
@@ -1085,7 +1085,7 @@ function ProducerDashboard() {
 												+{fmt(ins.commission)}
 											</span>
 											<span className='text-xs text-zinc-500 font-medium'>
-												{ins.issueDate}
+												{ins?.issueDate}
 											</span>
 										</div>
 									</div>
