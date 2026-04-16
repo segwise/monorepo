@@ -777,7 +777,7 @@ function ProducerDashboard() {
 
 	useEffect(() => {
 		if (isSuccess) {
-			console.log(
+			setPeriodIdx(
 				periods.findIndex(
 					(e) =>
 						e.label
