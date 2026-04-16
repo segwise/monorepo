@@ -145,8 +145,8 @@ function ProducerDashboard() {
 		quotes: any[] = [],
 	): Period[] => {
 		const groupedSafes = safes?.reduce<Record<string, any>>((acc, safe) => {
-			const dateStr = safe.requestAt || safe.dateOfReceipt || safe.issueDate;
-			const date = new Date(dateStr);
+			const dateStr = safe?.requestAt || safe?.dateOfReceipt || safe?.issueDate;
+			const date = parseISO(dateStr);
 
 			const year = date.getFullYear();
 			const month = date.getMonth() + 1;
@@ -184,7 +184,7 @@ function ProducerDashboard() {
 				type: 'car',
 				netPremium,
 				commission,
-				issueDate: dateStr.split('T')[0].split('-').reverse().join('/'), // formata dd/mm/yyyy
+				issueDate: format(date, 'dd/MM/yyyy'),
 				cep: safe.vehicle?.overnightPostalCode || '',
 				insurance: safe?.insuranceCompany?.image,
 			});
@@ -199,8 +199,9 @@ function ProducerDashboard() {
 		}, {});
 
 		const groupedQuotes = quotes?.reduce<Record<string, any>>((acc, quote) => {
-			const dateStr = quote.requestAt || quote.dateOfReceipt || quote.issueDate;
-			const date = new Date(dateStr);
+			const dateStr =
+				quote?.requestAt || quote?.dateOfReceipt || quote?.issueDate;
+			const date = parseISO(dateStr);
 
 			const year = date.getFullYear();
 			const month = date.getMonth() + 1;
@@ -239,7 +240,7 @@ function ProducerDashboard() {
 				type: 'car',
 				netPremium,
 				commission,
-				issueDate: dateStr.split('T')[0].split('-').reverse().join('/'),
+				issueDate: format(date, 'dd/MM/yyyy'),
 				cep: quote.vehicle?.overnightPostalCode || '',
 				insurance: quote?.insuranceCompany?.image,
 				status: quote?.status,
