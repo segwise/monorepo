@@ -111,7 +111,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 					<DialogDescription>Atenção ao realizar a ação</DialogDescription>
 				</DialogHeader>
 				<Separator />
-				<form onSubmit={handleSubmit(onSubmit)} autoComplete='off'>
+				<form onSubmit={handleSubmit(onSubmit)} autoComplete='new-password'>
 					<FieldGroup className='grid grid-cols-2 gap-4'>
 						<Controller
 							control={control}
@@ -138,7 +138,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 											}
 										}}
 										maxLength={18}
-										autoComplete='off'
+										autoComplete='new-password'
 										autoCapitalize='off'
 										autoCorrect='off'
 										autoFocus={false}
@@ -163,7 +163,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										onChange={({ target: { value } }) =>
 											field.onChange(capitalizeFirstLetters(value))
 										}
-										autoComplete='off'
+										autoComplete='new-password'
 										autoCapitalize='off'
 										autoCorrect='off'
 										autoFocus={false}
@@ -186,7 +186,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										aria-invalid={fieldState.invalid}
 										placeholder='exemplo@hospedage.com'
 										className='lowercase'
-										autoComplete='off'
+										autoComplete='new-password'
 										autoCapitalize='off'
 										autoCorrect='off'
 										autoFocus={false}
@@ -211,7 +211,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										onChange={({ target: { value } }) =>
 											field.onChange(maskPhone(value))
 										}
-										autoComplete='off'
+										autoComplete='new-password'
 										autoCapitalize='off'
 										autoCorrect='off'
 										autoFocus={false}
@@ -273,7 +273,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										min={1}
 										max={100}
 										maxLength={3}
-										autoComplete='off'
+										autoComplete='new-password'
 										autoCapitalize='off'
 										autoCorrect='off'
 										autoFocus={false}
@@ -396,7 +396,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										onChange={({ target: { value } }) =>
 											field.onChange(value.trim())
 										}
-										autoComplete='off'
+										autoComplete='new-password'
 										autoCapitalize='off'
 										autoCorrect='off'
 										autoFocus={false}
