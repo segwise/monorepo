@@ -147,123 +147,123 @@ function ProducerDashboard() {
 		console.log(quotes, safes);
 		return [];
 
-		const groupedQuotes = quotes?.reduce<Record<string, any>>((acc, quote) => {
-			const dateStr =
-				quote?.requestAt || quote?.dateOfReceipt || quote?.issueDate;
-			const date = parseISO(dateStr);
+		// const groupedQuotes = quotes?.reduce<Record<string, any>>((acc, quote) => {
+		// 	const dateStr =
+		// 		quote?.requestAt || quote?.dateOfReceipt || quote?.issueDate;
+		// 	const date = parseISO(dateStr);
 
-			const year = date.getFullYear();
-			const month = date.getMonth() + 1;
+		// 	const year = date.getFullYear();
+		// 	const month = date.getMonth() + 1;
 
-			const key = `${year}-${month.toString().padStart(2, '0')}`;
+		// 	const key = `${year}-${month.toString().padStart(2, '0')}`;
 
-			if (!acc[key]) {
-				acc[key] = {
-					label: date
-						.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-						.replace(/^\w/, (c) => c.toUpperCase()),
-					month,
-					year,
-					totalInsurances: 0,
-					netPremium: 0,
-					totalCommission: 0,
-					commissionRate: 15,
-					goalPremium: 0,
-					vsLastMonth: 0,
-					paid: false,
-					paymentDate: '',
-					commission: 0,
-					insurances: [],
-					quotes: [],
-				};
-			}
+		// 	if (!acc[key]) {
+		// 		acc[key] = {
+		// 			label: date
+		// 				.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+		// 				.replace(/^\w/, (c) => c.toUpperCase()),
+		// 			month,
+		// 			year,
+		// 			totalInsurances: 0,
+		// 			netPremium: 0,
+		// 			totalCommission: 0,
+		// 			commissionRate: 15,
+		// 			goalPremium: 0,
+		// 			vsLastMonth: 0,
+		// 			paid: false,
+		// 			paymentDate: '',
+		// 			commission: 0,
+		// 			insurances: [],
+		// 			quotes: [],
+		// 		};
+		// 	}
 
-			const period = acc[key];
+		// 	const period = acc[key];
 
-			const netPremium = quote.amount || 0;
-			const commission = quote.amount || 0;
+		// 	const netPremium = quote.amount || 0;
+		// 	const commission = quote.amount || 0;
 
-			period.quotes.push({
-				id: quote.vehicle?.plate,
-				client: quote.insured?.name || 'Cliente não informado',
-				type: 'car',
-				netPremium,
-				commission,
-				issueDate: format(date, 'dd/MM/yyyy'),
-				cep: quote.vehicle?.overnightPostalCode || '',
-				insurance: quote?.insuranceCompany?.image,
-				status: quote?.status,
-			});
+		// 	period.quotes.push({
+		// 		id: quote.vehicle?.plate,
+		// 		client: quote.insured?.name || 'Cliente não informado',
+		// 		type: 'car',
+		// 		netPremium,
+		// 		commission,
+		// 		issueDate: format(date, 'dd/MM/yyyy'),
+		// 		cep: quote.vehicle?.overnightPostalCode || '',
+		// 		insurance: quote?.insuranceCompany?.image,
+		// 		status: quote?.status,
+		// 	});
 
-			period.totalInsurances += 1;
-			period.netPremium += netPremium;
-			period.totalCommission += commission;
-			period.commission = period.totalCommission;
+		// 	period.totalInsurances += 1;
+		// 	period.netPremium += netPremium;
+		// 	period.totalCommission += commission;
+		// 	period.commission = period.totalCommission;
 
-			return acc;
-		}, {});
+		// 	return acc;
+		// }, {});
 
-		const groupedSafes = safes?.reduce<Record<string, any>>((acc, safe) => {
-			const dateStr = safe?.requestAt || safe?.dateOfReceipt || safe?.issueDate;
-			const date = parseISO(dateStr);
+		// const groupedSafes = safes?.reduce<Record<string, any>>((acc, safe) => {
+		// 	const dateStr = safe?.requestAt || safe?.dateOfReceipt || safe?.issueDate;
+		// 	const date = parseISO(dateStr);
 
-			const year = date.getFullYear();
-			const month = date.getMonth() + 1;
+		// 	const year = date.getFullYear();
+		// 	const month = date.getMonth() + 1;
 
-			const key = `${year}-${month.toString().padStart(2, '0')}`;
+		// 	const key = `${year}-${month.toString().padStart(2, '0')}`;
 
-			if (!acc[key]) {
-				acc[key] = {
-					label: date
-						.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-						.replace(/^\w/, (c) => c.toUpperCase()),
-					month,
-					year,
-					totalInsurances: 0,
-					netPremium: 0,
-					totalCommission: 0,
-					commissionRate: 15,
-					goalPremium: 0,
-					vsLastMonth: 0,
-					paid: false,
-					paymentDate: '',
-					commission: 0,
-					insurances: [],
-				};
-			}
+		// 	if (!acc[key]) {
+		// 		acc[key] = {
+		// 			label: date
+		// 				.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+		// 				.replace(/^\w/, (c) => c.toUpperCase()),
+		// 			month,
+		// 			year,
+		// 			totalInsurances: 0,
+		// 			netPremium: 0,
+		// 			totalCommission: 0,
+		// 			commissionRate: 15,
+		// 			goalPremium: 0,
+		// 			vsLastMonth: 0,
+		// 			paid: false,
+		// 			paymentDate: '',
+		// 			commission: 0,
+		// 			insurances: [],
+		// 		};
+		// 	}
 
-			const period = acc[key];
+		// 	const period = acc[key];
 
-			const netPremium = safe.amount || 0;
-			const commission = safe.amount || 0;
+		// 	const netPremium = safe.amount || 0;
+		// 	const commission = safe.amount || 0;
 
-			period.insurances.push({
-				id: safe.vehicle?.plate,
-				client: safe.insured?.name || 'Cliente não informado',
-				type: 'car',
-				netPremium,
-				commission,
-				issueDate: format(date, 'dd/MM/yyyy'),
-				cep: safe.vehicle?.overnightPostalCode || '',
-				insurance: safe?.insuranceCompany?.image,
-			});
+		// 	period.insurances.push({
+		// 		id: safe.vehicle?.plate,
+		// 		client: safe.insured?.name || 'Cliente não informado',
+		// 		type: 'car',
+		// 		netPremium,
+		// 		commission,
+		// 		issueDate: format(date, 'dd/MM/yyyy'),
+		// 		cep: safe.vehicle?.overnightPostalCode || '',
+		// 		insurance: safe?.insuranceCompany?.image,
+		// 	});
 
-			period.totalInsurances += 1;
-			period.netPremium += netPremium;
-			period.totalCommission += commission;
-			period.commission = period.totalCommission;
+		// 	period.totalInsurances += 1;
+		// 	period.netPremium += netPremium;
+		// 	period.totalCommission += commission;
+		// 	period.commission = period.totalCommission;
 
-			return acc;
-		}, {});
+		// 	return acc;
+		// }, {});
 
-		return [
-			...(Object.values(groupedQuotes) || []),
-			...(Object.values(groupedSafes) || []),
-		].sort((a, b) => {
-			if (a.year !== b.year) return b.year - a.year;
+		// return [
+		// 	...(Object.values(groupedQuotes) || []),
+		// 	...(Object.values(groupedSafes) || []),
+		// ].sort((a, b) => {
+		// 	if (a.year !== b.year) return b.year - a.year;
 
-			return b.month - a.month;
-		});
+		// 	return b.month - a.month;
+		// });
 	};
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: useMemo
