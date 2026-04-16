@@ -141,63 +141,9 @@ function ProducerDashboard() {
 	});
 
 	const transformToPeriods = (
-		safes: any[] = [],
 		quotes: any[] = [],
+		safes: any[] = [],
 	): Period[] => {
-		const groupedSafes = safes?.reduce<Record<string, any>>((acc, safe) => {
-			const dateStr = safe?.requestAt || safe?.dateOfReceipt || safe?.issueDate;
-			const date = parseISO(dateStr);
-
-			const year = date.getFullYear();
-			const month = date.getMonth() + 1;
-
-			const key = `${year}-${month.toString().padStart(2, '0')}`;
-
-			if (!acc[key]) {
-				acc[key] = {
-					label: date
-						.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-						.replace(/^\w/, (c) => c.toUpperCase()),
-					month,
-					year,
-					totalInsurances: 0,
-					netPremium: 0,
-					totalCommission: 0,
-					commissionRate: 15,
-					goalPremium: 0,
-					vsLastMonth: 0,
-					paid: false,
-					paymentDate: '',
-					commission: 0,
-					insurances: [],
-				};
-			}
-
-			const period = acc[key];
-
-			const netPremium = safe.amount || 0;
-			const commission = safe.amount || 0;
-
-			period.insurances.push({
-				id: safe.vehicle?.plate,
-				client: safe.insured?.name || 'Cliente não informado',
-				type: 'car',
-				netPremium,
-				commission,
-				issueDate: format(date, 'dd/MM/yyyy'),
-				cep: safe.vehicle?.overnightPostalCode || '',
-				insurance: safe?.insuranceCompany?.image,
-			});
-
-			// Agrega os totais
-			period.totalInsurances += 1;
-			period.netPremium += netPremium;
-			period.totalCommission += commission;
-			period.commission = period.totalCommission;
-
-			return acc;
-		}, {});
-
 		const groupedQuotes = quotes?.reduce<Record<string, any>>((acc, quote) => {
 			const dateStr =
 				quote?.requestAt || quote?.dateOfReceipt || quote?.issueDate;
@@ -254,9 +200,62 @@ function ProducerDashboard() {
 			return acc;
 		}, {});
 
+		const groupedSafes = safes?.reduce<Record<string, any>>((acc, safe) => {
+			const dateStr = safe?.requestAt || safe?.dateOfReceipt || safe?.issueDate;
+			const date = parseISO(dateStr);
+
+			const year = date.getFullYear();
+			const month = date.getMonth() + 1;
+
+			const key = `${year}-${month.toString().padStart(2, '0')}`;
+
+			if (!acc[key]) {
+				acc[key] = {
+					label: date
+						.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+						.replace(/^\w/, (c) => c.toUpperCase()),
+					month,
+					year,
+					totalInsurances: 0,
+					netPremium: 0,
+					totalCommission: 0,
+					commissionRate: 15,
+					goalPremium: 0,
+					vsLastMonth: 0,
+					paid: false,
+					paymentDate: '',
+					commission: 0,
+					insurances: [],
+				};
+			}
+
+			const period = acc[key];
+
+			const netPremium = safe.amount || 0;
+			const commission = safe.amount || 0;
+
+			period.insurances.push({
+				id: safe.vehicle?.plate,
+				client: safe.insured?.name || 'Cliente não informado',
+				type: 'car',
+				netPremium,
+				commission,
+				issueDate: format(date, 'dd/MM/yyyy'),
+				cep: safe.vehicle?.overnightPostalCode || '',
+				insurance: safe?.insuranceCompany?.image,
+			});
+
+			period.totalInsurances += 1;
+			period.netPremium += netPremium;
+			period.totalCommission += commission;
+			period.commission = period.totalCommission;
+
+			return acc;
+		}, {});
+
 		return [
-			...(Object.values(groupedSafes) || []),
 			...(Object.values(groupedQuotes) || []),
+			...(Object.values(groupedSafes) || []),
 		].sort((a, b) => {
 			if (a.year !== b.year) return b.year - a.year;
 
@@ -266,8 +265,9 @@ function ProducerDashboard() {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: useMemo
 	const periods: Period[] = useMemo(() => {
-		return transformToPeriods(data?.safes || [], data?.quotes || []);
-	}, [data?.safes]);
+		return [];
+		// return transformToPeriods(data?.quotes || [], data?.safes || []);
+	}, [data?.quotes, data?.safes]);
 
 	const ALL_YEAR_INSURANCES = periods.flatMap((p) => p.insurances);
 	const ALL_YEAR_QUOTES = periods.flatMap((p) => p.quotes);
