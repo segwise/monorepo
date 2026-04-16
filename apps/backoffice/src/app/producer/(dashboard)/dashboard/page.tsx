@@ -255,12 +255,15 @@ function ProducerDashboard() {
 			period.commission = period.totalCommission;
 		});
 
-		return Object.values(groupedPeriods).sort((a, b) => {
-			if (a.year !== b.year) {
-				return b.year - a.year;
-			}
-			return b.month - a.month;
-		});
+		return Object.values(groupedPeriods)
+			.sort((a, b) => {
+				if (a.year !== b.year) {
+					return b.year - a.year;
+				}
+
+				return b.month - a.month;
+			})
+			.reverse();
 	};
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: useMemo
