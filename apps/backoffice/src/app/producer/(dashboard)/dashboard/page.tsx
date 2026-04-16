@@ -141,10 +141,12 @@ function ProducerDashboard() {
 	});
 
 	const transformToPeriods = (
+		// biome-ignore lint/suspicious/noExplicitAny: quotes
 		quotes: any[] = [],
+		// biome-ignore lint/suspicious/noExplicitAny: safes
 		safes: any[] = [],
 	): Period[] => {
-		// Usamos UM único objeto para agrupar tudo (evita duplicar períodos do mesmo mês)
+		// biome-ignore lint/suspicious/noExplicitAny: quotes
 		const groupedPeriods = quotes?.reduce<Record<string, any>>((acc, quote) => {
 			const dateStr =
 				quote?.requestAt || quote?.dateOfReceipt || quote?.issueDate;
@@ -201,7 +203,6 @@ function ProducerDashboard() {
 			return acc;
 		}, {});
 
-		// Agora processamos os safes e MESCLAMOS no mesmo objeto (se o mês já existir)
 		safes?.forEach((safe) => {
 			const dateStr = safe?.requestAt || safe?.dateOfReceipt || safe?.issueDate;
 			const date = parseISO(dateStr);
@@ -211,7 +212,6 @@ function ProducerDashboard() {
 
 			const key = `${year}-${month.toString().padStart(2, '0')}`;
 
-			// Se o período ainda não existe (não veio de quote), criamos com a estrutura completa
 			if (!groupedPeriods[key]) {
 				groupedPeriods[key] = {
 					label: date
@@ -229,7 +229,7 @@ function ProducerDashboard() {
 					paymentDate: '',
 					commission: 0,
 					insurances: [],
-					quotes: [], // ← importante: criamos também o array de quotes vazio
+					quotes: [],
 				};
 			}
 
@@ -255,7 +255,6 @@ function ProducerDashboard() {
 			period.commission = period.totalCommission;
 		});
 
-		// Retorna os períodos ordenados (mais recentes primeiro)
 		return Object.values(groupedPeriods).sort((a, b) => {
 			if (a.year !== b.year) {
 				return b.year - a.year;
