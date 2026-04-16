@@ -95,7 +95,7 @@ function ProducerDashboard() {
 		state: string;
 	} | null>(null);
 
-	const { data } = useQuery({
+	const { data, isSuccess } = useQuery({
 		queryKey: ['profile', 'details-producer'],
 		queryFn: async ({ signal }) =>
 			(
@@ -774,6 +774,12 @@ function ProducerDashboard() {
 			setHidden(false);
 		}
 	}, []);
+
+	useEffect(() => {
+		if (isSuccess) {
+			console.log(periods);
+		}
+	}, [periods, isSuccess]);
 
 	return (
 		<div className='min-h-screen font-sans max-w-md mx-auto'>
