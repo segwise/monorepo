@@ -6,7 +6,7 @@ import type { QuoteStatus } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { isPlate } from '@segwise/core/valids';
 import { useQuery } from '@tanstack/react-query';
-import { format, parse, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import {
 	ArrowUpRightIcon,
 	Building2Icon,
@@ -957,13 +957,13 @@ function ProducerDashboard() {
 							<Clock className='h-3 w-3 text-amber-300' />
 							<span className='text-xs text-amber-300 font-medium'>
 								Pagamento previsto para
-								{periods[periodIdx]?.label
+								{/* {periods[periodIdx]?.label
 									? parse(
 											`${periods[periodIdx]?.label} de ${new Date().getFullYear()}`,
 											"LLLL 'de' yyyy",
 											new Date(),
 										).toISOString()
-									: ''}
+									: ''} */}
 								{period?.paymentDate || !!data?.dateOfReceipt
 									? format(
 											parseISO(data?.dateOfReceipt as string),
