@@ -9,8 +9,8 @@ const BUNDLE_IDENTIFIER = 'br.com.segwise';
 const PACKAGE_NAME = BUNDLE_IDENTIFIER;
 const SCHEME = PROJECT_SLUG;
 
-const VERSION = '1.0.6';
-const VERSION_CODE = 6;
+const VERSION = '1.0.7';
+const VERSION_CODE = 7;
 
 const config = ({ config }: ConfigContext): ExpoConfig => ({
 	...config,
