@@ -9,13 +9,16 @@ const BUNDLE_IDENTIFIER = 'br.com.segwise';
 const PACKAGE_NAME = BUNDLE_IDENTIFIER;
 const SCHEME = PROJECT_SLUG;
 
+const VERSION = '1.0.5';
+const VERSION_CODE = 5;
+
 const config = ({ config }: ConfigContext): ExpoConfig => ({
 	...config,
 	owner: OWNER,
 	name: APP_NAME,
 	slug: PROJECT_SLUG,
 	scheme: SCHEME,
-	version: '1.0.0',
+	version: VERSION,
 	platforms: ['android', 'ios'],
 	orientation: 'portrait',
 	icon: './src/assets/images/icons/ios-light.png',
@@ -33,6 +36,7 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 			dark: './src/assets/images/icons/ios-dark.png',
 			tinted: './src/assets/images/icons/ios-tinted.png',
 		},
+		buildNumber: VERSION_CODE.toString(),
 	},
 	android: {
 		adaptiveIcon: {
@@ -42,6 +46,7 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		},
 		predictiveBackGestureEnabled: false,
 		package: PACKAGE_NAME,
+		versionCode: VERSION_CODE,
 	},
 	plugins: [
 		[
