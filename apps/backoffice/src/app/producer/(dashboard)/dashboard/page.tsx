@@ -962,7 +962,7 @@ function ProducerDashboard() {
 											parse(
 												`${periods[periodIdx]?.label} de ${new Date().getFullYear()}`,
 												"LLLL 'de' yyyy",
-												new Date(2010, 0, 1),
+												new Date(),
 											),
 											'dd/MM/yyyy',
 										)
