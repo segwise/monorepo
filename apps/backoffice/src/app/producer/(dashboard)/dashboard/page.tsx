@@ -957,14 +957,6 @@ function ProducerDashboard() {
 							<Clock className='h-3 w-3 text-amber-300' />
 							<span className='text-xs text-amber-300 font-medium'>
 								Pagamento previsto para{' '}
-								{`${periods[periodIdx]?.label} de ${new Date().getFullYear()}`}
-								{/* {periods[periodIdx]?.label
-									? parse(
-											`${periods[periodIdx]?.label} de ${new Date().getFullYear()}`,
-											"LLLL 'de' yyyy",
-											new Date(),
-										).toISOString()
-									: ''} */}
 								{period?.paymentDate || !!data?.dateOfReceipt
 									? format(
 											parseISO(data?.dateOfReceipt as string),
