@@ -42,6 +42,7 @@ import {
 } from 'date-fns';
 import {
 	Building2Icon,
+	CalendarIcon,
 	CarIcon,
 	ChevronLeftIcon,
 	CircleDollarSignIcon,
@@ -69,6 +70,7 @@ import {
 	ComboboxItem,
 	ComboboxList,
 } from '@/components/ui/combobox';
+import { DatePickerInput } from '@/components/ui/date-picker-input';
 import {
 	Field,
 	FieldContent,
@@ -82,6 +84,7 @@ import { Input } from '@/components/ui/input';
 import {
 	InputGroup,
 	InputGroupAddon,
+	InputGroupButton,
 	InputGroupInput,
 	InputGroupText,
 } from '@/components/ui/input-group';
@@ -136,6 +139,7 @@ function FormProposalRegister() {
 			status: 'active',
 			producer: null,
 			modality: 'car',
+			renewal: false,
 			requestedAt: startOfToday(),
 			insured: {
 				cpf: '',
@@ -435,44 +439,6 @@ function FormProposalRegister() {
 									/>
 									<Controller
 										control={control}
-										name='renewal'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='type'>Tipo do Seguro:</FieldLabel>
-												<Select
-													{...field}
-													value={
-														field.value === true
-															? 'renewal'
-															: field.value === false
-																? 'no_renewal'
-																: ''
-													}
-													onValueChange={(value) =>
-														field.onChange(value === 'renewal')
-													}
-												>
-													<SelectTrigger
-														id='type'
-														aria-invalid={fieldState.invalid}
-													>
-														<SelectValue placeholder='Selecionar' />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value='no_renewal'>
-															Seguro Novo
-														</SelectItem>
-														<SelectItem value='renewal'>Renovação</SelectItem>
-													</SelectContent>
-												</Select>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
-												)}
-											</Field>
-										)}
-									/>
-									<Controller
-										control={control}
 										name='insuranceCompany'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
@@ -519,63 +485,40 @@ function FormProposalRegister() {
 											</Field>
 										)}
 									/>
-									<FieldGroup className='flex flex-row items-center justify-between gap-x-0!'>
-										<Controller
-											control={control}
-											name='requestedAt'
-											render={({ field, fieldState }) => (
-												<Field data-invalid={fieldState.invalid}>
-													<FieldLabel htmlFor='start-validity'>
-														Início da Vigência:
-													</FieldLabel>
-													<Input
+									<Controller
+										control={control}
+										name='requestedAt'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='start-validity'>
+													Início da Vigência:
+												</FieldLabel>
+												<DatePickerInput
+													id='start-validity'
+													value={
+														field.value instanceof Date ? field.value : null
+													}
+													onChange={field.onChange}
+													disabled={field.disabled}
+													invalid={fieldState.invalid}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										control={control}
+										name='requestedAt'
+										render={({ field, fieldState }) => (
+											<Field>
+												<FieldLabel htmlFor='end-validity'>
+													Final da Vigência:
+												</FieldLabel>
+												<InputGroup>
+													<InputGroupInput
 														{...field}
-														id='start-validity'
-														aria-invalid={fieldState.invalid}
-														placeholder='00/00/0000'
-														value={
-															typeof field.value === 'string'
-																? isDateString(field.value)
-																	? format(
-																			parse(
-																				field.value,
-																				'dd/MM/yyyy',
-																				new Date(),
-																			),
-																			'dd/MM/yyyy',
-																		)
-																	: maskDateString(field.value)
-																: field.value instanceof Date
-																	? format(field.value, 'dd/MM/yyyy')
-																	: ''
-														}
-														onChange={({ target: { value } }) =>
-															field.onChange(
-																isDateString(value)
-																	? parse(value, 'dd/MM/yyyy', new Date())
-																	: maskDateString(value),
-															)
-														}
-														maxLength={10}
-														className='rounded-r-none'
-													/>
-													{fieldState.invalid && (
-														<FieldError errors={[fieldState.error]} />
-													)}
-												</Field>
-											)}
-										/>
-										<Controller
-											control={control}
-											name='requestedAt'
-											render={({ field, fieldState }) => (
-												<Field>
-													<FieldLabel htmlFor='end-validity'>
-														Final da Vigência:
-													</FieldLabel>
-													<Input
-														{...field}
-														id='end-validity'
 														readOnly
 														placeholder='00/00/0000'
 														value={
@@ -585,18 +528,24 @@ function FormProposalRegister() {
 														}
 														onChange={undefined}
 														maxLength={10}
-														className='rounded-l-none border-l-0'
 													/>
-													{fieldState.invalid && (
-														<FieldError
-															errors={[fieldState.error]}
-															className='opacity-0 invisible'
-														/>
-													)}
-												</Field>
-											)}
-										/>
-									</FieldGroup>
+													<InputGroupButton
+														variant='ghost'
+														size='icon'
+														className='absolute right-1 h-7 w-7 text-muted-foreground pointer-events-none'
+													>
+														<CalendarIcon className='h-4 w-4' />
+													</InputGroupButton>
+												</InputGroup>
+												{fieldState.invalid && (
+													<FieldError
+														errors={[fieldState.error]}
+														className='opacity-0 invisible'
+													/>
+												)}
+											</Field>
+										)}
+									/>
 								</FieldGroup>
 							</FieldGroup>
 							<Separator />
@@ -1538,28 +1487,6 @@ function FormProposalRegister() {
 														</InputGroupAddon>
 													)}
 												</InputGroup>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
-												)}
-											</Field>
-										)}
-									/>
-									<Controller
-										control={control}
-										name='driver.phone'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='driver-phone'>Celular:</FieldLabel>
-												<Input
-													{...field}
-													id='driver-phone'
-													aria-invalid={fieldState.invalid}
-													disabled={theInsuredPartyIsTheDriver}
-													placeholder='(00) 00000-0000'
-													onChange={({ target: { value } }) =>
-														field.onChange(maskPhone(value))
-													}
-												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}

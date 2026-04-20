@@ -57,6 +57,7 @@ import {
 	ComboboxItem,
 	ComboboxList,
 } from '@/components/ui/combobox';
+import { DatePickerInput } from '@/components/ui/date-picker-input';
 import {
 	Field,
 	FieldContent,
@@ -586,35 +587,14 @@ function FormQuoteRegister() {
 												<FieldLabel htmlFor='request-date'>
 													Data da Solicitação:
 												</FieldLabel>
-												<Input
-													{...field}
+												<DatePickerInput
 													id='request-date'
-													aria-invalid={fieldState.invalid}
-													placeholder='00/00/0000'
 													value={
-														typeof field.value === 'string'
-															? isDateString(field.value)
-																? format(
-																		parse(
-																			field.value,
-																			'dd/MM/yyyy',
-																			new Date(),
-																		),
-																		'dd/MM/yyyy',
-																	)
-																: maskDateString(field.value)
-															: field.value instanceof Date
-																? format(field.value, 'dd/MM/yyyy')
-																: ''
+														field.value instanceof Date ? field.value : null
 													}
-													onChange={({ target: { value } }) =>
-														field.onChange(
-															isDateString(value)
-																? parse(value, 'dd/MM/yyyy', new Date())
-																: maskDateString(value),
-														)
-													}
-													maxLength={10}
+													onChange={field.onChange}
+													disabled={field.disabled}
+													invalid={fieldState.invalid}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -1567,28 +1547,6 @@ function FormQuoteRegister() {
 														</InputGroupAddon>
 													)}
 												</InputGroup>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
-												)}
-											</Field>
-										)}
-									/>
-									<Controller
-										control={control}
-										name='driver.phone'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='driver-phone'>Celular:</FieldLabel>
-												<Input
-													{...field}
-													id='driver-phone'
-													aria-invalid={fieldState.invalid}
-													disabled={theInsuredPartyIsTheDriver}
-													placeholder='(00) 00000-0000'
-													onChange={({ target: { value } }) =>
-														field.onChange(maskPhone(value))
-													}
-												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}
