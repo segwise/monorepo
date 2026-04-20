@@ -64,11 +64,7 @@ function FormForgotPassword() {
 						<FormItem>
 							<FormLabel>Email</FormLabel>
 							<FormControl>
-								<Input
-									{...field}
-									placeholder='Digite seu e-mail'
-									autoComplete='new-password'
-								/>
+								<Input {...field} placeholder='Digite seu e-mail' />
 							</FormControl>
 							<FormMessage />
 						</FormItem>
