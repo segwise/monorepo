@@ -2,17 +2,28 @@ import { maskNumber } from '@segwise/core/masks';
 import type { Document } from '@segwise/core/types';
 import { isCNPJ, isCPF } from '@segwise/core/valids';
 import { useQuery } from '@tanstack/react-query';
+import { parseISO } from 'date-fns';
 import { api } from '@/libraries/api';
 
 const useCpfOrCnpj = (document: string = '') =>
 	useQuery({
 		queryKey: ['cpf-or-cnpj', document],
-		queryFn: async ({ signal }) =>
-			(
-				await api.get<Document>(`/cpf-or-cnpj/${maskNumber(document)}`, {
+		queryFn: async ({ signal }) => {
+			const response = (
+				await api.get<
+					Omit<Document, 'birth'> & {
+						birth: string;
+					}
+				>(`/cpf-or-cnpj/${maskNumber(document)}`, {
 					signal,
 				})
-			).data,
+			).data;
+
+			return {
+				...response,
+				birth: parseISO(response.birth),
+			};
+		},
 		enabled: isCPF(document) || isCNPJ(document),
 		retry: false,
 	});

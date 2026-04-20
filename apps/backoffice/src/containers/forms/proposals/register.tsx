@@ -35,9 +35,8 @@ import {
 	addYears,
 	differenceInYears,
 	format,
-	isDate,
+	isValid,
 	parse,
-	parseISO,
 	startOfToday,
 } from 'date-fns';
 import {
@@ -159,7 +158,6 @@ function FormProposalRegister() {
 				cpf: '',
 				name: '',
 				birth: '',
-				phone: '',
 			},
 		},
 	});
@@ -242,7 +240,6 @@ function FormProposalRegister() {
 						cpf: '',
 						name: '',
 						birth: '',
-						phone: '',
 					},
 					commissions: {
 						type: '',
@@ -263,14 +260,18 @@ function FormProposalRegister() {
 	}
 
 	const cpfOrCnpj = watch('insured.cpf');
+	const cpfOrCnpjDriver = watch('driver.cpf');
 
 	const { data: cpfOrCnpjSearch } = useCpfOrCnpj(cpfOrCnpj);
+	const { data: cpfOrCnpjSearchDriver } = useCpfOrCnpj(
+		!theInsuredPartyIsTheDriver ? cpfOrCnpjDriver : '',
+	);
 
 	useEffect(() => {
 		if (cpfOrCnpjSearch) {
 			const name = capitalizeFirstLetters(cpfOrCnpjSearch.name);
 			const birth = format(
-				parseISO(cpfOrCnpjSearch.birth as unknown as string),
+				cpfOrCnpjSearch.birth as unknown as string,
 				'dd/MM/yyyy',
 			);
 
@@ -289,6 +290,27 @@ function FormProposalRegister() {
 			}
 		}
 	}, [cpfOrCnpjSearch, theInsuredPartyIsTheDriver, setValue, clearErrors]);
+
+	useEffect(() => {
+		if (cpfOrCnpjSearchDriver && !theInsuredPartyIsTheDriver) {
+			const name = capitalizeFirstLetters(cpfOrCnpjSearchDriver.name);
+			const birth = format(
+				cpfOrCnpjSearchDriver.birth as unknown as string,
+				'dd/MM/yyyy',
+			);
+
+			setValue('driver.name', name);
+			setValue('driver.birth', birth);
+
+			clearErrors('driver.name');
+			clearErrors('driver.birth');
+		}
+	}, [
+		cpfOrCnpjSearchDriver,
+		theInsuredPartyIsTheDriver,
+		setValue,
+		clearErrors,
+	]);
 
 	useEffect(() => {
 		if (vehicleSearch) {
@@ -679,14 +701,39 @@ function FormProposalRegister() {
 														]}
 														maxLength={10}
 													/>
-													{!!field.value && isDate(field.value) && (
-														<InputGroupAddon>
-															<InputGroupText>
-																{differenceInYears(new Date(), field.value)}{' '}
-																anos
-															</InputGroupText>
-														</InputGroupAddon>
-													)}
+													{isValid(
+														typeof field.value === 'string'
+															? parse(field.value, 'dd/MM/yyyy', new Date())
+															: (field.value as Date),
+													) &&
+														differenceInYears(
+															new Date(),
+															typeof field.value === 'string'
+																? parse(field.value, 'dd/MM/yyyy', new Date())
+																: (field.value as Date),
+														) <= 120 &&
+														differenceInYears(
+															new Date(),
+															typeof field.value === 'string'
+																? parse(field.value, 'dd/MM/yyyy', new Date())
+																: (field.value as Date),
+														) >= 18 && (
+															<InputGroupAddon>
+																<InputGroupText>
+																	{differenceInYears(
+																		new Date(),
+																		typeof field.value === 'string'
+																			? parse(
+																					field.value,
+																					'dd/MM/yyyy',
+																					new Date(),
+																				)
+																			: (field.value as Date),
+																	)}{' '}
+																	anos
+																</InputGroupText>
+															</InputGroupAddon>
+														)}
 												</InputGroup>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -707,12 +754,9 @@ function FormProposalRegister() {
 													id='insured-phone'
 													aria-invalid={fieldState.invalid}
 													placeholder='(00) 00000-0000'
-													onChange={({ target: { value } }) => [
-														field.onChange(maskPhone(value)),
-														theInsuredPartyIsTheDriver
-															? setValue('driver.phone', maskPhone(value))
-															: undefined,
-													]}
+													onChange={({ target: { value } }) =>
+														field.onChange(maskPhone(value))
+													}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -1373,7 +1417,6 @@ function FormProposalRegister() {
 																	setValue('driver', {
 																		cpf: getValues('insured.cpf'),
 																		name: getValues('insured.name'),
-																		phone: getValues('insured.phone'),
 																		birth: getValues('insured.birth'),
 																	}),
 																	clearErrors('driver'),
@@ -1404,9 +1447,21 @@ function FormProposalRegister() {
 													aria-invalid={fieldState.invalid}
 													disabled={theInsuredPartyIsTheDriver}
 													placeholder='000.000.000-00'
-													onChange={({ target: { value } }) =>
-														field.onChange(maskCPF(value))
-													}
+													onChange={({ target: { value } }) => {
+														const valueMask =
+															value.length >= 11
+																? isCPF(value)
+																	? maskCPF(value)
+																	: maskCNPJ(value)
+																: value;
+
+														field.onChange(valueMask);
+
+														if (value.length === 0) {
+															setValue('driver.name', '');
+															setValue('driver.birth', '');
+														}
+													}}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -1478,14 +1533,39 @@ function FormProposalRegister() {
 														}
 														maxLength={10}
 													/>
-													{!!field.value && isDate(field.value) && (
-														<InputGroupAddon>
-															<InputGroupText>
-																{differenceInYears(new Date(), field.value)}{' '}
-																anos
-															</InputGroupText>
-														</InputGroupAddon>
-													)}
+													{isValid(
+														typeof field.value === 'string'
+															? parse(field.value, 'dd/MM/yyyy', new Date())
+															: (field.value as Date),
+													) &&
+														differenceInYears(
+															new Date(),
+															typeof field.value === 'string'
+																? parse(field.value, 'dd/MM/yyyy', new Date())
+																: (field.value as Date),
+														) <= 120 &&
+														differenceInYears(
+															new Date(),
+															typeof field.value === 'string'
+																? parse(field.value, 'dd/MM/yyyy', new Date())
+																: (field.value as Date),
+														) >= 18 && (
+															<InputGroupAddon>
+																<InputGroupText>
+																	{differenceInYears(
+																		new Date(),
+																		typeof field.value === 'string'
+																			? parse(
+																					field.value,
+																					'dd/MM/yyyy',
+																					new Date(),
+																				)
+																			: (field.value as Date),
+																	)}{' '}
+																	anos
+																</InputGroupText>
+															</InputGroupAddon>
+														)}
 												</InputGroup>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />

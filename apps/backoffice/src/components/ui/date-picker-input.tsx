@@ -1,3 +1,4 @@
+import { maskDateString } from '@segwise/core/masks';
 import { format, isValid, parse } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -10,20 +11,6 @@ import {
 	PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/utils';
-
-function maskDate(value: string): string {
-	const digits = value.replace(/\D/g, '').slice(0, 8);
-
-	if (digits.length <= 2) {
-		return digits;
-	}
-
-	if (digits.length <= 4) {
-		return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-	}
-
-	return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-}
 
 function parseDate(str: string): Date | null {
 	if (str.length !== 10) {
@@ -80,7 +67,8 @@ function DatePickerInput({
 	}
 
 	function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-		const masked = maskDate(e.target.value);
+		const masked = maskDateString(e.target.value);
+
 		setInputValue(masked);
 		const date = parseDate(masked);
 
