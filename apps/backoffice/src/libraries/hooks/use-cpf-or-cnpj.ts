@@ -19,9 +19,11 @@ const useCpfOrCnpj = (document: string = '') =>
 				})
 			).data;
 
+			const birth = parseISO(response.birth);
+
 			return {
 				...response,
-				birth: parseISO(response.birth),
+				birth: new Date(birth.getTime() + birth.getTimezoneOffset() * 60000),
 			};
 		},
 		enabled: isCPF(document) || isCNPJ(document),
