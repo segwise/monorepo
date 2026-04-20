@@ -270,10 +270,7 @@ function FormProposalRegister() {
 	useEffect(() => {
 		if (cpfOrCnpjSearch) {
 			const name = capitalizeFirstLetters(cpfOrCnpjSearch.name);
-			const birth = format(
-				cpfOrCnpjSearch.birth as unknown as string,
-				'dd/MM/yyyy',
-			);
+			const birth = cpfOrCnpjSearch.birth;
 
 			setValue('insured.name', name);
 			setValue('insured.birth', birth);
@@ -294,10 +291,7 @@ function FormProposalRegister() {
 	useEffect(() => {
 		if (cpfOrCnpjSearchDriver && !theInsuredPartyIsTheDriver) {
 			const name = capitalizeFirstLetters(cpfOrCnpjSearchDriver.name);
-			const birth = format(
-				cpfOrCnpjSearchDriver.birth as unknown as string,
-				'dd/MM/yyyy',
-			);
+			const birth = cpfOrCnpjSearchDriver.birth;
 
 			setValue('driver.name', name);
 			setValue('driver.birth', birth);
