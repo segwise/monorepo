@@ -89,7 +89,7 @@ function FormSignIn() {
 								<Input
 									{...field}
 									placeholder='Digite seu e-mail'
-									autoComplete='off'
+									autoComplete='new-password'
 								/>
 							</FormControl>
 							<FormMessage />
@@ -109,7 +109,7 @@ function FormSignIn() {
 										id='password'
 										type={showPassword ? 'text' : 'password'}
 										placeholder='**********'
-										autoComplete='off'
+										autoComplete='new-password'
 										aria-invalid={fieldState.invalid}
 									/>
 									<InputGroupAddon align='inline-end'>

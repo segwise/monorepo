@@ -95,7 +95,7 @@ function FormAcceptInvitation() {
 										id='password'
 										type={showPassword ? 'text' : 'password'}
 										placeholder='**********'
-										autoComplete='off'
+										autoComplete='new-password'
 										aria-invalid={fieldState.invalid}
 									/>
 									<InputGroupAddon align='inline-end'>
@@ -127,7 +127,7 @@ function FormAcceptInvitation() {
 										id='password'
 										type={showPassword ? 'text' : 'password'}
 										placeholder='**********'
-										autoComplete='off'
+										autoComplete='new-password'
 										aria-invalid={fieldState.invalid}
 									/>
 									<InputGroupAddon align='inline-end'>

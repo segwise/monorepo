@@ -67,7 +67,7 @@ function FormForgotPassword() {
 								<Input
 									{...field}
 									placeholder='Digite seu e-mail'
-									autoComplete='off'
+									autoComplete='new-password'
 								/>
 							</FormControl>
 							<FormMessage />
