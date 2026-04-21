@@ -13,8 +13,8 @@ import type {
 } from '@segwise/core/types';
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
 import {
-	addDays,
 	endOfDay,
+	endOfToday,
 	format,
 	isSameDay,
 	parseISO,
@@ -298,7 +298,7 @@ function FilterrequestedAt({
 						}
 						numberOfMonths={2}
 						disabled={{
-							after: addDays(new Date(), 30),
+							after: endOfToday(),
 						}}
 					/>
 					{!isDateDefault && (

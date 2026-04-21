@@ -1732,13 +1732,24 @@ function FormProposalRegister() {
 															<SelectValue placeholder='Selecionar' />
 														</SelectTrigger>
 														<SelectContent align='start'>
-															{SchemaSafeCommission.shape.type.options.map(
+															<SelectItem
+																value={
+																	SchemaSafeCommission.shape.type.enum
+																		.by_the_brokerage_commission
+																}
+															>
+																{translateSafeCommissionType(
+																	SchemaSafeCommission.shape.type.enum
+																		.by_the_brokerage_commission,
+																)}
+															</SelectItem>
+															{/* {SchemaSafeCommission.shape.type.options.map(
 																(item) => (
 																	<SelectItem key={item} value={item}>
 																		{translateSafeCommissionType(item)}
 																	</SelectItem>
 																),
-															)}
+															)} */}
 														</SelectContent>
 													</Select>
 													{fieldState.invalid && (

@@ -12,14 +12,7 @@ import type {
 	SafeStatus,
 } from '@segwise/core/types';
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
-import {
-	addDays,
-	endOfDay,
-	format,
-	isSameDay,
-	parseISO,
-	startOfDay,
-} from 'date-fns';
+import { endOfDay, format, isSameDay, parseISO, startOfDay } from 'date-fns';
 import {
 	CalendarIcon,
 	CarIcon,
@@ -297,9 +290,6 @@ function FilterEffectivedAt({
 							})
 						}
 						numberOfMonths={2}
-						disabled={{
-							after: addDays(new Date(), 30),
-						}}
 					/>
 					{!isDateDefault && (
 						<Fragment>

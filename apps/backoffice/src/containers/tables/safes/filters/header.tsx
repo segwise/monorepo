@@ -6,7 +6,7 @@ import {
 	translateSafeStatus,
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
-import { addDays, format, isSameDay, parseISO } from 'date-fns';
+import { format, isSameDay, parseISO } from 'date-fns';
 import {
 	CarIcon,
 	ChevronsUpDownIcon,
@@ -318,9 +318,6 @@ function FilterEffectivedAt() {
 						}
 						selected={date}
 						onSelect={setDate}
-						disabled={{
-							after: addDays(new Date(), 30),
-						}}
 						numberOfMonths={2}
 					/>
 					<Separator />
