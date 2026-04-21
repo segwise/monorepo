@@ -461,40 +461,53 @@ function FormProposalRegister() {
 												<FieldLabel htmlFor='insurance-company'>
 													Seguradora:
 												</FieldLabel>
-												<Select {...field} onValueChange={field.onChange}>
-													<SelectTrigger
-														id='insurance-company'
-														aria-invalid={fieldState.invalid}
-													>
-														<SelectValue placeholder='Selecionar' />
-													</SelectTrigger>
-													<SelectContent className='max-h-72' align='center'>
-														{insuranceCompanies?.map(({ id, icon, name }) => (
-															<SelectItem key={id} value={id}>
-																<div className='flex flex-row items-center justify-start gap-x-2'>
-																	<Avatar className='size-6'>
-																		<AvatarImage
-																			src={icon || placeholder.company}
-																			width={512}
-																			height={512}
-																			alt={capitalizeFirstLetters(name).replace(
-																				'S/a',
-																				'S/A',
-																			)}
-																		/>
-																		<AvatarFallback>
-																			{name.toUpperCase().slice(0, 2)}
-																		</AvatarFallback>
-																	</Avatar>
-																	{capitalizeFirstLetters(name).replace(
-																		'S/a',
-																		'S/A',
-																	)}
-																</div>
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
+												<Combobox
+													{...field}
+													items={insuranceCompanies || []}
+													// @ts-expect-error
+													itemToStringValue={(item) => item.id}
+													itemToStringLabel={(item) =>
+														// @ts-expect-error
+														capitalizeFirstLetters(item.name).replace(
+															'S/a',
+															'S/A',
+														)
+													}
+													// @ts-expect-error
+													onValueChange={(item) => field.onChange(item.id)}
+												>
+													<ComboboxInput placeholder='Selecionar' />
+													<ComboboxContent>
+														<ComboboxEmpty>
+															Nenhum registro encontrado!
+														</ComboboxEmpty>
+														<ComboboxList>
+															{(item) => (
+																<ComboboxItem key={item.id} value={item}>
+																	<div className='flex flex-row items-center justify-start gap-x-2'>
+																		<Avatar className='size-6'>
+																			<AvatarImage
+																				src={item.icon || placeholder.company}
+																				width={512}
+																				height={512}
+																				alt={capitalizeFirstLetters(
+																					item.name,
+																				).replace('S/a', 'S/A')}
+																			/>
+																			<AvatarFallback>
+																				{item.name.toUpperCase().slice(0, 2)}
+																			</AvatarFallback>
+																		</Avatar>
+																		{capitalizeFirstLetters(item.name).replace(
+																			'S/a',
+																			'S/A',
+																		)}
+																	</div>
+																</ComboboxItem>
+															)}
+														</ComboboxList>
+													</ComboboxContent>
+												</Combobox>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}
