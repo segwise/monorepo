@@ -348,9 +348,20 @@ function FormProposalRegister() {
 								<Select
 									{...field}
 									value={!field.value ? '' : field.value || ''}
-									onValueChange={(value) =>
-										field.onChange(value === 'clear' ? null : value)
-									}
+									onValueChange={(value) => {
+										field.onChange(value === 'clear' ? null : value);
+
+										if (!getValues('commissions.type')) {
+											setValue(
+												'commissions.type',
+												'by_the_brokerage_commission',
+											);
+										}
+
+										if (value === 'clear') {
+											setValue('commissions', null);
+										}
+									}}
 								>
 									<SelectTrigger aria-invalid={fieldState.invalid}>
 										<SelectValue placeholder='Nenhum produtor' />
@@ -465,16 +476,21 @@ function FormProposalRegister() {
 													{...field}
 													items={insuranceCompanies || []}
 													// @ts-expect-error
-													itemToStringValue={(item) => item.id}
+													itemToStringValue={(item) => item?.id}
 													itemToStringLabel={(item) =>
 														// @ts-expect-error
-														capitalizeFirstLetters(item.name).replace(
-															'S/a',
-															'S/A',
-														)
+														item?.name
+															? // @ts-expect-error
+																capitalizeFirstLetters(item.name).replace(
+																	'S/a',
+																	'S/A',
+																)
+															: ''
 													}
-													// @ts-expect-error
-													onValueChange={(item) => field.onChange(item.id)}
+													onValueChange={(item) =>
+														// @ts-expect-error
+														item?.id ? field.onChange(item.id) : null
+													}
 												>
 													<ComboboxInput placeholder='Selecionar' />
 													<ComboboxContent>

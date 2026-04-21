@@ -464,16 +464,21 @@ function FormQuoteRegister() {
 															{...field}
 															items={insuranceCompanies || []}
 															// @ts-expect-error
-															itemToStringValue={(item) => item.id}
+															itemToStringValue={(item) => item?.id}
 															itemToStringLabel={(item) =>
 																// @ts-expect-error
-																capitalizeFirstLetters(item.name).replace(
-																	'S/a',
-																	'S/A',
-																)
+																item?.name
+																	? // @ts-expect-error
+																		capitalizeFirstLetters(item.name).replace(
+																			'S/a',
+																			'S/A',
+																		)
+																	: ''
 															}
-															// @ts-expect-error
-															onValueChange={(item) => field.onChange(item.id)}
+															onValueChange={(item) =>
+																// @ts-expect-error
+																item?.id ? field.onChange(item.id) : null
+															}
 														>
 															<ComboboxInput placeholder='Selecionar' />
 															<ComboboxContent>
