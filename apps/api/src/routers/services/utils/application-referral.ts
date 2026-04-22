@@ -14,22 +14,44 @@ import {
 	findMatch,
 } from '@/functions/fingerprint/generate';
 
-function registerRoutersServicesUtilsReferral(server: Server) {
-	const base = server.basePath('/referral');
+function registerRoutersServicesUtilsApplicationReferral(server: Server) {
+	const base = server.basePath('/application');
 
 	base.get(
-		'/:code',
+		'/',
 		zValidator(
 			'param',
-			z.object({
-				code: SchemaReferral,
-			}),
+			z
+				.object({
+					referral: SchemaReferral.nullish(),
+				})
+				.partial()
+				.strict(),
 		),
 		async (ctx) => {
-			const { code } = ctx.req.valid('param');
+			const { referral } = ctx.req.valid('param');
+
+			if (!referral) {
+				const userAgent = ctx.req.raw.headers.get('user-agent') ?? 'unknown';
+
+				const ua = userAgent.toLowerCase();
+
+				const isIos = /iphone|ipad|ipod/.test(ua);
+				const isAndroid = /android/.test(ua);
+
+				if (isIos) {
+					return ctx.redirect(APP_STORE_URL, 302);
+				}
+
+				if (isAndroid) {
+					return ctx.redirect(PLAY_STORE_URL, 302);
+				}
+
+				return ctx.redirect(FALLBACK_URL, 302);
+			}
 
 			const partner = await ctx.database.member.findUnique({
-				where: { referral: code },
+				where: { referral },
 			});
 
 			if (!partner) {
@@ -41,15 +63,13 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 			const fp = buildFingerprint(ctx.req.raw.headers, requestIp);
 
 			await cacheClick({
-				referralCode: code,
+				referralCode: referral,
 				partnerId: partner.id,
 				ip: fp.ip,
 				uaHash: fp.uaHash,
 				language: fp.language,
 				os: fp.os,
 			});
-
-			console.log('referral:', fp);
 
 			const ua = fp.userAgent.toLowerCase();
 
@@ -69,13 +89,15 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 	);
 
 	base.post(
-		'/',
+		'/referral',
 		zValidator(
 			'json',
-			z.object({
-				language: z.string().optional(),
-				os: z.string().optional(),
-			}),
+			z
+				.object({
+					language: z.string(),
+					os: z.string(),
+				})
+				.strict(),
 		),
 		async (ctx) => {
 			const requestIp = extractIp(ctx.req.raw.headers, 'unknown');
@@ -83,13 +105,6 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 			const userAgent = ctx.req.raw.headers.get('user-agent') ?? 'unknown';
 
 			const data = ctx.req.valid('json');
-
-			console.log({
-				ip: requestIp,
-				userAgent,
-				language: data.language ?? null,
-				os: data.os ?? null,
-			});
 
 			const match = await findMatch({
 				ip: requestIp,
@@ -106,11 +121,9 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 				cached: false,
 			};
 
-			console.log('referral:', referral);
-
 			return ctx.json(referral, 200);
 		},
 	);
 }
 
-export { registerRoutersServicesUtilsReferral };
+export { registerRoutersServicesUtilsApplicationReferral };
