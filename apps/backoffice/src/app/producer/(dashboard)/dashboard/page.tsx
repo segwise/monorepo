@@ -97,48 +97,56 @@ function ProducerDashboard() {
 
 	const { data, isSuccess } = useQuery({
 		queryKey: ['profile', 'details-producer'],
-		queryFn: async ({ signal }) =>
-			(
-				await api.get<{
-					message?: string;
-					referral: string;
-					valueToReceive: number;
-					dateOfReceipt: string;
-					safes: Array<{
-						insuranceCompany: {
-							image: string;
-							name: string;
-						};
-						insured: {
-							name: string;
-						};
-						vehicle: {
-							plate?: string;
-							overnightPostalCode: string;
-						};
-						amount: number;
-						requestAt: string;
-					}>;
-					quotes: Array<{
-						insuranceCompany: {
-							image: string;
-							name: string;
-						};
-						insured: {
-							name: string;
-						};
-						vehicle: {
-							plate?: string;
-							overnightPostalCode: string;
-						};
-						amount: number;
-						requestAt: string;
-						effectivedAt: string;
-					}>;
-				}>('/auth/profile/details-producer', {
-					signal,
-				})
-			).data,
+		queryFn: async ({ signal }) => {
+			const { data } = await api.get<{
+				message?: string;
+				referral: string;
+				valueToReceive: number;
+				dateOfReceipt: string;
+				safes: Array<{
+					insuranceCompany: {
+						image: string;
+						name: string;
+					};
+					insured: {
+						name: string;
+					};
+					vehicle: {
+						plate?: string;
+						overnightPostalCode: string;
+					};
+					amount: number;
+					requestAt: string;
+				}>;
+				quotes: Array<{
+					insuranceCompany: {
+						image: string;
+						name: string;
+					};
+					insured: {
+						name: string;
+					};
+					vehicle: {
+						plate?: string;
+						overnightPostalCode: string;
+					};
+					amount: number;
+					requestAt: string;
+					effectivedAt: string;
+				}>;
+			}>('/auth/profile/details-producer', {
+				signal,
+			});
+
+			const dateOfReceipt = parseISO(data.dateOfReceipt);
+
+			return {
+				...data,
+				dateOfReceipt: new Date(
+					dateOfReceipt.getTime() + dateOfReceipt.getTimezoneOffset() * 60000,
+				),
+			};
+		},
 	});
 
 	const transformToPeriods = (
@@ -961,10 +969,7 @@ function ProducerDashboard() {
 							<span className='text-xs text-amber-300 font-medium'>
 								Pagamento previsto para{' '}
 								{period?.paymentDate || !!data?.dateOfReceipt
-									? format(
-											parseISO(data?.dateOfReceipt as string),
-											'dd/MM/yyyy',
-										)
+									? format(data?.dateOfReceipt as Date, 'dd/MM/yyyy')
 									: '--/--/-----'}
 							</span>
 						</div>
