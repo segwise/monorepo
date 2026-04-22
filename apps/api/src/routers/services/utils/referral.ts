@@ -23,7 +23,6 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 			z.object({
 				code: SchemaReferral,
 			}),
-			(data) => console.log(data.data),
 		),
 		async (ctx) => {
 			const { code } = ctx.req.valid('param');
@@ -79,6 +78,7 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 				language: z.string().optional(),
 				os: z.string().optional(),
 			}),
+			(data) => console.log(data.data),
 		),
 		async (ctx) => {
 			const requestIp =
