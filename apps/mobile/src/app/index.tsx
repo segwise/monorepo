@@ -1,33 +1,30 @@
-// import { storage } from '@/libraries/storage';
-import { Image, ImageBackground } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Text, useWindowDimensions, View } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
-// import { useRouter } from 'expo-router';
-// import { useCallback, useEffect } from 'react';
 import LOGO from '@/assets/images/logo/segwise.png';
 import BACKGROUND_MAP from '@/assets/images/splash-screen/background-map.png';
 import { attributeReferral } from '@/functions/attribute-referral';
 import { cn } from '@/libraries/classname';
-import { storage } from '@/libraries/storage';
+import { Image, ImageBackground } from 'expo-image';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { Text, useWindowDimensions, View } from 'react-native';
+import { useMMKVBoolean } from 'react-native-mmkv';
+import Svg, { Circle, G } from 'react-native-svg';
 
 function IndexScreen() {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+
+	const [isFirstView] = useMMKVBoolean('first-view');
 
 	const { width, height } = useWindowDimensions();
 
 	const { replace } = useRouter();
 
 	const navigation = useCallback(() => {
-		const isFirstView = storage.getBoolean('first-view');
-
 		if (!isLoading) {
 			return;
 		}
 
 		replace(!isFirstView ? '/(stacks)/request-referral' : '/(stacks)/home');
-	}, [replace, isLoading]);
+	}, [replace, isLoading, isFirstView]);
 
 	useEffect(() => {
 		setTimeout(() => {
@@ -36,10 +33,12 @@ function IndexScreen() {
 	}, [navigation]);
 
 	useEffect(() => {
-		attributeReferral().finally(() => {
-			setIsLoading(true);
-		});
-	}, []);
+		if (!isFirstView) {
+			attributeReferral().finally(() => {
+				setIsLoading(true);
+			});
+		}
+	}, [isFirstView]);
 
 	return (
 		<View className='bg-primary size-full'>

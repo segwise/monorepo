@@ -14,7 +14,7 @@ async function attributeReferral() {
 
 		const { data } = await api.post<{
 			referralCode: string;
-		}>('/referral', payload);
+		}>('/application/referral', payload);
 
 		const code = data.referralCode;
 
