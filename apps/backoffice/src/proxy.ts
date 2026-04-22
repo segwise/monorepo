@@ -67,16 +67,18 @@ async function proxy(request: NextRequest) {
 	);
 
 	if (isSharedRoute) {
-		const requestHeaders = new Headers(request.headers);
-
 		const ip = extractIp(request.headers, 'unknown');
 
-		requestHeaders.set('cf-connecting-ip', ip);
-		requestHeaders.set('x-real-ip', ip);
-		requestHeaders.set('x-forwarded-for', ip);
+		const targetUrl = request.nextUrl.clone();
+		targetUrl.href = `${process.env.NEXT_PUBLIC_API_URL}${request.nextUrl.pathname}${request.nextUrl.search}`;
 
-		return NextResponse.next({
-			request: { headers: requestHeaders },
+		const forwardHeaders = new Headers(request.headers);
+		forwardHeaders.set('cf-connecting-ip', ip);
+		forwardHeaders.set('x-real-ip', ip);
+		forwardHeaders.set('x-forwarded-for', ip);
+
+		return NextResponse.rewrite(targetUrl, {
+			request: { headers: forwardHeaders },
 		});
 	}
 

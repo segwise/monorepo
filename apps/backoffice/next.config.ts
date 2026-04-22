@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
 			},
 			{
 				source: '/application',
-				destination: `${process.env.NEXT_PUBLIC_API_URL}/download-application`,
+				destination: `${process.env.NEXT_PUBLIC_API_URL}/referral/:code*`,
 			},
 		];
 	},
