@@ -25,6 +25,7 @@
 			"@/services/*": ["services/*"],
 			"@/server/*": ["services/server/*"],
 			"@/server": ["services/server"],
+			"@/const/*": ["config/const/*"],
 			"@/libraries/*": ["libraries/*"],
 			"@/functions/*": ["functions/*"],
 			"@/environment": ["libraries/environment"],

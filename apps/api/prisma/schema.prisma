@@ -604,6 +604,7 @@ model Invitation {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique([brokerId, email])
+  @@unique([referral])
   @@index([brokerId])
   @@index([email])
   @@map("invitation")
