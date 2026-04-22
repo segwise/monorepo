@@ -51,6 +51,8 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 				os: fp.os,
 			});
 
+			console.log('referral:', fp);
+
 			const ua = fp.userAgent.toLowerCase();
 
 			const isIos = /iphone|ipad|ipod/.test(ua);
