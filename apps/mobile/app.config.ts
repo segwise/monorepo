@@ -36,9 +36,11 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 			dark: './src/assets/images/icons/ios-dark.png',
 			tinted: './src/assets/images/icons/ios-tinted.png',
 		},
+		version: VERSION,
 		buildNumber: VERSION_CODE.toString(),
 	},
 	android: {
+		version: VERSION,
 		adaptiveIcon: {
 			foregroundImage: './src/assets/images/icons/adaptive-icon.png',
 			monochromeImage: './src/assets/images/icons/adaptive-icon.png',
