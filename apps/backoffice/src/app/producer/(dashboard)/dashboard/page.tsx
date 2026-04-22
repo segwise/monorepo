@@ -770,7 +770,6 @@ function ProducerDashboard() {
 		}
 	}
 
-	console.log(data);
 	useEffect(() => {
 		const isVisibleBalance = localStorage.getItem('visible:balance');
 
