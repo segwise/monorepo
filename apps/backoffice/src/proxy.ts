@@ -48,6 +48,15 @@ const getSessionCached = unstable_cache(
 	},
 );
 
+function extractIp(headers: Headers, fallback: string): string {
+	return (
+		headers.get('cf-connecting-ip') ??
+		headers.get('x-real-ip') ??
+		headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+		fallback
+	);
+}
+
 async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
@@ -60,13 +69,11 @@ async function proxy(request: NextRequest) {
 	if (isSharedRoute) {
 		const requestHeaders = new Headers(request.headers);
 
-		const ip =
-			request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
-			request.headers.get('x-real-ip') ??
-			'unknown';
+		const ip = extractIp(request.headers, 'unknown');
 
-		requestHeaders.set('x-forwarded-for', ip);
+		requestHeaders.set('cf-connecting-ip', ip);
 		requestHeaders.set('x-real-ip', ip);
+		requestHeaders.set('x-forwarded-for', ip);
 
 		return NextResponse.next({
 			request: { headers: requestHeaders },
