@@ -36,12 +36,9 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 				return ctx.redirect(FALLBACK_URL, 302);
 			}
 
-			const remoteIp =
-				ctx.req.header('cf-connecting-ip') ??
-				ctx.req.header('x-forwarded-for')?.split(',')[0] ??
-				'unknown';
+			const requestIp = extractIp(ctx.req.raw.headers, 'unknown');
 
-			const fp = buildFingerprint(ctx.req.raw.headers, remoteIp);
+			const fp = buildFingerprint(ctx.req.raw.headers, requestIp);
 
 			await cacheClick({
 				referralCode: code,
