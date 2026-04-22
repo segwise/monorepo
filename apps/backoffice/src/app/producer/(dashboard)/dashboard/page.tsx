@@ -766,7 +766,7 @@ function ProducerDashboard() {
 		try {
 			const message = data?.message;
 
-			const url = `https://segwise.com.br/referral/${data?.referral}`;
+			const url = `https://segwise.com.br/application/?referral=${data?.referral}`;
 
 			const content = message ? `${message}\n\n${url}` : url;
 
