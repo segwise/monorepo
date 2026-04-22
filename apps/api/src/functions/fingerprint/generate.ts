@@ -32,7 +32,7 @@ interface MatchResult {
 	hash: string | null;
 }
 
-const FINGERPRINT_TTL_SECONDS = 72 * 60 * 60;
+const FINGERPRINT_TTL_SECONDS = 60 * 5;
 
 const MIN_MATCH_SCORE = 70;
 
