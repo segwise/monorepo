@@ -51,8 +51,6 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 				os: fp.os,
 			});
 
-			console.log('referral:', fp);
-
 			const ua = fp.userAgent.toLowerCase();
 
 			const isIos = /iphone|ipad|ipod/.test(ua);
@@ -78,7 +76,6 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 				language: z.string().optional(),
 				os: z.string().optional(),
 			}),
-			(data) => console.log(data.data),
 		),
 		async (ctx) => {
 			const requestIp =
@@ -90,11 +87,18 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 
 			const data = ctx.req.valid('json');
 
+			console.log({
+				ip: requestIp,
+				userAgent,
+				language: data.language ?? null,
+				os: ('android' || data.os) ?? null,
+			});
+
 			const match = await findMatch({
 				ip: requestIp,
 				userAgent,
 				language: data.language ?? null,
-				os: data.os ?? null,
+				os: ('android' || data.os) ?? null,
 			});
 
 			const referral = {
