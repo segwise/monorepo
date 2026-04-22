@@ -77,6 +77,8 @@ async function proxy(request: NextRequest) {
 		forwardHeaders.set('x-real-ip', ip);
 		forwardHeaders.set('x-forwarded-for', ip);
 
+		console.log('PASSOU aqui');
+
 		return NextResponse.rewrite(targetUrl, {
 			request: { headers: forwardHeaders },
 		});
