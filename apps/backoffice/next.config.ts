@@ -14,6 +14,18 @@ const nextConfig: NextConfig = {
 		],
 	},
 	devIndicators: false,
+	async rewrites() {
+		return [
+			{
+				source: '/referral/:code*',
+				destination: `${process.env.NEXT_PUBLIC_API_URL}/referral/:code*`,
+			},
+			{
+				source: '/application',
+				destination: `${process.env.NEXT_PUBLIC_API_URL}/download-application`,
+			},
+		];
+	},
 };
 
 export default nextConfig;

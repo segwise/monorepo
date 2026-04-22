@@ -10,6 +10,8 @@ const PUBLIC_ROUTES = [
 	'/accept-invitation',
 ];
 
+const SHARED_ROUTES = ['/referral/:code*', '/application'];
+
 const COOKIE_PREFIX = getCookiePrefix();
 
 const getSessionCached = unstable_cache(
@@ -49,13 +51,23 @@ const getSessionCached = unstable_cache(
 async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
+	const isSharedRoute = SHARED_ROUTES.some((route) =>
+		route.endsWith(':path*') || route.endsWith(':code*')
+			? pathname.startsWith(route.replace('/:path*', '').replace('/:code*', ''))
+			: pathname === route,
+	);
+
+	if (isSharedRoute) {
+		return NextResponse.next();
+	}
+
 	const session = await getSessionCached(request.cookies.toString());
 
 	if (session && pathname === '/') {
 		return NextResponse.redirect(new URL('/dashboard', request.url));
 	}
 
-	const isPublicRoute = PUBLIC_ROUTES.some((route) =>
+	const isPublicRoute = [...PUBLIC_ROUTES, ...SHARED_ROUTES].some((route) =>
 		route.endsWith(':path*')
 			? pathname.startsWith(
 					`/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}${route.replace('/:path*', '')}`,
