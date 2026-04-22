@@ -92,12 +92,14 @@ function registerRoutersServicesAuthProfileDetailsProducer(server: Server) {
 				select: {
 					startOfProductionPayment: true,
 					referral: true,
+					invitationMessage: true,
 				},
 			}),
 		]);
 
 		return ctx.json(
 			{
+				message: member?.invitationMessage,
 				referral: member?.referral,
 				valueToReceive:
 					safes.some(
