@@ -10,6 +10,7 @@ import {
 import {
 	buildFingerprint,
 	cacheClick,
+	extractIp,
 	findMatch,
 } from '@/functions/fingerprint/generate';
 
@@ -80,10 +81,7 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 			}),
 		),
 		async (ctx) => {
-			const requestIp =
-				ctx.req.header('cf-connecting-ip') ??
-				ctx.req.header('x-forwarded-for')?.split(',')[0] ??
-				'unknown';
+			const requestIp = extractIp(ctx.req.raw.headers, 'unknown');
 
 			const userAgent = ctx.req.raw.headers.get('user-agent') ?? 'unknown';
 
@@ -93,14 +91,14 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 				ip: requestIp,
 				userAgent,
 				language: data.language ?? null,
-				os: ('android' || data.os) ?? null,
+				os: data.os ?? null,
 			});
 
 			const match = await findMatch({
 				ip: requestIp,
 				userAgent,
 				language: data.language ?? null,
-				os: ('android' || data.os) ?? null,
+				os: data.os ?? null,
 			});
 
 			const referral = {

@@ -35,26 +35,38 @@ const FINGERPRINT_TTL_SECONDS = 72 * 60 * 60;
 
 const MIN_MATCH_SCORE = 70;
 
+function normalizeIp(raw: string): string {
+	const ipv4Mapped = raw.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+
+	if (ipv4Mapped) {
+		return ipv4Mapped[1] as string;
+	}
+
+	if (raw === '::1') return '127.0.0.1';
+
+	return raw;
+}
+
 function extractIp(headers: Headers, fallback: string): string {
 	const cfIp = headers.get('cf-connecting-ip');
 
 	if (cfIp) {
-		return cfIp.trim();
+		return normalizeIp(cfIp.trim());
 	}
 
 	const forwardedFor = headers.get('x-forwarded-for');
 
 	if (forwardedFor) {
-		return forwardedFor.split(',')[0]?.trim() as string;
+		return normalizeIp(forwardedFor.split(',')[0]?.trim() as string);
 	}
 
 	const realIp = headers.get('x-real-ip');
 
 	if (realIp) {
-		return realIp.trim();
+		return normalizeIp(realIp.trim());
 	}
 
-	return fallback;
+	return normalizeIp(fallback);
 }
 
 function hashUa(userAgent: string): string {
@@ -192,5 +204,6 @@ export {
 	buildRedisKey,
 	buildRedisIpKey,
 	cacheClick,
+	extractIp,
 	findMatch,
 };
