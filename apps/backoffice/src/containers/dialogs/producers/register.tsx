@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { maskCNPJ, maskCPF, maskPhone } from '@segwise/core/masks';
+import { maskCNPJ, maskCPF, maskNumber, maskPhone } from '@segwise/core/masks';
 import {
 	SchemaProducerRegister,
 	SchemaProducerStartOfProductionPayment,
@@ -47,6 +47,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { useProducersRegister } from '@/libraries/hooks/producers/use-producers-register';
 import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 
@@ -105,13 +106,16 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 	return (
 		<Dialog open={open} onOpenChange={(open) => [setOpen(open), reset()]}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent>
+			<DialogContent className='max-w-5xl'>
 				<DialogHeader>
 					<DialogTitle>Cadastrar Novo Produtor</DialogTitle>
 					<DialogDescription>Atenção ao realizar a ação</DialogDescription>
 				</DialogHeader>
 				<Separator />
-				<form onSubmit={handleSubmit(onSubmit)}>
+				<form
+					onSubmit={handleSubmit(onSubmit)}
+					className='grid grid-cols-[55%_auto] gap-4'
+				>
 					<FieldGroup className='grid grid-cols-2 gap-4'>
 						<Controller
 							control={control}
@@ -130,7 +134,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 													? isCPF(value)
 														? maskCPF(value)
 														: maskCNPJ(value)
-													: value,
+													: maskNumber(value),
 											);
 
 											if (value.length === 0) {
@@ -226,13 +230,22 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 											<SelectValue placeholder='Selecionar' />
 										</SelectTrigger>
 										<SelectContent>
-											{SchemaProducerTypeOfPayment.options.map((item) => (
+											<SelectItem
+												value={SchemaProducerTypeOfPayment.enum.monthly}
+											>
+												{capitalizeFirstLetters(
+													translateProducerTypeOfPayment(
+														SchemaProducerTypeOfPayment.enum.monthly,
+													),
+												)}
+											</SelectItem>
+											{/* {SchemaProducerTypeOfPayment.options.map((item) => (
 												<SelectItem key={item} value={item}>
 													{capitalizeFirstLetters(
 														translateProducerTypeOfPayment(item),
 													)}
 												</SelectItem>
-											))}
+											))} */}
 										</SelectContent>
 									</Select>
 									{fieldState.invalid && (
@@ -375,6 +388,36 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										className='uppercase'
 										onChange={({ target: { value } }) =>
 											field.onChange(value.trim())
+										}
+									/>
+									{fieldState.invalid && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+					</FieldGroup>
+					<FieldGroup>
+						<Controller
+							control={control}
+							name='message'
+							render={({ field, fieldState }) => (
+								<Field
+									data-invalid={fieldState.invalid}
+									className='col-span-full'
+								>
+									<FieldLabel htmlFor='message'>
+										Mensagem de Indicação:{' '}
+									</FieldLabel>
+									<Textarea
+										{...field}
+										id='message'
+										value={field.value || ''}
+										aria-invalid={fieldState.invalid}
+										placeholder='Informar Código'
+										className='uppercase min-h-40'
+										onChange={({ target: { value } }) =>
+											field.onChange(!value ? null : value.trim())
 										}
 									/>
 									{fieldState.invalid && (

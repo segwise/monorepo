@@ -18,7 +18,6 @@ import {
 	translateGarage,
 	translateGarageSchool,
 	translateGarageWork,
-	translateMaritalStatus,
 	translateResidence,
 	translateSafeCommissionType,
 	translateVehicleExchange,
@@ -145,7 +144,6 @@ function FormProposalRegister() {
 				name: '',
 				birth: '',
 				phone: '',
-				qualificationTime: null,
 			},
 			vehicle: {
 				plate: null,
@@ -216,7 +214,6 @@ function FormProposalRegister() {
 						name: '',
 						birth: '',
 						phone: '',
-						maritalStatus: null,
 					},
 					vehicle: {
 						plate: null,
@@ -781,93 +778,6 @@ function FormProposalRegister() {
 														field.onChange(maskPhone(value))
 													}
 												/>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
-												)}
-											</Field>
-										)}
-									/>
-									<Controller
-										control={control}
-										name='insured.maritalStatus'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='insured-marital-status'>
-													Estado Cívil:
-												</FieldLabel>
-												<Select {...field} onValueChange={field.onChange}>
-													<SelectTrigger
-														id='insured-marital-status'
-														aria-invalid={fieldState.invalid}
-													>
-														<SelectValue placeholder='Selecionar' />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value='single'>
-															{translateMaritalStatus('single')}
-														</SelectItem>
-														<SelectItem value='common_law_marriage'>
-															{translateMaritalStatus('common_law_marriage')}
-														</SelectItem>
-														<SelectItem value='separated'>
-															{translateMaritalStatus('separated')}
-														</SelectItem>
-														<SelectItem value='divorced'>
-															{translateMaritalStatus('divorced')}
-														</SelectItem>
-														<SelectItem value='married'>
-															{translateMaritalStatus('married')}
-														</SelectItem>
-														<SelectItem value='widowed'>
-															{translateMaritalStatus('widowed')}
-														</SelectItem>
-													</SelectContent>
-												</Select>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
-												)}
-											</Field>
-										)}
-									/>
-									<Controller
-										control={control}
-										name='insured.qualificationTime'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='insured-qualification-time'>
-													Tempo de Habilitação:
-													<sup className='text-muted-foreground ml-2'>
-														( Opcional )
-													</sup>
-												</FieldLabel>
-												<Select
-													{...field}
-													value={field.value ? String(field.value) : ''}
-													onValueChange={field.onChange}
-												>
-													<SelectTrigger
-														id='insured-qualification-time'
-														aria-invalid={fieldState.invalid}
-													>
-														<SelectValue placeholder='Selecionar' />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value='0'>
-															Permissão Provisória
-														</SelectItem>
-														<SelectSeparator />
-														<SelectItem value='1'>1 anos</SelectItem>
-														<SelectItem value='2'>2 anos</SelectItem>
-														<SelectItem value='3'>3 anos</SelectItem>
-														<SelectItem value='4'>4 anos</SelectItem>
-														<SelectItem value='5'>5 anos</SelectItem>
-														<SelectItem value='6'>6 anos</SelectItem>
-														<SelectItem value='7'>7 anos</SelectItem>
-														<SelectItem value='8'>8 anos</SelectItem>
-														<SelectItem value='9'>9 anos</SelectItem>
-														<SelectItem value='10'>+10 anos</SelectItem>
-													</SelectContent>
-												</Select>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}
