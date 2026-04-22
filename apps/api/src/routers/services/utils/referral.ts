@@ -23,6 +23,7 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 			z.object({
 				code: SchemaReferral,
 			}),
+			(data) => console.log(data.data),
 		),
 		async (ctx) => {
 			const { code } = ctx.req.valid('param');
