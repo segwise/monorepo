@@ -58,7 +58,19 @@ async function proxy(request: NextRequest) {
 	);
 
 	if (isSharedRoute) {
-		return NextResponse.next();
+		const requestHeaders = new Headers(request.headers);
+
+		const ip =
+			request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+			request.headers.get('x-real-ip') ??
+			'unknown';
+
+		requestHeaders.set('x-forwarded-for', ip);
+		requestHeaders.set('x-real-ip', ip);
+
+		return NextResponse.next({
+			request: { headers: requestHeaders },
+		});
 	}
 
 	const session = await getSessionCached(request.cookies.toString());
