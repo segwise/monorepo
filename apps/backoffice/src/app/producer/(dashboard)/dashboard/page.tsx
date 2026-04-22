@@ -100,6 +100,7 @@ function ProducerDashboard() {
 		queryFn: async ({ signal }) =>
 			(
 				await api.get<{
+					message?: string;
 					referral: string;
 					valueToReceive: number;
 					dateOfReceipt: string;
@@ -755,11 +756,13 @@ function ProducerDashboard() {
 
 	async function copyReferral() {
 		try {
-			const url = new URL('https://segwise.com.br/download/appplication');
+			const message = data?.message;
 
-			url.searchParams.set('referral', data?.referral as string);
+			const url = `https://segwise.com.br/referral/${data?.referral}`;
 
-			await navigator.clipboard.writeText(url.toString());
+			const content = message ? `${message}\n\n${url}` : url;
+
+			await navigator.clipboard.writeText(content);
 
 			toast.success('LINK DE INDICAÇÃO COPIADO');
 		} catch {
@@ -767,6 +770,7 @@ function ProducerDashboard() {
 		}
 	}
 
+	console.log(data);
 	useEffect(() => {
 		const isVisibleBalance = localStorage.getItem('visible:balance');
 

@@ -417,7 +417,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										placeholder='Informar Código'
 										className='uppercase min-h-40'
 										onChange={({ target: { value } }) =>
-											field.onChange(!value ? null : value.trim())
+											field.onChange(!value ? null : value)
 										}
 									/>
 									{fieldState.invalid && (
