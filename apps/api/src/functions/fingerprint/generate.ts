@@ -54,16 +54,16 @@ function extractIp(headers: Headers, fallback: string): string {
 		return normalizeIp(cfIp.trim());
 	}
 
-	const forwardedFor = headers.get('x-forwarded-for');
-
-	if (forwardedFor) {
-		return normalizeIp(forwardedFor.split(',')[0]?.trim() as string);
-	}
-
 	const realIp = headers.get('x-real-ip');
 
 	if (realIp) {
 		return normalizeIp(realIp.trim());
+	}
+
+	const forwardedFor = headers.get('x-forwarded-for');
+
+	if (forwardedFor) {
+		return normalizeIp(forwardedFor.split(',')[0]?.trim() as string);
 	}
 
 	return normalizeIp(fallback);
