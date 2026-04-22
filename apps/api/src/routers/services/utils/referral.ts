@@ -51,6 +51,8 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 				os: fp.os,
 			});
 
+			console.log('referral:', fp);
+
 			const ua = fp.userAgent.toLowerCase();
 
 			const isIos = /iphone|ipad|ipod/.test(ua);
@@ -94,16 +96,17 @@ function registerRoutersServicesUtilsReferral(server: Server) {
 				os: data.os ?? null,
 			});
 
-			return ctx.json(
-				{
-					matched: match.matched,
-					referralCode: match.referralCode,
-					partnerId: match.partnerId,
-					score: match.score,
-					cached: false,
-				},
-				200,
-			);
+			const referral = {
+				matched: match.matched,
+				referralCode: match.referralCode,
+				partnerId: match.partnerId,
+				score: match.score,
+				cached: false,
+			};
+
+			console.log('referral:', referral);
+
+			return ctx.json(referral, 200);
 		},
 	);
 }
