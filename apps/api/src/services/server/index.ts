@@ -22,6 +22,8 @@ const server = new Hono<AppBindings>({
 		getPath: (req) => {
 			const host = req.headers.get('host') || '';
 
+			console.log('host:', host);
+
 			const domain = host.split(':')[0]?.split('.').shift();
 
 			const subdomain = domain === 'localhost' ? 'services' : domain;
