@@ -1,7 +1,7 @@
 import { api } from '@/libraries/api';
 import { storage } from '@/libraries/storage';
-import { osName } from 'expo-device';
 import { getLocales } from 'expo-localization';
+import { Platform } from 'react-native';
 
 async function attributeReferral() {
 	try {
@@ -9,7 +9,7 @@ async function attributeReferral() {
 
 		const payload = {
 			language: locale[0].languageTag,
-			os: osName,
+			os: Platform.OS,
 		};
 
 		const { data } = await api.post<{
