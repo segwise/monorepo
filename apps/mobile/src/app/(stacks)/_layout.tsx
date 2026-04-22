@@ -7,6 +7,7 @@ export const unstable_settings = {
 };
 
 function StackLayout() {
+	const isFirstView = !!storage.getString('first-view');
 	const isReferral = !!storage.getString('referral');
 
 	return (
@@ -17,10 +18,11 @@ function StackLayout() {
 			initialRouteName='home'
 		>
 			<Stack.Screen
-				redirect={isReferral}
+				redirect={isFirstView || isReferral}
 				name='request-referral'
 				options={{
 					title: 'Seu amigo na hora do sinistro',
+					header: (props) => <Header {...props} titlePosition='center' />,
 				}}
 			/>
 			<Stack.Screen

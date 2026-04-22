@@ -43,6 +43,8 @@ function RequestReferralScreen() {
 			onSuccess(_, { referral }) {
 				storage.set('referral', referral);
 
+				storage.set('first-view', true);
+
 				replace('/(stacks)/home');
 			},
 			onError(error) {

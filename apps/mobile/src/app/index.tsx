@@ -1,29 +1,45 @@
-import LOGO from '@/assets/images/logo/segwise.png';
-import BACKGROUND_MAP from '@/assets/images/splash-screen/background-map.png';
-import { cn } from '@/libraries/classname';
-import { storage } from '@/libraries/storage';
+// import { storage } from '@/libraries/storage';
 import { Image, ImageBackground } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
+// import { useRouter } from 'expo-router';
+// import { useCallback, useEffect } from 'react';
+import LOGO from '@/assets/images/logo/segwise.png';
+import BACKGROUND_MAP from '@/assets/images/splash-screen/background-map.png';
+import { attributeReferral } from '@/functions/attribute-referral';
+import { cn } from '@/libraries/classname';
+import { storage } from '@/libraries/storage';
 
 function IndexScreen() {
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+
 	const { width, height } = useWindowDimensions();
 
 	const { replace } = useRouter();
 
 	const navigation = useCallback(() => {
-		const storeReferral = storage.getString('referral');
+		const isFirstView = storage.getBoolean('first-view');
 
-		replace(!storeReferral ? '/(stacks)/request-referral' : '/(stacks)/home');
-	}, [replace]);
+		if (!isLoading) {
+			return;
+		}
+
+		replace(!isFirstView ? '/(stacks)/request-referral' : '/(stacks)/home');
+	}, [replace, isLoading]);
 
 	useEffect(() => {
 		setTimeout(() => {
 			navigation();
 		}, 3000);
 	}, [navigation]);
+
+	useEffect(() => {
+		attributeReferral().finally(() => {
+			setIsLoading(true);
+		});
+	}, []);
 
 	return (
 		<View className='bg-primary size-full'>

@@ -8,7 +8,7 @@ import { NAV_THEME } from '@/libraries/theme';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import { setDefaultOptions } from 'date-fns';
-import { ptBR } from 'date-fns/locale'; // Example: Spanish locale
+import { ptBR } from 'date-fns/locale';
 import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';

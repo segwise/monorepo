@@ -9,8 +9,8 @@ const BUNDLE_IDENTIFIER = 'br.com.segwise';
 const PACKAGE_NAME = BUNDLE_IDENTIFIER;
 const SCHEME = PROJECT_SLUG;
 
-const VERSION = '1.0.7';
-const VERSION_CODE = 7;
+const VERSION = '1.0.8';
+const VERSION_CODE = 8;
 
 const config = ({ config }: ConfigContext): ExpoConfig => ({
 	...config,
@@ -74,6 +74,7 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 					'This identifier will be used to deliver personalized ads to you.',
 			},
 		],
+		'expo-localization',
 	],
 	experiments: {
 		typedRoutes: true,

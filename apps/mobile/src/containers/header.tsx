@@ -1,5 +1,6 @@
 import LOGO from '@/assets/images/logo/segwise.png';
 import { cn } from '@/libraries/classname';
+import { storage } from '@/libraries/storage';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -29,7 +30,7 @@ function Header({
 	// @ts-expect-error
 	const firstInit = props.route.params?.['first-init'];
 
-	const { back } = useRouter();
+	const { back, replace } = useRouter();
 
 	return (
 		<View>
@@ -77,8 +78,29 @@ function Header({
 					allowDownscaling={false}
 					accessible={false}
 				/>
-				{showReturn && (
-					<View className={cn('size-6', width <= 400 && 'size-8')} />
+				{props.route.name === 'request-referral' ? (
+					<TouchableOpacity
+						onPress={() => {
+							replace('/(stacks)/home');
+
+							storage.set('first-view', true);
+						}}
+						hitSlop={14}
+						className={cn('size-6', width <= 400 && 'size-8')}
+					>
+						<SymbolView
+							name={{
+								ios: 'x.circle.fill',
+								android: 'close',
+							}}
+							size={32}
+							tintColor='#FFFFFF'
+						/>
+					</TouchableOpacity>
+				) : (
+					showReturn && (
+						<View className={cn('size-6', width <= 400 && 'size-8')} />
+					)
 				)}
 			</View>
 			<View
