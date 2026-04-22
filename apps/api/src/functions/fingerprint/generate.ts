@@ -29,6 +29,7 @@ interface MatchResult {
 	score: number;
 	referralCode: string | null;
 	partnerId: string | null;
+	hash: string | null;
 }
 
 const FINGERPRINT_TTL_SECONDS = 72 * 60 * 60;
@@ -151,6 +152,7 @@ async function findMatch(params: {
 			score,
 			referralCode: entry.referralCode,
 			partnerId: entry.partnerId,
+			hash: entry.uaHash,
 		};
 	}
 
@@ -188,6 +190,7 @@ async function findMatch(params: {
 			score,
 			referralCode: entry.referralCode,
 			partnerId: entry.partnerId,
+			hash: entry.uaHash,
 		};
 	}
 
@@ -196,7 +199,30 @@ async function findMatch(params: {
 		score: 0,
 		referralCode: null,
 		partnerId: null,
+		hash: null,
 	};
+}
+
+async function deleteMatch(ip: string, hash?: string | null) {
+	if (hash) {
+		const keyIpHash = buildRedisKey(ip, hash);
+
+		const exists = await cache.exists(keyIpHash);
+
+		if (exists) {
+			await cache.del(keyIpHash);
+		}
+	}
+
+	if (ip) {
+		const keyIp = buildRedisIpKey(ip);
+
+		const exists = await cache.exists(keyIp);
+
+		if (exists) {
+			await cache.del(keyIp);
+		}
+	}
 }
 
 export {
@@ -206,4 +232,5 @@ export {
 	cacheClick,
 	extractIp,
 	findMatch,
+	deleteMatch,
 };

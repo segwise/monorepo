@@ -10,6 +10,7 @@ import {
 import {
 	buildFingerprint,
 	cacheClick,
+	deleteMatch,
 	extractIp,
 	findMatch,
 } from '@/functions/fingerprint/generate';
@@ -20,7 +21,7 @@ function registerRoutersServicesUtilsApplicationReferral(server: Server) {
 	base.get(
 		'/',
 		zValidator(
-			'param',
+			'query',
 			z
 				.object({
 					referral: SchemaReferral.nullish(),
@@ -29,7 +30,7 @@ function registerRoutersServicesUtilsApplicationReferral(server: Server) {
 				.strict(),
 		),
 		async (ctx) => {
-			const { referral } = ctx.req.valid('param');
+			const { referral } = ctx.req.valid('query');
 
 			if (!referral) {
 				const userAgent = ctx.req.raw.headers.get('user-agent') ?? 'unknown';
@@ -120,6 +121,10 @@ function registerRoutersServicesUtilsApplicationReferral(server: Server) {
 				score: match.score,
 				cached: false,
 			};
+
+			if (referral.referralCode) {
+				await deleteMatch(requestIp, match.hash);
+			}
 
 			return ctx.json(referral, 200);
 		},
