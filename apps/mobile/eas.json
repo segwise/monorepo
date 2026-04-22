@@ -18,10 +18,11 @@
 		},
 		"production": {
 			"bun": "1.3.10",
-			"autoIncrement": true
+			"autoIncrement": true,
+			"android": {
+				"gradleCommand": ":app:bundleRelease"
+			}
 		}
 	},
-	"submit": {
-		"production": {}
-	}
+	"submit": {}
 }
