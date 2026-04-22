@@ -24,6 +24,9 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 				where: {
 					id: token,
 				},
+				select: {
+					role: true,
+				},
 			});
 
 			if (invitation?.role === Role.producer) {
@@ -73,6 +76,7 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 						role: true,
 						startOfProductionPayment: true,
 						brokerId: true,
+						invitationMessage: true,
 					},
 				});
 
@@ -154,6 +158,7 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 							typeOfProductionPayment: invitation.typeOfProductionPayment,
 							percentageOfProduction: invitation.percentageOfProduction,
 							startOfProductionPayment: invitation.startOfProductionPayment,
+							invitationMessage: invitation.invitationMessage,
 						},
 					});
 				});

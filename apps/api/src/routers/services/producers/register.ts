@@ -23,6 +23,7 @@ function registerRoutersServicesProducersRegister(server: Server) {
 			startOfPayment,
 			referral,
 			cpfOrCnpj,
+			message,
 		} = ctx.req.valid('json');
 
 		if (!brokerId) {
@@ -90,6 +91,9 @@ function registerRoutersServicesProducersRegister(server: Server) {
 					organizationId: brokerId,
 					role: Role.producer,
 					referral,
+					...(!!message && {
+						invitationMessage: message,
+					}),
 					...(type &&
 						type !== SchemaProducerType.enum.producer && {
 							typeOfProduction: type,

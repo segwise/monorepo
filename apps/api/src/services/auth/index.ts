@@ -238,6 +238,10 @@ const auth = betterAuth({
 						organizationId: 'brokerId',
 					},
 					additionalFields: {
+						invitationMessage: {
+							type: 'string',
+							required: false,
+						},
 						referral: {
 							type: 'string',
 							required: false,

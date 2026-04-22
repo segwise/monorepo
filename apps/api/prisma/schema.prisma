@@ -562,6 +562,8 @@ model Member {
   typeOfProductionPayment  TypeOfProductionPayment? @map("type_of_production_payment")
   startOfProductionPayment Int?                     @map("start_of_production_payment") @db.SmallInt
 
+  invitationMessage String? @map("invitation_message") @db.Text
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -589,6 +591,8 @@ model Invitation {
   percentageOfProduction   Int?                     @map("percentage_of_production") @db.SmallInt
   typeOfProductionPayment  TypeOfProductionPayment? @map("type_of_production_payment")
   startOfProductionPayment Int?                     @map("start_of_production_payment") @db.SmallInt
+
+  invitationMessage String? @map("invitation_message") @db.Text
 
   status StatusInvitation @default(pending)
 

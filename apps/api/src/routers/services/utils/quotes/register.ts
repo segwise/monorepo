@@ -1,6 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaQuoteSimpleRegister } from '@segwise/core';
-import { endOfDay, endOfMonth, subYears } from 'date-fns';
+import { endOfDay, endOfMonth } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { vehicleByPlate } from '@/functions/vehicle/by-plate';
@@ -221,14 +221,13 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 										overnightPostalCode: postalCode,
 									},
 								},
+								requestedAt: new Date(),
 								...(expiration
 									? {
 											expiration: endOfDay(expiration),
-											requestedAt: subYears(endOfDay(expiration), 1),
 										}
 									: {
 											expiration: endOfMonth(new Date()),
-											requestedAt: subYears(endOfMonth(new Date()), 1),
 										}),
 								franchise,
 							},
