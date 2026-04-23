@@ -720,6 +720,7 @@ function RequestQuote() {
 														value={insuranceCompanySearch}
 														onChangeText={setInsuranceCompanySearch}
 														className='h-10'
+														placeholder='Pesquisar'
 													/>
 													<NativeSelectScrollView keyboardShouldPersistTaps='always'>
 														{insuranceCompanies

@@ -54,10 +54,10 @@ function HomeScreen() {
 								<Text
 									allowFontScaling={false}
 									accessible={false}
-									className='text-white'
+									className='text-white font-bold mr-3'
 								>
 									SIM
-								</Text>{' '}
+								</Text>
 								<SymbolView name='checkmark' size={20} tintColor='white' />
 							</Button>
 							<DialogClose asChild>
@@ -65,10 +65,10 @@ function HomeScreen() {
 									<Text
 										allowFontScaling={false}
 										accessible={false}
-										className='text-balance'
+										className='text-bold mr-3'
 									>
 										NÃO
-									</Text>{' '}
+									</Text>
 									<SymbolView name='x.circle' size={20} tintColor='black' />
 								</Button>
 							</DialogClose>
