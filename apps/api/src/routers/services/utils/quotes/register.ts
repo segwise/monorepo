@@ -57,7 +57,7 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 			}
 
 			if (!brokerId) {
-				const broker = await ctx.database.insuranceCompany.findFirst({
+				const broker = await ctx.database.broker.findFirst({
 					orderBy: {
 						createdAt: 'asc',
 					},
