@@ -23,8 +23,9 @@ function IndexScreen() {
 			return;
 		}
 
-		replace(!isFirstView ? '/(stacks)/request-referral' : '/(stacks)/home');
-	}, [replace, isLoading, isFirstView]);
+		// replace(!isFirstView ? '/(stacks)/request-referral' : '/(stacks)/home');
+		replace('/(stacks)/home');
+	}, [replace, isLoading]);
 
 	useEffect(() => {
 		setTimeout(() => {
