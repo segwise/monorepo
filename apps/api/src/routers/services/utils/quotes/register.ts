@@ -38,13 +38,40 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 				referral,
 			} = ctx.req.valid('json');
 
+			let brokerId = null;
+
 			const referralResponse = referral
 				? await ctx.database.member.findUnique({
 						where: {
 							referral,
 						},
+						select: {
+							userId: true,
+							brokerId: true,
+						},
 					})
 				: null;
+
+			if (referralResponse?.brokerId) {
+				brokerId = referralResponse?.brokerId;
+			}
+
+			if (!brokerId) {
+				const broker = await ctx.database.insuranceCompany.findFirst({
+					orderBy: {
+						createdAt: 'asc',
+					},
+					select: {
+						id: true,
+					},
+				});
+
+				if (!broker?.id) {
+					throw new Error('Nenhuma corretora vinculada');
+				}
+
+				brokerId = broker?.id;
+			}
 
 			try {
 				let quote = null;
@@ -55,7 +82,7 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 						data: {
 							broker: {
 								connect: {
-									id: referralResponse?.brokerId,
+									id: brokerId,
 								},
 							},
 							name: insured?.name as string,
@@ -77,14 +104,17 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 
 					const response = await transaction.quote.create({
 						data: {
-							producer: {
-								connect: {
-									id: referralResponse?.userId,
+							...(referralResponse && {
+								producer: {
+									connect: {
+										id: referralResponse.userId,
+									},
 								},
-							},
+							}),
+
 							broker: {
 								connect: {
-									id: referralResponse?.brokerId,
+									id: brokerId,
 								},
 							},
 							modality,
@@ -166,7 +196,7 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 								},
 								broker: {
 									connect: {
-										id: referralResponse?.brokerId,
+										id: brokerId,
 									},
 								},
 								isExternal: true,
