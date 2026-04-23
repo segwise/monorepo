@@ -189,11 +189,13 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 					if (renewal) {
 						const response = await transaction.safe.create({
 							data: {
-								producer: {
-									connect: {
-										id: referralResponse?.userId,
+								...(referralResponse && {
+									producer: {
+										connect: {
+											id: referralResponse.userId,
+										},
 									},
-								},
+								}),
 								broker: {
 									connect: {
 										id: brokerId,
