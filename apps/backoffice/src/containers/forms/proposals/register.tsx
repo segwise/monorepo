@@ -1899,7 +1899,7 @@ function DialogGetPlate({
 							<div className='text-sm'>
 								Segurado:{' '}
 								<b>
-									{data.insured.name} |{' '}
+									{capitalizeFirstLetters(data.insured.name)} -{' '}
 									{data.insured.cpf
 										? isCPF(data.insured.cpf)
 											? maskCPF(data.insured.cpf)
@@ -1918,11 +1918,16 @@ function DialogGetPlate({
 									</b>
 								</div>
 								<div className='text-sm'>
-									Marca: <b>{data.vehicle?.manufacturer}</b>
+									Marca:{' '}
+									<b>
+										{capitalizeFirstLetters(
+											data.vehicle?.manufacturer as string,
+										)}
+									</b>
 								</div>
 								<div className='text-sm'>
-									Modelo:
-									<b>{data.vehicle?.model}</b>
+									Modelo:{' '}
+									<b>{capitalizeFirstLetters(data.vehicle?.model as string)}</b>
 								</div>
 								<div className='text-sm'>
 									Ano: <b>{data.vehicle?.modelYear}</b>
