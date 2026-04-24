@@ -11,7 +11,7 @@ function registerRoutersServicesQuotesByPlate(server: Server) {
 	base.get('/', async (ctx) => {
 		const plate = ctx.req.param('plate');
 
-		const quotes = await ctx.database.quote.findFirst({
+		const quote = await ctx.database.quote.findFirst({
 			where: {
 				quoteVehicle: {
 					vehicle: {
@@ -90,50 +90,51 @@ function registerRoutersServicesQuotesByPlate(server: Server) {
 			},
 		});
 
-		if (!quotes) {
+		if (!quote) {
 			throw new Error('Nenhum registro encontrado!');
 		}
 
+		console.log(quote);
+
 		return ctx.json(
 			{
-				...(quotes.producerId && {
-					producer: quotes.producerId,
+				...(quote.producerId && {
+					producer: quote.producerId,
 				}),
-				modality: quotes.modality,
-				renewal: quotes.renewal || false,
-				status: quotes.status,
-				requestedAt: quotes.requestedAt,
-				insuranceCompany: quotes.insuranceCompanyId,
-				expiration: quotes.expiration,
+				modality: quote.modality,
+				renewal: quote.renewal || false,
+				status: quote.status,
+				requestedAt: quote.requestedAt,
+				insuranceCompany: quote.insuranceCompanyId,
+				expiration: quote.expiration,
 				insured: {
-					name: (quotes.insured?.name ||
-						quotes.temporaryInsured?.name) as string,
-					cpf: (quotes.insured?.cpf ||
-						quotes.insured?.cnpj ||
-						quotes.temporaryInsured?.cpf ||
-						quotes.temporaryInsured?.cnpj) as string,
-					birth: (quotes.insured?.birth ||
-						quotes.temporaryInsured?.birth) as Date,
-					phone: (quotes.insured?.phone ||
-						quotes.temporaryInsured?.phone) as string,
+					name: (quote.insured?.name || quote.temporaryInsured?.name) as string,
+					cpf: (quote.insured?.cpf ||
+						quote.insured?.cnpj ||
+						quote.temporaryInsured?.cpf ||
+						quote.temporaryInsured?.cnpj) as string,
+					birth: (quote.insured?.birth ||
+						quote.temporaryInsured?.birth) as Date,
+					phone: (quote.insured?.phone ||
+						quote.temporaryInsured?.phone) as string,
 					maritalStatus: 'common_law_marriage',
 					qualificationTime: 0,
 				},
 				vehicle: {
-					plate: quotes.quoteVehicle?.plate,
-					manufacturer: (quotes.quoteVehicle?.vehicle?.manufacturer.name ||
-						quotes.quoteVehicle?.vehicleWithoutPlate?.manufacturer
+					plate: quote.quoteVehicle?.plate,
+					manufacturer: (quote.quoteVehicle?.vehicle?.manufacturer.name ||
+						quote.quoteVehicle?.vehicleWithoutPlate?.manufacturer
 							?.name) as string,
-					model: (quotes.quoteVehicle?.vehicle?.model ||
-						quotes.quoteVehicle?.vehicleWithoutPlate?.model) as string,
-					modelYear: (quotes.quoteVehicle?.vehicle?.modelYear ||
-						quotes.quoteVehicle?.vehicleWithoutPlate?.modelYear) as number,
-					chassi: quotes.quoteVehicle?.vehicle?.chassi,
-					usage: quotes.quoteVehicle?.usage as VehicleUsage,
-					exchange: (quotes.quoteVehicle?.vehicle?.exchange ||
-						quotes.quoteVehicle?.vehicleWithoutPlate
+					model: (quote.quoteVehicle?.vehicle?.model ||
+						quote.quoteVehicle?.vehicleWithoutPlate?.model) as string,
+					modelYear: (quote.quoteVehicle?.vehicle?.modelYear ||
+						quote.quoteVehicle?.vehicleWithoutPlate?.modelYear) as number,
+					chassi: quote.quoteVehicle?.vehicle?.chassi,
+					usage: quote.quoteVehicle?.usage as VehicleUsage,
+					exchange: (quote.quoteVehicle?.vehicle?.exchange ||
+						quote.quoteVehicle?.vehicleWithoutPlate
 							?.exchange) as VehicleExchange,
-					overnightPostalCode: quotes.quoteVehicle
+					overnightPostalCode: quote.quoteVehicle
 						?.overnightPostalCode as string,
 					additional: {
 						residence: {
@@ -150,9 +151,9 @@ function registerRoutersServicesQuotesByPlate(server: Server) {
 					},
 				},
 				driver: {
-					name: quotes.quoteVehicle?.driverName as string,
-					cpf: quotes.quoteVehicle?.driverCPF as string,
-					birth: quotes.quoteVehicle?.driverBirth as Date,
+					name: quote.quoteVehicle?.driverName as string,
+					cpf: quote.quoteVehicle?.driverCPF as string,
+					birth: quote.quoteVehicle?.driverBirth as Date,
 				},
 			} satisfies z.infer<typeof SchemaQuoteRegister>,
 			200,
