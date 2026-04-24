@@ -11,19 +11,20 @@ import {
 	maskPostalCode,
 } from '@segwise/core/masks';
 import {
+	SchemaPlate,
 	SchemaSafeCommission,
 	SchemaSafeRegister,
 } from '@segwise/core/schemas';
 import {
-	translateGarage,
-	translateGarageSchool,
-	translateGarageWork,
-	translateResidence,
 	translateSafeCommissionType,
 	translateVehicleExchange,
 	translateVehicleUsage,
 } from '@segwise/core/translate';
-import type { SafeRegister, VehicleManufacturer } from '@segwise/core/types';
+import type {
+	QuoteRegister,
+	SafeRegister,
+	VehicleManufacturer,
+} from '@segwise/core/types';
 import {
 	calculatePercentageOfValue,
 	capitalizeFirstLetters,
@@ -45,16 +46,20 @@ import {
 	ChevronLeftIcon,
 	CircleDollarSignIcon,
 	ClipboardIcon,
+	FileTextIcon,
 	SaveIcon,
+	SearchIcon,
 	User2Icon,
 	UserCircle2Icon,
 	XCircleIcon,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import type React from 'react';
 import { Fragment, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { withMask } from 'use-mask-input';
+import z from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ButtonBack } from '@/components/ui/button/back';
@@ -69,6 +74,16 @@ import {
 	ComboboxList,
 } from '@/components/ui/combobox';
 import { DatePickerInput } from '@/components/ui/date-picker-input';
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/components/ui/dialog';
 import {
 	Field,
 	FieldContent,
@@ -91,7 +106,6 @@ import {
 	Select,
 	SelectContent,
 	SelectItem,
-	SelectSeparator,
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
@@ -99,6 +113,7 @@ import { Separator } from '@/components/ui/separator';
 import { placeholder } from '@/config/placeholder';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
+import { useQuotesByPlate } from '@/libraries/hooks/quotes/use-quotes-by-plate';
 import { useSafesRegister } from '@/libraries/hooks/safes/use-safes-register';
 import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
@@ -138,7 +153,7 @@ function FormProposalRegister() {
 			producer: null,
 			modality: 'car',
 			renewal: false,
-			requestedAt: startOfToday(),
+			requestedAt: null,
 			insured: {
 				cpf: '',
 				name: '',
@@ -194,6 +209,58 @@ function FormProposalRegister() {
 
 	const commissionGross = commissionAmount;
 	const commissionNet = commissionAmount - commissionAmountProducer;
+
+	function onChangeResponseQuotesSearch(props: QuoteRegister) {
+		setValue('modality', props.modality);
+
+		if (props.insured.cpf) {
+			setValue(
+				'insured.cpf',
+				isCPF(props.insured.cpf)
+					? maskCPF(props.insured.cpf)
+					: maskCNPJ(props.insured.cpf),
+			);
+		}
+		setValue('insured.name', capitalizeFirstLetters(props.insured.name));
+		setValue('insured.birth', props.insured.birth);
+		setValue('insured.phone', maskPhone(props.insured.phone.slice(2)));
+
+		setValue('vehicle.plate', props.vehicle?.plate);
+
+		const manufacturer = manufacturers?.find(
+			(e) => e.name.toLowerCase() === props.vehicle?.manufacturer.toLowerCase(),
+		)?.id;
+
+		if (manufacturer) {
+			setValue('vehicle.manufacturer', manufacturer);
+		}
+
+		setValue('vehicle.model', props.vehicle?.model);
+		setValue('vehicle.modelYear', props.vehicle?.modelYear);
+		setValue('vehicle.chassi', props.vehicle?.chassi);
+		setValue('vehicle.usage', props.vehicle?.usage);
+		setValue('vehicle.exchange', props.vehicle?.exchange);
+		setValue(
+			'vehicle.overnightPostalCode',
+			maskPostalCode(props.vehicle?.overnightPostalCode as string),
+		);
+
+		if (props.driver.cpf) {
+			setValue(
+				'driver.cpf',
+				isCPF(props.driver.cpf)
+					? maskCPF(props.driver.cpf)
+					: maskCNPJ(props.driver.cpf),
+			);
+		}
+		if (props.driver.name) {
+			setValue('driver.name', capitalizeFirstLetters(props.driver.name));
+		}
+
+		if (props.driver.cpf) {
+			setValue('driver.birth', props.driver.birth);
+		}
+	}
 
 	function onSubmit(props: SafeRegister) {
 		mutate(props, {
@@ -330,7 +397,11 @@ function FormProposalRegister() {
 	return (
 		<Fragment>
 			<div className='flex flex-row items-center justify-between **:gap-x-2'>
-				<div />
+				<DialogGetPlate onChange={onChangeResponseQuotesSearch}>
+					<Button>
+						<FileTextIcon /> Preencher via cotação
+					</Button>
+				</DialogGetPlate>
 				<div className='flex flex-row items-center justify-end'>
 					<Controller
 						control={control}
@@ -464,30 +535,28 @@ function FormProposalRegister() {
 									<Controller
 										control={control}
 										name='insuranceCompany'
-										render={({ field, fieldState }) => (
+										render={({ field: { value, onChange }, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='insurance-company'>
 													Seguradora:
 												</FieldLabel>
 												<Combobox
-													{...field}
+													value={
+														value
+															? {
+																	value: value,
+																	label: capitalizeFirstLetters(
+																		// @ts-expect-error
+																		insuranceCompanies?.find(
+																			(e) => e.id === value,
+																		)?.name,
+																	).replace('S/a', 'S/A'),
+																}
+															: null
+													}
 													items={insuranceCompanies || []}
 													// @ts-expect-error
-													itemToStringValue={(item) => item?.id}
-													itemToStringLabel={(item) =>
-														// @ts-expect-error
-														item?.name
-															? // @ts-expect-error
-																capitalizeFirstLetters(item.name).replace(
-																	'S/a',
-																	'S/A',
-																)
-															: ''
-													}
-													onValueChange={(item) =>
-														// @ts-expect-error
-														item?.id ? field.onChange(item.id) : null
-													}
+													onValueChange={(value) => onChange(value.value)}
 												>
 													<ComboboxInput placeholder='Selecionar' />
 													<ComboboxContent>
@@ -496,7 +565,15 @@ function FormProposalRegister() {
 														</ComboboxEmpty>
 														<ComboboxList>
 															{(item) => (
-																<ComboboxItem key={item.id} value={item}>
+																<ComboboxItem
+																	key={item.id}
+																	value={{
+																		value: item.id,
+																		label: capitalizeFirstLetters(
+																			item.name,
+																		).replace('S/a', 'S/A'),
+																	}}
+																>
 																	<div className='flex flex-row items-center justify-start gap-x-2'>
 																		<Avatar className='size-6'>
 																			<AvatarImage
@@ -1154,179 +1231,6 @@ function FormProposalRegister() {
 											</Field>
 										)}
 									/>
-									<FieldGroup className='flex flex-row gap-x-0!'>
-										<Controller
-											control={control}
-											name='vehicle.additional.residence.type'
-											render={({ field, fieldState }) => (
-												<Field data-invalid={fieldState.invalid}>
-													<FieldLabel htmlFor='vehicle-additional-residence-type'>
-														Reside Em:
-													</FieldLabel>
-													<Select {...field} onValueChange={field.onChange}>
-														<SelectTrigger
-															id='vehicle-additional-residence-type'
-															aria-invalid={fieldState.invalid}
-															className='rounded-r-none border-r-0'
-														>
-															<SelectValue placeholder='Selecionar' />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value='home'>
-																{translateResidence('home')}
-															</SelectItem>
-															<SelectItem value='apartment'>
-																{translateResidence('apartment')}
-															</SelectItem>
-															<SelectItem value='house_condominium'>
-																{translateResidence('house_condominium')}
-															</SelectItem>
-															<SelectItem value='others'>
-																{translateResidence('others')}
-															</SelectItem>
-														</SelectContent>
-													</Select>
-													{fieldState.invalid && (
-														<FieldError errors={[fieldState.error]} />
-													)}
-												</Field>
-											)}
-										/>
-										<Controller
-											control={control}
-											name='vehicle.additional.residence.garage'
-											render={({ field, fieldState }) => (
-												<Field data-invalid={fieldState.invalid}>
-													<FieldLabel htmlFor='vehicle-additional-residence-garage'>
-														Tipo de Garagem:
-													</FieldLabel>
-													<Select
-														{...field}
-														value={field.value || ''}
-														onValueChange={(value) =>
-															field.onChange(value === 'clear' ? null : value)
-														}
-													>
-														<SelectTrigger
-															id='vehicle-additional-residence-garage'
-															aria-invalid={fieldState.invalid}
-															className='rounded-l-none'
-														>
-															<SelectValue placeholder='Selecionar' />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value='no_garage'>
-																{translateGarage('no_garage')}
-															</SelectItem>
-															<SelectSeparator />
-															<SelectItem value='automatic_gate'>
-																{translateGarage('automatic_gate')}
-															</SelectItem>
-															<SelectItem value='manual_gate'>
-																{translateGarage('manual_gate')}
-															</SelectItem>
-															<SelectItem value='private'>
-																{translateGarage('private')}
-															</SelectItem>
-														</SelectContent>
-													</Select>
-													{fieldState.invalid && (
-														<FieldError errors={[fieldState.error]} />
-													)}
-												</Field>
-											)}
-										/>
-									</FieldGroup>
-									<FieldGroup className='flex flex-row gap-x-0!'>
-										<Controller
-											control={control}
-											name='vehicle.additional.work'
-											render={({ field, fieldState }) => (
-												<Field data-invalid={fieldState.invalid}>
-													<FieldLabel htmlFor='vehicle-additional-work-garage'>
-														Garagem no Trabalho:
-													</FieldLabel>
-													<Select
-														{...field}
-														value={field.value || ''}
-														onValueChange={(value) =>
-															field.onChange(value === 'clear' ? null : value)
-														}
-													>
-														<SelectTrigger
-															id='vehicle-additional-work-garage'
-															aria-invalid={fieldState.invalid}
-														>
-															<SelectValue placeholder='Selecionar' />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value='does_not_work'>
-																{translateGarageWork('does_not_work')}
-															</SelectItem>
-															<SelectSeparator />
-															<SelectItem value='yes'>
-																{translateGarageWork('yes')}
-															</SelectItem>
-															<SelectItem value='no'>
-																{translateGarageWork('no')}
-															</SelectItem>
-															<SelectItem value='does_not_use'>
-																{translateGarageWork('does_not_use')}
-															</SelectItem>
-														</SelectContent>
-													</Select>
-													{fieldState.invalid && (
-														<FieldError errors={[fieldState.error]} />
-													)}
-												</Field>
-											)}
-										/>
-									</FieldGroup>
-									<FieldGroup className='flex flex-row gap-x-0!'>
-										<Controller
-											control={control}
-											name='vehicle.additional.school'
-											render={({ field, fieldState }) => (
-												<Field data-invalid={fieldState.invalid}>
-													<FieldLabel htmlFor='vehicle-additional-school-garage'>
-														Garagem na Escola:
-													</FieldLabel>
-													<Select
-														{...field}
-														value={field.value || ''}
-														onValueChange={(value) =>
-															field.onChange(value === 'clear' ? null : value)
-														}
-													>
-														<SelectTrigger
-															id='vehicle-additional-school-garage'
-															aria-invalid={fieldState.invalid}
-														>
-															<SelectValue placeholder='Selecionar' />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value='does_not_study'>
-																{translateGarageSchool('does_not_study')}
-															</SelectItem>
-															<SelectSeparator />
-															<SelectItem value='yes'>
-																{translateGarageSchool('yes')}
-															</SelectItem>
-															<SelectItem value='no'>
-																{translateGarageSchool('no')}
-															</SelectItem>
-															<SelectItem value='does_not_use'>
-																{translateGarageSchool('does_not_use')}
-															</SelectItem>
-														</SelectContent>
-													</Select>
-													{fieldState.invalid && (
-														<FieldError errors={[fieldState.error]} />
-													)}
-												</Field>
-											)}
-										/>
-									</FieldGroup>
 								</FieldGroup>
 							</FieldGroup>
 							<Separator />
@@ -1915,6 +1819,164 @@ function FormProposalRegister() {
 				<SaveIcon /> Salvar Registro
 			</Button>
 		</Fragment>
+	);
+}
+
+function DialogGetPlate({
+	children,
+	onChange,
+}: React.PropsWithChildren<{
+	onChange: (props: QuoteRegister) => void;
+}>) {
+	const Schema = z.object({
+		plate: SchemaPlate,
+	});
+
+	const [open, setOpen] = useState<boolean>(false);
+
+	const { data, mutate, isPending } = useQuotesByPlate();
+
+	const {
+		control,
+		handleSubmit,
+		formState: { isValid },
+	} = useForm({
+		mode: 'all',
+		criteriaMode: 'all',
+		reValidateMode: 'onChange',
+		resolver: zodResolver(Schema),
+		defaultValues: {
+			plate: '',
+		},
+	});
+
+	function onSubmit({ plate }: z.infer<typeof Schema>) {
+		toast.dismiss();
+
+		mutate(plate, {
+			onError(error) {
+				toast.error(error.message);
+			},
+		});
+	}
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger asChild>{children}</DialogTrigger>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Pesquisar Cotação</DialogTitle>
+					<DialogDescription>
+						Informe a placa do veículo a ser consultado
+					</DialogDescription>
+				</DialogHeader>
+				<form onSubmit={handleSubmit(onSubmit)}>
+					<Controller
+						control={control}
+						name='plate'
+						render={({ field, fieldState }) => (
+							<Field data-invalid={fieldState.invalid}>
+								<FieldLabel htmlFor='plate-search'>Placa:</FieldLabel>
+								<Input
+									{...field}
+									id='plate-search'
+									placeholder='AAA-0000 / AAA0A00'
+									aria-invalid={fieldState.invalid}
+									onChange={({ target: { value } }) =>
+										field.onChange(maskPlate(value))
+									}
+								/>
+								{fieldState.invalid && (
+									<FieldError errors={[fieldState.error]} />
+								)}
+							</Field>
+						)}
+					/>
+					{!!data && (
+						<div className='mt-2 bg-border rounded-md p-3'>
+							<div className='text-sm'>
+								Segurado:{' '}
+								<b>
+									{data.insured.name} |{' '}
+									{data.insured.cpf
+										? isCPF(data.insured.cpf)
+											? maskCPF(data.insured.cpf)
+											: maskCNPJ(data.insured.cpf)
+										: ''}
+								</b>
+							</div>
+							<Separator className='bg-primary/20 my-2' />
+							<div>
+								<div className='text-sm'>
+									Placa:{' '}
+									<b>
+										{data.vehicle?.plate
+											? maskPlate(data.vehicle?.plate)
+											: 'Sem Placa'}
+									</b>
+								</div>
+								<div className='text-sm'>
+									Marca: <b>{data.vehicle?.manufacturer}</b>
+								</div>
+								<div className='text-sm'>
+									Modelo:
+									<b>{data.vehicle?.model}</b>
+								</div>
+								<div className='text-sm'>
+									Ano: <b>{data.vehicle?.modelYear}</b>
+								</div>
+							</div>
+							<Button
+								size='sm'
+								onClick={() => [
+									onChange({
+										...data,
+										insured: {
+											...data.insured,
+											...(data.insured.birth && {
+												birth: new Date(
+													data.insured.birth.getTime() +
+														data.insured.birth.getTimezoneOffset() * 60000,
+												),
+											}),
+										},
+										driver: {
+											...data.driver,
+											...(data.driver.birth && {
+												birth: new Date(
+													data.driver.birth.getTime() +
+														data.driver.birth.getTimezoneOffset() * 60000,
+												),
+											}),
+										},
+									}),
+									setOpen(false),
+								]}
+								className='w-full mt-3'
+							>
+								Preencher Dados
+							</Button>
+						</div>
+					)}
+				</form>
+				<Separator />
+				<DialogFooter>
+					<DialogClose asChild>
+						<Button variant='destructive' tabIndex={-1}>
+							Fechar <XCircleIcon />
+						</Button>
+					</DialogClose>
+					<Button
+						disabled={!isValid}
+						onClick={handleSubmit(onSubmit)}
+						isPending={isPending}
+						textPending='Consultando'
+					>
+						Consultar <SearchIcon />
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

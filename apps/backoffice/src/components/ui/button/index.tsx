@@ -50,6 +50,7 @@ export interface ButtonProps
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 	(
 		{
+			type = 'button',
 			className,
 			variant,
 			size,
@@ -65,8 +66,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 		if (isPending) {
 			return (
 				<Comp
-					className={cn(buttonVariants({ variant, size, className }))}
 					ref={ref}
+					type={type}
+					className={cn(buttonVariants({ variant, size, className }))}
 					disabled
 					{...props}
 				>
@@ -81,8 +83,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 		return (
 			<Comp
-				className={cn(buttonVariants({ variant, size, className }))}
 				ref={ref}
+				type={type}
+				className={cn(buttonVariants({ variant, size, className }))}
 				{...props}
 			/>
 		);

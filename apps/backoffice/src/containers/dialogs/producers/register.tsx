@@ -371,7 +371,6 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 											Código de Indicação:{' '}
 										</FieldLabel>
 										<Button
-											type='button'
 											variant='link'
 											size='sm'
 											className='text-xs'

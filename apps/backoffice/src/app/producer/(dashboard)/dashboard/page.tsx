@@ -2,7 +2,7 @@
 
 import { maskPlate, maskPostalCode } from '@segwise/core/masks';
 import { translateQuoteStatus } from '@segwise/core/translate';
-import type { QuoteStatus } from '@segwise/core/types';
+import type { ProducerType, QuoteStatus } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { isPlate } from '@segwise/core/valids';
 import { useQuery } from '@tanstack/react-query';
@@ -19,13 +19,10 @@ import {
 	Eye,
 	EyeOff,
 	FileIcon,
-	Loader2Icon,
-	LogOut,
 	User2Icon,
 	X,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +38,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/libraries/api';
 import { auth } from '@/libraries/auth';
-import { useSignOut } from '@/libraries/hooks/auth/use-sign-out';
 
 type Insurance = {
 	id: string;
@@ -82,7 +78,7 @@ type CepGroup = {
 };
 
 function ProducerDashboard() {
-	const { replace } = useRouter();
+	// const { replace } = useRouter();
 
 	const [hidden, setHidden] = useState(true);
 
@@ -134,6 +130,7 @@ function ProducerDashboard() {
 					requestAt: string;
 					effectivedAt: string;
 				}>;
+				typeOfProduction: ProducerType;
 			}>('/auth/profile/details-producer', {
 				signal,
 			});
@@ -741,26 +738,26 @@ function ProducerDashboard() {
 
 	const groupsCeps = buildCepGroups(ALL_YEAR_INSURANCES);
 
-	const { mutate: signOut, isPending: isPendingSignout } = useSignOut();
+	// const { mutate: signOut, isPending: isPendingSignout } = useSignOut();
 
 	const { data: session, isPending } = auth.useSession();
 
-	function logout() {
-		toast.dismiss();
+	// function logout() {
+	// 	toast.dismiss();
 
-		signOut(undefined, {
-			onSuccess(_data, _variables, _result, ctx) {
-				setTimeout(() => {
-					ctx.client.clear();
-				}, 1000);
+	// 	signOut(undefined, {
+	// 		onSuccess(_data, _variables, _result, ctx) {
+	// 			setTimeout(() => {
+	// 				ctx.client.clear();
+	// 			}, 1000);
 
-				replace('/sign-in');
-			},
-			onError(error) {
-				toast.error(error.message);
-			},
-		});
-	}
+	// 			replace('/sign-in');
+	// 		},
+	// 		onError(error) {
+	// 			toast.error(error.message);
+	// 		},
+	// 	});
+	// }
 
 	async function copyReferral() {
 		try {
@@ -850,7 +847,7 @@ function ProducerDashboard() {
 								</p>
 							)}
 						</div>
-						<button
+						{/* <button
 							type='button'
 							className='ml-1 h-7 w-7 rounded-full flex items-center justify-center transition-colors cursor-pointer'
 							style={{
@@ -866,7 +863,7 @@ function ProducerDashboard() {
 							{!!isPendingSignout && (
 								<Loader2Icon className='size-3.5 text-white/50 animate-spin' />
 							)}
-						</button>
+						</button> */}
 					</div>
 					<div>
 						<div
@@ -991,12 +988,14 @@ function ProducerDashboard() {
 						>
 							Seguros
 						</TabsTrigger>
-						<TabsTrigger
-							value='cep'
-							className='flex-1 text-sm rounded-sm h-full data-[state=active]:bg-[#1e293b] data-[state=active]:text-white data-[state=active]:shadow-sm'
-						>
-							Por CEP
-						</TabsTrigger>
+						{data?.typeOfProduction === 'condominium_management' && (
+							<TabsTrigger
+								value='cep'
+								className='flex-1 text-sm rounded-sm h-full data-[state=active]:bg-[#1e293b] data-[state=active]:text-white data-[state=active]:shadow-sm'
+							>
+								Por CEP
+							</TabsTrigger>
+						)}
 					</TabsList>
 					<TabsContent value='quotes' className='mt-0'>
 						{!period?.quotes || period?.quotes.length === 0 ? (
@@ -1129,57 +1128,59 @@ function ProducerDashboard() {
 							</div>
 						)}
 					</TabsContent>
-					<TabsContent value='cep' className='mt-0'>
-						{!period?.insurances || period?.insurances.length === 0 ? (
-							<Empty>
-								<EmptyHeader>
-									<EmptyMedia variant='icon' className='rounded-full'>
-										<FileIcon />
-									</EmptyMedia>
-									<EmptyTitle>Nenhum registro encontrada!</EmptyTitle>
-									<EmptyDescription>
-										Você não tem nenhum registro no momento
-									</EmptyDescription>
-								</EmptyHeader>
-							</Empty>
-						) : (
-							<div className='divide-y divide-zinc-200 px-3'>
-								{groupsCeps.map((group) => (
-									// biome-ignore lint/a11y/noStaticElementInteractions: div
-									// biome-ignore lint/a11y/useKeyWithClickEvents: div
-									<div
-										key={group.cep}
-										className='flex items-center gap-2 py-3.5'
-										onClick={() =>
-											setSelectedCep({
-												cep: group.cep,
-												state: group.state,
-											})
-										}
-									>
-										<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
-											<Building2Icon />
+					{data?.typeOfProduction === 'condominium_management' && (
+						<TabsContent value='cep' className='mt-0'>
+							{!period?.insurances || period?.insurances.length === 0 ? (
+								<Empty>
+									<EmptyHeader>
+										<EmptyMedia variant='icon' className='rounded-full'>
+											<FileIcon />
+										</EmptyMedia>
+										<EmptyTitle>Nenhum registro encontrada!</EmptyTitle>
+										<EmptyDescription>
+											Você não tem nenhum registro no momento
+										</EmptyDescription>
+									</EmptyHeader>
+								</Empty>
+							) : (
+								<div className='divide-y divide-zinc-200 px-3'>
+									{groupsCeps.map((group) => (
+										// biome-ignore lint/a11y/noStaticElementInteractions: div
+										// biome-ignore lint/a11y/useKeyWithClickEvents: div
+										<div
+											key={group.cep}
+											className='flex items-center gap-2 py-3.5'
+											onClick={() =>
+												setSelectedCep({
+													cep: group.cep,
+													state: group.state,
+												})
+											}
+										>
+											<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
+												<Building2Icon />
+											</div>
+											<div className='flex-1 min-w-0'>
+												<p className='text-sm font-semibold truncate text-zinc-900'>
+													{maskPostalCode(group.cep)}
+												</p>
+												<p className='text-xs text-zinc-500'>{group.state}</p>
+											</div>
+											<div className='flex flex-col items-end gap-1 shrink-0'>
+												<span className='text-sm font-semibold text-zinc-800'>
+													{group.count} Seguros
+												</span>
+												<span className='text-xs font-medium text-indigo-400 flex flex-row items-center justify-end'>
+													Ver detalhes{' '}
+													<ChevronRightIcon className='size-3.5 stroke-2.5' />
+												</span>
+											</div>
 										</div>
-										<div className='flex-1 min-w-0'>
-											<p className='text-sm font-semibold truncate text-zinc-900'>
-												{maskPostalCode(group.cep)}
-											</p>
-											<p className='text-xs text-zinc-500'>{group.state}</p>
-										</div>
-										<div className='flex flex-col items-end gap-1 shrink-0'>
-											<span className='text-sm font-semibold text-zinc-800'>
-												{group.count} Seguros
-											</span>
-											<span className='text-xs font-medium text-indigo-400 flex flex-row items-center justify-end'>
-												Ver detalhes{' '}
-												<ChevronRightIcon className='size-3.5 stroke-2.5' />
-											</span>
-										</div>
-									</div>
-								))}
-							</div>
-						)}
-					</TabsContent>
+									))}
+								</div>
+							)}
+						</TabsContent>
+					)}
 				</Tabs>
 			</div>
 		</div>

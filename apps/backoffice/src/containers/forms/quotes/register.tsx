@@ -123,7 +123,7 @@ function FormQuoteRegister() {
 			producer: null,
 			status: 'waiting',
 			modality: 'car',
-			requestedAt: startOfToday(),
+			requestedAt: null,
 			insured: {
 				cpf: '',
 				name: '',
@@ -455,30 +455,31 @@ function FormQuoteRegister() {
 											<Controller
 												control={control}
 												name='insuranceCompany'
-												render={({ field, fieldState }) => (
+												render={({
+													field: { value, onChange },
+													fieldState,
+												}) => (
 													<Field data-invalid={fieldState.invalid}>
 														<FieldLabel htmlFor='insurance-company'>
 															Seguradora:
 														</FieldLabel>
 														<Combobox
-															{...field}
+															value={
+																value
+																	? {
+																			value: value,
+																			label: capitalizeFirstLetters(
+																				// @ts-expect-error
+																				insuranceCompanies?.find(
+																					(e) => e.id === value,
+																				)?.name,
+																			).replace('S/a', 'S/A'),
+																		}
+																	: null
+															}
 															items={insuranceCompanies || []}
 															// @ts-expect-error
-															itemToStringValue={(item) => item?.id}
-															itemToStringLabel={(item) =>
-																// @ts-expect-error
-																item?.name
-																	? // @ts-expect-error
-																		capitalizeFirstLetters(item.name).replace(
-																			'S/a',
-																			'S/A',
-																		)
-																	: ''
-															}
-															onValueChange={(item) =>
-																// @ts-expect-error
-																item?.id ? field.onChange(item.id) : null
-															}
+															onValueChange={(value) => onChange(value.value)}
 														>
 															<ComboboxInput placeholder='Selecionar' />
 															<ComboboxContent>
@@ -487,7 +488,15 @@ function FormQuoteRegister() {
 																</ComboboxEmpty>
 																<ComboboxList>
 																	{(item) => (
-																		<ComboboxItem key={item.id} value={item}>
+																		<ComboboxItem
+																			key={item.id}
+																			value={{
+																				value: item.id,
+																				label: capitalizeFirstLetters(
+																					item.name,
+																				).replace('S/a', 'S/A'),
+																			}}
+																		>
 																			<div className='flex flex-row items-center justify-start gap-x-2'>
 																				<Avatar className='size-6'>
 																					<AvatarImage
