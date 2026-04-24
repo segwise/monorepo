@@ -211,6 +211,8 @@ function FormProposalRegister() {
 	const commissionNet = commissionAmount - commissionAmountProducer;
 
 	function onChangeResponseQuotesSearch(props: QuoteRegister) {
+		console.log(props);
+
 		setValue('modality', props.modality);
 
 		if (props.insured.cpf) {
