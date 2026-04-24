@@ -93,6 +93,7 @@ function registerRoutersServicesAuthProfileDetailsProducer(server: Server) {
 					startOfProductionPayment: true,
 					referral: true,
 					invitationMessage: true,
+					typeOfProduction: true,
 				},
 			}),
 		]);
@@ -154,6 +155,7 @@ function registerRoutersServicesAuthProfileDetailsProducer(server: Server) {
 						.toNumber(),
 					requestAt: props.requestedAt,
 				})),
+				typeOfProduction: member?.typeOfProduction,
 			},
 			200,
 		);

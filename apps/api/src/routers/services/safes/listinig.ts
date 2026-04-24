@@ -300,41 +300,44 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 		},
 	);
 
-	server.get('/simple/plate/:plate', async (ctx) => {
-		const { plate } = ctx.req.param();
+	server.get(
+		'/simple/plate/:plate{^[A-Za-z]{3}[0-9][A-Za-z0-9][0-9]{2}$}',
+		async (ctx) => {
+			const { plate } = ctx.req.param();
 
-		const where: Prisma.SafeWhereInput = {
-			safeVehicle: {
-				vehicle: {
-					OR: [
-						{
-							plate: plate,
-						},
-						{
-							plateAlternative: plate,
-						},
-					],
+			const where: Prisma.SafeWhereInput = {
+				safeVehicle: {
+					vehicle: {
+						OR: [
+							{
+								plate: plate,
+							},
+							{
+								plateAlternative: plate,
+							},
+						],
+					},
 				},
-			},
-		};
+			};
 
-		const safe = await ctx.database.safe.findFirst({
-			where,
-			select: selectPrisma,
-			relationLoadStrategy: 'join',
-		});
+			const safe = await ctx.database.safe.findFirst({
+				where,
+				select: selectPrisma,
+				relationLoadStrategy: 'join',
+			});
 
-		if (!safe) {
-			return ctx.json(
-				{
-					message: 'Seguro não encontrado',
-				},
-				404,
-			);
-		}
+			if (!safe) {
+				return ctx.json(
+					{
+						message: 'Seguro não encontrado',
+					},
+					404,
+				);
+			}
 
-		return ctx.json(serializer(safe), 200);
-	});
+			return ctx.json(serializer(safe), 200);
+		},
+	);
 }
 
 export { registerRoutersServicesSafesSimpleListining };
