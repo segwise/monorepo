@@ -211,7 +211,9 @@ function FormProposalRegister() {
 	const commissionNet = commissionAmount - commissionAmountProducer;
 
 	function onChangeResponseQuotesSearch(props: QuoteRegister) {
-		console.log(props);
+		if (props.producer) {
+			setValue('producer', props.producer);
+		}
 
 		setValue('modality', props.modality);
 
@@ -227,7 +229,10 @@ function FormProposalRegister() {
 		setValue('insured.birth', props.insured.birth);
 		setValue('insured.phone', maskPhone(props.insured.phone.slice(2)));
 
-		setValue('vehicle.plate', props.vehicle?.plate);
+		setValue(
+			'vehicle.plate',
+			props.vehicle?.plate ? maskPlate(props.vehicle.plate) : null,
+		);
 
 		const manufacturer = manufacturers?.find(
 			(e) => e.name.toLowerCase() === props.vehicle?.manufacturer.toLowerCase(),
@@ -237,7 +242,10 @@ function FormProposalRegister() {
 			setValue('vehicle.manufacturer', manufacturer);
 		}
 
-		setValue('vehicle.model', props.vehicle?.model);
+		setValue(
+			'vehicle.model',
+			capitalizeFirstLetters(props.vehicle?.model as string),
+		);
 		setValue('vehicle.modelYear', props.vehicle?.modelYear);
 		setValue('vehicle.chassi', props.vehicle?.chassi);
 		setValue('vehicle.usage', props.vehicle?.usage);
