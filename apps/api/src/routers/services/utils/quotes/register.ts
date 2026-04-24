@@ -111,7 +111,6 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 									},
 								},
 							}),
-
 							broker: {
 								connect: {
 									id: brokerId,
@@ -131,6 +130,7 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 							},
 							quoteVehicle: {
 								create: {
+									plate,
 									...(!!vehicle && {
 										vehicle: {
 											connectOrCreate: {

@@ -94,8 +94,6 @@ function registerRoutersServicesQuotesByPlate(server: Server) {
 			throw new Error('Nenhum registro encontrado!');
 		}
 
-		console.log(quote);
-
 		return ctx.json(
 			{
 				...(quote.producerId && {
@@ -117,8 +115,6 @@ function registerRoutersServicesQuotesByPlate(server: Server) {
 						quote.temporaryInsured?.birth) as Date,
 					phone: (quote.insured?.phone ||
 						quote.temporaryInsured?.phone) as string,
-					maritalStatus: 'common_law_marriage',
-					qualificationTime: 0,
 				},
 				vehicle: {
 					plate: quote.quoteVehicle?.plate,
@@ -136,26 +132,13 @@ function registerRoutersServicesQuotesByPlate(server: Server) {
 							?.exchange) as VehicleExchange,
 					overnightPostalCode: quote.quoteVehicle
 						?.overnightPostalCode as string,
-					additional: {
-						residence: {
-							type: 'apartment',
-							garage: 'automatic_gate',
-						},
-						work: 'does_not_use',
-						school: 'does_not_study',
-						armored: false,
-						gasKit: false,
-						theInsuredIsTheOwner: false,
-						funded: false,
-						driversUnder26: false,
-					},
 				},
 				driver: {
 					name: quote.quoteVehicle?.driverName as string,
 					cpf: quote.quoteVehicle?.driverCPF as string,
 					birth: quote.quoteVehicle?.driverBirth as Date,
 				},
-			} satisfies z.infer<typeof SchemaQuoteRegister>,
+			} as z.infer<typeof SchemaQuoteRegister>,
 			200,
 		);
 	});
