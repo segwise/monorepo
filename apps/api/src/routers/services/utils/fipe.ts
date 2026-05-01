@@ -122,32 +122,26 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 					? 'Automático'
 					: 'Manual',
 				fuel: data.extra?.combustivel || 'Gasolina',
-				fipe: data.fipe.dados
-					.sort((a, b) => b.score - a.score)
-					.slice(0, 5)
-					.map(
-						({
-							ano_modelo,
-							texto_valor,
-							texto_modelo,
-							codigo_fipe,
-							combustivel,
-							score,
-						}) => ({
-							year: Number(ano_modelo),
-							value: Number(
-								texto_valor
-									.replace('R$ ', '')
-									.replace('.', '')
-									.replace(',', '.'),
-							),
-							model: texto_modelo.toLowerCase(),
-							code: codigo_fipe,
-							fuel: combustivel.toLowerCase() || 'Gasolina',
-							reference: new Date(),
-							score,
-						}),
-					),
+				fipe: data.fipe.dados.map(
+					({
+						ano_modelo,
+						texto_valor,
+						texto_modelo,
+						codigo_fipe,
+						combustivel,
+						score,
+					}) => ({
+						year: Number(ano_modelo),
+						value: Number(
+							texto_valor.replace('R$ ', '').replace('.', '').replace(',', '.'),
+						),
+						model: texto_modelo.toLowerCase(),
+						code: codigo_fipe,
+						fuel: combustivel.toLowerCase() || 'Gasolina',
+						reference: new Date(),
+						score,
+					}),
+				),
 				chassi: data.chassi,
 			};
 
