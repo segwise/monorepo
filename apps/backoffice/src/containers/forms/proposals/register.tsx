@@ -11,11 +11,13 @@ import {
 	maskPostalCode,
 } from '@segwise/core/masks';
 import {
+	SchemaModality,
 	SchemaPlate,
 	SchemaSafeCommission,
 	SchemaSafeRegister,
 } from '@segwise/core/schemas';
 import {
+	translateModality,
 	translateSafeCommissionType,
 	translateVehicleExchange,
 	translateVehicleUsage,
@@ -41,16 +43,21 @@ import {
 } from 'date-fns';
 import {
 	Building2Icon,
+	BuildingIcon,
 	CalendarIcon,
 	CarIcon,
 	ChevronLeftIcon,
 	CircleDollarSignIcon,
 	ClipboardIcon,
 	FileTextIcon,
+	HeartIcon,
+	HomeIcon,
+	PlaneIcon,
 	SaveIcon,
 	SearchIcon,
 	User2Icon,
 	UserCircle2Icon,
+	UserIcon,
 	XCircleIcon,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -151,7 +158,7 @@ function FormProposalRegister() {
 			insuranceCompany: '',
 			status: 'active',
 			producer: null,
-			modality: 'car',
+			modality: SchemaModality.enum.vehicle,
 			renewal: false,
 			requestedAt: null,
 			insured: {
@@ -165,7 +172,6 @@ function FormProposalRegister() {
 				model: '',
 				modelYear: '',
 				overnightPostalCode: '',
-				additional: {},
 			},
 			driver: {
 				cpf: '',
@@ -529,11 +535,21 @@ function FormProposalRegister() {
 														<SelectValue placeholder='Selecionar' />
 													</SelectTrigger>
 													<SelectContent>
-														<SelectItem value='car'>
-															<div className='flex flex-row items-center justify-start gap-x-2'>
-																<CarIcon /> <span>Automóvel</span>
-															</div>
-														</SelectItem>
+														{SchemaModality.options.map((item) => (
+															<SelectItem value={item} key={item}>
+																<div className='flex flex-row items-center justify-start gap-x-2'>
+																	{item === 'vehicle' && <CarIcon />}
+																	{item === 'health' && <HeartIcon />}
+																	{item === 'residence' && <HomeIcon />}
+																	{item === 'business' && <BuildingIcon />}
+																	{item === 'condominium' && <BuildingIcon />}
+																	{item === 'travel' && <PlaneIcon />}
+																	{item === 'professional' && <UserIcon />}
+																	{item === 'construction' && <BuildingIcon />}
+																	{translateModality(item)}
+																</div>
+															</SelectItem>
+														))}
 													</SelectContent>
 												</Select>
 												{fieldState.invalid && (

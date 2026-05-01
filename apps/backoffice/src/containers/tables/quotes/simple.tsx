@@ -1,6 +1,7 @@
 'use client';
 
 import { maskPhone, maskPlate } from '@segwise/core/masks';
+import { SchemaModality } from '@segwise/core/schemas';
 import {
 	translateModality,
 	translateQuoteStatus,
@@ -13,8 +14,14 @@ import {
 	formatDistanceToNowStrict,
 	isAfter,
 } from 'date-fns';
-import { CarIcon, InfoIcon, PrinterIcon, Trash2Icon } from 'lucide-react';
-import { Fragment } from 'react';
+import {
+	CarIcon,
+	InfoIcon,
+	PrinterCheckIcon,
+	PrinterIcon,
+	Trash2Icon,
+} from 'lucide-react';
+import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,8 +56,24 @@ import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicle
 import { useSearchParams } from '@/libraries/search-params/quotes';
 import { cn } from '@/libraries/utils';
 
+const STORAGE_KEY = 'printed-quotes';
+
+function getStoredQuotePrintedIds(): Set<string> {
+	try {
+		const raw = localStorage.getItem(STORAGE_KEY);
+
+		return new Set(raw ? JSON.parse(raw) : []);
+	} catch {
+		return new Set();
+	}
+}
+
 function TableQuotesSimple() {
 	const [searchParams] = useSearchParams();
+
+	const [printedIds, setPrintedIds] = useState<Set<string>>(
+		getStoredQuotePrintedIds,
+	);
 
 	const { data, isPending, isSuccess } = useQuotesSimple({
 		cursor: searchParams.cursor,
@@ -78,6 +101,20 @@ function TableQuotesSimple() {
 
 	const items = data?.data || [];
 	const total = data?.total;
+
+	function markAsPrinted(id: string) {
+		setPrintedIds((previous) => {
+			const next = new Set(previous).add(id);
+
+			if (previous.has(id)) {
+				return previous;
+			}
+
+			localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
+
+			return next;
+		});
+	}
 
 	return (
 		<Table>
@@ -325,6 +362,7 @@ function TableQuotesSimple() {
 								)}
 							</TableCell>
 							<TableCell className='text-center w-30'>
+								{!producers?.find((e) => e.id === producer) && '-------------'}
 								{!!producers?.find((e) => e.id === producer) && (
 									<Tooltip>
 										<TooltipTrigger asChild>
@@ -360,13 +398,14 @@ function TableQuotesSimple() {
 								)}
 							</TableCell>
 							<TableCell className='text-center w-40'>
-								<Badge className='dark:border-input'>
-									{modality === 'car' && (
-										<Fragment>
-											<CarIcon className='size-4' />{' '}
-											{translateModality(modality)}
-										</Fragment>
-									)}
+								<Badge className='dark:border-input truncate'>
+									<CarIcon className='size-4' />{' '}
+									{capitalizeFirstLetters(
+										translateModality(modality)
+											.toLowerCase()
+											.replace('seguro', '')
+											.replace('plano de', ''),
+									).trim()}
 								</Badge>
 							</TableCell>
 							<TableCell className='text-center w-40'>
@@ -399,16 +438,20 @@ function TableQuotesSimple() {
 									</Link>
 								</Button> */}
 								<Button
+									disabled={modality !== SchemaModality.enum.vehicle}
 									variant='outline'
 									size='icon-sm'
 									isPending={isPendingQuotePrint && variablesQuotePrint === id}
-									onClick={() => mutateQuotePrint(id)}
+									onClick={() => {
+										mutateQuotePrint(id);
+										markAsPrinted(id);
+									}}
 									className={cn(
 										'',
 										isPendingQuotePrint && 'pointer-events-none',
 									)}
 								>
-									<PrinterIcon />
+									{printedIds.has(id) ? <PrinterCheckIcon /> : <PrinterIcon />}
 								</Button>
 								<DialogQuoteDeleteById id={id}>
 									<Button variant='destructive' size='icon-sm'>
