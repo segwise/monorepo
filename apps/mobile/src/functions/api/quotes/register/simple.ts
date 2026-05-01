@@ -1,5 +1,8 @@
 import { api } from '@/libraries/api';
-import type { QuoteSimpleRegister } from '@segwise/core/types';
+import type {
+	QuoteSimpleCustomRegister,
+	QuoteSimpleRegister,
+} from '@segwise/core/types';
 import { XiorError } from 'xior';
 
 async function submitQuoteSimple(props: QuoteSimpleRegister) {
@@ -23,4 +26,20 @@ async function submitQuoteSimple(props: QuoteSimpleRegister) {
 	}
 }
 
-export { submitQuoteSimple };
+async function submitQuoteSimpleCustom(props: QuoteSimpleCustomRegister) {
+	try {
+		const { data } = await api.post<{
+			message: string;
+		}>('/quotes/simple/custom', props);
+
+		return data;
+	} catch (error) {
+		if (error instanceof XiorError) {
+			throw new Error(error.response?.data.message || 'Falha ao registrar');
+		}
+
+		throw error;
+	}
+}
+
+export { submitQuoteSimple, submitQuoteSimpleCustom };

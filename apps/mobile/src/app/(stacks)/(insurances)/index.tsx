@@ -87,7 +87,7 @@ function InsurancesScreen() {
 					<TouchableOpacity
 						className='py-2 bg-transparent border border-primary rounded-sm'
 						onPress={() =>
-							push('/(stacks)/request-quote?i-have-insurance=true')
+							push('/(stacks)/request-quote/vehicle?i-have-insurance=true')
 						}
 					>
 						<View className='flex-row text-center items-center justify-center'>

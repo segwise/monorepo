@@ -41,9 +41,9 @@ function StackLayout() {
 				}}
 			/>
 			<Stack.Screen
-				name='request-quote'
+				name='(request-quote)'
 				options={{
-					title: 'Faça sua Cotação',
+					headerShown: false,
 				}}
 			/>
 			<Stack.Screen
@@ -60,6 +60,12 @@ function StackLayout() {
 			/>
 			<Stack.Screen
 				name='(useful-contacts)'
+				options={{
+					headerShown: false,
+				}}
+			/>
+			<Stack.Screen
+				name='(vehicle-inquiry)'
 				options={{
 					headerShown: false,
 				}}

@@ -1,5 +1,8 @@
 import { fetchApi } from '@/functions/api';
-import type { QuoteSimpleRegister } from '@segwise/core/types';
+import type {
+	QuoteSimpleCustomRegister,
+	QuoteSimpleRegister,
+} from '@segwise/core/types';
 import { useMutation } from '@tanstack/react-query';
 import type { XiorError } from 'xior';
 
@@ -13,4 +16,14 @@ const useQuoteSimpleRegister = () =>
 		mutationFn: fetchApi.quotes.register.simple,
 	});
 
-export { useQuoteSimpleRegister };
+const useQuoteSimpleCustomRegister = () =>
+	useMutation<
+		Awaited<ReturnType<typeof fetchApi.quotes.register.simpleCustom>>,
+		XiorError,
+		QuoteSimpleCustomRegister
+	>({
+		mutationKey: ['quotes', 'simple', 'custom', 'register'],
+		mutationFn: fetchApi.quotes.register.simpleCustom,
+	});
+
+export { useQuoteSimpleCustomRegister, useQuoteSimpleRegister };

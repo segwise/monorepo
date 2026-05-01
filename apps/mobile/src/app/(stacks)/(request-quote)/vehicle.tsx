@@ -79,7 +79,7 @@ function Label({ title, icon }: LabelProps) {
 	);
 }
 
-function RequestQuote() {
+function RequestQuoteVehicle() {
 	const [openDialog, setOpenDialog] = useState<boolean>(false);
 
 	const scrollViewRef = useRef<KeyboardAwareScrollViewRef>(null);
@@ -122,7 +122,7 @@ function RequestQuote() {
 		resolver: zodResolver(SchemaQuoteSimpleRegister),
 		defaultValues: {
 			referral,
-			modality: 'car',
+			modality: 'vehicle',
 			vehicleWithLicensePlate: true,
 			...(iHaveInsurance && {
 				type: {
@@ -990,4 +990,4 @@ function RequestQuote() {
 	);
 }
 
-export default RequestQuote;
+export default RequestQuoteVehicle;

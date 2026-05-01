@@ -48,7 +48,7 @@ function HomeScreen() {
 								onPress={() => {
 									setStoreFirstQuote(true);
 
-									push('/(stacks)/request-quote');
+									push('/(stacks)/request-quote/vehicle');
 								}}
 							>
 								<Text
@@ -89,7 +89,7 @@ function HomeScreen() {
 						/>
 						<ButtonLink
 							title='FAÇA SUA COTAÇÃO'
-							href='/(stacks)/request-quote'
+							href='/(stacks)/(request-quote)'
 						/>
 						<ButtonLink
 							title='QUAIS SEGUROS TENHO?'
@@ -107,9 +107,11 @@ function HomeScreen() {
 					</View>
 					<Text
 						allowFontScaling={false}
-						className='px-4 text-center text-sm font-semibold leading-tight mt-0 mb-1'
+						className='px-4 text-center text-sm font-semibold leading-tight mt-0 mb-1 uppercase'
 					>
-						COM FAMILIARES E AMIGOS{`\n`}SURPREENDA-SE COM O QUE HÁ DE MELHOR
+						Com amigos e familiares
+						{'\n'}
+						Conhecimento e economia
 					</Text>
 					<View className='px-4 flex-row flex-wrap gap-2'>
 						<View className='flex-1 min-w-[28%]'>
@@ -214,7 +216,7 @@ function HomeScreen() {
 						</View>
 						<View className='flex-1 min-w-[28%]'>
 							<ButtonGrid
-								title='Pontos e Multas'
+								title='Consulta Veicular'
 								icon={({ width, height, className, style }) => (
 									<Svg
 										width={width || 66}
@@ -232,7 +234,7 @@ function HomeScreen() {
 										/>
 									</Svg>
 								)}
-								href='https://www.usezapay.com.br'
+								href='/(vehicle-inquiry)'
 							/>
 						</View>
 						<View className='flex-1 min-w-[28%]'>
