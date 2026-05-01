@@ -78,7 +78,6 @@ function registerRoutersServicesAnalyticsPoliciesCount(server: Server) {
 						{
 							insured: {
 								name: {
-									mode: 'insensitive',
 									search: search.replaceAll(' ', '&'),
 								},
 							},
@@ -86,7 +85,6 @@ function registerRoutersServicesAnalyticsPoliciesCount(server: Server) {
 						{
 							temporaryInsured: {
 								name: {
-									mode: 'insensitive',
 									search: search.replaceAll(' ', '&'),
 								},
 							},

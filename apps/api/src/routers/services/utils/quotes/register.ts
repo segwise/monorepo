@@ -1,5 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
-import { SchemaQuoteSimpleRegister } from '@segwise/core';
+import {
+	SchemaQuoteSimpleCustomRegister,
+	SchemaQuoteSimpleRegister,
+} from '@segwise/core';
 import { endOfDay, endOfMonth } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
@@ -207,7 +210,7 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 										id: temporaryInsured.id,
 									},
 								},
-								modality: ModalityInsurance.car,
+								modality: ModalityInsurance.vehicle,
 								...(!!insuranceCompany && {
 									insuranceCompany: {
 										connect: {
@@ -286,6 +289,115 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 									quote,
 									safe,
 								},
+					200,
+				);
+			} catch (error) {
+				let message = 'Falha ao registrar';
+
+				if (error instanceof Error) {
+					message = error.message;
+				}
+
+				return ctx.json(
+					{
+						message,
+					},
+					500,
+				);
+			}
+		},
+	);
+
+	server.post(
+		'/simple/custom',
+		zValidator('json', SchemaQuoteSimpleCustomRegister),
+		async (ctx) => {
+			const { type, insured, referral } = ctx.req.valid('json');
+
+			let brokerId = null;
+
+			const referralResponse = referral
+				? await ctx.database.member.findUnique({
+						where: {
+							referral,
+						},
+						select: {
+							userId: true,
+							brokerId: true,
+						},
+					})
+				: null;
+
+			if (referralResponse?.brokerId) {
+				brokerId = referralResponse?.brokerId;
+			}
+
+			if (!brokerId) {
+				const broker = await ctx.database.broker.findFirst({
+					orderBy: {
+						createdAt: 'asc',
+					},
+					select: {
+						id: true,
+					},
+				});
+
+				if (!broker?.id) {
+					throw new Error('Nenhuma corretora vinculada');
+				}
+
+				brokerId = broker?.id;
+			}
+
+			try {
+				await ctx.database.$transaction(async (transaction) => {
+					const temporaryInsured = await transaction.temporaryInsured.create({
+						data: {
+							broker: {
+								connect: {
+									id: brokerId,
+								},
+							},
+							name: insured?.name as string,
+							phone: insured?.phone as string,
+						},
+						select: {
+							id: true,
+						},
+					});
+
+					await transaction.quote.create({
+						data: {
+							modality: type,
+							...(referralResponse && {
+								producer: {
+									connect: {
+										id: referralResponse.userId,
+									},
+								},
+							}),
+							broker: {
+								connect: {
+									id: brokerId,
+								},
+							},
+							temporaryInsured: {
+								connect: {
+									id: temporaryInsured.id,
+								},
+							},
+						},
+						select: {
+							id: true,
+						},
+						relationLoadStrategy: 'join',
+					});
+				});
+
+				return ctx.json(
+					{
+						message: 'Cadastrado com sucesso',
+					},
 					200,
 				);
 			} catch (error) {

@@ -108,7 +108,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 							insured: {
 								name: {
 									search: search.replaceAll(' ', '&'),
-									mode: 'insensitive',
 								},
 							},
 						},
@@ -116,7 +115,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 							temporaryInsured: {
 								name: {
 									search: search.replaceAll(' ', '&'),
-									mode: 'insensitive',
 								},
 							},
 						},

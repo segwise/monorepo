@@ -680,7 +680,14 @@ enum Role {
 }
 
 enum ModalityInsurance {
-  car
+  vehicle
+  health
+  residence
+  business
+  condominium
+  travel
+  professional
+  construction
 }
 
 enum StatusQuote {

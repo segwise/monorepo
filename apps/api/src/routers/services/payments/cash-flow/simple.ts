@@ -51,13 +51,11 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 											OR: [
 												{
 													name: {
-														mode: 'insensitive',
 														search: search.replaceAll(' ', '&'),
 													},
 												},
 												{
 													fantasy: {
-														mode: 'insensitive',
 														search: search.replaceAll(' ', '&'),
 													},
 												},
@@ -67,7 +65,6 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 									{
 										user: {
 											name: {
-												mode: 'insensitive',
 												search: search.replaceAll(' ', '&'),
 											},
 										},
@@ -77,13 +74,12 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 											OR: [
 												{
 													name: {
-														mode: 'insensitive',
 														search: search.replaceAll(' ', '&'),
 													},
 												},
 												// {
 												// 	fantasy: {
-												// 		mode: 'insensitive',
+												//
 												// 		search: search.replaceAll(' ', '&'),
 												// 	},
 												// },
@@ -101,13 +97,11 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 											OR: [
 												{
 													name: {
-														mode: 'insensitive',
 														search: search.replaceAll(' ', '&'),
 													},
 												},
 												{
 													fantasy: {
-														mode: 'insensitive',
 														search: search.replaceAll(' ', '&'),
 													},
 												},
@@ -117,7 +111,6 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 									{
 										user: {
 											name: {
-												mode: 'insensitive',
 												search: search.replaceAll(' ', '&'),
 											},
 										},
@@ -127,13 +120,12 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 											OR: [
 												{
 													name: {
-														mode: 'insensitive',
 														search: search.replaceAll(' ', '&'),
 													},
 												},
 												// {
 												// 	fantasy: {
-												// 		mode: 'insensitive',
+												//
 												// 		search: search.replaceAll(' ', '&'),
 												// 	},
 												// },

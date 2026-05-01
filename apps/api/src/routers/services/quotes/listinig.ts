@@ -49,7 +49,6 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 							insured: {
 								name: {
 									search: search.replaceAll(' ', '&'),
-									mode: 'insensitive',
 								},
 							},
 						},
@@ -57,7 +56,6 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 							temporaryInsured: {
 								name: {
 									search: search.replaceAll(' ', '&'),
-									mode: 'insensitive',
 								},
 							},
 						},

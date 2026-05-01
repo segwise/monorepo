@@ -76,12 +76,7 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 
 	const isProducer = roleBroker === Role.producer;
 
-	if (
-		session &&
-		((isBackoffice && XClientApp !== 'admin') ||
-			(isProducer && XClientApp !== 'producer') ||
-			(isCustomer && !isProducer && XClientApp !== 'customer'))
-	) {
+	async function logOut() {
 		const cloneResponse = response.clone();
 
 		const responseSignOut = await ctx.auth.api.signOut({
@@ -92,7 +87,7 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 		return new Response(
 			JSON.stringify({
 				code: 'INVALID_EMAIL_OR_PASSWORD',
-				message: 'Invalid email or password',
+				message: 'E-mail ou senha inválidos',
 			}),
 			{
 				...responseSignOut,
@@ -100,6 +95,26 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 				statusText: 'Unauthorized',
 			},
 		);
+	}
+
+	if (session) {
+		if (isBackoffice) {
+			if (XClientApp !== 'admin') {
+				return await logOut();
+			}
+		}
+
+		if (isCustomer) {
+			if (isProducer || XClientApp !== 'customer') {
+				return await logOut();
+			}
+		}
+
+		if (isProducer) {
+			if (XClientApp !== 'producer') {
+				return await logOut();
+			}
+		}
 	}
 
 	if (setCookies.length) {

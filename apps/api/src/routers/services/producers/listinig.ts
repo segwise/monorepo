@@ -21,7 +21,6 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 			const where: Prisma.UserWhereInput = {
 				...(!!search && {
 					name: {
-						mode: 'insensitive',
 						search: search.replaceAll(' ', '&'),
 					},
 				}),

@@ -177,7 +177,6 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 								driverName: driver.name,
 								driverBirth: driver.birth,
 								driverAge: differenceInYears(new Date(), driver.birth),
-								driverPhone: driver.phone,
 							},
 						},
 					}),

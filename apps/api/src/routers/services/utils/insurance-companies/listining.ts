@@ -18,7 +18,6 @@ function registerRoutersServicesUtilsInsuranceCompaniesListining(
 				...(!!search && {
 					name: {
 						search: search.replaceAll(' ', '&'),
-						mode: 'insensitive',
 					},
 				}),
 			};
