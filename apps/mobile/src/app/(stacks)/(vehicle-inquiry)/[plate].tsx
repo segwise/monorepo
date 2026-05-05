@@ -11,19 +11,20 @@ import { maskPlate } from '@segwise/core/masks';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
 	AlertTriangleIcon,
 	FileWarningIcon,
 	ReceiptIcon,
-	UserIcon,
 } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useMMKVObject } from 'react-native-mmkv';
 
 function VehicleInquiryPlateScreen() {
+	const { back } = useRouter();
+
 	const { plate } = useLocalSearchParams<{
 		plate: string;
 	}>();
@@ -59,6 +60,12 @@ function VehicleInquiryPlateScreen() {
 			setHistories(newCache);
 		}
 	}, [data, isSuccess, plate, histories, setHistories]);
+
+	useEffect(() => {
+		if (!isPending && !isSuccess) {
+			back();
+		}
+	}, [isPending, isSuccess, back]);
 
 	if (isPending) {
 		return;
@@ -323,24 +330,10 @@ function VehicleInquiryPlateScreen() {
 						Desbloqueie todos os detalhes
 					</Text>
 					<Text className='text-sm text-slate-700 mt-2 leading-tight'>
-						Acesse dados sigilosos do proprietário, histórico de débitos,
-						multas, leilões e restrições.
+						Histórico de débitos, multas, leilões e restrições e outros dados
+						complementares
 					</Text>
 					<View className='mt-4 bg-white rounded-md border-2 border-primary'>
-						<View className='flex-row items-center gap-3 py-3 px-4 border-b border-b-primary'>
-							<View className='size-9 rounded-full items-center justify-center'>
-								<UserIcon size={16} color='#94a3b8' />
-							</View>
-							<View className='flex-1'>
-								<Text className='text-sm leading-none font-bold text-black'>
-									Dados do Proprietário
-								</Text>
-								<Text className='text-xs text-slate-500' numberOfLines={1}>
-									Nome, CPF/CNPJ, endereço
-								</Text>
-							</View>
-							<SymbolView name='lock' size={16} tintColor='#94a3b8' />
-						</View>
 						<View className='flex-row items-center gap-3 py-3 px-4 border-b border-b-primary'>
 							<View className='size-9 rounded-full items-center justify-center'>
 								<AlertTriangleIcon size={16} color='#94a3b8' />
@@ -388,7 +381,7 @@ function VehicleInquiryPlateScreen() {
 						<Text className='text-xs text-slate-600 uppercase font-semibold'>
 							a partir de
 						</Text>
-						<Text className='text-[24px] font-black text-black'>R$ 29,90</Text>
+						<Text className='text-[24px] font-black text-black'>R$ ---,--</Text>
 					</View>
 					<Button
 						disabled={true}

@@ -30,37 +30,58 @@ function VehicleInquiryScreen() {
 						BRASIL • MERCOSUL
 					</Text>
 				</View>
-				<View className='mx-auto'>
-					<InputOTP
-						value={plate}
-						onValueChange={setPlate}
-						length={7}
-						classNameSquare='w-10 h-12 uppercase'
-						autoFocus
-						keyboardType='default'
-					/>
-				</View>
+				<InputOTP
+					value={plate}
+					onValueChange={setPlate}
+					length={7}
+					classNameSquare='flex-1 aspect-square uppercase'
+					autoFocus
+					keyboardType='default'
+				/>
 			</View>
 			{!!plate.length && !isValid && (
 				<Text className='text-destructive text-sm font-medium -mt-3 -mb-2'>
 					Placa Inválida
 				</Text>
 			)}
+			<Link href={`/(vehicle-inquiry)/${plate}`} asChild disabled={!isValid}>
+				<Button disabled={!isValid} className='h-fit'>
+					<Text className='text-white font-medium text-base leading-tight text-center uppercase'>
+						Consultar Simples{'\n'}Gratuito
+					</Text>
+					<Feather
+						name='search'
+						size={20}
+						color='#FFFFFF'
+						className='absolute right-4'
+					/>
+				</Button>
+			</Link>
+			<Link
+				href={`/(vehicle-inquiry)/complete?plate=${plate}`}
+				asChild
+				disabled={!isValid}
+			>
+				<Button disabled={!isValid} className='h-fit'>
+					<Text className='text-white font-medium text-base leading-tight text-center uppercase'>
+						Consultar Completa{'\n'}R$ ---,--
+					</Text>
+					<Feather
+						name='search'
+						size={20}
+						color='#FFFFFF'
+						className='absolute right-4'
+					/>
+				</Button>
+			</Link>
 			<View className='border border-primary/20 rounded-md px-4 pt-3 pb-4 flex-row gap-2 bg-primary/5'>
 				<Feather name='info' size={16} className='mt-1' />
 				<Text className='flex-1 text-sm leading-snug'>
-					A consulta básica é gratuita e mostra dados do veículo e tabela FIPE.
-					Dados do proprietário, multas e débitos requerem a consulta completa.
+					<Text className='font-bold'>OBS:</Text> Em consulta completa,
+					histórico de:{'\n'}Roubo e Furto, Recall, Multas, Leilão, Sinistros,
+					Débitos e Outros.
 				</Text>
 			</View>
-			<Link href={`/(vehicle-inquiry)/${plate}`} asChild disabled={!isValid}>
-				<Button disabled={!isValid} className='h-fit'>
-					<Feather name='search' size={20} color='#FFFFFF' />
-					<Text className='text-white font-medium text-base'>
-						Consultar Veículo
-					</Text>
-				</Button>
-			</Link>
 			{!!histories?.length && (
 				<View>
 					<Text className='font-bold text-base capitalize'>
