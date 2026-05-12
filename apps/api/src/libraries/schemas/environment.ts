@@ -14,6 +14,20 @@ const SchemaEnvironment = z.object({
 	RESEND_API_KEY: z.string('RESEND_API_KEY inválido'),
 	APIPLACAS_TOKEN: z.string('APIPLACAS_TOKEN inválido'),
 	CPFCNPJ_TOKEN: z.string('CPFCNPJ_TOKEN inválido'),
+	AMOUNT_SEARCH_VEHICLE_COMPLETE: z.coerce.number(
+		'AMOUNT_SEARCH_VEHICLE_COMPLETE inválido',
+	),
+	TRANSFEERA_CLIENT_SECRET: z.string('TRANSFEERA_CLIENT_SECRET inválido'),
+	TRANSFEERA_CLIENT_SECRET_USER: z.string(
+		'TRANSFEERA_CLIENT_SECRET_USER inválido',
+	),
+	TRANSFEERA_PAYMENT_PIX_KEY: z.string('TRANSFEERA_PAYMENT_PIX_KEY inválido'),
+	TRANSFEERA_PAYMENT_SPLIT_PIX_TYPE: z.string(
+		'TRANSFEERA_PAYMENT_SPLIT_PIX_TYPE inválido',
+	),
+	TRANSFEERA_PAYMENT_SPLIT_PIX: z.string(
+		'TRANSFEERA_PAYMENT_SPLIT_PIX_TYPE inválido',
+	),
 });
 
 export { SchemaEnvironment };

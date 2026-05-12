@@ -1,5 +1,4 @@
 import type { Server } from '@/@types/server.d';
-
 import { registerRoutersServicesAnalytics } from '@/routers/services/analytics';
 import { registerRoutersServicesAuth } from '@/routers/services/auth';
 import { registerRoutersServicesCpfOrCnpj } from '@/routers/services/cpf-or-cnpj';
@@ -11,6 +10,7 @@ import { registerRoutersServicesUtils } from '@/routers/services/utils';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
 import { requireSession } from '@/server/middlewares/session';
 import { registerRoutersServicesMarketplace } from './marketplace';
+import { registerRoutersServicesPIX } from './pix';
 import { registerRoutersServicesQuoteFinancing } from './quote-financing';
 
 function registerRoutersServices(server: Server) {
@@ -20,6 +20,8 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesUtils(base);
 	registerRoutersServicesQuoteFinancing(base);
 	registerRoutersServicesMarketplace(base);
+
+	registerRoutersServicesPIX(base);
 
 	base.use(requireSession);
 

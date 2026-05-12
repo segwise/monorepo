@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { logger } from 'hono/logger';
 import { trimTrailingSlash } from 'hono/trailing-slash';
 import type { AppBindings } from '@/@types/server.d';
 import { environment } from '@/libraries/environment';
@@ -10,6 +11,7 @@ import { databaseMiddleware } from '@/server/middlewares/database';
 import { emailMiddleware } from '@/server/middlewares/email';
 import { environmentMiddleware } from '@/server/middlewares/environment';
 import { errorMiddleware } from '@/server/middlewares/error';
+import { transfeeraMiddleware } from '@/server/middlewares/pix/transfeera';
 import {
 	replaceSession,
 	sessionMiddleware,
@@ -40,6 +42,10 @@ const server = new Hono<AppBindings>({
 	}),
 });
 
+if (environment.NODE_ENV === 'development') {
+	server.use(logger());
+}
+
 server.use(trimTrailingSlash());
 
 server.use(corsMiddleware);
@@ -58,6 +64,8 @@ server.use(authMiddleware);
 server.use(sessionMiddleware);
 
 server.use(browserMiddleware);
+
+server.use(transfeeraMiddleware);
 
 server.onError(errorMiddleware);
 

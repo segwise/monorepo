@@ -5,6 +5,7 @@ import type {
 	MiddlewareHandler as HonoMiddlewareHandler,
 } from 'hono';
 import type { Resend } from 'resend';
+import type { Xior } from 'xior';
 import type { Database } from '@/@types/database';
 import type { Environment } from '@/@types/environment';
 import type { auth } from '@/auth';
@@ -32,6 +33,7 @@ type Variables = {
 		brokerRole?: Role | null;
 	};
 	browser: Awaited<typeof acquirePage>;
+	transfeera: Xior;
 };
 
 type AppBindings = {
