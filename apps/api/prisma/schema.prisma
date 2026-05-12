@@ -162,11 +162,11 @@ model Insured {
   name  String
   phone String @db.VarChar(13)
 
-  cpf           String?       @db.VarChar(11)
-  cnpj          String?       @db.VarChar(14)
-  birth         DateTime      @db.Date
-  age           Int           @db.SmallInt
-  maritalStatus MaritalStatus @map("marital_status")
+  cpf           String?        @db.VarChar(11)
+  cnpj          String?        @db.VarChar(14)
+  birth         DateTime?      @db.Date
+  age           Int?           @db.SmallInt
+  maritalStatus MaritalStatus? @map("marital_status")
 
   qualificationTime Int? @map("qualification_time") @db.SmallInt
 
@@ -668,6 +668,62 @@ model Payment {
   @@map("payments")
 }
 
+model QuoteFinancingAVehicle {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  referral String?
+
+  model String
+  year  Int    @db.SmallInt
+
+  amount      Decimal  @db.Decimal(10, 2)
+  downPayment Decimal? @db.Decimal(10, 2)
+
+  name  String
+  phone String @db.VarChar(13)
+
+  @@index([referral])
+  @@index([name])
+  @@index([phone])
+  @@map("quotes_financing_a_vehicles")
+}
+
+model MarketplaceVehicle {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  photos String[]
+
+  model        String
+  year         Int                            @db.SmallInt
+  plate        String                         @db.VarChar(7)
+  color        String
+  fuel         MarketplaceVehicleFuel
+  transmission MarketplaceVehicleTransmission
+
+  price   Decimal @db.Decimal(10, 2)
+  mileage Int
+
+  description String?
+
+  state String
+  city  String
+
+  clientRegistration String @db.VarChar(11)
+
+  status MarketplaceVehicleStatus @default(active)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([plate])
+  @@index([status])
+  @@index([state, city])
+  @@index([price])
+  @@index([fuel])
+  @@index([transmission])
+  @@map("marketplace_vehicles")
+}
+
 enum Role {
   owner
   admin
@@ -816,4 +872,26 @@ enum TypeOfProductionPayment {
   weekly
   bi_weekly
   monthly
+}
+
+enum MarketplaceVehicleFuel {
+  gasoline
+  ethanol
+  flex
+  diesel
+  electric
+  hybrid
+}
+
+enum MarketplaceVehicleTransmission {
+  manual
+  automatic
+  cvt
+  automated_manual
+}
+
+enum MarketplaceVehicleStatus {
+  active
+  paused
+  sold
 }

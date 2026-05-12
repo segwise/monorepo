@@ -10,12 +10,16 @@ import { registerRoutersServicesSafes } from '@/routers/services/safes';
 import { registerRoutersServicesUtils } from '@/routers/services/utils';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
 import { requireSession } from '@/server/middlewares/session';
+import { registerRoutersServicesMarketplace } from './marketplace';
+import { registerRoutersServicesQuoteFinancing } from './quote-financing';
 
 function registerRoutersServices(server: Server) {
 	const base = server.basePath('/services');
 
 	registerRoutersServicesAuth(base);
 	registerRoutersServicesUtils(base);
+	registerRoutersServicesQuoteFinancing(base);
+	registerRoutersServicesMarketplace(base);
 
 	base.use(requireSession);
 

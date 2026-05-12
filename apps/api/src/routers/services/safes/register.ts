@@ -97,8 +97,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 							birth: insured.birth,
 							age: differenceInYears(new Date(), insured.birth),
 							phone: insured.phone,
-							maritalStatus: insured.maritalStatus,
-							qualificationTime: insured.qualificationTime,
 						},
 						select: {
 							id: true,
@@ -115,8 +113,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 						birth: insured.birth,
 						age: differenceInYears(new Date(), insured.birth),
 						phone: insured.phone,
-						maritalStatus: insured.maritalStatus,
-						qualificationTime: insured.qualificationTime,
 					},
 					select: {
 						id: true,
@@ -236,7 +232,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 								driverName: driver.name,
 								driverBirth: driver.birth,
 								driverAge: differenceInYears(new Date(), driver.birth),
-								driverPhone: driver.phone,
 							},
 						},
 					}),

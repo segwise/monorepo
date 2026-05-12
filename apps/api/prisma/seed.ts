@@ -11,6 +11,8 @@ import {
 } from 'date-fns';
 import xior from 'xior';
 import {
+	MarketplaceVehicleFuel,
+	MarketplaceVehicleTransmission,
 	ModalityInsurance,
 	Role,
 	StatusQuote,
@@ -2247,6 +2249,30 @@ async function seed() {
 						}),
 						commissionGross: faker.number.int({ min: 100, max: 1000 }),
 						commissionNet: faker.number.int({ min: 100, max: 1000 }),
+					},
+				});
+			}
+
+			for (let i = 0; i < 100; i++) {
+				await database.marketplaceVehicle.create({
+					data: {
+						city: faker.location.city().toLowerCase(),
+						state: faker.location.state().toLowerCase(),
+						color: faker.vehicle.color(),
+						photos: Array.from({ length: 3 }).map(() => faker.image.url()),
+						mileage: faker.number.int({ min: 10000, max: 100000 }),
+						model: faker.vehicle.color(),
+						price: faker.number.int({ min: 100000, max: 1000000 }),
+						year: faker.number.int({
+							min: 2000,
+							max: new Date().getFullYear(),
+						}),
+						plate: faker.vehicle.vrm(),
+						fuel: faker.helpers.enumValue(MarketplaceVehicleFuel),
+						transmission: faker.helpers.enumValue(
+							MarketplaceVehicleTransmission,
+						),
+						clientRegistration: '00473263289',
 					},
 				});
 			}

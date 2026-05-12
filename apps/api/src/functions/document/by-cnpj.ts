@@ -1,5 +1,5 @@
 import { type Document, maskNumber, SchemaCNPJ } from '@segwise/core';
-import { parse, startOfDay } from 'date-fns';
+import { parse, startOfDay, startOfToday } from 'date-fns';
 import xior, { XiorError } from 'xior';
 import { cache } from '@/services/cache';
 import { database } from '@/services/database';
@@ -72,7 +72,7 @@ async function documentByCNPJ(value: string): Promise<Document> {
 			const dataResponse = {
 				name: data.company.name.toLowerCase(),
 				cpfOrCnpj: maskNumber(data.taxId),
-				birth: startOfDay(parse(data.founded, 'yyyy-MM-dd', new Date())),
+				birth: startOfDay(parse(data.founded, 'yyyy-MM-dd', startOfToday())),
 			};
 
 			await cache.set(`document:cnpj:${cnpj}`, JSON.stringify(dataResponse));

@@ -1,5 +1,5 @@
 import { type Document, maskNumber, SchemaCPF } from '@segwise/core';
-import { parse, startOfDay } from 'date-fns';
+import { parse, startOfDay, startOfToday } from 'date-fns';
 import xior, { XiorError } from 'xior';
 import { environment } from '@/libraries/environment';
 import { cache } from '@/services/cache';
@@ -86,7 +86,7 @@ async function documentByCPF(value: string): Promise<Document> {
 			const dataResponse = {
 				name: data.nome.toLowerCase(),
 				cpfOrCnpj: maskNumber(data.cpf),
-				birth: startOfDay(parse(data.nascimento, 'dd/MM/yyyy', new Date())),
+				birth: startOfDay(parse(data.nascimento, 'dd/MM/yyyy', startOfToday())),
 			};
 
 			await cache.set(`document:cpf:${cpf}`, JSON.stringify(dataResponse));
