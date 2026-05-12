@@ -637,7 +637,7 @@ function FilterModality() {
 			</span>
 			<div className='flex flex-row items-center justify-start gap-x-2'>
 				{items.slice(0, 2).map((props) => {
-					const Icon = props === 'car' ? CarIcon : CarIcon;
+					const Icon = props === 'vehicle' ? CarIcon : CarIcon;
 
 					return (
 						<Badge key={props} className='font-medium'>

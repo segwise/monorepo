@@ -579,7 +579,7 @@ function FilterModality({
 						className='w-fit px-2 cursor-pointer hover:bg-muted-foreground/20 data-[variant=active]:hover:bg-active/80'
 						onClick={() => onChangeValue(modality)}
 					>
-						{modality === 'car' && <CarIcon />}
+						{modality === 'vehicle' && <CarIcon />}
 						{translateModality(modality)}{' '}
 						{value.includes(modality) && <XIcon className='size-2.5!' />}
 					</Badge>

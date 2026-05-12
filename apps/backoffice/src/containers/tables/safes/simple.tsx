@@ -359,7 +359,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 							</TableCell>
 							<TableCell className='text-center w-40'>
 								<Badge className='dark:border-input'>
-									{modality === 'car' && (
+									{modality === 'vehicle' && (
 										<Fragment>
 											<CarIcon className='size-4' />{' '}
 											{translateModality(modality)}
