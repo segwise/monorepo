@@ -7,6 +7,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { api } from '@/libraries/api';
+import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 import { maskPlate } from '@segwise/core/masks';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -22,7 +23,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useMMKVObject } from 'react-native-mmkv';
 
 function VehicleInquiryPlateScreen() {
-	const { back } = useRouter();
+	const { push, back } = useRouter();
 
 	const { plate } = useLocalSearchParams<{
 		plate: string;
@@ -42,6 +43,9 @@ function VehicleInquiryPlateScreen() {
 			return (await api.get(`/fipe/${plate}`)).data;
 		},
 	});
+
+	const { data: amountSearchVehicleComplete } =
+		useGetAmountSearchVehicleComplete();
 
 	useEffect(() => {
 		if (isSuccess && data) {
@@ -367,11 +371,18 @@ function VehicleInquiryPlateScreen() {
 						<Text className='text-xs text-slate-600 uppercase font-semibold'>
 							a partir de
 						</Text>
-						<Text className='text-[24px] font-black text-black'>R$ ---,--</Text>
+						<Text className='text-[24px] font-black text-black'>
+							{amountSearchVehicleComplete?.amount
+								? new Intl.NumberFormat('pt-BR', {
+										style: 'currency',
+										currency: 'BRL',
+									}).format(amountSearchVehicleComplete.amount)
+								: undefined}
+						</Text>
 					</View>
 					<Button
-						disabled={true}
 						className='flex-row items-center justify-center gap-2 mt-3 rounded-md'
+						onPress={() => push(`/(vehicle-inquiry)/complete?plate=${plate}`)}
 					>
 						<SymbolView name='lock' size={16} tintColor='#FFFFFF' />
 						<Text className='text-white font-bold text-sm leading-none uppercase'>
@@ -379,9 +390,6 @@ function VehicleInquiryPlateScreen() {
 						</Text>
 						<SymbolView name='arrow.right' size={16} tintColor='#FFFFFF' />
 					</Button>
-					<Text className='text-xs text-center text-slate-500 mt-2 font-semibold uppercase'>
-						Em Construção · Pagamento em breve
-					</Text>
 				</View>
 				<Text className='text-sm text-center text-slate-500 px-4 mt-4 mb-6 leading-tight'>
 					Dados obtidos junto a fontes oficiais (DENATRAN/SENATRAN).

@@ -1,20 +1,20 @@
 import { Button } from '@/components/ui/button';
 import { api } from '@/libraries/api';
+import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 import { maskPlate } from '@segwise/core/masks';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import {
-	ConstructionIcon,
-	DollarSignIcon,
-	InfoIcon,
-} from 'lucide-react-native';
+import { DollarSignIcon, InfoIcon } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 function VehicleInquiryCompleteScreen() {
-	const { back } = useRouter();
+	const { push, back } = useRouter();
 
 	const { plate } = useLocalSearchParams<{ plate: string }>();
+
+	const { data: amountSearchVehicleComplete } =
+		useGetAmountSearchVehicleComplete();
 
 	const { data, isPending, isSuccess } = useQuery({
 		queryKey: ['fipe', plate],
@@ -22,6 +22,10 @@ function VehicleInquiryCompleteScreen() {
 			return (await api.get(`/fipe/${plate}`)).data;
 		},
 	});
+
+	function goCheckout() {
+		push(`/(vehicle-inquiry)/checkout-complete?plate=${plate}`);
+	}
 
 	useEffect(() => {
 		if (!isPending && !isSuccess) {
@@ -87,17 +91,19 @@ function VehicleInquiryCompleteScreen() {
 					</Text>
 				</View>
 				<Text className='text-base font-medium text-neutral-900 mb-0.5'>
-					R$ —,——
+					{amountSearchVehicleComplete?.amount
+						? new Intl.NumberFormat('pt-BR', {
+								style: 'currency',
+								currency: 'BRL',
+							}).format(amountSearchVehicleComplete.amount)
+						: undefined}
 				</Text>
 			</View>
-			<Button className='w-full mt-6' disabled>
+			<Button className='w-full mt-6' onPress={goCheckout}>
 				<Text className='text-white text-base font-medium uppercase'>
 					Realizar Pagamento <DollarSignIcon size={18} color='#FFFFFF' />
 				</Text>
 			</Button>
-			<Text className='text-center mt-2 font-medium capitalize opacity-40'>
-				Em Construção <ConstructionIcon size={12} />
-			</Text>
 		</ScrollView>
 	);
 }

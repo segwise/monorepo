@@ -11,6 +11,8 @@ function StackLayout() {
 		>
 			<Stack.Screen name='index' />
 			<Stack.Screen name='[plate]' />
+			<Stack.Screen name='complete' />
+			<Stack.Screen name='checkout-complete' />
 		</Stack>
 	);
 }

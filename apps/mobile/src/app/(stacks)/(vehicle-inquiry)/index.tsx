@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { InputOTP } from '@/components/ui/input-otp';
+import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 import { Feather } from '@expo/vector-icons';
 import { maskPlate } from '@segwise/core/masks';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
@@ -19,6 +20,9 @@ function VehicleInquiryScreen() {
 			year: number;
 		}>
 	>('vehicle-inquiry-plate');
+
+	const { data: amountSearchVehicleComplete } =
+		useGetAmountSearchVehicleComplete();
 
 	const isValid = isPlate(plate);
 
@@ -64,7 +68,13 @@ function VehicleInquiryScreen() {
 			>
 				<Button disabled={!isValid} className='h-fit'>
 					<Text className='text-white font-medium text-base leading-tight text-center uppercase'>
-						Consultar Completa{'\n'}R$ ---,--
+						Consulta Completa{'\n'}
+						{amountSearchVehicleComplete?.amount
+							? new Intl.NumberFormat('pt-BR', {
+									style: 'currency',
+									currency: 'BRL',
+								}).format(amountSearchVehicleComplete.amount)
+							: undefined}
 					</Text>
 					<Feather
 						name='search'
