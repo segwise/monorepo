@@ -88,6 +88,7 @@ function RequestQuoteVehicle() {
 		resolver: zodResolver(SchemaQuoteSimpleCustomRegister),
 		defaultValues: {
 			referral,
+			// @ts-expect-error
 			type,
 			insured: {
 				name: '',

@@ -40,7 +40,7 @@ function VehicleInquiryCompleteScreen() {
 			showsVerticalScrollIndicator={false}
 		>
 			<View className='mb-4'>
-				<Text className='text-xs font-medium tracking-widest uppercase text-muted-foreground'>
+				<Text className='text-xs font-bold tracking-widest uppercase text-foreground'>
 					Vai comprar?
 				</Text>
 				<Text className='text-3xl font-bold tracking-tight'>

@@ -179,7 +179,6 @@ function HomeScreen() {
 						</View>
 						<View className='flex-1 min-w-[28%]'>
 							<ButtonGrid
-								disabled
 								title='Financiar Veículo'
 								icon={({ width, height, className, style }) => (
 									<Svg
@@ -211,7 +210,7 @@ function HomeScreen() {
 										</Defs>
 									</Svg>
 								)}
-								href='/#'
+								href='/financing-a-vehicle'
 							/>
 						</View>
 						<View className='flex-1 min-w-[28%]'>
@@ -239,7 +238,6 @@ function HomeScreen() {
 						</View>
 						<View className='flex-1 min-w-[28%]'>
 							<ButtonGrid
-								disabled
 								title='Compra & Vendas'
 								icon={({ width, height, className, style }) => (
 									<Svg
@@ -258,7 +256,7 @@ function HomeScreen() {
 										/>
 									</Svg>
 								)}
-								href='/#'
+								href='/(buying-and-selling)'
 							/>
 						</View>
 						<View className='flex-1 min-w-[28%]'>

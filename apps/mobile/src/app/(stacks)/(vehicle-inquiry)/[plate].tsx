@@ -10,7 +10,6 @@ import { api } from '@/libraries/api';
 import { maskPlate } from '@segwise/core/masks';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { useQuery } from '@tanstack/react-query';
-import { format, parseISO } from 'date-fns';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
@@ -210,20 +209,7 @@ function VehicleInquiryPlateScreen() {
 						value={`${data.address.city} - ${data.address.uf}`}
 					/>
 				</View>
-				<View className='flex-row items-center justify-between px-4 py-2 -mx-4 bg-primary mt-2'>
-					<Text className='text-white font-semibold text-base uppercase flex-1 text-left'>
-						TABELA FIPE
-					</Text>
-					<Text className='text-muted font-normal text-xs text-right'>
-						Ref:{' '}
-						{capitalizeFirstLetters(
-							format(
-								parseISO(data.fipe[0]?.reference || new Date().toISOString()),
-								'MMMM/yyyy',
-							),
-						)}
-					</Text>
-				</View>
+				<Separator />
 				{!!data.fipe.length && (
 					<View>
 						<View className='border-2 border-black rounded-lg overflow-hidden'>

@@ -77,6 +77,7 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 			},
 		],
 		'expo-localization',
+		'expo-image-picker',
 	],
 	experiments: {
 		typedRoutes: true,

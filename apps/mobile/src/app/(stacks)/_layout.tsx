@@ -70,6 +70,18 @@ function StackLayout() {
 					headerShown: false,
 				}}
 			/>
+			<Stack.Screen
+				name='financing-a-vehicle'
+				options={{
+					title: 'Financiar Veículo',
+				}}
+			/>
+			<Stack.Screen
+				name='(buying-and-selling)'
+				options={{
+					headerShown: false,
+				}}
+			/>
 		</Stack>
 	);
 }

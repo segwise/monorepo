@@ -26,8 +26,8 @@ function VehicleInquiryScreen() {
 		<View className='p-4 gap-y-4'>
 			<View className='border border-border rounded-md p-4 overflow-hidden relative'>
 				<View className='bg-primary py-1.5 -mx-4 -mt-4 mb-4'>
-					<Text className='text-center text-white font-medium uppercase text-sm'>
-						BRASIL • MERCOSUL
+					<Text className='text-center text-white font-bold uppercase text-base'>
+						PLACA
 					</Text>
 				</View>
 				<InputOTP
@@ -77,8 +77,8 @@ function VehicleInquiryScreen() {
 			<View className='border border-primary/20 rounded-md px-4 pt-3 pb-4 flex-row gap-2 bg-primary/5'>
 				<Feather name='info' size={16} className='mt-1' />
 				<Text className='flex-1 text-sm leading-snug'>
-					<Text className='font-bold'>OBS:</Text> Em consulta completa,
-					histórico de:{'\n'}Roubo e Furto, Recall, Multas, Leilão, Sinistros,
+					<Text className='font-bold'>OBS:</Text> Em Consulta Completa,
+					Histórico de:{'\n'}Roubo e Furto, Recall, Multas, Leilão, Sinistros,
 					Débitos e Outros.
 				</Text>
 			</View>
