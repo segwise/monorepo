@@ -92,7 +92,7 @@ function ButtonGrid({
 						}}
 					/>
 				</View>
-				<View className='h-9 flex flex-row items-center'>
+				<View className='h-12 flex flex-row items-center'>
 					<Text
 						allowFontScaling={false}
 						className={cn(

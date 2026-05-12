@@ -91,10 +91,7 @@ function HomeScreen() {
 							title='FAÇA SUA COTAÇÃO'
 							href='/(stacks)/(request-quote)'
 						/>
-						<ButtonLink
-							title='QUAIS SEGUROS TENHO?'
-							href='https://www2.susep.gov.br/safe/apolices/app'
-						/>
+						<ButtonLink title='CONSULTA VEICULAR' href='/(vehicle-inquiry)' />
 						<ButtonLink
 							title='COMPARTILHAR'
 							invert
@@ -215,7 +212,7 @@ function HomeScreen() {
 						</View>
 						<View className='flex-1 min-w-[28%]'>
 							<ButtonGrid
-								title='Consulta Veicular'
+								title='Quais Seguros Tenho?'
 								icon={({ width, height, className, style }) => (
 									<Svg
 										width={width || 66}
@@ -233,7 +230,7 @@ function HomeScreen() {
 										/>
 									</Svg>
 								)}
-								href='/(vehicle-inquiry)'
+								href='https://www2.susep.gov.br/safe/apolices/app'
 							/>
 						</View>
 						<View className='flex-1 min-w-[28%]'>
