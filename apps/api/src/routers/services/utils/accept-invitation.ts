@@ -29,6 +29,8 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 				},
 			});
 
+			console.log(invitation);
+
 			if (invitation?.role === Role.producer) {
 				const url = new URL(
 					`http${ctx.environment.NODE_ENV !== 'development' ? 's' : ''}://${ctx.environment.NODE_ENV !== 'development' ? 'producer.' : ''}${getMainDomain(ctx.environment.APPLICATION_URL)}${ctx.environment.NODE_ENV === 'development' ? `:3000` : ''}`,
