@@ -20,6 +20,8 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 		async (ctx) => {
 			const { token } = ctx.req.valid('query');
 
+			console.log(token);
+
 			const invitation = await ctx.database.invitation.findUnique({
 				where: {
 					id: token,
