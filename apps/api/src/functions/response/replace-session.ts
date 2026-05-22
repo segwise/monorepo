@@ -72,7 +72,8 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 		role === Role.finance ||
 		role === Role.counter;
 
-	const isCustomer = role === Role.customer;
+	const isCustomer =
+		roleBroker === Role.producer ? false : role === Role.customer;
 
 	const isProducer = roleBroker === Role.producer;
 
@@ -97,7 +98,6 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 		);
 	}
 
-	console.log('XClientApp:', XClientApp);
 	console.log(isBackoffice, isCustomer, isProducer);
 
 	if (session) {
@@ -107,14 +107,14 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 			}
 		}
 
-		if (isCustomer) {
-			if (isProducer || XClientApp !== 'customer') {
+		if (isProducer) {
+			if (XClientApp !== 'producer') {
 				return await logOut();
 			}
 		}
 
-		if (isProducer) {
-			if (XClientApp !== 'producer') {
+		if (isCustomer) {
+			if (isProducer || XClientApp !== 'customer') {
 				return await logOut();
 			}
 		}
