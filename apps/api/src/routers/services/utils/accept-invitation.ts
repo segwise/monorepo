@@ -31,7 +31,14 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 				},
 			});
 
-			console.log(invitation);
+			if (!invitation) {
+				return ctx.json(
+					{
+						message: 'Token não encontrado',
+					},
+					404,
+				);
+			}
 
 			if (invitation?.role === Role.producer) {
 				const url = new URL(
