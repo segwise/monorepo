@@ -97,6 +97,8 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 		);
 	}
 
+	console.log('XClientApp:', XClientApp);
+
 	if (session) {
 		if (isBackoffice) {
 			if (XClientApp !== 'admin') {
