@@ -98,6 +98,7 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 	}
 
 	console.log('XClientApp:', XClientApp);
+	console.log(isBackoffice, isCustomer, isProducer);
 
 	if (session) {
 		if (isBackoffice) {
