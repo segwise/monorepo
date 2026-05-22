@@ -101,22 +101,16 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 	console.log(isBackoffice, isCustomer, isProducer);
 
 	if (session) {
-		if (isBackoffice) {
-			if (XClientApp !== 'admin') {
-				return await logOut();
-			}
+		if (isBackoffice && XClientApp !== 'admin') {
+			return await logOut();
 		}
 
-		if (isProducer) {
-			if (XClientApp !== 'producer') {
-				return await logOut();
-			}
+		if (isCustomer && XClientApp !== 'customer') {
+			return await logOut();
 		}
 
-		if (isCustomer) {
-			if (isProducer || XClientApp !== 'customer') {
-				return await logOut();
-			}
+		if (isProducer && XClientApp !== 'producer') {
+			return await logOut();
 		}
 	}
 
