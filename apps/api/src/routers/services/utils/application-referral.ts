@@ -4,8 +4,10 @@ import z from 'zod';
 import type { Server } from '@/@types/server';
 import {
 	APP_STORE_URL,
+	APP_STORE_XCAR_URL,
 	FALLBACK_URL,
 	PLAY_STORE_URL,
+	PLAY_STORE_XCAR_URL,
 } from '@/const/url-application';
 import {
 	buildFingerprint,
@@ -25,12 +27,13 @@ function registerRoutersServicesUtilsApplicationReferral(server: Server) {
 			z
 				.object({
 					referral: SchemaReferral.nullish(),
+					package: z.literal(['br.com.segwise.xcarcorretora']).nullish(),
 				})
 				.partial()
 				.strict(),
 		),
 		async (ctx) => {
-			const { referral } = ctx.req.valid('query');
+			const { referral, package: url } = ctx.req.valid('query');
 
 			if (!referral) {
 				const userAgent = ctx.req.raw.headers.get('user-agent') ?? 'unknown';
@@ -41,11 +44,11 @@ function registerRoutersServicesUtilsApplicationReferral(server: Server) {
 				const isAndroid = /android/.test(ua);
 
 				if (isIos) {
-					return ctx.redirect(APP_STORE_URL, 302);
+					return ctx.redirect(url ? APP_STORE_XCAR_URL : APP_STORE_URL, 302);
 				}
 
 				if (isAndroid) {
-					return ctx.redirect(PLAY_STORE_URL, 302);
+					return ctx.redirect(url ? PLAY_STORE_XCAR_URL : PLAY_STORE_URL, 302);
 				}
 
 				return ctx.redirect(FALLBACK_URL, 302);
