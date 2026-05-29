@@ -5,7 +5,9 @@ const PROJECT_SLUG = 'segwise';
 const OWNER = 'segwise';
 
 const APP_NAME = 'Segwise';
-const BUNDLE_IDENTIFIER = 'br.com.segwise';
+const BUNDLE_IDENTIFIER = !process.env.COMPANY_ID
+	? 'br.com.segwise'
+	: 'br.com.segwise.xcarcorretora';
 const PACKAGE_NAME = BUNDLE_IDENTIFIER;
 const SCHEME = PROJECT_SLUG;
 
