@@ -26,7 +26,7 @@ function serializer(
 		broker: props.brokerId,
 		...(!!props.safeVehicle && {
 			vehicle: {
-				plate: props.safeVehicle.vehicle?.plate,
+				plate: props.safeVehicle.plate || props.safeVehicle.vehicle?.plate,
 				manufacturer:
 					props.safeVehicle.vehicle?.manufacturerId ||
 					props.safeVehicle.vehicleWithoutPlate?.manufacturerId ||

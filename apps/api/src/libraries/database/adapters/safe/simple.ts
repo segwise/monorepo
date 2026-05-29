@@ -21,6 +21,7 @@ const selectPrisma = {
 	brokerId: true,
 	safeVehicle: {
 		select: {
+			plate: true,
 			vehicle: {
 				select: {
 					plate: true,

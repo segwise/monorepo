@@ -17,6 +17,7 @@ const selectPrisma = {
 	brokerId: true,
 	quoteVehicle: {
 		select: {
+			plate: true,
 			vehicle: {
 				select: {
 					plate: true,
