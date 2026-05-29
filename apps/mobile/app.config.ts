@@ -4,7 +4,9 @@ const EAS_PROJECT_ID = 'd756c43a-d7d8-4021-b5e7-c801b0f55874';
 const PROJECT_SLUG = 'segwise';
 const OWNER = 'segwise';
 
-const APP_NAME = 'Segwise';
+const APP_NAME = !process.env.COMPANY_ID
+	? 'Segwise'
+	: 'XCAR Corretora de Seguros';
 const BUNDLE_IDENTIFIER = !process.env.COMPANY_ID
 	? 'br.com.segwise'
 	: 'br.com.segwise.xcarcorretora';
