@@ -27,7 +27,9 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 	version: VERSION,
 	platforms: ['android', 'ios'],
 	orientation: 'portrait',
-	icon: './src/assets/images/icons/ios-light.png',
+	icon: !process.env.COMPANY_ID
+		? './src/assets/images/icons/ios-light.png'
+		: './src/assets/images/icons/xcar.png',
 	userInterfaceStyle: 'light',
 	ios: {
 		supportsTablet: true,
