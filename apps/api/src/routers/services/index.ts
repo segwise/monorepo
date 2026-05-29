@@ -8,7 +8,6 @@ import { registerRoutersServicesQuotes } from '@/routers/services/quotes';
 import { registerRoutersServicesSafes } from '@/routers/services/safes';
 import { registerRoutersServicesUtils } from '@/routers/services/utils';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
-import { requireSession } from '@/services/server/middlewares/session';
 import { registerRoutersServicesMarketplace } from './marketplace';
 import { registerRoutersServicesPIX } from './pix';
 import { registerRoutersServicesQuoteFinancing } from './quote-financing';
@@ -27,7 +26,7 @@ function registerRoutersServices(server: Server) {
 
 	registerRoutersServicesSafes(base);
 
-	base.use(requireSession);
+	// base.use(requireSession);
 
 	registerRoutersServicesProducers(base);
 	registerRoutersServicesCpfOrCnpj(base);
