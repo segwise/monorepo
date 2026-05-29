@@ -62,7 +62,11 @@ export default function VehicleBuy() {
 		},
 	});
 
-	const gallery = data.photos || [];
+	const gallery = data?.photos || [];
+
+	if (!data) {
+		return;
+	}
 
 	return (
 		<Fragment>
