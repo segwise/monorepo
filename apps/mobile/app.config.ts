@@ -29,9 +29,6 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 	orientation: 'portrait',
 	icon: './src/assets/images/icons/ios-light.png',
 	userInterfaceStyle: 'light',
-	splash: {
-		backgroundColor: '#232323',
-	},
 	ios: {
 		supportsTablet: true,
 		bundleIdentifier: BUNDLE_IDENTIFIER,
@@ -54,6 +51,11 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		package: PACKAGE_NAME,
 		versionCode: VERSION_CODE,
 	},
+	splash: {
+		image: './src/assets/images/splash-screen/splash-icon-light.png',
+		resizeMode: 'contain',
+		backgroundColor: '#232323',
+	},
 	plugins: [
 		[
 			'expo-dev-client',
@@ -65,6 +67,9 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		[
 			'expo-splash-screen',
 			{
+				image: './src/assets/images/splash-screen/splash-icon-light.png',
+				imageWidth: 200,
+				sizeMode: 'contain',
 				backgroundColor: '#232323',
 			},
 		],
