@@ -104,32 +104,40 @@ function registerRoutersServicesUtilsApplicationReferral(server: Server) {
 				.strict(),
 		),
 		async (ctx) => {
-			const requestIp = extractIp(ctx.req.raw.headers, 'unknown');
+			try {
+				const requestIp = extractIp(ctx.req.raw.headers, 'unknown');
 
-			const userAgent = ctx.req.raw.headers.get('user-agent') ?? 'unknown';
+				const userAgent = ctx.req.raw.headers.get('user-agent') ?? 'unknown';
 
-			const data = ctx.req.valid('json');
+				const data = ctx.req.valid('json');
 
-			const match = await findMatch({
-				ip: requestIp,
-				userAgent,
-				language: data.language ?? null,
-				os: data.os ?? null,
-			});
+				const match = await findMatch({
+					ip: requestIp,
+					userAgent,
+					language: data.language ?? null,
+					os: data.os ?? null,
+				});
 
-			const referral = {
-				matched: match.matched,
-				referralCode: match.referralCode,
-				partnerId: match.partnerId,
-				score: match.score,
-				cached: false,
-			};
+				const referral = {
+					matched: match.matched,
+					referralCode: match.referralCode,
+					partnerId: match.partnerId,
+					score: match.score,
+					cached: false,
+				};
 
-			if (referral.referralCode) {
-				await deleteMatch(requestIp, match.hash);
+				if (referral.referralCode) {
+					await deleteMatch(requestIp, match.hash);
+				}
+
+				if (!referral.referralCode) {
+					return ctx.json({}, 200);
+				}
+
+				return ctx.json(referral, 200);
+			} catch {
+				return ctx.json({}, 200);
 			}
-
-			return ctx.json(referral, 200);
 		},
 	);
 }
