@@ -15,6 +15,12 @@ const selectPrisma = {
 	description: true,
 	plate: true,
 	status: true,
+	createdAt: true,
+	acceptExchange: true,
+	acceptExchangeAmount: true,
+	acceptExchangeChange1: true,
+	acceptExchangeChange2: true,
+	acceptExchangeChange3: true,
 } as const satisfies Prisma.MarketplaceVehicleSelect;
 
 export { selectPrisma };

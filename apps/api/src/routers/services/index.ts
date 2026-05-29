@@ -23,13 +23,15 @@ function registerRoutersServices(server: Server) {
 
 	registerRoutersServicesPIX(base);
 
+	registerRoutersServicesVehicles(base);
+
+	registerRoutersServicesSafes(base);
+
 	base.use(requireSession);
 
 	registerRoutersServicesProducers(base);
-	registerRoutersServicesVehicles(base);
 	registerRoutersServicesCpfOrCnpj(base);
 	registerRoutersServicesQuotes(base);
-	registerRoutersServicesSafes(base);
 	registerRoutersServicesAnalytics(base);
 	registerRoutersServicesPayments(base);
 }

@@ -1,4 +1,9 @@
 import { faker } from '@faker-js/faker/locale/pt_BR';
+import {
+	SchemaMarketplaceVehicleColor,
+	SchemaMarketplaceVehicleConservations,
+	SchemaMarketplaceVehicleFeatures,
+} from '@segwise/core';
 import { generateReferral } from '@segwise/core/utils';
 import type { User } from 'better-auth';
 import {
@@ -11,8 +16,13 @@ import {
 } from 'date-fns';
 import xior from 'xior';
 import {
+	MarketplaceVehicleAcceptExchangeAmount,
+	MarketplaceVehicleDirection,
+	MarketplaceVehicleFinancialState,
 	MarketplaceVehicleFuel,
+	MarketplaceVehicleStatus,
 	MarketplaceVehicleTransmission,
+	MarketplaceVehicleType,
 	ModalityInsurance,
 	Role,
 	StatusQuote,
@@ -2253,26 +2263,80 @@ async function seed() {
 				});
 			}
 
+			const insureds = await database.user.findMany({
+				where: {
+					role: 'customer',
+				},
+			});
+
 			for (let i = 0; i < 100; i++) {
 				await database.marketplaceVehicle.create({
 					data: {
-						city: faker.location.city().toLowerCase(),
-						state: faker.location.state().toLowerCase(),
-						color: faker.vehicle.color(),
-						photos: Array.from({ length: 3 }).map(() => faker.image.url()),
-						mileage: faker.number.int({ min: 10000, max: 100000 }),
-						model: faker.vehicle.color(),
-						price: faker.number.int({ min: 100000, max: 1000000 }),
+						insured: {
+							connect: {
+								id: faker.helpers.arrayElement(insureds).id,
+							},
+						},
+						photos: Array.from(
+							{ length: faker.number.int({ min: 1, max: 6 }) },
+							() => faker.image.url(),
+						),
+						type: faker.helpers.enumValue(MarketplaceVehicleType),
+						manufacturer: faker.vehicle.manufacturer(),
+						model: faker.vehicle.model(),
 						year: faker.number.int({
-							min: 2000,
+							min: 1990,
 							max: new Date().getFullYear(),
 						}),
-						plate: faker.vehicle.vrm(),
+						modelYear: faker.number.int({
+							min: 1990,
+							max: new Date().getFullYear(),
+						}),
+						plate: 'nas6888',
+						color: faker.helpers.enumValue(SchemaMarketplaceVehicleColor.enum),
 						fuel: faker.helpers.enumValue(MarketplaceVehicleFuel),
 						transmission: faker.helpers.enumValue(
 							MarketplaceVehicleTransmission,
 						),
-						clientRegistration: '00473263289',
+						direction: faker.helpers.enumValue(MarketplaceVehicleDirection),
+						financialState: faker.helpers.enumValue(
+							MarketplaceVehicleFinancialState,
+						),
+						price: faker.number.float({
+							min: 15_000,
+							max: 350_000,
+							fractionDigits: 2,
+						}),
+						mileage: faker.number.int({ min: 0, max: 300_000 }),
+						optionals: [
+							faker.helpers.enumValue(SchemaMarketplaceVehicleFeatures.enum),
+						],
+						conservations: [
+							faker.helpers.enumValue(
+								SchemaMarketplaceVehicleConservations.enum,
+							),
+						],
+						description: faker.lorem.sentences({ min: 1, max: 4 }),
+						phone: faker.phone.number({ style: 'national' }),
+
+						postalCode: faker.location.zipCode('########'),
+						state: faker.location.state(),
+						city: faker.location.city(),
+						acceptExchange: faker.datatype.boolean(),
+						acceptExchangeAmount: faker.datatype.boolean()
+							? faker.helpers.enumValue(MarketplaceVehicleAcceptExchangeAmount)
+							: null,
+						acceptExchangeChange1: faker.datatype.boolean()
+							? faker.vehicle.model()
+							: null,
+						acceptExchangeChange2: faker.datatype.boolean()
+							? faker.vehicle.model()
+							: null,
+						acceptExchangeChange3: faker.datatype.boolean()
+							? faker.vehicle.model()
+							: null,
+
+						status: faker.helpers.enumValue(MarketplaceVehicleStatus),
 					},
 				});
 			}

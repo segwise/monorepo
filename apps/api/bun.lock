@@ -9,7 +9,7 @@
         "@hono/zod-validator": "^0.7.6",
         "@prisma/adapter-pg": "^7.6.0",
         "@prisma/client": "^7.6.0",
-        "@segwise/core": "^1.1.313",
+        "@segwise/core": "^1.1.346",
         "better-auth": "^1.5.6",
         "date-fns": "^4.1.0",
         "handlebars": "^4.7.9",
@@ -143,7 +143,7 @@
 
     "@radix-ui/react-use-layout-effect": ["@radix-ui/react-use-layout-effect@1.1.1", "", { "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-RbJRS4UWQFkzHTTwVymMTUv8EqYhOp8dOOviLj2ugtTiXRaRQS7GLGxZTLL1jWhMeoSCf5zmcZkqTl9IiYfXcQ=="],
 
-    "@segwise/core": ["@segwise/core@1.1.313", "https://npm.pkg.github.com/download/@segwise/core/1.1.313/f29f46f47ec7210a0fa1381c2528f798c6407961", { "dependencies": { "decimal.js": "^10.6.0" }, "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-xKXXoNBvMC4XrPY4SgKPNjG7ITicBTIFgOjs4malAWvf1SLLDUeZqQ5ULTIgu4gF208tW14RfIyGMnfBxF4s4g=="],
+    "@segwise/core": ["@segwise/core@1.1.346", "https://npm.pkg.github.com/download/@segwise/core/1.1.346/7559f23b72dcc648faa6b09f44e89e634a6dfd43", { "dependencies": { "decimal.js": "^10.6.0" }, "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-9e9mummPV1vTFozOwI57Q6MW5cwb1JOoILX9MK64Vd1ebXixI/DLgVc+UAlDsxLJ7BOfN6OfKE+PGUft6RIIng=="],
 
     "@stablelib/base64": ["@stablelib/base64@1.0.1", "", {}, "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ=="],
 

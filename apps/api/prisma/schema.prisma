@@ -176,8 +176,9 @@ model Insured {
   quotes Quote[] @relation("insured_to_quote")
   safes  Safe[]  @relation("insured_to_safe")
 
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+  marketplaceVehicles MarketplaceVehicle[]
 
   @@unique([brokerId, cpf])
   @@unique([brokerId, cnpj])
@@ -691,24 +692,42 @@ model QuoteFinancingAVehicle {
 model MarketplaceVehicle {
   id String @id @default(uuid(7)) @db.Uuid
 
+  // Relação com o segurado
+  insuredId String  @map("insured_id") @db.Uuid
+  insured   Insured @relation(fields: [insuredId], references: [id])
+
   photos String[]
 
-  model        String
-  year         Int                            @db.SmallInt
-  plate        String                         @db.VarChar(7)
-  color        String
-  fuel         MarketplaceVehicleFuel
-  transmission MarketplaceVehicleTransmission
+  type           MarketplaceVehicleType
+  manufacturer   String
+  model          String
+  year           Int                              @db.SmallInt
+  modelYear      Int                              @map("model_year") @db.SmallInt
+  plate          String                           @db.VarChar(7)
+  color          String
+  fuel           MarketplaceVehicleFuel
+  transmission   MarketplaceVehicleTransmission
+  direction      MarketplaceVehicleDirection
+  financialState MarketplaceVehicleFinancialState @map("financial_state")
 
   price   Decimal @db.Decimal(10, 2)
   mileage Int
 
+  optionals     MarketplaceVehicleFeature[]
+  conservations MarketplaceVehicleConservation[]
+
   description String?
+  phone       String  @db.VarChar(20)
 
-  state String
-  city  String
+  postalCode String @map("postal_code") @db.VarChar(8)
+  state      String
+  city       String
 
-  clientRegistration String @db.VarChar(11)
+  acceptExchange        Boolean?                                @map("accept_exchange")
+  acceptExchangeAmount  MarketplaceVehicleAcceptExchangeAmount? @map("accept_exchange_amount")
+  acceptExchangeChange1 String?                                 @map("accept_exchange_change_1")
+  acceptExchangeChange2 String?                                 @map("accept_exchange_change_2")
+  acceptExchangeChange3 String?                                 @map("accept_exchange_change_3")
 
   status MarketplaceVehicleStatus @default(active)
 
@@ -716,7 +735,9 @@ model MarketplaceVehicle {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([plate])
+  @@index([insuredId])
   @@index([status])
+  @@index([type])
   @@index([state, city])
   @@index([price])
   @@index([fuel])
@@ -894,4 +915,45 @@ enum MarketplaceVehicleStatus {
   active
   paused
   sold
+}
+
+enum MarketplaceVehicleAcceptExchangeAmount {
+  down
+  up
+}
+
+enum MarketplaceVehicleType {
+  car
+  motorcycle
+}
+
+enum MarketplaceVehicleDirection {
+  hydraulics
+  electric
+  mechanics
+  assisted
+}
+
+enum MarketplaceVehicleFinancialState {
+  financed
+  settled
+}
+
+enum MarketplaceVehicleFeature {
+  air_barg
+  alarm
+  air_conditioning
+  electric_locks
+  electric_windows
+  sound
+  reverse_sensor
+  reversing_camera
+}
+
+enum MarketplaceVehicleConservation {
+  only_owner
+  with_manual
+  extra_key
+  reviewed
+  with_guarantee
 }

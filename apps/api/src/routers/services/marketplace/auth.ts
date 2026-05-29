@@ -1,13 +1,14 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaMarketplaceSignIn } from '@segwise/core';
 import type { Server } from '@/@types/server';
+import { StatusSafe } from '@/generated/prisma/enums';
 
 function registerRoutersServicesMarketplaceAuth(server: Server) {
 	server.get(
 		'/auth',
 		zValidator('query', SchemaMarketplaceSignIn),
 		async (ctx) => {
-			const { cpf, birth } = ctx.req.valid('query');
+			const { cpf, birth, company } = ctx.req.valid('query');
 
 			const isInsured = await ctx.database.safe.findFirst({
 				where: {
@@ -15,6 +16,13 @@ function registerRoutersServicesMarketplaceAuth(server: Server) {
 						cpf,
 						birth,
 					},
+					...(company && {
+						brokerId: company,
+					}),
+					status: StatusSafe.active,
+				},
+				select: {
+					insuredId: true,
 				},
 			});
 
@@ -29,7 +37,7 @@ function registerRoutersServicesMarketplaceAuth(server: Server) {
 
 			return ctx.json(
 				{
-					message: 'Logado com sucesso',
+					id: isInsured.insuredId,
 				},
 				200,
 			);

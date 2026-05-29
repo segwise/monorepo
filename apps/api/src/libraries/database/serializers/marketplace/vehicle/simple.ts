@@ -36,6 +36,12 @@ function serializer(
 		state: props.state,
 		status: props.status,
 		plate: props.plate,
+		createdAt: props.createdAt,
+		acceptExchange: props.acceptExchange,
+		acceptExchangeAmount: props.acceptExchangeAmount,
+		acceptExchangeChange1: props.acceptExchangeChange1,
+		acceptExchangeChange2: props.acceptExchangeChange2,
+		acceptExchangeChange3: props.acceptExchangeChange3,
 	} satisfies MarketplaceVehicle;
 }
 
