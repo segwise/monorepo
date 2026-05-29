@@ -46,6 +46,8 @@ function IndexScreen() {
 			attributeReferral().finally(() => {
 				setIsLoading(true);
 			});
+		} else {
+			setIsLoading(true);
 		}
 	}, [isFirstView]);
 
