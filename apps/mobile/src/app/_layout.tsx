@@ -48,7 +48,7 @@ function RootLayout() {
 	return (
 		<KeyboardProvider>
 			<GestureHandlerRootView
-				className={cn('flex-1', isCompany && 'theme-company')}
+				className={cn('flex-1')}
 				style={isCompany ? COMPANY_THEME : undefined}
 			>
 				<Providers>
