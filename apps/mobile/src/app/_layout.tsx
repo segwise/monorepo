@@ -14,6 +14,7 @@ import Constants from 'expo-constants';
 import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { vars } from 'nativewind';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -31,6 +32,10 @@ setDefaultOptions({
 
 const isCompany = !!Constants.expoConfig?.extra?.company;
 
+const COMPANY_THEME = vars({
+	'--primary': '2, 64%, 47%',
+});
+
 export const unstable_settings = {
 	initialRouteName: '/index',
 };
@@ -44,6 +49,7 @@ function RootLayout() {
 		<KeyboardProvider>
 			<GestureHandlerRootView
 				className={cn('flex-1', isCompany && 'theme-company')}
+				style={isCompany ? COMPANY_THEME : undefined}
 			>
 				<Providers>
 					<ThemeProvider value={NAV_THEME.light}>
