@@ -166,12 +166,14 @@ function Item(props: SafeSimple) {
 						value={maskPostalCode(props.vehicle.overnightPostalCode)}
 					/>
 				)}
+				{/* @ts-expect-error */}
 				{props.franchise && (
 					<List
 						label='FRÂNQUIA'
 						value={new Intl.NumberFormat('pt-BR', {
 							style: 'currency',
 							currency: 'BRL',
+							// @ts-expect-error
 						}).format(props.franchise)}
 					/>
 				)}

@@ -85,7 +85,7 @@ function InsurancesScreen() {
 						Cliente de outra corretora ou banco acesse:
 					</Text>
 					<TouchableOpacity
-						className='py-2 bg-transparent border border-primary rounded-sm'
+						className='py-2 bg-transparent border border-input rounded-sm'
 						onPress={() =>
 							push('/(stacks)/request-quote/vehicle?i-have-insurance=true')
 						}
@@ -96,7 +96,7 @@ function InsurancesScreen() {
 								accessible={false}
 								className='text-base font-bold leading-none mr-2'
 							>
-								JÁ TENHO SEGURO
+								FAÇA SUA COTAÇÃO
 							</Text>
 							<SymbolView
 								name={{

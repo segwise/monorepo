@@ -24,8 +24,6 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 	icon: './src/assets/images/icons/ios-light.png',
 	userInterfaceStyle: 'light',
 	splash: {
-		image: './src/assets/images/splash-screen/splash-icon-light.png',
-		resizeMode: 'contain',
 		backgroundColor: '#232323',
 	},
 	ios: {
@@ -61,9 +59,6 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		[
 			'expo-splash-screen',
 			{
-				image: './src/assets/images/splash-screen/splash-icon-light.png',
-				imageWidth: 200,
-				sizeMode: 'contain',
 				backgroundColor: '#232323',
 			},
 		],
@@ -86,6 +81,11 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		eas: {
 			projectId: EAS_PROJECT_ID,
 		},
+		...(!!process.env.COMPANY_ID && {
+			company: {
+				id: process.env.COMPANY_ID,
+			},
+		}),
 	},
 });
 

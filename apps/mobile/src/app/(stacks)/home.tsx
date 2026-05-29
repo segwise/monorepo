@@ -38,8 +38,8 @@ function HomeScreen() {
 			>
 				<DialogContent showClose={false}>
 					<DialogHeader>
-						<DialogTitle className='leading-snug'>
-							Gostaria de receber sua cotação de seguro com{' '}
+						<DialogTitle className='leading-snug text-center'>
+							Deseja receber cotação de seguro com{' '}
 							<Text className='font-extrabold'>DESCONTOS EXCLUSIVO?</Text>
 						</DialogTitle>
 						<DialogFooter className='flex-row items-center justify-between mt-3'>
@@ -48,7 +48,7 @@ function HomeScreen() {
 								onPress={() => {
 									setStoreFirstQuote(true);
 
-									push('/(stacks)/request-quote/vehicle');
+									push('/(stacks)/(request-quote)/vehicle');
 								}}
 							>
 								<Text

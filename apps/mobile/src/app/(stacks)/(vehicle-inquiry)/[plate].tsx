@@ -102,8 +102,8 @@ function VehicleInquiryPlateScreen() {
 							</Text>
 						</View>
 						<View className='flex-row items-end justify-between'>
-							<View className='flex-row items-center mt-3 border-2 border-primary rounded-sm self-start px-2 py-1 relative overflow-hidden'>
-								<View className='flex-row items-center justify-center bg-primary -ml-2 w-6 h-5 mr-2'>
+							<View className='flex-row items-center mt-3 border-2 border-input rounded-sm self-start px-2 py-1 relative overflow-hidden'>
+								<View className='flex-row items-center justify-center bg-input -ml-2 w-6 h-5 mr-2'>
 									<Text className='text-white text-xs'>BR</Text>
 								</View>
 								<Text className='text-base font-bold'>
@@ -235,7 +235,7 @@ function VehicleInquiryPlateScreen() {
 								<Text className='text-xs text-slate-500 mt-0.5 leading-none'>
 									Código FIPE: {data.fipe[0].code}
 								</Text>
-								<View className='flex-row mt-4 pt-3 border-t border-t-primary'>
+								<View className='flex-row mt-4 pt-3 border-t border-t-input'>
 									<View className='flex-1'>
 										<Text className='text-xs capitalize text-slate-500 font-semibold'>
 											Combustível
@@ -250,10 +250,10 @@ function VehicleInquiryPlateScreen() {
 								<Collapsible>
 									<CollapsibleTrigger className='flex-row items-center justify-between px-4 py-2 bg-slate-50 active:bg-slate-100 border-t-2'>
 										<View className='flex-row items-center gap-2'>
-											<Text className='text-sm font-bold text-black uppercase'>
+											<Text className='text-base font-extrabold text-destructive uppercase'>
 												Ver outras versões
 											</Text>
-											<View className='bg-black size-5 rounded-full items-center justify-center'>
+											<View className='bg-destructive size-5 rounded-full items-center justify-center'>
 												<Text className='text-white text-xs font-bold'>
 													{data.fipe.length}
 												</Text>
@@ -315,7 +315,7 @@ function VehicleInquiryPlateScreen() {
 						Consulta Completa
 					</Text>
 				</View>
-				<View className='mt-2 rounded-lg bg-slate-50 border-2 border-primary p-4'>
+				<View className='mt-2 rounded-lg bg-slate-50 border-2 border-input p-4'>
 					<Text className='text-xl font-black text-black uppercase tracking-tight leading-snug'>
 						Desbloqueie todos os detalhes
 					</Text>
@@ -323,22 +323,22 @@ function VehicleInquiryPlateScreen() {
 						Histórico de débitos, multas, leilões e restrições e outros dados
 						complementares
 					</Text>
-					<View className='mt-4 bg-white rounded-md border-2 border-primary'>
-						<View className='flex-row items-center gap-3 py-3 px-4 border-b border-b-primary'>
+					<View className='mt-4 bg-white rounded-md border-2 border-input'>
+						<View className='flex-row items-center gap-3 py-3 px-4 border-b border-b-input'>
 							<View className='size-9 rounded-full items-center justify-center'>
 								<AlertTriangleIcon size={16} color='#94a3b8' />
 							</View>
 							<View className='flex-1'>
 								<Text className='text-sm leading-none font-bold text-black'>
-									Multas e Pontuação
+									Multas
 								</Text>
 								<Text className='text-xs text-slate-500' numberOfLines={1}>
-									CNH, infrações, pontos
+									Gravame e infrações
 								</Text>
 							</View>
 							<SymbolView name='lock' size={16} tintColor='#94a3b8' />
 						</View>
-						<View className='flex-row items-center gap-3 py-3 px-4 border-b border-b-primary'>
+						<View className='flex-row items-center gap-3 py-3 px-4 border-b border-b-input'>
 							<View className='size-9 rounded-full items-center justify-center'>
 								<ReceiptIcon size={16} color='#94a3b8' />
 							</View>
@@ -352,7 +352,7 @@ function VehicleInquiryPlateScreen() {
 							</View>
 							<SymbolView name='lock' size={16} tintColor='#94a3b8' />
 						</View>
-						<View className='flex-row items-center gap-3 py-3 px-4 border-b border-b-primary'>
+						<View className='flex-row items-center gap-3 py-3 px-4 border-b border-b-input'>
 							<View className='size-9 rounded-full items-center justify-center'>
 								<FileWarningIcon size={16} color='#94a3b8' />
 							</View>
@@ -372,15 +372,17 @@ function VehicleInquiryPlateScreen() {
 							a partir de
 						</Text>
 						<Text className='text-[24px] font-black text-black'>
-							{amountSearchVehicleComplete?.amount
+							R$ ___,__
+							{/* {amountSearchVehicleComplete?.amount
 								? new Intl.NumberFormat('pt-BR', {
 										style: 'currency',
 										currency: 'BRL',
 									}).format(amountSearchVehicleComplete.amount)
-								: undefined}
+								: undefined} */}
 						</Text>
 					</View>
 					<Button
+						disabled
 						className='flex-row items-center justify-center gap-2 mt-3 rounded-md'
 						onPress={() => push(`/(vehicle-inquiry)/complete?plate=${plate}`)}
 					>
@@ -390,6 +392,7 @@ function VehicleInquiryPlateScreen() {
 						</Text>
 						<SymbolView name='arrow.right' size={16} tintColor='#FFFFFF' />
 					</Button>
+					<Text className='text-center'>Em construção</Text>
 				</View>
 				<Text className='text-sm text-center text-slate-500 px-4 mt-4 mb-6 leading-tight'>
 					Dados obtidos junto a fontes oficiais (DENATRAN/SENATRAN).

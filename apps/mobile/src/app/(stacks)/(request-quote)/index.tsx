@@ -8,11 +8,10 @@ import {
 	Dialog,
 	DialogClose,
 	DialogContent,
-	DialogHeader,
-	DialogTitle,
 	DialogTrigger,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Header } from '@/containers/header';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { type Href, Link, useRouter } from 'expo-router';
@@ -498,13 +497,16 @@ function Item({
 	isCollapsible = false,
 	contentCollapsible: CollapsibleItems,
 	href,
+	title,
 }: React.PropsWithChildren<{
 	content?: React.JSX.Element;
 	isBlock?: boolean;
 	isCollapsible?: boolean;
 	contentCollapsible?: () => React.JSX.Element | null;
 	href?: Href;
+	title: string;
 }>) {
+	const [open, setOpen] = useState<boolean>(false);
 	const [isOpenCollapsible, setIsOpenCollapsible] = useState(false);
 
 	function toggleCollapsible() {
@@ -513,45 +515,50 @@ function Item({
 
 	if (content && !isBlock) {
 		return (
-			<Dialog>
+			<Dialog open={open} onOpenChange={setOpen}>
 				<DialogTrigger asChild>{children}</DialogTrigger>
 				<DialogContent
 					showClose={false}
-					className='max-h-[calc(100vh-15vh)] mt-safe'
+					className='w-screen h-screen px-0 pt-0 border-0'
 				>
-					<DialogHeader className='flex-row items-center justify-between'>
-						<DialogTitle className='text-xl uppercase flex-1'>
-							Informações sobre o seguro
-						</DialogTitle>
-						<DialogClose asChild>
-							<TouchableOpacity hitSlop={10}>
-								<Feather size={24} name='x-circle' />
-							</TouchableOpacity>
-						</DialogClose>
-					</DialogHeader>
-					<View className='bg-border h-px' />
-					<ScrollView showsVerticalScrollIndicator={false}>
+					{/* @ts-expect-error */}
+					<Header
+						options={{
+							title,
+						}}
+						titlePosition='center'
+						showReturn
+						returnCallback={() => setOpen(false)}
+					/>
+
+					<ScrollView
+						showsVerticalScrollIndicator={false}
+						className='px-6 -mt-4'
+					>
+						{href && (
+							<View className='-mx-6'>
+								<Link href={href} asChild className='my-4 mx-5'>
+									<DialogClose asChild>
+										<Button className='h-fit'>
+											<Text className='text-white text-base font-bold uppercase'>
+												fazer uma cotação
+											</Text>
+											<SymbolView
+												name={{
+													ios: 'paperplane',
+													android: 'send',
+												}}
+												size={20}
+												tintColor='white'
+											/>
+										</Button>
+									</DialogClose>
+								</Link>
+								<Separator className='mb-4' />
+							</View>
+						)}
 						<Pressable>{content}</Pressable>
 					</ScrollView>
-					{href && (
-						<Link href={href} asChild>
-							<DialogClose asChild>
-								<Button className='h-fit'>
-									<Text className='text-white text-base font-bold uppercase'>
-										fazer uma cotação
-									</Text>
-									<SymbolView
-										name={{
-											ios: 'paperplane',
-											android: 'send',
-										}}
-										size={20}
-										tintColor='white'
-									/>
-								</Button>
-							</DialogClose>
-						</Link>
-					)}
 				</DialogContent>
 			</Dialog>
 		);
@@ -588,6 +595,7 @@ function RequestQuote() {
 					<Fragment key={index.toString()}>
 						<View className='mb-0 p-0'>
 							<Item
+								title={item.label}
 								href={item.screen}
 								content={item.content}
 								isBlock={!!item.items?.length}
@@ -601,7 +609,11 @@ function RequestQuote() {
 														key={index.toString()}
 														className='bg-border rounded-sm p-2 border border-border'
 													>
-														<Item content={item.content} href={item.screen}>
+														<Item
+															title={item1.label}
+															content={item.content}
+															href={item.screen}
+														>
 															<Text className='text-foreground text-lg font-medium uppercase w-full'>
 																{item1.label}
 															</Text>

@@ -1,13 +1,18 @@
 import LOGO from '@/assets/images/logo/segwise.png';
+import LOGO_XCAR from '@/assets/images/logo/xcar-light-full.png';
 import BACKGROUND_MAP from '@/assets/images/splash-screen/background-map.png';
 import { attributeReferral } from '@/functions/attribute-referral';
 import { cn } from '@/libraries/classname';
+import Constants from 'expo-constants';
 import { Image, ImageBackground } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { useMMKVBoolean } from 'react-native-mmkv';
 import Svg, { Circle, G } from 'react-native-svg';
+
+// @ts-expect-error
+const isCompany = Constants.expoConfig?.extra.company;
 
 function IndexScreen() {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -23,9 +28,12 @@ function IndexScreen() {
 			return;
 		}
 
-		// replace(!isFirstView ? '/(stacks)/request-referral' : '/(stacks)/home');
-		replace('/(stacks)/home');
-	}, [replace, isLoading]);
+		if (isCompany) {
+			replace('/(stacks)/home');
+		} else {
+			replace(!isFirstView ? '/(stacks)/request-referral' : '/(stacks)/home');
+		}
+	}, [replace, isLoading, isFirstView]);
 
 	useEffect(() => {
 		setTimeout(() => {
@@ -57,12 +65,12 @@ function IndexScreen() {
 				<View className='flex flex-col items-center justify-between py-10 absolute inset-0 z-10 size-full'>
 					<View />
 					<Image
-						source={LOGO}
+						source={isCompany ? LOGO_XCAR : LOGO}
 						contentFit='contain'
 						contentPosition='center'
 						style={{
 							width,
-							height: width / 10,
+							height: isCompany ? width / 5 : width / 10,
 						}}
 						allowDownscaling={false}
 						accessible={false}

@@ -72,9 +72,7 @@ function Label({ title, icon }: LabelProps) {
 			<View className='bg-primary rounded-full size-9 flex flex-row items-center justify-center'>
 				<SymbolView name={icon} size={18} tintColor='#FFFFFF' />
 			</View>
-			<Text allowFontScaling={false} className='text-xl font-semibold'>
-				{title}
-			</Text>
+			<Text className='text-xl font-semibold'>{title}</Text>
 		</View>
 	);
 }
@@ -172,7 +170,7 @@ function RequestQuoteVehicle() {
 
 					storage.set(keyStorage, JSON.stringify(myFiltersIds));
 
-					await ctx.client.refetchQueries({
+					ctx.client.resetQueries({
 						queryKey: ['safes'],
 					});
 				}

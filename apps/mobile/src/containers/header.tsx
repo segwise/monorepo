@@ -1,7 +1,8 @@
 import LOGO from '@/assets/images/logo/segwise.png';
+import LOGO_XCAR from '@/assets/images/logo/xcar-light-full.png';
 import { cn } from '@/libraries/classname';
-import { storage } from '@/libraries/storage';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
+import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -13,24 +14,29 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+// @ts-expect-error
+const isCompany = Constants.expoConfig?.extra.company;
+
 interface HeaderProps extends NativeStackHeaderProps {
 	titlePosition?: 'left' | 'center' | 'right';
 	showReturn?: boolean;
+	returnCallback?: () => void;
 }
 
 function Header({
 	titlePosition = 'center',
 	showReturn = true,
 	options: { title },
+	returnCallback,
 	...props
 }: HeaderProps) {
 	const { width } = useWindowDimensions();
 	const { top } = useSafeAreaInsets();
 
 	// @ts-expect-error
-	const firstInit = props.route.params?.['first-init'];
+	const firstInit = props.route?.params?.['first-init'];
 
-	const { back, replace } = useRouter();
+	const { back } = useRouter();
 
 	return (
 		<View>
@@ -41,11 +47,17 @@ function Header({
 					showReturn && 'justify-between',
 				)}
 			>
-				{props.route.name === 'request-referral' ? (
+				{props.route?.name === 'request-referral' ? (
 					<View className={cn('size-6', width <= 400 && 'size-8')} />
 				) : !firstInit && showReturn ? (
 					<TouchableOpacity
-						onPress={back}
+						onPress={() => {
+							if (returnCallback) {
+								return returnCallback();
+							}
+
+							back();
+						}}
 						hitSlop={14}
 						className={cn('size-6', width <= 400 && 'size-8')}
 					>
@@ -64,7 +76,7 @@ function Header({
 					)
 				)}
 				<Image
-					source={LOGO}
+					source={isCompany ? LOGO_XCAR : LOGO}
 					style={{
 						width: 170,
 						height: 50,
@@ -78,29 +90,8 @@ function Header({
 					allowDownscaling={false}
 					accessible={false}
 				/>
-				{props.route.name === 'request-referral' ? (
-					<TouchableOpacity
-						onPress={() => {
-							replace('/(stacks)/home');
-
-							storage.set('first-view', true);
-						}}
-						hitSlop={14}
-						className={cn('size-6', width <= 400 && 'size-8')}
-					>
-						<SymbolView
-							name={{
-								ios: 'x.circle.fill',
-								android: 'close',
-							}}
-							size={32}
-							tintColor='#FFFFFF'
-						/>
-					</TouchableOpacity>
-				) : (
-					showReturn && (
-						<View className={cn('size-6', width <= 400 && 'size-8')} />
-					)
+				{showReturn && (
+					<View className={cn('size-6', width <= 400 && 'size-8')} />
 				)}
 			</View>
 			<View

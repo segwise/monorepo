@@ -15,7 +15,7 @@
         "@rn-primitives/select": "^1.2.0",
         "@rn-primitives/separator": "^1.2.0",
         "@rn-primitives/slot": "^1.2.0",
-        "@segwise/core": "^1.1.312",
+        "@segwise/core": "^1.1.346",
         "@tanstack/react-query": "^5.90.21",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -504,7 +504,7 @@
 
     "@rn-primitives/types": ["@rn-primitives/types@1.2.0", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-web": "*" }, "optionalPeers": ["react-native", "react-native-web"] }, "sha512-b+6zKgdKVqAfaFPSfhwlQL0dnPQXPpW890m3eguC0VDI1eOsoEvUfVb6lmgH4bum9MmI0xymq4tOUI/fsKLoCQ=="],
 
-    "@segwise/core": ["@segwise/core@1.1.312", "https://npm.pkg.github.com/download/@segwise/core/1.1.312/57bcfe7939bc6bf4773842ec2b2611775f2ac67e", { "dependencies": { "decimal.js": "^10.6.0" }, "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-j0kqVhidaMseEKXD9nckomJD6hpmG70MVVHzTsQhEYPFKCtamR3Um4iiWYroOSZpXjpAtlgUlnWS1ty2R12+2w=="],
+    "@segwise/core": ["@segwise/core@1.1.346", "https://npm.pkg.github.com/download/@segwise/core/1.1.346/7559f23b72dcc648faa6b09f44e89e634a6dfd43", { "dependencies": { "decimal.js": "^10.6.0" }, "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-9e9mummPV1vTFozOwI57Q6MW5cwb1JOoILX9MK64Vd1ebXixI/DLgVc+UAlDsxLJ7BOfN6OfKE+PGUft6RIIng=="],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.27.10", "", {}, "sha512-MTBk/3jGLNB2tVxv6uLlFh1iu64iYOQ2PbdOSK3NW8JZsmlaOh2q6sdtKowBhfw8QFLmYNzTW4/oK4uATIi6ZA=="],
 

@@ -4,11 +4,13 @@ import 'react-native-reanimated';
 
 import { Toasts } from '@/components/ui/toast';
 import { Providers } from '@/contexts/providers';
+import { cn } from '@/libraries/classname';
 import { NAV_THEME } from '@/libraries/theme';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import { setDefaultOptions } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import Constants from 'expo-constants';
 import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -27,6 +29,8 @@ setDefaultOptions({
 	locale: ptBR,
 });
 
+const isCompany = !!Constants.expoConfig?.extra?.company;
+
 export const unstable_settings = {
 	initialRouteName: '/index',
 };
@@ -38,7 +42,9 @@ function RootLayout() {
 
 	return (
 		<KeyboardProvider>
-			<GestureHandlerRootView>
+			<GestureHandlerRootView
+				className={cn('flex-1', isCompany && 'theme-company')}
+			>
 				<Providers>
 					<ThemeProvider value={NAV_THEME.light}>
 						<StatusBar style='light' />

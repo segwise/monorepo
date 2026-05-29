@@ -13,7 +13,7 @@ import { cn } from '@/libraries/classname';
 import { useFinancingRegister } from '@/libraries/hooks/api/financing/register';
 import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { maskPhone } from '@segwise/core/masks';
+import { maskCPF, maskPhone } from '@segwise/core/masks';
 import { SchemaQuoteFinancingRegister } from '@segwise/core/schemas';
 import type { QuoteFinancingRegister } from '@segwise/core/types';
 import { Stack, useRouter } from 'expo-router';
@@ -80,6 +80,11 @@ function RequestQuoteFinancing() {
 		resolver: zodResolver(SchemaQuoteFinancingRegister),
 		defaultValues: {
 			referral,
+			financed: {
+				name: '',
+				phone: '',
+				cpf: '',
+			},
 		},
 	});
 
@@ -122,6 +127,41 @@ function RequestQuoteFinancing() {
 							}}
 						/>
 
+						<Controller
+							control={control}
+							name='vehicle.plate'
+							render={({ field, fieldState }) => (
+								<View>
+									<Input
+										{...field}
+										value={field.value || undefined}
+										onChangeText={(value) =>
+											field.onChange(value.toUpperCase())
+										}
+										label='Placa do Veículo ( Opcional )'
+										placeholder='AAA-0000 ou AAA0A00'
+										className='uppercase'
+										keyboardAppearance='dark'
+										autoCapitalize='characters'
+										autoCorrect={false}
+										returnKeyType={
+											!field.value || field.value === '' || fieldState.invalid
+												? 'none'
+												: 'next'
+										}
+										returnKeyLabel='Próximo'
+										enablesReturnKeyAutomatically
+										onSubmitEditing={() => {
+											if (!field.value || fieldState.invalid) return;
+											setFocus('vehicle.model');
+										}}
+									/>
+									{fieldState.error?.message && (
+										<InputError>{fieldState.error.message}</InputError>
+									)}
+								</View>
+							)}
+						/>
 						{/* Modelo */}
 						<Controller
 							control={control}
@@ -225,7 +265,6 @@ function RequestQuoteFinancing() {
 											<Input {...props} label='Valor do Veículo' />
 										)}
 									/>
-									81
 									{fieldState.error?.message && (
 										<InputError>{fieldState.error.message}</InputError>
 									)}
@@ -294,8 +333,8 @@ function RequestQuoteFinancing() {
 										onChangeText={(value) =>
 											field.onChange(value.toUpperCase())
 										}
-										label='Nome Completo'
-										placeholder='Nome e Sobrenome'
+										label='Nome'
+										placeholder='Nome'
 										className='uppercase'
 										keyboardAppearance='dark'
 										autoCapitalize='characters'
@@ -332,6 +371,40 @@ function RequestQuoteFinancing() {
 										onChangeText={(value) => field.onChange(maskPhone(value))}
 										label='Celular'
 										placeholder='(99) 99999-9999'
+										keyboardAppearance='dark'
+										keyboardType='phone-pad'
+										autoCapitalize='none'
+										autoCorrect={false}
+										autoComplete='tel-device'
+										returnKeyType={
+											!field.value || field.value === '' || fieldState.invalid
+												? 'none'
+												: 'done'
+										}
+										returnKeyLabel='Concluir'
+										enablesReturnKeyAutomatically
+										onSubmitEditing={() => {
+											if (!isDirty || !isValid) return;
+											setFocus('financed.cpf');
+										}}
+									/>
+									{fieldState.error?.message && (
+										<InputError>{fieldState.error.message}</InputError>
+									)}
+								</View>
+							)}
+						/>
+						<Controller
+							control={control}
+							name='financed.cpf'
+							render={({ field, fieldState }) => (
+								<View>
+									<Input
+										{...field}
+										value={field.value || undefined}
+										onChangeText={(value) => field.onChange(maskCPF(value))}
+										label='CPF'
+										placeholder='000.000.000-00'
 										keyboardAppearance='dark'
 										keyboardType='phone-pad'
 										autoCapitalize='none'

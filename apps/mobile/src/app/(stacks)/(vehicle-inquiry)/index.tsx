@@ -38,7 +38,7 @@ function VehicleInquiryScreen() {
 					value={plate}
 					onValueChange={setPlate}
 					length={7}
-					classNameSquare='flex-1 aspect-square uppercase'
+					classNameSquare='flex-1 h-12 uppercase'
 					autoFocus
 					keyboardType='default'
 				/>
@@ -51,7 +51,7 @@ function VehicleInquiryScreen() {
 			<Link href={`/(vehicle-inquiry)/${plate}`} asChild disabled={!isValid}>
 				<Button disabled={!isValid} className='h-fit'>
 					<Text className='text-white font-medium text-base leading-tight text-center uppercase'>
-						Consultar Simples{'\n'}Gratuito
+						Consulta Simples{'\n'}Gratuito
 					</Text>
 					<Feather
 						name='search'
@@ -66,15 +66,18 @@ function VehicleInquiryScreen() {
 				asChild
 				disabled={!isValid}
 			>
-				<Button disabled={!isValid} className='h-fit'>
+				{/* <Button disabled={!isValid} className='h-fit'> */}
+				<Button disabled className='h-fit'>
 					<Text className='text-white font-medium text-base leading-tight text-center uppercase'>
-						Consulta Completa{'\n'}
-						{amountSearchVehicleComplete?.amount
+						Consulta Completa
+						{'\n'}
+						{/* {amountSearchVehicleComplete?.amount
 							? new Intl.NumberFormat('pt-BR', {
 									style: 'currency',
 									currency: 'BRL',
 								}).format(amountSearchVehicleComplete.amount)
-							: undefined}
+							: undefined} */}
+						Em Construção
 					</Text>
 					<Feather
 						name='search'
@@ -100,7 +103,7 @@ function VehicleInquiryScreen() {
 					<View className='mt-2 gap-y-2'>
 						{histories
 							.reverse()
-							.slice(0, 5)
+							.slice(0, 3)
 							?.map(({ plate, model, year }) => (
 								<Link href={`/(vehicle-inquiry)/${plate}`} key={plate} asChild>
 									<TouchableOpacity className='flex-row items-center justify-between gap-x-2 border border-primary/20 rounded-md p-2 gap-2 bg-primary/5'>
