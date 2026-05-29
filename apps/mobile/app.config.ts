@@ -1,7 +1,9 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
-const EAS_PROJECT_ID = 'd756c43a-d7d8-4021-b5e7-c801b0f55874';
-const PROJECT_SLUG = 'segwise';
+const EAS_PROJECT_ID = !process.env.COMPANY_ID
+	? 'd756c43a-d7d8-4021-b5e7-c801b0f55874'
+	: '2b548c27-07f9-4378-88c2-2c12483fdc1b';
+const PROJECT_SLUG = !process.env.COMPANY_ID ? 'segwise' : 'xcarcorretora';
 const OWNER = 'segwise';
 
 const APP_NAME = !process.env.COMPANY_ID
