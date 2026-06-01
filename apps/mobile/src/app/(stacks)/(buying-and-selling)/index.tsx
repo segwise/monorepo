@@ -36,13 +36,17 @@ import {
 	FlatList,
 	Keyboard,
 	Platform,
+	ScrollView,
 	Text,
 	type TextInput,
 	TouchableOpacity,
 	useWindowDimensions,
 	View,
 } from 'react-native';
-import { useKeyboardState } from 'react-native-keyboard-controller';
+import {
+	KeyboardAvoidingView,
+	useKeyboardState,
+} from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { XiorError } from 'xior';
 
@@ -744,134 +748,142 @@ function BuyAndSell() {
 				</View>
 			)}
 			{!authenticated ? (
-				<View className='p-6 items-center'>
-					<Image
-						source={require('@/assets/images/as-mulheres-que-enviam-contrato-e-documento-sobre-emprestimo-de-carro-sao-submetidas-ao-banco-e-rece.png')}
-						style={{
-							width: '100%',
-							height: 180,
-							borderRadius: 5,
-						}}
-					/>
-					<Text
-						allowFontScaling={false}
-						className='text-lg text-center font-medium leading-tight text-muted-foreground mt-3'
-					>
-						Realize a compra ou venda do seu veículo com mais confiança
-					</Text>
-					<Text allowFontScaling={false} className='text-xl mt-6 font-bold'>
-						Acesso apenas para segurados
-					</Text>
-					<View
-						style={{
-							marginTop: 30,
-							width: '100%',
-						}}
-					>
-						<Controller
-							control={controlAuth}
-							name='cpf'
-							render={({ field, fieldState }) => (
-								<View>
-									<Input
-										{...field}
-										ref={registerRed}
-										label='CPF'
-										maxLength={14}
-										keyboardType='number-pad'
-										returnKeyType='done'
-										onChangeText={(value = '') =>
-											field.onChange(maskCPF(value))
-										}
-										onSubmitEditing={() => {
-											if (isCPF(field.value) || isCNPJ(field.value)) {
-												birthRef.current?.focus();
-											}
-										}}
-									/>
-									{fieldState.invalid && fieldState.error?.message && (
-										<InputError>{fieldState.error.message}</InputError>
-									)}
-								</View>
-							)}
-						/>
-						<View style={{ height: 30 }} />
-						<Controller
-							control={controlAuth}
-							name='birth'
-							render={({ field, fieldState }) => (
-								<View>
-									<Input
-										{...field}
-										ref={birthRef}
-										label='DATA DE NASCIMENTO'
-										maxLength={10}
-										onChangeText={(value) =>
-											field.onChange(maskDateString(value))
-										}
-										onSubmitEditing={Keyboard.dismiss}
-										keyboardType='number-pad'
-										returnKeyType='done'
-									/>
-									{fieldState.invalid && fieldState.error?.message && (
-										<InputError>{fieldState.error.message}</InputError>
-									)}
-								</View>
-							)}
-						/>
-						<Text
-							className='text-muted-foreground'
-							allowFontScaling={false}
-							style={{
-								fontSize: 12,
-								marginTop: 10,
-								fontFamily: 'inter',
-							}}
-						>
-							<Text className='font-bold'>IMPORTANTE:</Text>
-							{`\n`}Não intermediamos as negociações, apenas o uso da plataforma
-						</Text>
-					</View>
-					<View
-						className='bg-primary'
-						style={{
-							marginTop: 30,
-							width: '100%',
-							borderRadius: 5,
-						}}
-					>
-						<TouchableOpacity
-							className={cn(isPending && 'bg-muted-foreground')}
+				<KeyboardAvoidingView
+					behavior={
+						Platform.OS === 'android' ? 'translate-with-padding' : 'padding'
+					}
+					className='p-6 items-center'
+				>
+					<ScrollView showsVerticalScrollIndicator={false} className='pt-6'>
+						<Image
+							source={require('@/assets/images/as-mulheres-que-enviam-contrato-e-documento-sobre-emprestimo-de-carro-sao-submetidas-ao-banco-e-rece.png')}
 							style={{
 								width: '100%',
-								paddingVertical: 15,
-								alignItems: 'center',
-								justifyContent: 'center',
-								flexDirection: 'row',
-								gap: 10,
+								height: 180,
+								borderRadius: 5,
 							}}
-							onPress={handleSubmitAuth((value) => handleSearch(value))}
-							disabled={isPending}
+						/>
+						<Text
+							allowFontScaling={false}
+							className='text-lg text-center font-medium leading-tight text-muted-foreground mt-3'
 						>
-							{isPending ? (
-								<ActivityIndicator color='white' size={20} />
-							) : (
-								<Fragment>
-									<SearchIcon color='white' size={20} />
-									<Text
-										className='font-bold text-white'
-										allowFontScaling={false}
-										style={{
-											fontSize: 16,
-										}}
-									>
-										PESQUISAR
-									</Text>
-								</Fragment>
-							)}
-						</TouchableOpacity>
-					</View>
-				</View>
+							Realize a compra ou venda do seu veículo com mais confiança
+						</Text>
+						<Text allowFontScaling={false} className='text-xl mt-6 font-bold'>
+							Acesso apenas para segurados
+						</Text>
+						<View
+							style={{
+								marginTop: 30,
+								width: '100%',
+							}}
+						>
+							<Controller
+								control={controlAuth}
+								name='cpf'
+								render={({ field, fieldState }) => (
+									<View>
+										<Input
+											{...field}
+											ref={registerRed}
+											label='CPF'
+											maxLength={14}
+											keyboardType='number-pad'
+											returnKeyType='done'
+											onChangeText={(value = '') =>
+												field.onChange(maskCPF(value))
+											}
+											onSubmitEditing={() => {
+												if (isCPF(field.value) || isCNPJ(field.value)) {
+													birthRef.current?.focus();
+												}
+											}}
+										/>
+										{fieldState.invalid && fieldState.error?.message && (
+											<InputError>{fieldState.error.message}</InputError>
+										)}
+									</View>
+								)}
+							/>
+							<View style={{ height: 30 }} />
+							<Controller
+								control={controlAuth}
+								name='birth'
+								render={({ field, fieldState }) => (
+									<View>
+										<Input
+											{...field}
+											ref={birthRef}
+											label='DATA DE NASCIMENTO'
+											maxLength={10}
+											onChangeText={(value) =>
+												field.onChange(maskDateString(value))
+											}
+											onSubmitEditing={Keyboard.dismiss}
+											keyboardType='number-pad'
+											returnKeyType='done'
+										/>
+										{fieldState.invalid && fieldState.error?.message && (
+											<InputError>{fieldState.error.message}</InputError>
+										)}
+									</View>
+								)}
+							/>
+							<Text
+								className='text-muted-foreground'
+								allowFontScaling={false}
+								style={{
+									fontSize: 12,
+									marginTop: 10,
+									fontFamily: 'inter',
+								}}
+							>
+								<Text className='font-bold'>IMPORTANTE:</Text>
+								{`\n`}Não intermediamos as negociações, apenas o uso da
+								plataforma
+							</Text>
+						</View>
+						<View
+							className='bg-primary'
+							style={{
+								marginTop: 30,
+								width: '100%',
+								borderRadius: 5,
+							}}
+						>
+							<TouchableOpacity
+								className={cn(isPending && 'bg-muted-foreground')}
+								style={{
+									width: '100%',
+									paddingVertical: 15,
+									alignItems: 'center',
+									justifyContent: 'center',
+									flexDirection: 'row',
+									gap: 10,
+								}}
+								onPress={handleSubmitAuth((value) => handleSearch(value))}
+								disabled={isPending}
+							>
+								{isPending ? (
+									<ActivityIndicator color='white' size={20} />
+								) : (
+									<Fragment>
+										<SearchIcon color='white' size={20} />
+										<Text
+											className='font-bold text-white'
+											allowFontScaling={false}
+											style={{
+												fontSize: 16,
+											}}
+										>
+											PESQUISAR
+										</Text>
+									</Fragment>
+								)}
+							</TouchableOpacity>
+						</View>
+					</ScrollView>
+				</KeyboardAvoidingView>
 			) : loadingResults ? (
 				<ActivityIndicator style={{ marginTop: 30 }} />
 			) : results.length === 0 ? (
@@ -1066,6 +1078,7 @@ function BuyAndSell() {
 										</View>
 										{item.acceptExchange ? (
 											<TouchableOpacity
+												className='bg-primary'
 												disabled={!!item.acceptExchangeAmount}
 												onPress={() => {
 													setModalVisible({
@@ -1080,7 +1093,6 @@ function BuyAndSell() {
 													});
 												}}
 												style={{
-													backgroundColor: colors.primary,
 													paddingHorizontal: 10,
 													paddingVertical: 5,
 													width: '100%',
@@ -1176,6 +1188,7 @@ function BuyAndSell() {
 			{authenticated && (
 				<TouchableOpacity
 					onPress={logOut}
+					className='bg-primary'
 					style={{
 						position: 'absolute',
 						left: 0,
@@ -1184,7 +1197,6 @@ function BuyAndSell() {
 						paddingTop: Platform.OS === 'android' ? 15 : 10,
 						bottom: 0,
 						paddingHorizontal: 20,
-						backgroundColor: colors.primary,
 						flexDirection: 'row',
 						alignItems: 'center',
 						justifyContent: 'center',

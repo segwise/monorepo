@@ -4,17 +4,14 @@ import 'react-native-reanimated';
 
 import { Toasts } from '@/components/ui/toast';
 import { Providers } from '@/contexts/providers';
-import { cn } from '@/libraries/classname';
 import { NAV_THEME } from '@/libraries/theme';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import { setDefaultOptions } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import Constants from 'expo-constants';
 import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { vars } from 'nativewind';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -30,12 +27,6 @@ setDefaultOptions({
 	locale: ptBR,
 });
 
-const isCompany = !!Constants.expoConfig?.extra?.company;
-
-const COMPANY_THEME = vars({
-	'--primary': '2, 64%, 47%',
-});
-
 export const unstable_settings = {
 	initialRouteName: '/index',
 };
@@ -47,10 +38,7 @@ function RootLayout() {
 
 	return (
 		<KeyboardProvider>
-			<GestureHandlerRootView
-				className={cn('flex-1')}
-				style={isCompany ? COMPANY_THEME : undefined}
-			>
+			<GestureHandlerRootView>
 				<Providers>
 					<ThemeProvider value={NAV_THEME.light}>
 						<StatusBar style='light' />

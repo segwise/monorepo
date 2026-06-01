@@ -94,15 +94,14 @@ const insurances: Array<{
 		icon: (props) => <FontAwesome5 name='home' {...props} />,
 		screen: '/(request-quote)/residence',
 		content: (
-			<Text
-				allowFontScaling={false}
-				className='text-lg font-normal text-foreground'
-			>
-				A residência é um dos bens mais valioso que temos.
-				{`\n\n`}O seguro residencial existe para cobrir prejuízos que poderiam
-				facilmente destruir nossas finanças e custa até 4x menos que o seguro do
-				seu carro.
-				{`\n\n`}
+			<Text allowFontScaling={false}>
+				<Text className='text-lg font-normal text-foreground'>
+					A residência é um dos bens mais valioso que temos.
+					{`\n\n`}O seguro residencial existe para cobrir prejuízos que poderiam
+					facilmente destruir nossas finanças e custa até 4x menos que o seguro
+					do seu carro.
+					{`\n\n`}
+				</Text>
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					coberturas:
 				</Text>{' '}
@@ -168,16 +167,15 @@ const insurances: Array<{
 		icon: (props) => <FontAwesome5 name='building' {...props} />,
 		screen: '/(request-quote)/business',
 		content: (
-			<Text
-				allowFontScaling={false}
-				className='text-lg font-normal text-foreground'
-			>
-				O seguro empresarial foi feito para você empresário , que possui uma
-				pequena, média ou grande empresa, seja comércio, serviço ou indústria.
-				{`\n\n`}
-				Sua empresa não precisa correr riscos que podem levar ao encerramento de
-				suas atividades e das suas receitas.
-				{`\n\n`}
+			<Text allowFontScaling={false}>
+				<Text className='text-lg font-normal text-foreground'>
+					O seguro empresarial foi feito para você empresário , que possui uma
+					pequena, média ou grande empresa, seja comércio, serviço ou indústria.
+					{`\n\n`}
+					Sua empresa não precisa correr riscos que podem levar ao encerramento
+					de suas atividades e das suas receitas.
+					{`\n\n`}
+				</Text>
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					coberturas:
 				</Text>{' '}
@@ -244,22 +242,21 @@ const insurances: Array<{
 		icon: (props) => <FontAwesome5 name='building' {...props} />,
 		screen: '/(request-quote)/condominium',
 		content: (
-			<Text
-				allowFontScaling={false}
-				className='text-lg font-normal text-foreground'
-			>
+			<Text allowFontScaling={false}>
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					seguro obrigatório:
 				</Text>
 				{`\n`}
-				De acordo com o artigo 1346 do{' '}
-				<Text className='underline'>Código Civil de 1964</Text>.{`\n\n`}
-				Vale salientar que o seguro condomínio protege as áreas comuns do
-				condomínio e não as residências.
-				{`\n\n`}O seguro residencial protege a sua residência e o que há nela,
-				não é obrigatório e deve ser contratado pelo proprietário ou inquilino
-				do imóvel.
-				{`\n\n`}
+				<Text className='text-lg font-normal text-foreground'>
+					De acordo com o artigo 1346 do{' '}
+					<Text className='underline'>Código Civil de 1964</Text>.{`\n\n`}
+					Vale salientar que o seguro condomínio protege as áreas comuns do
+					condomínio e não as residências.
+					{`\n\n`}O seguro residencial protege a sua residência e o que há nela,
+					não é obrigatório e deve ser contratado pelo proprietário ou inquilino
+					do imóvel.
+					{`\n\n`}
+				</Text>
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					coberturas obrigatórias:
 				</Text>
@@ -296,7 +293,9 @@ const insurances: Array<{
 					observação:
 				</Text>
 				{`\n`}
-				Na renovação do seu seguro atualize as coberturas e valores.
+				<Text className='text-lg font-normal text-foreground'>
+					Na renovação do seu seguro atualize as coberturas e valores.
+				</Text>
 			</Text>
 		),
 	},
@@ -519,7 +518,7 @@ function Item({
 				<DialogTrigger asChild>{children}</DialogTrigger>
 				<DialogContent
 					showClose={false}
-					className='w-screen h-screen px-0 pt-0 border-0'
+					className='w-screen h-full px-0 pt-0 pb-safe border-0 mb-0'
 				>
 					{/* @ts-expect-error */}
 					<Header
@@ -530,7 +529,6 @@ function Item({
 						showReturn
 						returnCallback={() => setOpen(false)}
 					/>
-
 					<ScrollView
 						showsVerticalScrollIndicator={false}
 						className='px-6 -mt-4'

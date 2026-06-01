@@ -96,8 +96,8 @@ export default function VehicleBuy() {
 						}}
 					>
 						<TouchableOpacity
+							className='bg-primary'
 							style={{
-								backgroundColor: colors.primary,
 								padding: 10,
 								borderRadius: 5,
 							}}
@@ -195,8 +195,8 @@ export default function VehicleBuy() {
 						}}
 					>
 						<TouchableOpacity
+							className='bg-primary'
 							style={{
-								backgroundColor: colors.primary,
 								padding: 10,
 								borderRadius: 5,
 							}}

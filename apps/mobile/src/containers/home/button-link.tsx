@@ -1,9 +1,12 @@
 import { cn } from '@/libraries/classname';
+import Constants from 'expo-constants';
 import { openURL } from 'expo-linking';
 import { type Href, useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
+
+const company = Constants.expoConfig?.extra?.company?.id;
 
 type ButtonLinkVariant =
 	| { href: Href; onPress?: never }
@@ -13,10 +16,11 @@ type ButtonLinkProps = {
 	title: string;
 	invert?: boolean;
 	icon?: SymbolViewProps['name'];
+	secondary?: boolean;
 } & ButtonLinkVariant;
 
 function ButtonLink(props: ButtonLinkProps) {
-	const { title, invert, icon, href, onPress: onClick } = props;
+	const { title, invert, icon, href, onPress: onClick, secondary } = props;
 
 	const { push } = useRouter();
 
@@ -47,7 +51,12 @@ function ButtonLink(props: ButtonLinkProps) {
 			<View className='size-6' />
 			<Text
 				allowFontScaling={false}
-				className={cn('text-lg font-semibold', invert && 'text-white')}
+				className={cn(
+					'text-lg font-semibold',
+					invert && 'text-white',
+					secondary &&
+						cn('text-destructive font-bold', company && 'text-primary'),
+				)}
 			>
 				{title}
 			</Text>

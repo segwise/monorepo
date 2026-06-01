@@ -39,8 +39,8 @@ function HomeScreen() {
 				<DialogContent showClose={false}>
 					<DialogHeader>
 						<DialogTitle className='leading-snug text-center'>
-							Deseja receber cotação de seguro com{' '}
-							<Text className='font-extrabold'>DESCONTOS EXCLUSIVO?</Text>
+							Gostaria de receber agora sua cotação de{' '}
+							<Text className='font-extrabold'>SEGURO AUTO?</Text>
 						</DialogTitle>
 						<DialogFooter className='flex-row items-center justify-between mt-3'>
 							<Button
@@ -91,7 +91,11 @@ function HomeScreen() {
 							title='FAÇA SUA COTAÇÃO'
 							href='/(stacks)/(request-quote)'
 						/>
-						<ButtonLink title='CONSULTA VEICULAR' href='/(vehicle-inquiry)' />
+						<ButtonLink
+							title='CONSULTA VEICULAR'
+							href='/(vehicle-inquiry)'
+							secondary
+						/>
 						<ButtonLink
 							title='COMPARTILHAR'
 							invert

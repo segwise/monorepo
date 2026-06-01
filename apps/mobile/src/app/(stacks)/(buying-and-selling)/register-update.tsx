@@ -29,7 +29,6 @@ import type { TriggerRef } from '@rn-primitives/select';
 import { maskPhone, maskPlate, maskPostalCode } from '@segwise/core/masks';
 import {
 	SchemaMarketplaceRegister,
-	SchemaMarketplaceVehicleColor,
 	SchemaMarketplaceVehicleDirection,
 	SchemaMarketplaceVehicleFuel,
 	SchemaVehicleExchange,
@@ -139,19 +138,6 @@ const featuresArray = [
 	{ id: 'reverse_sensor', name: 'sensor de Ré' },
 	{ id: 'reversing_camera', name: 'câmera de Ré' },
 ];
-const colorsVariable = [
-	{ id: 'black', name: 'preto'.toUpperCase() },
-	{ id: 'blue', name: 'azul'.toUpperCase() },
-	{ id: 'brown', name: 'marrom'.toUpperCase() },
-	{ id: 'gray', name: 'cinza'.toUpperCase() },
-	{ id: 'green', name: 'verde'.toUpperCase() },
-	{ id: 'orange', name: 'laranja'.toUpperCase() },
-	{ id: 'pink', name: 'rosa'.toUpperCase() },
-	{ id: 'purple', name: 'roxo'.toUpperCase() },
-	{ id: 'red', name: 'vermelho'.toUpperCase() },
-	{ id: 'white', name: 'branco'.toUpperCase() },
-	{ id: 'yellow', name: 'amarelo'.toUpperCase() },
-];
 
 const financial_state_array = [
 	{ id: 'financed', name: 'financiado' },
@@ -187,7 +173,7 @@ export default function SendMyVehiclesBuy() {
 	const fuelRef = useRef<TriggerRef>(null);
 	const directionRef = useRef<TriggerRef>(null);
 	const KMRef = useRef<TextInput>(null);
-	const colorRef = useRef<TriggerRef>(null);
+	const colorRef = useRef<TextInput>(null);
 	const priceRef = useRef<TextInput>(null);
 	const zipCodeRef = useRef<TextInput>(null);
 	const phoneRef = useRef<TextInput>(null);
@@ -1030,47 +1016,13 @@ export default function SendMyVehiclesBuy() {
 					name='color'
 					render={({ field, fieldState }) => (
 						<View>
-							<Select
+							<Input
 								{...field}
-								value={
-									field.value
-										? {
-												value: field.value,
-												label: colorsVariable.find((e) => e.id === field.value)
-													?.name as string,
-											}
-										: undefined
-								}
-								onValueChange={(value) => field.onChange(value?.value)}
-							>
-								<SelectTrigger ref={colorRef} label='COR'>
-									<SelectValue placeholder='COR' />
-								</SelectTrigger>
-								<SelectContent
-									style={{ width: width - 32 }}
-									insets={{
-										...(keyboardIsVisible && {
-											// top: keyboardHeight,
-											bottom: keyboardHeight + 24,
-										}),
-										left: 12,
-										right: 12,
-									}}
-								>
-									<NativeSelectScrollView keyboardShouldPersistTaps='always'>
-										{SchemaMarketplaceVehicleColor.options.map((item) => (
-											<SelectItem
-												key={item}
-												value={item}
-												label={
-													colorsVariable.find((e) => e.id === item)
-														?.name as string
-												}
-											/>
-										))}
-									</NativeSelectScrollView>
-								</SelectContent>
-							</Select>
+								ref={colorRef}
+								label='COR'
+								placeholder='COR'
+								onSubmitEditing={Keyboard.dismiss}
+							/>
 							{fieldState.invalid && fieldState.error?.message && (
 								<InputError>{fieldState.error.message}</InputError>
 							)}
@@ -1128,6 +1080,132 @@ export default function SendMyVehiclesBuy() {
 					))}
 				</View>
 				<View style={{ height: 30 }} />
+				<Controller
+					control={control}
+					name='postalCode'
+					render={({ field, fieldState }) => (
+						<View>
+							<Input
+								{...field}
+								ref={zipCodeRef}
+								label='CEP'
+								placeholder='00000-000'
+								keyboardType='number-pad'
+								returnKeyType='done'
+								onChangeText={(value) => field.onChange(maskPostalCode(value))}
+								maxLength={9}
+								onSubmitEditing={() => {
+									Keyboard.dismiss();
+
+									setTimeout(() => {
+										phoneRef.current?.focus();
+									}, 100);
+								}}
+							/>
+							{fieldState.invalid && fieldState.error?.message && (
+								<InputError>{fieldState.error.message}</InputError>
+							)}
+						</View>
+					)}
+				/>
+				<View style={{ height: 30 }} />
+				<Controller
+					control={control}
+					name='phone'
+					render={({ field, fieldState }) => (
+						<View>
+							<Input
+								{...field}
+								ref={phoneRef}
+								label='WHATSAPP'
+								placeholder='(00) 00000-0000'
+								keyboardType='number-pad'
+								returnKeyType='done'
+								maxLength={15}
+								onChangeText={(value) => field.onChange(maskPhone(value))}
+								onSubmitEditing={() => {
+									Keyboard.dismiss();
+
+									setTimeout(() => {
+										priceRef.current?.focus();
+									}, 100);
+								}}
+							/>
+							{fieldState.invalid && fieldState.error?.message && (
+								<InputError>{fieldState.error.message}</InputError>
+							)}
+						</View>
+					)}
+				/>
+				<View style={{ height: 30 }} />
+				<Controller
+					control={control}
+					name='price'
+					render={({ field, fieldState }) => (
+						<View>
+							{/* @ts-expect-error */}
+							<Input
+								{...field}
+								ref={priceRef}
+								label='PREÇO'
+								placeholder='R$ 0.000,00'
+								keyboardType='number-pad'
+								returnKeyType='done'
+								onChangeText={(value) => {
+									const digits = value.replace(/\D/g, '');
+
+									const formatted = new Intl.NumberFormat('pt-BR', {
+										style: 'currency',
+										currency: 'BRL',
+									}).format(Number(digits || 0) / 100);
+
+									field.onChange(formatted);
+								}}
+								onSubmitEditing={() => {
+									Keyboard.dismiss();
+
+									setTimeout(() => {
+										descriptionRef.current?.focus();
+									}, 100);
+								}}
+							/>
+							{fieldState.invalid && fieldState.error?.message && (
+								<InputError>{fieldState.error.message}</InputError>
+							)}
+						</View>
+					)}
+				/>
+				<View style={{ height: 30 }} />
+				<Controller
+					control={control}
+					name='description'
+					render={({ field, fieldState }) => (
+						<View>
+							<Input
+								{...field}
+								ref={descriptionRef}
+								label='DESCRIÇÃO'
+								placeholder='DESCRIÇÃO'
+								autoCapitalize='characters'
+								className='h-40 py-4'
+								multiline
+								onChangeText={(value) => field.onChange(value)}
+								onSubmitEditing={Keyboard.dismiss}
+							/>
+							{fieldState.invalid && fieldState.error?.message && (
+								<InputError>{fieldState.error.message}</InputError>
+							)}
+						</View>
+					)}
+				/>
+				<View style={{ height: 30 }} />
+				<ImageCarousel
+					control={control}
+					name='images'
+					primaryColor={colors.primary}
+					onPickImage={pickImage}
+				/>
+				<View style={{ height: 20 }} />
 				<Text
 					allowFontScaling={false}
 					style={{
@@ -1388,134 +1466,8 @@ export default function SendMyVehiclesBuy() {
 								</View>
 							)}
 						/>
-						<View style={{ height: 30 }} />
 					</Fragment>
 				)}
-				<Controller
-					control={control}
-					name='postalCode'
-					render={({ field, fieldState }) => (
-						<View>
-							<Input
-								{...field}
-								ref={zipCodeRef}
-								label='CEP'
-								placeholder='00000-000'
-								keyboardType='number-pad'
-								returnKeyType='done'
-								onChangeText={(value) => field.onChange(maskPostalCode(value))}
-								maxLength={9}
-								onSubmitEditing={() => {
-									Keyboard.dismiss();
-
-									setTimeout(() => {
-										phoneRef.current?.focus();
-									}, 100);
-								}}
-							/>
-							{fieldState.invalid && fieldState.error?.message && (
-								<InputError>{fieldState.error.message}</InputError>
-							)}
-						</View>
-					)}
-				/>
-				<View style={{ height: 30 }} />
-				<Controller
-					control={control}
-					name='phone'
-					render={({ field, fieldState }) => (
-						<View>
-							<Input
-								{...field}
-								ref={phoneRef}
-								label='WHATSAPP'
-								placeholder='(00) 00000-0000'
-								keyboardType='number-pad'
-								returnKeyType='done'
-								maxLength={15}
-								onChangeText={(value) => field.onChange(maskPhone(value))}
-								onSubmitEditing={() => {
-									Keyboard.dismiss();
-
-									setTimeout(() => {
-										priceRef.current?.focus();
-									}, 100);
-								}}
-							/>
-							{fieldState.invalid && fieldState.error?.message && (
-								<InputError>{fieldState.error.message}</InputError>
-							)}
-						</View>
-					)}
-				/>
-				<View style={{ height: 30 }} />
-				<Controller
-					control={control}
-					name='price'
-					render={({ field, fieldState }) => (
-						<View>
-							{/* @ts-expect-error */}
-							<Input
-								{...field}
-								ref={priceRef}
-								label='PREÇO'
-								placeholder='R$ 0.000,00'
-								keyboardType='number-pad'
-								returnKeyType='done'
-								onChangeText={(value) => {
-									const digits = value.replace(/\D/g, '');
-
-									const formatted = new Intl.NumberFormat('pt-BR', {
-										style: 'currency',
-										currency: 'BRL',
-									}).format(Number(digits || 0) / 100);
-
-									field.onChange(formatted);
-								}}
-								onSubmitEditing={() => {
-									Keyboard.dismiss();
-
-									setTimeout(() => {
-										descriptionRef.current?.focus();
-									}, 100);
-								}}
-							/>
-							{fieldState.invalid && fieldState.error?.message && (
-								<InputError>{fieldState.error.message}</InputError>
-							)}
-						</View>
-					)}
-				/>
-				<View style={{ height: 30 }} />
-				<Controller
-					control={control}
-					name='description'
-					render={({ field, fieldState }) => (
-						<View>
-							<Input
-								{...field}
-								ref={descriptionRef}
-								label='DESCRIÇÃO'
-								placeholder='DESCRIÇÃO'
-								autoCapitalize='characters'
-								className='h-40 py-4'
-								multiline
-								onChangeText={(value) => field.onChange(value)}
-								onSubmitEditing={Keyboard.dismiss}
-							/>
-							{fieldState.invalid && fieldState.error?.message && (
-								<InputError>{fieldState.error.message}</InputError>
-							)}
-						</View>
-					)}
-				/>
-				<View style={{ height: 30 }} />
-				<ImageCarousel
-					control={control}
-					name='images'
-					primaryColor={colors.primary}
-					onPickImage={pickImage}
-				/>
 				<View style={{ height: 30 }} />
 				<View
 					style={{
