@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker/locale/pt_BR';
 import {
-	SchemaMarketplaceVehicleColor,
 	SchemaMarketplaceVehicleConservations,
 	SchemaMarketplaceVehicleFeatures,
 } from '@segwise/core';
@@ -2293,7 +2292,7 @@ async function seed() {
 							max: new Date().getFullYear(),
 						}),
 						plate: 'nas6888',
-						color: faker.helpers.enumValue(SchemaMarketplaceVehicleColor.enum),
+						color: faker.vehicle.color(),
 						fuel: faker.helpers.enumValue(MarketplaceVehicleFuel),
 						transmission: faker.helpers.enumValue(
 							MarketplaceVehicleTransmission,
