@@ -26,7 +26,7 @@ function registerRoutersServicesMarketplaceAuth(server: Server) {
 				},
 			});
 
-			if (!isInsured) {
+			if (!isInsured?.insuredId) {
 				return ctx.json(
 					{
 						message: 'Dados inválidos',
