@@ -78,8 +78,6 @@ type CepGroup = {
 };
 
 function ProducerDashboard() {
-	// const { replace } = useRouter();
-
 	const [hidden, setHidden] = useState(true);
 
 	const [periodIdx, setPeriodIdx] = useState(0);
