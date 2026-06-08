@@ -1,6 +1,6 @@
 {
 	"private": true,
-	"version": "1.0.19",
+	"version": "1.0.21",
 	"name": "segwise",
 	"main": "expo-router/entry",
 	"scripts": {
@@ -21,7 +21,7 @@
 		"@rn-primitives/select": "^1.2.0",
 		"@rn-primitives/separator": "^1.2.0",
 		"@rn-primitives/slot": "^1.2.0",
-		"@segwise/core": "^1.1.346",
+		"@segwise/core": "^1.1.347",
 		"@tanstack/react-query": "^5.90.21",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",

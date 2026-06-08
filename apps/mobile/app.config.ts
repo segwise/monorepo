@@ -17,7 +17,7 @@ const BUNDLE_IDENTIFIER = !process.env.EXPO_PUBLIC_COMPANY_ID
 const PACKAGE_NAME = BUNDLE_IDENTIFIER;
 const SCHEME = PROJECT_SLUG;
 
-const VERSION_CODE = 20;
+const VERSION_CODE = 21;
 const VERSION = `1.0.${VERSION_CODE}`;
 
 const config = ({ config }: ConfigContext): ExpoConfig => ({
@@ -30,35 +30,20 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 	platforms: ['android', 'ios'],
 	orientation: 'portrait',
 	icon: !process.env.EXPO_PUBLIC_COMPANY_ID
-		? './src/assets/images/icons/ios-light.png'
+		? './src/assets/images/icons/segwise.png'
 		: './src/assets/images/icons/xcar.png',
 	userInterfaceStyle: 'light',
 	ios: {
 		supportsTablet: true,
 		bundleIdentifier: BUNDLE_IDENTIFIER,
-		icon: {
-			light: './src/assets/images/icons/ios-light.png',
-			dark: './src/assets/images/icons/ios-dark.png',
-			tinted: './src/assets/images/icons/ios-tinted.png',
-		},
 		version: VERSION,
 		buildNumber: VERSION_CODE.toString(),
 	},
 	android: {
 		version: VERSION,
-		adaptiveIcon: {
-			foregroundImage: './src/assets/images/icons/adaptive-icon.png',
-			monochromeImage: './src/assets/images/icons/adaptive-icon.png',
-			backgroundColor: '#232323',
-		},
 		predictiveBackGestureEnabled: false,
 		package: PACKAGE_NAME,
 		versionCode: VERSION_CODE,
-	},
-	splash: {
-		image: './src/assets/images/splash-screen/splash-icon-light.png',
-		resizeMode: 'contain',
-		backgroundColor: '#232323',
 	},
 	plugins: [
 		[
@@ -71,7 +56,7 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		[
 			'expo-splash-screen',
 			{
-				image: './src/assets/images/splash-screen/splash-icon-light.png',
+				image: './src/assets/images/splash-screen/splash-icon.png',
 				imageWidth: 200,
 				sizeMode: 'contain',
 				backgroundColor: '#232323',
