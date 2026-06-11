@@ -83,25 +83,13 @@ type VehicleResponse = {
 	uf: string;
 };
 
-const CACHE_KEY = (plate: string) => `fipe-plates:${plate}`;
-
 function registerRoutersServicesUtilsFipe(server: Server) {
 	const base = server.basePath('/fipe');
 
 	base.get('/:plate{^[A-Za-z]{3}[0-9][A-Za-z0-9][0-9]{2}$}', async (ctx) => {
 		const plate = ctx.req.param('plate');
 
-		const cacheName = CACHE_KEY(plate);
-
 		try {
-			const isCache = await ctx.cache.exists(cacheName);
-
-			if (isCache) {
-				const data = JSON.parse((await ctx.cache.get(cacheName)) || '{}');
-
-				return ctx.json(data, 200);
-			}
-
 			const { data } = await xior.get<VehicleResponse>(
 				`https://wdapi2.com.br/consulta/${plate}/${ctx.environment.APIPLACAS_TOKEN}`,
 			);
@@ -149,8 +137,6 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 					),
 				chassi: data.chassi,
 			};
-
-			await ctx.cache.set(cacheName, JSON.stringify(response));
 
 			return ctx.json(response, 200);
 		} catch (error) {
