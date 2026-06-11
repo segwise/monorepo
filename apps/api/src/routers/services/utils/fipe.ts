@@ -89,8 +89,6 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 	base.get('/:plate{^[A-Za-z]{3}[0-9][A-Za-z0-9][0-9]{2}$}', async (ctx) => {
 		const plate = ctx.req.param('plate');
 
-		console.log(plate);
-
 		try {
 			const { data } = await xior.get<VehicleResponse>(
 				`https://wdapi2.com.br/consulta/${plate}/${ctx.environment.APIPLACAS_TOKEN}`,
