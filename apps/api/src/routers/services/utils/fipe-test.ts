@@ -56,11 +56,7 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				manufacturer: data.marca.toLowerCase(),
 			};
 
-			console.log(querySearch);
 			const fipe = await fipeService.findByPlateData(querySearch, vehicleType);
-
-			console.log(fipe);
-			console.log(data.fipe, data.fipe.dados[0]?.codigo_fipe);
 
 			// const response = {
 			// 	code: data.fipe.dados[0]?.codigo_fipe,
