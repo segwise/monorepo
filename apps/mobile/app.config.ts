@@ -17,7 +17,7 @@ const BUNDLE_IDENTIFIER = !process.env.EXPO_PUBLIC_COMPANY_ID
 const PACKAGE_NAME = BUNDLE_IDENTIFIER;
 const SCHEME = PROJECT_SLUG;
 
-const VERSION_CODE = 21;
+const VERSION_CODE = 22;
 const VERSION = `1.0.${VERSION_CODE}`;
 
 const config = ({ config }: ConfigContext): ExpoConfig => ({
@@ -34,7 +34,7 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		: './src/assets/images/icons/xcar.png',
 	userInterfaceStyle: 'light',
 	ios: {
-		supportsTablet: true,
+		supportsTablet: false,
 		bundleIdentifier: BUNDLE_IDENTIFIER,
 		version: VERSION,
 		buildNumber: VERSION_CODE.toString(),
