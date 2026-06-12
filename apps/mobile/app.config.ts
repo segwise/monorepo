@@ -38,6 +38,9 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		bundleIdentifier: BUNDLE_IDENTIFIER,
 		version: VERSION,
 		buildNumber: VERSION_CODE.toString(),
+		infoPlist: {
+			ITSAppUsesNonExemptEncryption: false,
+		},
 	},
 	android: {
 		version: VERSION,
