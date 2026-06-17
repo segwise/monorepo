@@ -250,7 +250,6 @@ class FipeService {
 		}
 
 		const models = await this.client.getModelsByBrand(vehicleType, brand.code);
-		console.log(models);
 		const modelCandidates = rankMatches(models, vehicle.model).slice(
 			0,
 			MAX_MODEL_CANDIDATES,
