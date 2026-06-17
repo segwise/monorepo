@@ -1,87 +1,11 @@
+import { parse } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import xior, { XiorError } from 'xior';
 import type { Server } from '@/@types/server';
+import { FipeService } from '@/controllers/fipe';
+import { environment } from '@/libraries/environment';
 
-type VehicleResponse = {
-	MARCA: string;
-	MODELO: string;
-	SUBMODELO: string;
-	VERSAO: string;
-	ano: string;
-	anoModelo: string;
-	chassi: string;
-	codigoSituacao: string;
-	cor: string;
-	data: string;
-	extra?: {
-		ano_fabricacao: string;
-		ano_modelo: string;
-		caixa_cambio: string;
-		cap_maxima_tracao: string;
-		carroceria: string;
-		chassi?: string | null;
-		cilindradas: string;
-		combustivel: string;
-		di: string;
-		eixo_traseiro_dif: string;
-		eixos: string;
-		especie: string;
-		grupo: string;
-		modelo: string;
-		municipio: string;
-		nacionalidade: string;
-		peso_bruto_total: string;
-		placa: string;
-		placa_modelo_antigo: string;
-		placa_modelo_novo: string;
-		quantidade_passageiro: string;
-		's.especie': string;
-		segmento: string;
-		situacao_chassi: string;
-		situacao_veiculo: string;
-		sub_segmento: string;
-		terceiro_eixo: string;
-		tipo_carroceria: string;
-		tipo_doc_faturado: string;
-		tipo_doc_importadora: string;
-		tipo_doc_prop: string;
-		tipo_montagem: string;
-		tipo_veiculo: string;
-		uf: string;
-		uf_faturado: string;
-		uf_placa: string;
-	} | null;
-	fipe: {
-		dados: Array<{
-			ano_modelo: string;
-			codigo_fipe: string;
-			codigo_marca: number;
-			codigo_modelo: string;
-			combustivel: string;
-			id_valor: number;
-			mes_referencia: string;
-			referencia_fipe: number;
-			score: number;
-			sigla_combustivel: string;
-			texto_marca: string;
-			texto_modelo: string;
-			texto_valor: string;
-			tipo_modelo: number;
-		}>;
-	};
-	listamodelo: Array<string>;
-	logo: string;
-	marca: string;
-	marcaModelo: string;
-	mensagemRetorno: string;
-	modelo: string;
-	municipio: string;
-	origem: string;
-	placa: string;
-	placa_alternativa: string;
-	situacao: string | null;
-	token: string;
-	uf: string;
-};
+const fipeService = new FipeService();
 
 const CACHE_KEY = (plate: string) => `fipe-plates:${plate}`;
 
@@ -102,9 +26,37 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				return ctx.json(data, 200);
 			}
 
-			const { data } = await xior.get<VehicleResponse>(
-				`https://wdapi2.com.br/consulta/${plate}/${ctx.environment.APIPLACAS_TOKEN}`,
+			const { data } = await xior.get(
+				`https://wdapi2.com.br/consulta/${plate}/${environment.APIPLACAS_TOKEN}`,
 			);
+
+			const [cars, motorcycles] = await Promise.all(
+				['cars', 'motorcycles', 'trucks'].map((type) =>
+					xior
+						.get(`https://fipe.parallelum.com.br/api/v2/${type}/brands`)
+						.then((response) => response.data),
+				),
+			);
+
+			// @ts-expect-error
+			const vehicleType = cars.find((response) =>
+				response.name.toLowerCase().includes(data.marca.toLowerCase()),
+			)
+				? 'cars'
+				: // @ts-expect-error
+					motorcycles.find((response) =>
+							response.name.toLowerCase().includes(data.marca),
+						)
+					? 'motorcycles'
+					: 'trucks';
+
+			const querySearch = {
+				model: data.extra?.modelo || data.modelo,
+				modelYear: Number(data.anoModelo),
+				manufacturer: data.marca.toLowerCase(),
+			};
+
+			const fipe = await fipeService.findByPlateData(querySearch, vehicleType);
 
 			const response = {
 				code: data.fipe.dados[0]?.codigo_fipe,
@@ -122,31 +74,21 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 					? 'Automático'
 					: 'Manual',
 				fuel: data.extra?.combustivel || 'Gasolina',
-				fipe: data.fipe.dados
-					.slice(0, 5)
-					.map(
-						({
-							ano_modelo,
-							texto_valor,
-							texto_modelo,
-							codigo_fipe,
-							combustivel,
-							score,
-						}) => ({
-							year: Number(ano_modelo),
-							value: Number(
-								texto_valor
-									.replace('R$ ', '')
-									.replace('.', '')
-									.replace(',', '.'),
-							),
-							model: texto_modelo.toLowerCase(),
-							code: codigo_fipe,
-							fuel: combustivel.toLowerCase() || 'Gasolina',
-							reference: new Date(),
-							score,
+				fipe: fipe.details.map(
+					({ modelYear, price, model, codeFipe, fuel, referenceMonth }) => ({
+						year: Number(modelYear),
+						value: Number(
+							price.replace('R$ ', '').replace('.', '').replace(',', '.'),
+						),
+						model: model.toLowerCase(),
+						code: codeFipe,
+						fuel: fuel.toLowerCase() || 'Gasolina',
+						reference: parse(referenceMonth, "MMMM 'de' yyyy", new Date(), {
+							locale: ptBR,
 						}),
-					),
+						score: 0,
+					}),
+				),
 				chassi: data.chassi,
 			};
 
