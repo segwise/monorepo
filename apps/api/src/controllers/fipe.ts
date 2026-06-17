@@ -74,7 +74,6 @@ function tokenize(str: string): string[] {
 function scoreParts(candidate: string, target: string) {
 	const targetTokens = tokenize(target);
 	const candidateTokens = tokenize(candidate);
-	const candidateStr = candidateTokens.join(' ');
 
 	const noSpaceCandidate = normalize(candidate).replace(/\s/g, '');
 	const noSpaceTarget = normalize(target).replace(/\s/g, '');
@@ -85,7 +84,8 @@ function scoreParts(candidate: string, target: string) {
 	const matched = noSpaceMatch
 		? targetTokens.length
 		: targetTokens.reduce(
-				(acc, token) => acc + (candidateStr.includes(token) ? 1 : 0),
+				(acc, token) =>
+					acc + (candidateTokens.some((ct) => ct.startsWith(token)) ? 1 : 0),
 				0,
 			);
 
@@ -116,14 +116,7 @@ export function bestMatch<T extends VehicleBrand | VehicleModel>(
 	return best.item;
 }
 
-/**
- * Como bestMatch, mas devolve todos os candidatos plausíveis (não só o
- * melhor), ordenados por score. O filtro usa só recall — um nome mais
- * "verboso" não é descartado por ter palavras extras — porque quem
- * desambigua de verdade vai ser outro critério (o ano do veículo),
- * não o texto.
- */
-export function rankMatches<T extends VehicleBrand | VehicleModel>(
+function rankMatches<T extends VehicleBrand | VehicleModel>(
 	items: T[],
 	query: string,
 ): T[] {
@@ -232,8 +225,6 @@ class FipeService {
 	constructor(subscriptionToken?: string) {
 		this.client = new FipeClient(subscriptionToken);
 	}
-
-	// dentro de FipeService
 
 	async findByPlateData(
 		vehicle: PlateVehicle,
