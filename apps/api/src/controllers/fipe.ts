@@ -63,22 +63,82 @@ function normalize(str: string): string {
 		.trim();
 }
 
-function matchScore(candidate: string, target: string): number {
-	const words = normalize(target).split(' ').filter(Boolean);
-
-	const norm = normalize(candidate);
-
-	return words.reduce((acc, word) => acc + (norm.includes(word) ? 1 : 0), 0);
+function tokenize(str: string): string[] {
+	return normalize(str)
+		.replace(/([a-z])(\d)/g, '$1 $2')
+		.replace(/(\d)([a-z])/g, '$1 $2')
+		.split(/\s+/)
+		.filter(Boolean);
 }
 
-function bestMatch<T extends VehicleBrand | VehicleModel>(
+function scoreParts(candidate: string, target: string) {
+	const targetTokens = tokenize(target);
+	const candidateTokens = tokenize(candidate);
+	const candidateStr = candidateTokens.join(' ');
+
+	const noSpaceCandidate = normalize(candidate).replace(/\s/g, '');
+	const noSpaceTarget = normalize(target).replace(/\s/g, '');
+	const noSpaceMatch =
+		noSpaceCandidate.includes(noSpaceTarget) ||
+		noSpaceTarget.includes(noSpaceCandidate);
+
+	const matched = noSpaceMatch
+		? targetTokens.length
+		: targetTokens.reduce(
+				(acc, token) => acc + (candidateStr.includes(token) ? 1 : 0),
+				0,
+			);
+
+	return {
+		recall: matched / Math.max(targetTokens.length, 1),
+		precision: matched / Math.max(candidateTokens.length, 1),
+	};
+}
+
+function matchScore(candidate: string, target: string): number {
+	const { precision, recall } = scoreParts(candidate, target);
+	if (precision + recall === 0) return 0;
+	return (2 * precision * recall) / (precision + recall);
+}
+
+const MATCH_THRESHOLD = 0.5;
+const RECALL_THRESHOLD = 0.5;
+
+export function bestMatch<T extends VehicleBrand | VehicleModel>(
 	items: T[],
 	query: string,
-): T {
-	// @ts-expect-error
-	return items
+): T | null {
+	const best = items
 		.map((item) => ({ item, score: matchScore(item.name, query) }))
-		.sort((a, b) => b.score - a.score)[0]?.item;
+		.sort((a, b) => b.score - a.score)[0];
+
+	if (!best || best.score < MATCH_THRESHOLD) return null;
+	return best.item;
+}
+
+/**
+ * Como bestMatch, mas devolve todos os candidatos plausíveis (não só o
+ * melhor), ordenados por score. O filtro usa só recall — um nome mais
+ * "verboso" não é descartado por ter palavras extras — porque quem
+ * desambigua de verdade vai ser outro critério (o ano do veículo),
+ * não o texto.
+ */
+export function rankMatches<T extends VehicleBrand | VehicleModel>(
+	items: T[],
+	query: string,
+): T[] {
+	return items
+		.map((item) => {
+			const { precision, recall } = scoreParts(item.name, query);
+			const score =
+				precision + recall === 0
+					? 0
+					: (2 * precision * recall) / (precision + recall);
+			return { item, recall, score };
+		})
+		.filter((entry) => entry.recall >= RECALL_THRESHOLD)
+		.sort((a, b) => b.score - a.score)
+		.map((entry) => entry.item);
 }
 
 class FipeClient {
@@ -164,12 +224,16 @@ class FipeClient {
 	}
 }
 
+const MAX_MODEL_CANDIDATES = 15;
+
 class FipeService {
 	private client: FipeClient;
 
 	constructor(subscriptionToken?: string) {
 		this.client = new FipeClient(subscriptionToken);
 	}
+
+	// dentro de FipeService
 
 	async findByPlateData(
 		vehicle: PlateVehicle,
@@ -178,7 +242,7 @@ class FipeService {
 		const brands = await this.client.getBrands(vehicleType);
 		const brand = bestMatch(brands, vehicle.manufacturer);
 
-		if (!brand || matchScore(brand.name, vehicle.manufacturer) === 0) {
+		if (!brand) {
 			throw new Error(
 				`Marca não encontrada na FIPE: "${vehicle.manufacturer}". ` +
 					`Tente ajustar o nome ou verificar o tipo de veículo.`,
@@ -186,49 +250,63 @@ class FipeService {
 		}
 
 		const models = await this.client.getModelsByBrand(vehicleType, brand.code);
-		const model = bestMatch(models, vehicle.model);
+		console.log(models);
+		const modelCandidates = rankMatches(models, vehicle.model).slice(
+			0,
+			MAX_MODEL_CANDIDATES,
+		);
 
-		if (!model || matchScore(model.name, vehicle.model) === 0) {
+		if (modelCandidates.length === 0) {
 			throw new Error(
 				`Modelo não encontrado na FIPE: "${vehicle.model}" para a marca "${brand.name}". ` +
 					`Tente ajustar o nome do modelo.`,
 			);
 		}
 
-		const years = await this.client.getYearsByModel(
-			vehicleType,
-			brand.code,
-			model.code,
-		);
+		let firstCandidateYears: VehicleYear[] | null = null;
 
-		const matchingYears = years.filter((y) =>
-			y.code.startsWith(String(vehicle.modelYear)),
-		);
-
-		if (matchingYears.length === 0) {
-			const available = years.map((y) => y.name).join(', ');
-			throw new Error(
-				`Ano ${vehicle.modelYear} não encontrado para ${brand.name} ${model.name}. ` +
-					`Anos disponíveis: ${available}`,
+		for (const model of modelCandidates) {
+			const years = await this.client.getYearsByModel(
+				vehicleType,
+				brand.code,
+				model.code,
 			);
+
+			if (firstCandidateYears === null) {
+				firstCandidateYears = years;
+			}
+
+			const matchingYears = years.filter((y) =>
+				y.code.startsWith(String(vehicle.modelYear)),
+			);
+
+			if (matchingYears.length > 0) {
+				const details = await Promise.all(
+					matchingYears.map((year) =>
+						this.client.getVehicleDetail(
+							vehicleType,
+							brand.code,
+							model.code,
+							year.code,
+						),
+					),
+				);
+
+				return {
+					details,
+					brandCode: brand.code,
+					modelCode: model.code,
+				};
+			}
 		}
 
-		const details = await Promise.all(
-			matchingYears.map((year) =>
-				this.client.getVehicleDetail(
-					vehicleType,
-					brand.code,
-					model.code,
-					year.code,
-				),
-			),
-		);
+		const available = (firstCandidateYears ?? []).map((y) => y.name).join(', ');
 
-		return {
-			details,
-			brandCode: brand.code,
-			modelCode: model.code,
-		};
+		throw new Error(
+			`Ano ${vehicle.modelYear} não encontrado para ${brand.name} ${modelCandidates[0]?.name}. ` +
+				`Anos disponíveis: ${available} ` +
+				`(nenhuma das ${modelCandidates.length} variações de modelo encontradas tinha esse ano).`,
+		);
 	}
 
 	async findByFipeCode(

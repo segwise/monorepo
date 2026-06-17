@@ -2,7 +2,7 @@ import { parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import xior, { XiorError } from 'xior';
 import type { Server } from '@/@types/server';
-import { FipeService } from '@/controllers/fipe';
+import { bestMatch, FipeService } from '@/controllers/fipe';
 import { environment } from '@/libraries/environment';
 
 const fipeService = new FipeService();
@@ -30,6 +30,10 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				`https://wdapi2.com.br/consulta/${plate}/${environment.APIPLACAS_TOKEN}`,
 			);
 
+			if (data?.detail?.toLowerCase().includes('erro')) {
+				throw new Error(data.detail);
+			}
+
 			const [cars, motorcycles] = await Promise.all(
 				['cars', 'motorcycles', 'trucks'].map((type) =>
 					xior
@@ -38,15 +42,9 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				),
 			);
 
-			// @ts-expect-error
-			const vehicleType = cars.find((response) =>
-				response.name.toLowerCase().includes(data.marca.toLowerCase()),
-			)
+			const vehicleType = bestMatch(cars, data.marca.toLowerCase())
 				? 'cars'
-				: // @ts-expect-error
-					motorcycles.find((response) =>
-							response.name.toLowerCase().includes(data.marca),
-						)
+				: bestMatch(motorcycles, data.marca.toLowerCase())
 					? 'motorcycles'
 					: 'trucks';
 
