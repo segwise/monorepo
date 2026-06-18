@@ -34,8 +34,6 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 				};
 			});
 
-	console.log(session);
-
 	const setCookies = response.headers.getSetCookie();
 
 	const role = session?.user?.role || ctx?.session?.role;
