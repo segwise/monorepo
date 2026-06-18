@@ -334,7 +334,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 
 			console.log(safes);
 
-			if (!safes) {
+			if (!safes.length) {
 				return ctx.json(
 					{
 						message: 'Seguros não encontrados',
