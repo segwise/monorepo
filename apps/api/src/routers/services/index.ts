@@ -26,8 +26,6 @@ function registerRoutersServices(server: Server) {
 
 	registerRoutersServicesSafes(base);
 
-	// base.use(requireSession);
-
 	registerRoutersServicesProducers(base);
 	registerRoutersServicesCpfOrCnpj(base);
 	registerRoutersServicesQuotes(base);

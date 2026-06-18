@@ -4,8 +4,6 @@ import { registerRoutersServicesAuthProfileDetailsProducer } from './details-pro
 function registerRoutersServicesAuthProfile(server: Server) {
 	const base = server.basePath('/profile');
 
-	// base.use(requireSession);
-
 	registerRoutersServicesAuthProfileDetailsProducer(base);
 }
 
