@@ -16,6 +16,8 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 		| 'producer'
 		| 'customer';
 
+	console.log(XClientApp);
+
 	const shouldIgnoreSession = pathnameIgnoresSession.some(
 		(ignoredPath) =>
 			ctx.req.url.includes(ignoredPath) || ctx.req.url.startsWith(ignoredPath),
@@ -77,28 +79,28 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 
 	const isProducer = roleBroker === Role.producer;
 
-	async function logOut() {
-		const cloneResponse = response.clone();
-
-		const responseSignOut = await ctx.auth.api.signOut({
-			headers: cloneResponse.headers,
-			asResponse: true,
-		});
-
-		return new Response(
-			JSON.stringify({
-				code: 'INVALID_EMAIL_OR_PASSWORD',
-				message: 'E-mail ou senha inválidos',
-			}),
-			{
-				...responseSignOut,
-				status: 401,
-				statusText: 'Unauthorized',
-			},
-		);
-	}
-
 	if (session) {
+		async function logOut() {
+			const cloneResponse = response.clone();
+
+			const responseSignOut = await ctx.auth.api.signOut({
+				headers: cloneResponse.headers,
+				asResponse: true,
+			});
+
+			return new Response(
+				JSON.stringify({
+					code: 'INVALID_EMAIL_OR_PASSWORD',
+					message: 'E-mail ou senha inválidos',
+				}),
+				{
+					...responseSignOut,
+					status: 401,
+					statusText: 'Unauthorized',
+				},
+			);
+		}
+
 		if (isBackoffice && XClientApp !== 'admin') {
 			return await logOut();
 		}
