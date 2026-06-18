@@ -16,8 +16,6 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 		| 'producer'
 		| 'customer';
 
-	console.log(XClientApp);
-
 	const shouldIgnoreSession = pathnameIgnoresSession.some(
 		(ignoredPath) =>
 			ctx.req.url.includes(ignoredPath) || ctx.req.url.startsWith(ignoredPath),
@@ -35,6 +33,8 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 					brokerRole?: Role | null;
 				};
 			});
+
+	console.log(session);
 
 	const setCookies = response.headers.getSetCookie();
 
