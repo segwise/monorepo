@@ -345,6 +345,8 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 
 			const results = safes.map(serializer);
 
+			console.log(results);
+
 			return ctx.json(
 				serializerCursor(results, {
 					total: 0,
