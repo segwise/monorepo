@@ -31,6 +31,15 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesQuotes(base);
 	registerRoutersServicesAnalytics(base);
 	registerRoutersServicesPayments(base);
+
+	base.get('/migration', async (ctx) => {
+		return ctx.json(
+			{
+				ok: true,
+			},
+			200,
+		);
+	});
 }
 
 export { registerRoutersServices };
