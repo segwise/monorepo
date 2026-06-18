@@ -21,6 +21,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					)
 					.nullish(),
 			}),
+			(ctx) => console.log(ctx),
 		),
 		async (ctx) => {
 			const brokerId =
