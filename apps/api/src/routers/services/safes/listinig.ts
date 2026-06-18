@@ -318,21 +318,32 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 		async (ctx) => {
 			const { registration, birth } = ctx.req.valid('query');
 
-			const safes = await ctx.database.safe.findMany({
-				where: {
-					insured: {
-						cpf: registration,
-						birth: {
-							lte: birth,
-							gte: birth,
+			const [safes, count] = await ctx.database.$transaction([
+				ctx.database.safe.findMany({
+					where: {
+						insured: {
+							cpf: registration,
+							birth: {
+								lte: birth,
+								gte: birth,
+							},
 						},
 					},
-				},
-				select: selectPrisma,
-				relationLoadStrategy: 'join',
-			});
-
-			console.log(safes);
+					select: selectPrisma,
+					relationLoadStrategy: 'join',
+				}),
+				ctx.database.safe.count({
+					where: {
+						insured: {
+							cpf: registration,
+							birth: {
+								lte: birth,
+								gte: birth,
+							},
+						},
+					},
+				}),
+			]);
 
 			if (!safes.length) {
 				return ctx.json(
@@ -345,11 +356,9 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 
 			const results = safes.map(serializer);
 
-			console.log(results);
-
 			return ctx.json(
 				serializerCursor(results, {
-					total: 0,
+					total: count,
 				}),
 				200,
 			);
