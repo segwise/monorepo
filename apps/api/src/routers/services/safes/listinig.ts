@@ -332,6 +332,8 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				relationLoadStrategy: 'join',
 			});
 
+			console.log(safes);
+
 			if (!safes) {
 				return ctx.json(
 					{
@@ -341,7 +343,9 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				);
 			}
 
-			return ctx.json(safes.map(serializer), 200);
+			const results = safes.map(serializer);
+
+			return ctx.json(results, 200);
 		},
 	);
 
