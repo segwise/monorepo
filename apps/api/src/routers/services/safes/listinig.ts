@@ -1,5 +1,9 @@
 import { zValidator } from '@hono/zod-validator';
-import { SchemaSearchParamsSafeSimple } from '@segwise/core/schemas';
+import {
+	SchemaSearchParamsSafeRegistration,
+	SchemaSearchParamsSafeSimple,
+} from '@segwise/core/schemas';
+import { set } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
@@ -21,7 +25,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					)
 					.nullish(),
 			}),
-			(ctx) => console.log(ctx),
 		),
 		async (ctx) => {
 			const brokerId =
@@ -296,6 +299,49 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				}),
 				200,
 			);
+		},
+	);
+
+	server.get(
+		'/simple/registration',
+		zValidator(
+			'query',
+			SchemaSearchParamsSafeRegistration.transform(
+				({ registration, birth }) => ({
+					registration,
+					birth: set(birth, {
+						hours: 12,
+					}),
+				}),
+			),
+		),
+		async (ctx) => {
+			const { registration, birth } = ctx.req.valid('query');
+
+			const safes = await ctx.database.safe.findMany({
+				where: {
+					insured: {
+						cpf: registration,
+						birth: {
+							lte: birth,
+							gte: birth,
+						},
+					},
+				},
+				select: selectPrisma,
+				relationLoadStrategy: 'join',
+			});
+
+			if (!safes) {
+				return ctx.json(
+					{
+						message: 'Seguros não encontrados',
+					},
+					404,
+				);
+			}
+
+			return ctx.json(safes.map(serializer), 200);
 		},
 	);
 
