@@ -67,13 +67,6 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		],
 		'expo-font',
 		'expo-image',
-		[
-			'expo-tracking-transparency',
-			{
-				userTrackingPermission:
-					'This identifier will be used to deliver personalized ads to you.',
-			},
-		],
 		'expo-localization',
 		'expo-image-picker',
 	],
