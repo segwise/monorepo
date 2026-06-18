@@ -10,6 +10,8 @@ function registerRoutersServicesAuth(server: Server) {
 	base.on(['POST', 'GET'], '*', async (ctx) => {
 		const handler = await ctx.auth.handler(ctx.req.raw);
 
+		console.log('handler:', handler);
+
 		const response = await responseReplaceSession(handler, ctx);
 
 		return response;
