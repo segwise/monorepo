@@ -42,9 +42,7 @@ const server = new Hono<AppBindings>({
 	}),
 });
 
-if (environment.NODE_ENV === 'development') {
-	server.use(logger());
-}
+server.use(logger());
 
 server.use(trimTrailingSlash());
 
