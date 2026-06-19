@@ -394,8 +394,8 @@ function registerRoutersServicesMigration(server: Server) {
 			errors: [] as Array<{ old_id: string; reason: string }>,
 		};
 
-		await ctx.database.safe.deleteMany();
-		await ctx.cache.del('indexSafeMigration');
+		// await ctx.database.safe.deleteMany();
+		// await ctx.cache.del('indexSafeMigration');
 
 		for (const id of ids) {
 			const indexMigration = ids.indexOf(id) + 1;
