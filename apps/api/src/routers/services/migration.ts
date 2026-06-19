@@ -390,20 +390,22 @@ function registerRoutersServicesMigration(server: Server) {
 			success: 0,
 			skipped: 0,
 			failed: 0,
+			id_map: {} as Record<string, string>,
 			errors: [] as Array<{ old_id: string; reason: string }>,
 		};
 
-		// await ctx.database.safe.deleteMany();
-		// await ctx.cache.del('indexSafeMigration');
+		await ctx.database.safe.deleteMany();
+		await ctx.cache.del('indexSafeMigration');
 
 		for (const id of ids) {
 			const indexMigration = ids.indexOf(id) + 1;
 
-			if (
-				indexMigration <=
-				Number((await ctx.cache.get('indexSafeMigration')) ?? 0)
-			) {
-				console.log('Ignorou o index:', indexMigration);
+			const reportCache = JSON.parse(
+				(await ctx.cache.get('reportSafeMigration')) ?? '{}',
+			);
+
+			if (reportCache?.id_map?.[id]) {
+				console.log('Ignorou o id:', id);
 				continue;
 			}
 
@@ -499,7 +501,7 @@ function registerRoutersServicesMigration(server: Server) {
 				const producerAmount = oldSafe.receivables.producer?.amount ?? null;
 				const commissionNet = commissionGross - (producerAmount ?? 0);
 
-				await ctx.database.safe.create({
+				const newSafe = await ctx.database.safe.create({
 					data: {
 						isExternal: false,
 						// biome-ignore lint/suspicious/noExplicitAny: modality
@@ -548,8 +550,12 @@ function registerRoutersServicesMigration(server: Server) {
 								}
 							: {}),
 					},
+					select: {
+						id: true,
+					},
 				});
 
+				report.id_map[oldSafe.id] = newSafe.id;
 				report.success++;
 
 				await ctx.cache.set('indexSafeMigration', String(indexMigration));
