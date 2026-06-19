@@ -1,3 +1,4 @@
+import { parse } from 'date-fns';
 import xior from 'xior';
 import type { Server } from '@/@types/server';
 
@@ -471,7 +472,13 @@ function registerRoutersServicesMigration(server: Server) {
 							cnpj: cpf,
 						}),
 						birth: oldSafe.insured.additional_information?.birth
-							? oldSafe.insured.additional_information.birth.split('T')[0]
+							? parse(
+									oldSafe.insured.additional_information.birth.split(
+										'T',
+									)[0] as string,
+									'yyyy-MM-dd',
+									new Date(),
+								)
 							: null,
 						brokerId: BROKER_ID,
 					},
