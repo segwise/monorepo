@@ -89,19 +89,23 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					],
 				}),
 				...(!ids?.length && {
-					...(!!effectived && {
-						effectivedAt: {
-							gte: effectivedAt.start,
-							lte: effectivedAt.end,
-						},
-					}),
-					...(!effectived && {
-						requestedAt: {
-							gte: effectivedAt.start,
-							lte: effectivedAt.end,
-						},
-						effectivedAt: null,
-					}),
+					requestedAt: {
+						gte: effectivedAt.start,
+						lte: effectivedAt.end,
+					},
+					// ...(!!effectived && {
+					// 	effectivedAt: {
+					// 		gte: effectivedAt.start,
+					// 		lte: effectivedAt.end,
+					// 	},
+					// }),
+					// ...(!effectived && {
+					// 	requestedAt: {
+					// 		gte: effectivedAt.start,
+					// 		lte: effectivedAt.end,
+					// 	},
+					// 	effectivedAt: null,
+					// }),
 				}),
 				...(!!renewal && {
 					renewal,

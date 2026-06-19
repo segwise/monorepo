@@ -717,7 +717,7 @@ model MarketplaceVehicle {
   conservations MarketplaceVehicleConservation[]
 
   description String?
-  phone       String  @db.VarChar(20)
+  phone       String  @db.VarChar(13)
 
   postalCode String @map("postal_code") @db.VarChar(8)
   state      String

@@ -120,7 +120,7 @@ function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 						in: status,
 					},
 				}),
-				effectivedAt: null,
+				// effectivedAt: null,
 			};
 
 			const [current, before] = await ctx.database.$transaction([

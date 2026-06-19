@@ -9,6 +9,7 @@ import { registerRoutersServicesSafes } from '@/routers/services/safes';
 import { registerRoutersServicesUtils } from '@/routers/services/utils';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
 import { registerRoutersServicesMarketplace } from './marketplace';
+import { registerRoutersServicesMigration } from './migration';
 import { registerRoutersServicesPIX } from './pix';
 import { registerRoutersServicesQuoteFinancing } from './quote-financing';
 
@@ -32,14 +33,7 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesAnalytics(base);
 	registerRoutersServicesPayments(base);
 
-	base.get('/migration', async (ctx) => {
-		return ctx.json(
-			{
-				ok: true,
-			},
-			200,
-		);
-	});
+	registerRoutersServicesMigration(base);
 }
 
 export { registerRoutersServices };

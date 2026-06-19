@@ -1,8 +1,4 @@
 import { faker } from '@faker-js/faker/locale/pt_BR';
-import {
-	SchemaMarketplaceVehicleConservations,
-	SchemaMarketplaceVehicleFeatures,
-} from '@segwise/core';
 import { generateReferral } from '@segwise/core/utils';
 import type { User } from 'better-auth';
 import {
@@ -15,13 +11,6 @@ import {
 } from 'date-fns';
 import xior from 'xior';
 import {
-	MarketplaceVehicleAcceptExchangeAmount,
-	MarketplaceVehicleDirection,
-	MarketplaceVehicleFinancialState,
-	MarketplaceVehicleFuel,
-	MarketplaceVehicleStatus,
-	MarketplaceVehicleTransmission,
-	MarketplaceVehicleType,
 	ModalityInsurance,
 	Role,
 	StatusQuote,
@@ -1877,7 +1866,7 @@ async function seed() {
 			returnHeaders: true,
 		});
 
-		const broker = await auth.api.createOrganization({
+		const brokerOrg = await auth.api.createOrganization({
 			body: {
 				name: 'XCar Corretora de Seguros LTDA',
 				slug: 'xcarcorretora',
@@ -1888,7 +1877,16 @@ async function seed() {
 			},
 		});
 
-		if (environment.NODE_ENV !== 'production') {
+		const broker = await database.broker.update({
+			where: {
+				id: brokerOrg.id,
+			},
+			data: {
+				id: '019e71c7-bd45-7f19-9715-d7a92e94cfcd',
+			},
+		});
+
+		if (environment.NODE_ENV === 'preview') {
 			await database.manufacturerVehicle.createMany({
 				data: Array.from({ length: 10 }).map(() => ({
 					name: faker.vehicle.manufacturer(),
@@ -2262,83 +2260,83 @@ async function seed() {
 				});
 			}
 
-			const insureds = await database.user.findMany({
-				where: {
-					role: 'customer',
-				},
-			});
+			// const insureds = await database.user.findMany({
+			// 	where: {
+			// 		role: 'customer',
+			// 	},
+			// });
 
-			for (let i = 0; i < 100; i++) {
-				await database.marketplaceVehicle.create({
-					data: {
-						insured: {
-							connect: {
-								id: faker.helpers.arrayElement(insureds).id,
-							},
-						},
-						photos: Array.from(
-							{ length: faker.number.int({ min: 1, max: 6 }) },
-							() => faker.image.url(),
-						),
-						type: faker.helpers.enumValue(MarketplaceVehicleType),
-						manufacturer: faker.vehicle.manufacturer(),
-						model: faker.vehicle.model(),
-						year: faker.number.int({
-							min: 1990,
-							max: new Date().getFullYear(),
-						}),
-						modelYear: faker.number.int({
-							min: 1990,
-							max: new Date().getFullYear(),
-						}),
-						plate: 'nas6888',
-						color: faker.vehicle.color(),
-						fuel: faker.helpers.enumValue(MarketplaceVehicleFuel),
-						transmission: faker.helpers.enumValue(
-							MarketplaceVehicleTransmission,
-						),
-						direction: faker.helpers.enumValue(MarketplaceVehicleDirection),
-						financialState: faker.helpers.enumValue(
-							MarketplaceVehicleFinancialState,
-						),
-						price: faker.number.float({
-							min: 15_000,
-							max: 350_000,
-							fractionDigits: 2,
-						}),
-						mileage: faker.number.int({ min: 0, max: 300_000 }),
-						optionals: [
-							faker.helpers.enumValue(SchemaMarketplaceVehicleFeatures.enum),
-						],
-						conservations: [
-							faker.helpers.enumValue(
-								SchemaMarketplaceVehicleConservations.enum,
-							),
-						],
-						description: faker.lorem.sentences({ min: 1, max: 4 }),
-						phone: faker.phone.number({ style: 'national' }),
+			// for (let i = 0; i < 100; i++) {
+			// 	await database.marketplaceVehicle.create({
+			// 		data: {
+			// 			insured: {
+			// 				connect: {
+			// 					id: faker.helpers.arrayElement(insureds).id,
+			// 				},
+			// 			},
+			// 			photos: Array.from(
+			// 				{ length: faker.number.int({ min: 1, max: 6 }) },
+			// 				() => faker.image.url(),
+			// 			),
+			// 			type: faker.helpers.enumValue(MarketplaceVehicleType),
+			// 			manufacturer: faker.vehicle.manufacturer(),
+			// 			model: faker.vehicle.model(),
+			// 			year: faker.number.int({
+			// 				min: 1990,
+			// 				max: new Date().getFullYear(),
+			// 			}),
+			// 			modelYear: faker.number.int({
+			// 				min: 1990,
+			// 				max: new Date().getFullYear(),
+			// 			}),
+			// 			plate: 'nas6888',
+			// 			color: faker.vehicle.color(),
+			// 			fuel: faker.helpers.enumValue(MarketplaceVehicleFuel),
+			// 			transmission: faker.helpers.enumValue(
+			// 				MarketplaceVehicleTransmission,
+			// 			),
+			// 			direction: faker.helpers.enumValue(MarketplaceVehicleDirection),
+			// 			financialState: faker.helpers.enumValue(
+			// 				MarketplaceVehicleFinancialState,
+			// 			),
+			// 			price: faker.number.float({
+			// 				min: 15_000,
+			// 				max: 350_000,
+			// 				fractionDigits: 2,
+			// 			}),
+			// 			mileage: faker.number.int({ min: 0, max: 300_000 }),
+			// 			optionals: [
+			// 				faker.helpers.enumValue(SchemaMarketplaceVehicleFeatures.enum),
+			// 			],
+			// 			conservations: [
+			// 				faker.helpers.enumValue(
+			// 					SchemaMarketplaceVehicleConservations.enum,
+			// 				),
+			// 			],
+			// 			description: faker.lorem.sentences({ min: 1, max: 4 }),
+			// 			phone: faker.phone.number({ style: 'national' }),
 
-						postalCode: faker.location.zipCode('########'),
-						state: faker.location.state(),
-						city: faker.location.city(),
-						acceptExchange: faker.datatype.boolean(),
-						acceptExchangeAmount: faker.datatype.boolean()
-							? faker.helpers.enumValue(MarketplaceVehicleAcceptExchangeAmount)
-							: null,
-						acceptExchangeChange1: faker.datatype.boolean()
-							? faker.vehicle.model()
-							: null,
-						acceptExchangeChange2: faker.datatype.boolean()
-							? faker.vehicle.model()
-							: null,
-						acceptExchangeChange3: faker.datatype.boolean()
-							? faker.vehicle.model()
-							: null,
+			// 			postalCode: faker.location.zipCode('########'),
+			// 			state: faker.location.state(),
+			// 			city: faker.location.city(),
+			// 			acceptExchange: faker.datatype.boolean(),
+			// 			acceptExchangeAmount: faker.datatype.boolean()
+			// 				? faker.helpers.enumValue(MarketplaceVehicleAcceptExchangeAmount)
+			// 				: null,
+			// 			acceptExchangeChange1: faker.datatype.boolean()
+			// 				? faker.vehicle.model()
+			// 				: null,
+			// 			acceptExchangeChange2: faker.datatype.boolean()
+			// 				? faker.vehicle.model()
+			// 				: null,
+			// 			acceptExchangeChange3: faker.datatype.boolean()
+			// 				? faker.vehicle.model()
+			// 				: null,
 
-						status: faker.helpers.enumValue(MarketplaceVehicleStatus),
-					},
-				});
-			}
+			// 			status: faker.helpers.enumValue(MarketplaceVehicleStatus),
+			// 		},
+			// 	});
+			// }
 		}
 	} catch (error) {
 		console.error(error);
