@@ -263,8 +263,6 @@ model Safe {
   brokerId String @map("broker_id") @db.Uuid
   broker   Broker @relation("broker_to_safe", fields: [brokerId], references: [id], onDelete: Cascade)
 
-  expiration DateTime @db.Date
-
   safeVehicle SafeVehicle? @relation("safe_to_safe_vehicle", map: "safe_vehicle")
 
   installments     Int?     @db.SmallInt
@@ -292,7 +290,8 @@ model Safe {
   statusMessage String?    @map("status_message")
 
   requestedAt  DateTime  @map("requested_at") @db.Timestamptz
-  effectivedAt DateTime? @map("effectived_at") @db.Timestamptz
+  effectivedAt DateTime? @map("effectived_at") @db.Date
+  expiration   DateTime  @db.Date
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
