@@ -1,6 +1,6 @@
 {
 	"private": true,
-	"version": "1.0.22",
+	"version": "1.0.25",
 	"name": "segwise",
 	"main": "expo-router/entry",
 	"scripts": {
