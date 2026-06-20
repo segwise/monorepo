@@ -1,5 +1,7 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
+import { version } from './package.json';
+
 const EAS_PROJECT_ID = !process.env.EXPO_PUBLIC_COMPANY_ID
 	? 'd756c43a-d7d8-4021-b5e7-c801b0f55874'
 	: '2b548c27-07f9-4378-88c2-2c12483fdc1b';
@@ -17,8 +19,7 @@ const BUNDLE_IDENTIFIER = !process.env.EXPO_PUBLIC_COMPANY_ID
 const PACKAGE_NAME = BUNDLE_IDENTIFIER;
 const SCHEME = PROJECT_SLUG;
 
-const VERSION_CODE = 23;
-const VERSION = `1.0.${VERSION_CODE}`;
+const VERSION = version;
 
 const config = ({ config }: ConfigContext): ExpoConfig => ({
 	...config,
@@ -37,7 +38,6 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		supportsTablet: false,
 		bundleIdentifier: BUNDLE_IDENTIFIER,
 		version: VERSION,
-		buildNumber: VERSION_CODE.toString(),
 		infoPlist: {
 			ITSAppUsesNonExemptEncryption: false,
 		},
@@ -46,7 +46,6 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		version: VERSION,
 		predictiveBackGestureEnabled: false,
 		package: PACKAGE_NAME,
-		versionCode: VERSION_CODE,
 	},
 	plugins: [
 		[
