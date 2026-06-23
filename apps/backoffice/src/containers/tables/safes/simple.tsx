@@ -310,7 +310,9 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 														{format(expiration, 'dd/MM/yyyy')}{' '}
 														{isAfter(expiration, new Date()) &&
 															differenceInDays(expiration, new Date()) <= 7 &&
-															`- ${formatDistanceToNow(expiration)
+															`- ${formatDistanceToNow(
+																expiration.toString().replace('z', ''),
+															)
 																.replace('cerca de ', '')
 																.replace('mais de ', '')}`}
 													</span>

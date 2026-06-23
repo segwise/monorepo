@@ -351,7 +351,9 @@ function TableQuotesSimple() {
 														{format(expiration, 'dd/MM/yyyy')}{' '}
 														{isAfter(expiration, new Date()) &&
 															differenceInDays(expiration, new Date()) <= 7 &&
-															`- ${formatDistanceToNow(expiration)
+															`- ${formatDistanceToNow(
+																expiration.toString().replace('Z', ''),
+															)
 																.replace('cerca de ', '')
 																.replace('mais de ', '')}`}
 													</span>
