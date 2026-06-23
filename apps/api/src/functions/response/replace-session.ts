@@ -99,8 +99,6 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 			);
 		}
 
-		console.log(ctx.req.url, 'XClientApp:', XClientApp);
-
 		if (isBackoffice && XClientApp !== 'admin') {
 			return await logOut();
 		}

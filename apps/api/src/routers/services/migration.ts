@@ -405,11 +405,8 @@ function registerRoutersServicesMigration(server: Server) {
 			);
 
 			if (reportCache?.id_map?.[id]) {
-				console.log('Ignorou o id:', id);
 				continue;
 			}
-
-			console.log(ids.length, indexMigration);
 
 			let oldSafe: OldSafe;
 			try {
@@ -559,14 +556,15 @@ function registerRoutersServicesMigration(server: Server) {
 				report.success++;
 
 				await ctx.cache.set('indexSafeMigration', String(indexMigration));
+
+				await ctx.cache.set('reportSafeMigration', JSON.stringify(report));
 			} catch (err) {
 				report.errors.push({
 					old_id: id,
 					reason: err instanceof Error ? err.message : String(err),
 				});
+
 				report.failed++;
-			} finally {
-				await ctx.cache.set('reportSafeMigration', JSON.stringify(report));
 			}
 		}
 
