@@ -1,4 +1,3 @@
-import type { BetterAuthClientPlugin } from 'better-auth';
 import { adminClient, organizationClient } from 'better-auth/client/plugins';
 import { nextCookies } from 'better-auth/next-js';
 import { createAuthClient } from 'better-auth/react';
@@ -20,46 +19,44 @@ function getCookiePrefix() {
 		: `${roleApplication[process.env.NEXT_PUBLIC_ROLE_SYSTEM as keyof typeof roleApplication]}.${process.env.NODE_ENV}.auth`;
 }
 
-const plugins: BetterAuthClientPlugin[] = [
-	nextCookies(),
-	adminClient(),
-	organizationClient({
-		schema: {
-			organization: {
-				additionalFields: {
-					fantasy: {
-						type: 'string',
-						required: true,
-						returned: true,
-					},
-					cnpj: {
-						type: 'string',
-						required: true,
-						index: true,
-						unique: true,
-						returned: true,
-					},
-				},
-			},
-			member: {
-				additionalFields: {
-					referral: {
-						type: 'string',
-						required: true,
-						index: true,
-						unique: true,
-						returned: true,
-					},
-				},
-			},
-		},
-	}),
-];
-
 const auth = createAuthClient({
 	baseURL,
 	basePath,
-	plugins,
+	plugins: [
+		nextCookies(),
+		adminClient(),
+		organizationClient({
+			schema: {
+				organization: {
+					additionalFields: {
+						fantasy: {
+							type: 'string',
+							required: true,
+							returned: true,
+						},
+						cnpj: {
+							type: 'string',
+							required: true,
+							index: true,
+							unique: true,
+							returned: true,
+						},
+					},
+				},
+				member: {
+					additionalFields: {
+						referral: {
+							type: 'string',
+							required: true,
+							index: true,
+							unique: true,
+							returned: true,
+						},
+					},
+				},
+			},
+		}),
+	],
 	fetchOptions: {
 		credentials: 'include',
 		priority: 'high',
@@ -77,7 +74,6 @@ const auth = createAuthClient({
 			},
 			useSecureCookies: true,
 		},
-		plugins,
 	},
 });
 
