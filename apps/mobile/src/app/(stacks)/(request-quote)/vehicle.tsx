@@ -26,6 +26,8 @@ import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { TriggerRef } from '@rn-primitives/select';
 import {
+	maskCNPJ,
+	maskCPF,
 	maskDateString,
 	maskPhone,
 	maskPlate,
@@ -40,6 +42,7 @@ import {
 	translateVehicleUsage,
 } from '@segwise/core/translate';
 import type { QuoteSimpleRegister } from '@segwise/core/types';
+import { isCNPJ } from '@segwise/core/valids';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Fragment, useEffect, useRef, useState } from 'react';
@@ -486,6 +489,57 @@ function RequestQuoteVehicle() {
 										}
 										label='Nome e Sobrenome'
 										placeholder='Nome e Sobrenome'
+										className='uppercase'
+										keyboardAppearance='dark'
+										autoCapitalize='characters'
+										autoComplete='off'
+										autoCorrect={false}
+										returnKeyType={
+											!field.value || field.value === '' || fieldState.invalid
+												? 'none'
+												: 'next'
+										}
+										returnKeyLabel='Próximo'
+										enablesReturnKeyAutomatically
+										onSubmitEditing={() => {
+											if (!field.value || field.value === '') {
+												return;
+											}
+
+											if (fieldState.invalid) {
+												return;
+											}
+
+											const { invalid, isDirty } = getFieldState(
+												'insured.registration',
+											);
+
+											if (!isDirty || invalid) {
+												setFocus('insured.registration');
+											}
+										}}
+									/>
+									{fieldState.error?.message && (
+										<InputError>{fieldState.error.message}</InputError>
+									)}
+								</View>
+							)}
+						/>
+						<Controller
+							control={control}
+							name='insured.registration'
+							render={({ field, fieldState }) => (
+								<View>
+									<Input
+										{...field}
+										value={field.value || undefined}
+										onChangeText={(value) =>
+											field.onChange(
+												isCNPJ(value) ? maskCNPJ(value) : maskCPF(value),
+											)
+										}
+										label='CPF'
+										placeholder='000.000.000-00'
 										className='uppercase'
 										keyboardAppearance='dark'
 										autoCapitalize='characters'

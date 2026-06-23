@@ -68,6 +68,12 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		'expo-image',
 		'expo-localization',
 		'expo-image-picker',
+		[
+			'@hot-updater/react-native',
+			{
+				channel: process.env.HOT_UPDATER_CHANNEL,
+			},
+		],
 	],
 	experiments: {
 		typedRoutes: true,
