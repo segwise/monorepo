@@ -1,3 +1,14 @@
+import { Button } from '@/components/ui/button';
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/api/insurance-companies/simple';
 import { useSafes } from '@/libraries/hooks/api/safe';
@@ -179,28 +190,50 @@ function Item(props: SafeSimple) {
 				)}
 				<Separator />
 				<View className='flex-row items-center justify-between'>
-					<TouchableOpacity onPress={removeItem}>
-						<View className='flex-row items-center justify-start gap-x-1'>
-							<SymbolView
-								name={{
-									ios: 'x.circle',
-									android: 'close',
-								}}
-								size={18}
-								tintColor='red'
-							/>
-							<Text
-								allowFontScaling={false}
-								accessible={false}
-								className='text-base font-semibold'
-								style={{
-									color: 'red',
-								}}
-							>
-								Excluir
-							</Text>
-						</View>
-					</TouchableOpacity>
+					<Dialog>
+						<DialogTrigger asChild>
+							<TouchableOpacity>
+								<View className='flex-row items-center justify-start gap-x-1'>
+									<SymbolView
+										name={{
+											ios: 'x.circle',
+											android: 'close',
+										}}
+										size={18}
+										tintColor='red'
+									/>
+									<Text
+										allowFontScaling={false}
+										accessible={false}
+										className='text-base font-semibold'
+										style={{
+											color: 'red',
+										}}
+									>
+										Excluir
+									</Text>
+								</View>
+							</TouchableOpacity>
+						</DialogTrigger>
+						<DialogContent showClose={false} className='min-w-96'>
+							<DialogHeader>
+								<DialogTitle>Excluir Registro</DialogTitle>
+								<DialogDescription className='leading-none'>
+									Deseja realmente excluir o registro?
+								</DialogDescription>
+							</DialogHeader>
+							<DialogFooter>
+								<DialogClose asChild>
+									<Button variant='outline'>
+										<Text className='font-normal'>CANCELAR</Text>
+									</Button>
+								</DialogClose>
+								<Button onPress={removeItem}>
+									<Text className='text-white font-semibold'>EXCLUIR</Text>
+								</Button>
+							</DialogFooter>
+						</DialogContent>
+					</Dialog>
 					<View />
 				</View>
 			</View>
