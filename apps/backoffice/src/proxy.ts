@@ -17,7 +17,7 @@ const getSessionCached = unstable_cache(
 		const sessionCookie = getSessionCookie(
 			new Headers({
 				cookie,
-				'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
+				// 'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
 			}),
 			{
 				cookiePrefix: COOKIE_PREFIX,
@@ -32,7 +32,7 @@ const getSessionCached = unstable_cache(
 			fetchOptions: {
 				headers: {
 					cookie,
-					'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
+					// 'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
 				},
 			},
 		});
