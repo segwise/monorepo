@@ -3,7 +3,7 @@ import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
-import { set } from 'date-fns';
+import { set, setYear } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
@@ -89,9 +89,12 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					],
 				}),
 				...(!ids?.length && {
-					requestedAt: {
-						gte: effectivedAt.start,
-						lte: effectivedAt.end,
+					expiration: {
+						gte: setYear(
+							effectivedAt.start,
+							effectivedAt.start.getFullYear() + 1,
+						),
+						lte: setYear(effectivedAt.end, effectivedAt.end.getFullYear() + 1),
 					},
 					// ...(!!effectived && {
 					// 	effectivedAt: {
