@@ -40,10 +40,16 @@ function Header({
 
 	return (
 		<View>
-			<View className='bg-primary' style={{ height: top }} />
+			<View
+				className={cn('bg-primary', isCompany && 'bg-primary-xcar')}
+				style={{ height: top }}
+			/>
 			<View
 				className={cn(
-					'bg-primary flex-row items-center justify-center py-2 px-4',
+					cn(
+						'bg-primary flex-row items-center justify-center py-2 px-4',
+						isCompany && 'bg-primary-xcar',
+					),
 					showReturn && 'justify-between',
 				)}
 			>
@@ -96,7 +102,10 @@ function Header({
 			</View>
 			<View
 				className={cn(
-					'bg-primary py-2 border-t border-t-white px-4 flex flex-row items-center justify-between',
+					cn(
+						'bg-primary py-2 border-t border-t-white px-4 flex flex-row items-center justify-between',
+						isCompany && 'bg-primary-xcar',
+					),
 					showReturn && 'justify-center',
 				)}
 			>

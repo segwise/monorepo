@@ -1,3 +1,4 @@
+import { isCompany } from '@/configs/consts/company';
 import { cn } from '@/libraries/classname';
 import Constants from 'expo-constants';
 import { openURL } from 'expo-linking';
@@ -45,7 +46,11 @@ function ButtonLink(props: ButtonLinkProps) {
 			onPress={onPress}
 			className={cn(
 				'rounded-sm border bg-background py-2 px-6 flex flex-row items-center justify-between',
-				invert && 'bg-primary border-primary',
+				invert &&
+					cn(
+						'bg-primary border-primary',
+						isCompany && 'bg-primary-xcar border-primary-xcar',
+					),
 			)}
 		>
 			<View className='size-6' />

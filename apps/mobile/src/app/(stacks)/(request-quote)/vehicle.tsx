@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/toast';
+import { isCompany } from '@/configs/consts/company';
 import { cn } from '@/libraries/classname';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/api/insurance-companies/simple';
 import { useQuoteIsPlate } from '@/libraries/hooks/api/quotes/plate';
@@ -72,7 +73,12 @@ interface LabelProps {
 function Label({ title, icon }: LabelProps) {
 	return (
 		<View className='flex flex-row items-center justify-start gap-x-2'>
-			<View className='bg-primary rounded-full size-9 flex flex-row items-center justify-center'>
+			<View
+				className={cn(
+					'bg-primary rounded-full size-9 flex flex-row items-center justify-center',
+					isCompany && 'bg-primary-xcar',
+				)}
+			>
 				<SymbolView name={icon} size={18} tintColor='#FFFFFF' />
 			</View>
 			<Text className='text-xl font-semibold'>{title}</Text>
@@ -1006,7 +1012,10 @@ function RequestQuoteVehicle() {
 							<View className='mt-4 gap-y-2'>
 								<Button
 									variant='outline'
-									className='border-primary h-fit'
+									className={cn(
+										'border-primary h-fit',
+										isCompany && 'border-primary-xcar',
+									)}
 									onPress={() => {
 										if (firstInit) {
 											replace('/(stacks)/home');

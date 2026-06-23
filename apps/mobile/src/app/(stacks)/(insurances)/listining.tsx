@@ -10,6 +10,8 @@ import {
 	DialogTrigger,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/api/insurance-companies/simple';
 import { useSafes } from '@/libraries/hooks/api/safe';
 import { storage } from '@/libraries/storage';
@@ -215,7 +217,7 @@ function Item(props: SafeSimple) {
 								</View>
 							</TouchableOpacity>
 						</DialogTrigger>
-						<DialogContent showClose={false} className='min-w-96'>
+						<DialogContent showClose={false}>
 							<DialogHeader>
 								<DialogTitle>Excluir Registro</DialogTitle>
 								<DialogDescription className='leading-none'>
@@ -272,7 +274,12 @@ function InsurancesListiningScreen() {
 						<Text className='font-extrabold'>{data?.data.length || 0}</Text>
 					</Text>
 					<TouchableOpacity onPress={() => push('/(stacks)/(insurances)')}>
-						<View className='flex-row items-center justify-end bg-primary rounded px-3 py-2'>
+						<View
+							className={cn(
+								'flex-row items-center justify-end bg-primary rounded px-3 py-2',
+								isCompany && 'bg-primary-xcar',
+							)}
+						>
 							<Text
 								allowFontScaling={false}
 								accessible={false}

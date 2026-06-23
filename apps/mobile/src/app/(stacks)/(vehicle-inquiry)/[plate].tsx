@@ -6,7 +6,9 @@ import {
 } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { isCompany } from '@/configs/consts/company';
 import { api } from '@/libraries/api';
+import { cn } from '@/libraries/classname';
 import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 import { maskPlate } from '@segwise/core/masks';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
@@ -86,8 +88,18 @@ function VehicleInquiryPlateScreen() {
 						title: 'Resultado da Consulta',
 					}}
 				/>
-				<View className='border-2 border-primary rounded-md p-4 overflow-hidden relative'>
-					<View className='bg-primary py-1.5 -mx-4 -mt-4 mb-3'>
+				<View
+					className={cn(
+						'border-2 border-primary rounded-md p-4 overflow-hidden relative',
+						isCompany && 'border-primary-xcar',
+					)}
+				>
+					<View
+						className={cn(
+							'bg-primary py-1.5 -mx-4 -mt-4 mb-3',
+							isCompany && 'bg-primary-xcar',
+						)}
+					>
 						<Text className='text-center text-white font-medium uppercase text-sm'>
 							Veículo Encontrado
 						</Text>
@@ -120,7 +132,12 @@ function VehicleInquiryPlateScreen() {
 				<Separator />
 				<View className='gap-5'>
 					<View className='flex flex-row items-center justify-start gap-x-2'>
-						<View className='bg-primary rounded-full size-9 flex flex-row items-center justify-center'>
+						<View
+							className={cn(
+								'bg-primary rounded-full size-9 flex flex-row items-center justify-center',
+								isCompany && 'bg-primary-xcar',
+							)}
+						>
 							<SymbolView
 								name={{
 									ios: 'car.fill',

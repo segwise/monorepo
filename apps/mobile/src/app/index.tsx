@@ -1,18 +1,15 @@
 import LOGO from '@/assets/images/logo/segwise.png';
 import LOGO_XCAR from '@/assets/images/logo/xcar-light-full.png';
 import BACKGROUND_MAP from '@/assets/images/splash-screen/background-map.png';
+import { isCompany } from '@/configs/consts/company';
 import { attributeReferral } from '@/functions/attribute-referral';
 import { cn } from '@/libraries/classname';
-import Constants from 'expo-constants';
 import { Image, ImageBackground } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { useMMKVBoolean } from 'react-native-mmkv';
 import Svg, { Circle, G } from 'react-native-svg';
-
-// @ts-expect-error
-const isCompany = Constants.expoConfig?.extra.company;
 
 function IndexScreen() {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -52,7 +49,9 @@ function IndexScreen() {
 	}, [isFirstView]);
 
 	return (
-		<View className='bg-primary size-full'>
+		<View
+			className={cn('bg-primary size-full', isCompany && 'bg-primary-xcar')}
+		>
 			<ImageBackground
 				source={BACKGROUND_MAP}
 				contentFit='contain'

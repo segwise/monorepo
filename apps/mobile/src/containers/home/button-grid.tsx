@@ -1,3 +1,4 @@
+import { isCompany } from '@/configs/consts/company';
 import { cn } from '@/libraries/classname';
 import { openURL } from 'expo-linking';
 import { type Href, useRouter } from 'expo-router';
@@ -76,7 +77,7 @@ function ButtonGrid({
 				onPress={navigation}
 				className={cn(
 					'w-full h-40 rounded-md border flex flex-col items-center justify-between p-3',
-					invert && 'border-0 bg-primary',
+					invert && cn('border-0 bg-primary', isCompany && 'bg-primary-xcar'),
 					width <= 400 && 'h-32',
 					disabled && 'opacity-60',
 					borderLight && 'border-border',

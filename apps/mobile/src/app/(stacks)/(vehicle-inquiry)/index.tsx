@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { InputOTP } from '@/components/ui/input-otp';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
 import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 import { Feather } from '@expo/vector-icons';
 import { maskPlate } from '@segwise/core/masks';
@@ -29,7 +31,12 @@ function VehicleInquiryScreen() {
 	return (
 		<View className='p-4 gap-y-4'>
 			<View className='border border-border rounded-md p-4 overflow-hidden relative'>
-				<View className='bg-primary py-1.5 -mx-4 -mt-4 mb-4'>
+				<View
+					className={cn(
+						'bg-primary py-1.5 -mx-4 -mt-4 mb-4',
+						isCompany && 'bg-primary-xcar',
+					)}
+				>
 					<Text className='text-center text-white font-bold uppercase text-base'>
 						PLACA
 					</Text>
@@ -87,7 +94,12 @@ function VehicleInquiryScreen() {
 					/>
 				</Button>
 			</Link>
-			<View className='border border-primary/20 rounded-md px-4 pt-3 pb-4 flex-row gap-2 bg-primary/5'>
+			<View
+				className={cn(
+					'border border-primary/20 rounded-md px-4 pt-3 pb-4 flex-row gap-2 bg-primary/5',
+					isCompany && 'bg-primary-xcar/5 border-r-primary-xcar/20',
+				)}
+			>
 				<Feather name='info' size={16} className='mt-1' />
 				<Text className='flex-1 text-sm leading-snug'>
 					<Text className='font-bold'>OBS:</Text> Em Consulta Completa,
@@ -106,9 +118,19 @@ function VehicleInquiryScreen() {
 							.slice(0, 3)
 							?.map(({ plate, model, year }) => (
 								<Link href={`/(vehicle-inquiry)/${plate}`} key={plate} asChild>
-									<TouchableOpacity className='flex-row items-center justify-between gap-x-2 border border-primary/20 rounded-md p-2 gap-2 bg-primary/5'>
+									<TouchableOpacity
+										className={cn(
+											'flex-row items-center justify-between gap-x-2 border border-primary/20 rounded-md p-2 gap-2 bg-primary/5',
+											isCompany && 'bg-primary-xcar/5 border-r-primary-xcar/20',
+										)}
+									>
 										<View className='flex-row items-center justify-start gap-x-2'>
-											<View className='size-8 rounded-sm bg-primary items-center justify-center flex-row'>
+											<View
+												className={cn(
+													'size-8 rounded-sm bg-primary items-center justify-center flex-row',
+													isCompany && 'bg-primary-xcar',
+												)}
+											>
 												<Feather name='clock' size={20} color='#FFFFFF' />
 											</View>
 											<View>

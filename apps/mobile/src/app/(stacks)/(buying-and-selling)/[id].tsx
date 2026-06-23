@@ -1,5 +1,7 @@
 import { Separator } from '@/components/ui/separator';
+import { isCompany } from '@/configs/consts/company';
 import { api } from '@/libraries/api';
+import { cn } from '@/libraries/classname';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { maskPostalCode } from '@segwise/core/masks';
@@ -96,7 +98,7 @@ export default function VehicleBuy() {
 						}}
 					>
 						<TouchableOpacity
-							className='bg-primary'
+							className={cn('bg-primary', isCompany && 'bg-primary-xcar')}
 							style={{
 								padding: 10,
 								borderRadius: 5,
@@ -168,7 +170,9 @@ export default function VehicleBuy() {
 					headerShown: false,
 				}}
 			/>
-			<View className='pt-safe bg-primary' />
+			<View
+				className={cn('pt-safe bg-primary', isCompany && 'bg-primary-xcar')}
+			/>
 			<ScrollView
 				showsVerticalScrollIndicator={false}
 				style={{
@@ -195,7 +199,7 @@ export default function VehicleBuy() {
 						}}
 					>
 						<TouchableOpacity
-							className='bg-primary'
+							className={cn('bg-primary', isCompany && 'bg-primary-xcar')}
 							style={{
 								padding: 10,
 								borderRadius: 5,

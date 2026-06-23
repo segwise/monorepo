@@ -1,6 +1,8 @@
 import CAR from '@/assets/images/car-insurances.png';
 import { Input, InputError } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
 import { useSafesRegistration } from '@/libraries/hooks/api/safe';
 import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -174,7 +176,10 @@ function InsurancesScreen() {
 					)}
 				/>
 				<TouchableOpacity
-					className='py-3 bg-primary border border-primary rounded-sm'
+					className={cn(
+						'py-3 bg-primary border border-primary rounded-sm',
+						isCompany && 'bg-primary-xcar border-primary-xcar',
+					)}
 					onPress={handleSubmit(onSubmit)}
 				>
 					<View className='flex-row text-center items-center justify-center'>

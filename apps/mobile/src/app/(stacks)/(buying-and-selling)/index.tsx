@@ -10,6 +10,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
+import { isCompany } from '@/configs/consts/company';
 import states from '@/data/states.json';
 import { api } from '@/libraries/api';
 import { cn } from '@/libraries/classname';
@@ -844,7 +845,7 @@ function BuyAndSell() {
 							</Text>
 						</View>
 						<View
-							className='bg-primary'
+							className={cn('bg-primary', isCompany && 'bg-primary-xcar')}
 							style={{
 								marginTop: 30,
 								width: '100%',
@@ -1078,7 +1079,10 @@ function BuyAndSell() {
 										</View>
 										{item.acceptExchange ? (
 											<TouchableOpacity
-												className='bg-primary'
+												className={cn(
+													'bg-primary',
+													isCompany && 'bg-primary-xcar',
+												)}
 												disabled={!!item.acceptExchangeAmount}
 												onPress={() => {
 													setModalVisible({
@@ -1188,7 +1192,7 @@ function BuyAndSell() {
 			{authenticated && (
 				<TouchableOpacity
 					onPress={logOut}
-					className='bg-primary'
+					className={cn('bg-primary', isCompany && 'bg-primary-xcar')}
 					style={{
 						position: 'absolute',
 						left: 0,

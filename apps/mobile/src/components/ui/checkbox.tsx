@@ -1,3 +1,4 @@
+import { isCompany } from '@/configs/consts/company';
 import { cn } from '@/libraries/classname';
 import * as CheckboxPrimitive from '@rn-primitives/checkbox';
 import { SymbolView } from 'expo-symbols';
@@ -25,7 +26,11 @@ function Checkbox({
 					web: 'focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive peer cursor-default outline-none transition-shadow focus-visible:ring-[3px] disabled:cursor-not-allowed',
 					native: 'overflow-hidden',
 				}),
-				props.checked && cn('border-primary', checkedClassName),
+				props.checked &&
+					cn(
+						cn('border-primary', isCompany && 'border-primary-xcar'),
+						checkedClassName,
+					),
 				props.disabled && 'opacity-50',
 				className,
 			)}
@@ -34,7 +39,10 @@ function Checkbox({
 		>
 			<CheckboxPrimitive.Indicator
 				className={cn(
-					'bg-primary h-full w-full items-center justify-center',
+					cn(
+						'bg-primary h-full w-full items-center justify-center',
+						isCompany && 'bg-primary-xcar',
+					),
 					indicatorClassName,
 				)}
 			>

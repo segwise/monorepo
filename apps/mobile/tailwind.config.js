@@ -20,11 +20,10 @@ module.exports = {
 				foreground: 'hsl(var(--foreground))',
 				active: 'hsl(var(--active))',
 				primary: {
-					DEFAULT: !process.env.EXPO_PUBLIC_COMPANY_ID
-						? 'hsl(var(--primary))'
-						: 'hsl(var(--primary-xcar))',
+					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
 				},
+				'primary-xcar': 'hsl(var(--primary-xcar))',
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))',

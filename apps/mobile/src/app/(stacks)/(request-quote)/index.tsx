@@ -11,7 +11,9 @@ import {
 	DialogTrigger,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { isCompany } from '@/configs/consts/company';
 import { Header } from '@/containers/header';
+import { cn } from '@/libraries/classname';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { type Href, Link, useRouter } from 'expo-router';
@@ -634,7 +636,12 @@ function RequestQuote() {
 									}}
 								>
 									<View className='flex-row items-center justify-start gap-3'>
-										<View className='size-12 items-center justify-center bg-primary rounded-full'>
+										<View
+											className={cn(
+												'size-12 items-center justify-center bg-primary rounded-full',
+												isCompany && 'bg-primary-xcar',
+											)}
+										>
 											<Icon size={24} color='#FFFFFF' />
 										</View>
 										<Text className='text-foreground text-lg font-bold uppercase'>

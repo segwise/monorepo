@@ -1,4 +1,5 @@
 import { TextClassContext } from '@/components/ui/text';
+import { isCompany } from '@/configs/consts/company';
 import { cn } from '@/libraries/classname';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Platform, Pressable } from 'react-native';
@@ -14,8 +15,16 @@ const buttonVariants = cva(
 		variants: {
 			variant: {
 				default: cn(
-					'bg-primary active:bg-primary/90 shadow-sm shadow-black/5',
-					Platform.select({ web: 'hover:bg-primary/90' }),
+					cn(
+						'bg-primary active:bg-primary/90 shadow-sm shadow-black/5',
+						isCompany && 'bg-primary-xcar active:bg-primary-xcar/90',
+					),
+					Platform.select({
+						web: cn(
+							'hover:bg-primary/90',
+							isCompany && 'hover:bg-primary-xcar/90',
+						),
+					}),
 				),
 				destructive: cn(
 					'bg-destructive active:bg-destructive/90 dark:bg-destructive/60 shadow-sm shadow-black/5',

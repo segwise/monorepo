@@ -1,3 +1,5 @@
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -6,7 +8,10 @@ function Advertisement() {
 
 	return (
 		<View
-			className='absolute left-0 right-0 bottom-0 bg-primary items-center justify-center'
+			className={cn(
+				'absolute left-0 right-0 bottom-0 bg-primary items-center justify-center',
+				isCompany && 'bg-primary-xcar',
+			)}
 			style={{
 				paddingBottom: bottom,
 			}}

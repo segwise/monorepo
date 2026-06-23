@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
+import { isCompany } from '@/configs/consts/company';
 import { api } from '@/libraries/api';
+import { cn } from '@/libraries/classname';
 import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 import { maskPlate } from '@segwise/core/masks';
 import { useQuery } from '@tanstack/react-query';
@@ -54,7 +56,12 @@ function VehicleInquiryCompleteScreen() {
 					Confira o histórico antes de fechar negócio.
 				</Text>
 			</View>
-			<View className='flex-row items-center gap-3 bg-primary/5 border border-primary rounded-md p-3 mb-5'>
+			<View
+				className={cn(
+					'flex-row items-center gap-3 bg-primary/5 border border-primary rounded-md p-3 mb-5',
+					isCompany && 'bg-primary-xcar/5 border-primary-xcar',
+				)}
+			>
 				<InfoIcon size={18} color='black' />
 				<Text className='text-xs text-primary leading-5 font-medium'>
 					Verifique o veículo antes de qualquer pagamento.
@@ -63,8 +70,18 @@ function VehicleInquiryCompleteScreen() {
 			<Text className='text-xs font-medium tracking-widest uppercase text-muted-foreground mb-2'>
 				Consulta veicular
 			</Text>
-			<View className='bg-white rounded-lg border-2 border-primary overflow-hidden mb-3'>
-				<View className='flex-row items-center gap-4 bg-primary px-4 py-4'>
+			<View
+				className={cn(
+					'bg-white rounded-lg border-2 border-primary overflow-hidden mb-3',
+					isCompany && 'border-primary-xcar',
+				)}
+			>
+				<View
+					className={cn(
+						'flex-row items-center gap-4 bg-primary px-4 py-4',
+						isCompany && 'bg-primary-xcar',
+					)}
+				>
 					<View className='flex-1'>
 						<Text className='text-xs text-white mb-0.5 uppercase'>Placa</Text>
 						<Text className='text-lg font-bold text-white leading-none'>
@@ -81,7 +98,12 @@ function VehicleInquiryCompleteScreen() {
 					<DataRow label='Combustível' value={data.fuel} />
 				</View>
 			</View>
-			<View className='bg-white rounded-lg border-2 border-primary p-4 flex-row items-center justify-between'>
+			<View
+				className={cn(
+					'bg-white rounded-lg border-2 border-primary p-4 flex-row items-center justify-between',
+					isCompany && 'border-primary-xcar',
+				)}
+			>
 				<View className='flex-1'>
 					<Text className='text-base font-medium text-neutral-900 mb-0.5'>
 						Histórico completo
@@ -119,7 +141,12 @@ function DataRow({ label, value, valueElement, isLast }: DataRowProps) {
 	return (
 		<View
 			className={`flex-row items-center justify-between py-3 gap-x-4 ${
-				!isLast ? 'border-b border-primary/20' : ''
+				!isLast
+					? cn(
+							'border-b border-primary/20',
+							isCompany && 'border-primary-xcar/20',
+						)
+					: ''
 			}`}
 		>
 			<Text className='text-sm text-neutral-500'>{label}</Text>

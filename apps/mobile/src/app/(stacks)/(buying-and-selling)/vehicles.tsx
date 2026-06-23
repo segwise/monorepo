@@ -1,4 +1,6 @@
+import { isCompany } from '@/configs/consts/company';
 import { api } from '@/libraries/api';
+import { cn } from '@/libraries/classname';
 import { storage } from '@/libraries/storage';
 import { Feather } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
@@ -300,7 +302,10 @@ export default function MyVehiclesBuyAndSell() {
 										</View>
 										{item.acceptExchange ? (
 											<View
-												className='bg-primary'
+												className={cn(
+													'bg-primary',
+													isCompany && 'bg-primary-xcar',
+												)}
 												style={{
 													paddingHorizontal: 10,
 													paddingVertical: 5,
@@ -325,7 +330,10 @@ export default function MyVehiclesBuyAndSell() {
 											</View>
 										) : (
 											<View
-												className='bg-primary'
+												className={cn(
+													'bg-primary',
+													isCompany && 'bg-primary-xcar',
+												)}
 												style={{
 													paddingHorizontal: 10,
 													paddingVertical: 5,
