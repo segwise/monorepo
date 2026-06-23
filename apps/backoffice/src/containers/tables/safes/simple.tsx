@@ -7,6 +7,7 @@ import {
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import {
+	addHours,
 	differenceInDays,
 	format,
 	formatDistanceToNow,
@@ -308,7 +309,10 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 													</span>
 													<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
 														{format(
-															expiration.toString().replace('Z', ''),
+															addHours(
+																expiration,
+																new Date().getTimezoneOffset(),
+															),
 															'dd/MM/yyyy',
 														)}{' '}
 														{isAfter(expiration, new Date()) &&
