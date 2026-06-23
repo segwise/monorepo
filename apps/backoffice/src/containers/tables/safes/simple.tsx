@@ -307,12 +307,13 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 														Final da Vigência
 													</span>
 													<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
-														{format(expiration, 'dd/MM/yyyy')}{' '}
+														{format(
+															expiration.toString().replace('Z', ''),
+															'dd/MM/yyyy',
+														)}{' '}
 														{isAfter(expiration, new Date()) &&
 															differenceInDays(expiration, new Date()) <= 7 &&
-															`- ${formatDistanceToNow(
-																expiration.toString().replace('z', ''),
-															)
+															`- ${formatDistanceToNow(expiration)
 																.replace('cerca de ', '')
 																.replace('mais de ', '')}`}
 													</span>

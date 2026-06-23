@@ -348,12 +348,13 @@ function TableQuotesSimple() {
 														Final da Vigência
 													</span>
 													<span className='text-xs text-muted-foreground font-normal leading-none truncate'>
-														{format(expiration, 'dd/MM/yyyy')}{' '}
+														{format(
+															expiration.toString().replace('Z', ''),
+															'dd/MM/yyyy',
+														)}{' '}
 														{isAfter(expiration, new Date()) &&
 															differenceInDays(expiration, new Date()) <= 7 &&
-															`- ${formatDistanceToNow(
-																expiration.toString().replace('Z', ''),
-															)
+															`- ${formatDistanceToNow(expiration)
 																.replace('cerca de ', '')
 																.replace('mais de ', '')}`}
 													</span>
