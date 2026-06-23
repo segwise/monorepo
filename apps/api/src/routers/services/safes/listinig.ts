@@ -3,7 +3,7 @@ import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
-import { set, setYear } from 'date-fns';
+import { set } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
@@ -89,12 +89,9 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					],
 				}),
 				...(!ids?.length && {
-					expiration: {
-						gte: setYear(
-							effectivedAt.start,
-							effectivedAt.start.getFullYear() + 1,
-						),
-						lte: setYear(effectivedAt.end, effectivedAt.end.getFullYear() + 1),
+					requestedAt: {
+						gte: effectivedAt.start,
+						lte: effectivedAt.end,
 					},
 					// ...(!!effectived && {
 					// 	effectivedAt: {
@@ -162,14 +159,9 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						},
 					}),
 					take: (limit as number) + 1,
-					orderBy: [
-						{
-							expiration: 'asc',
-						},
-						{
-							id: 'desc',
-						},
-					],
+					orderBy: {
+						id: 'desc',
+					},
 					select: selectPrisma,
 					relationLoadStrategy: 'join',
 				}),
@@ -208,14 +200,9 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 								cursor: {
 									id: safes[0]?.id,
 								},
-								orderBy: [
-									{
-										expiration: 'desc',
-									},
-									{
-										id: 'asc',
-									},
-								],
+								orderBy: {
+									id: 'asc',
+								},
 								skip: limit as number,
 								select: {
 									id: true,
@@ -250,7 +237,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						where,
 						cursor: { id: tempCursorForward },
 						skip: limit as number,
-						orderBy: [{ expiration: 'asc' }, { id: 'desc' }],
+						orderBy: { id: 'desc' },
 						select: { id: true },
 					});
 
@@ -271,7 +258,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						where,
 						cursor: { id: tempCursorBackward },
 						skip: limit as number,
-						orderBy: [{ expiration: 'desc' }, { id: 'asc' }],
+						orderBy: { id: 'asc' },
 						select: { id: true },
 					});
 
@@ -290,7 +277,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 
 			const lastPage = await ctx.database.safe.findFirst({
 				where,
-				orderBy: [{ expiration: 'desc' }, { id: 'asc' }],
+				orderBy: { id: 'asc' },
 				skip: skipGetLastPage >= 0 ? skipGetLastPage : (limit as number) - 1,
 				select: { id: true },
 			});
