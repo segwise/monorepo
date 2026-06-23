@@ -358,9 +358,26 @@ function TableQuotesSimple() {
 																.replace('Z', ''),
 															'dd/MM/yyyy',
 														)}{' '}
-														{isAfter(expiration, new Date()) &&
-															differenceInDays(expiration, new Date()) <= 7 &&
-															`- ${formatDistanceToNow(expiration)
+														{isAfter(
+															addHours(
+																expiration,
+																new Date().getTimezoneOffset(),
+															),
+															new Date(),
+														) &&
+															differenceInDays(
+																addHours(
+																	expiration,
+																	new Date().getTimezoneOffset(),
+																),
+																new Date(),
+															) <= 7 &&
+															`- ${formatDistanceToNow(
+																addHours(
+																	expiration,
+																	new Date().getTimezoneOffset(),
+																),
+															)
 																.replace('cerca de ', '')
 																.replace('mais de ', '')}`}
 													</span>
