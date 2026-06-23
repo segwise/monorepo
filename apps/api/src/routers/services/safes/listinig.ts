@@ -161,7 +161,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					take: (limit as number) + 1,
 					orderBy: [
 						{
-							expiration: 'desc',
+							expiration: 'asc',
 						},
 						{
 							id: 'desc',
@@ -207,7 +207,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 								},
 								orderBy: [
 									{
-										expiration: 'asc',
+										expiration: 'desc',
 									},
 									{
 										id: 'asc',
@@ -247,7 +247,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						where,
 						cursor: { id: tempCursorForward },
 						skip: limit as number,
-						orderBy: [{ expiration: 'desc' }, { id: 'desc' }],
+						orderBy: [{ expiration: 'asc' }, { id: 'desc' }],
 						select: { id: true },
 					});
 
@@ -268,7 +268,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						where,
 						cursor: { id: tempCursorBackward },
 						skip: limit as number,
-						orderBy: [{ expiration: 'asc' }, { id: 'asc' }],
+						orderBy: [{ expiration: 'desc' }, { id: 'asc' }],
 						select: { id: true },
 					});
 
@@ -287,7 +287,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 
 			const lastPage = await ctx.database.safe.findFirst({
 				where,
-				orderBy: [{ expiration: 'asc' }, { id: 'asc' }],
+				orderBy: [{ expiration: 'desc' }, { id: 'asc' }],
 				skip: skipGetLastPage >= 0 ? skipGetLastPage : (limit as number) - 1,
 				select: { id: true },
 			});
