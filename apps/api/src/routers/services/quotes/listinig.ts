@@ -250,16 +250,7 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 
 			const where: Prisma.QuoteWhereInput = {
 				quoteVehicle: {
-					vehicle: {
-						OR: [
-							{
-								plate: plate,
-							},
-							{
-								plateAlternative: plate,
-							},
-						],
-					},
+					plate: plate.replace('-', '').toLowerCase(),
 				},
 			};
 

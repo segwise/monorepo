@@ -376,23 +376,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 
 			const where: Prisma.SafeWhereInput = {
 				safeVehicle: {
-					OR: [
-						{
-							plate,
-						},
-						{
-							vehicle: {
-								OR: [
-									{
-										plate: plate,
-									},
-									{
-										plateAlternative: plate,
-									},
-								],
-							},
-						},
-					],
+					plate: plate.replace('-', '').toLowerCase(),
 				},
 			};
 
