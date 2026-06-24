@@ -380,6 +380,32 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				},
 			};
 
+			const safes = await ctx.database.safe.findMany({
+				select: {
+					id: true,
+					safeVehicle: {
+						select: {
+							plate: true,
+						},
+					},
+				},
+			});
+
+			for (const safe of safes) {
+				await ctx.database.safe.update({
+					where: {
+						id: safe.id,
+					},
+					data: {
+						safeVehicle: {
+							update: {
+								plate: safe.safeVehicle?.plate?.replace('-', '').toLowerCase(),
+							},
+						},
+					},
+				});
+			}
+
 			const safe = await ctx.database.safe.findFirst({
 				where,
 				select: selectPrisma,
