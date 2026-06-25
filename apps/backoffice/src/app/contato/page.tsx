@@ -359,9 +359,8 @@ function SuportePage() {
 						</span>
 					</div>
 					<p className='max-sm:text-center'>
-						© {new Date().getFullYear()} Xcar Corretora de Seguros e
-						Empreendimentos Financeiros LTDA. CNPJ 07.581.995/0001-70 | SUSEP
-						202055129
+						© 2026 Xcar Corretora de Seguros e Empreendimentos Financeiros LTDA.
+						CNPJ 07.581.995/0001-70 | SUSEP 202055129
 					</p>
 				</div>
 			</footer>
