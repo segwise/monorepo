@@ -110,7 +110,7 @@ function HomeScreen() {
 						/>
 						<ButtonLink
 							title='INCLUIR SEGUROS'
-							href='/(stacks)/(request-quote)/vehicle'
+							href='/(stacks)/(request-quote)/vehicle?i-have-insurance=true'
 						/>
 						<ButtonLink
 							title='FAÇA SUA COTAÇÃO'
