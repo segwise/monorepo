@@ -63,7 +63,12 @@ function VehicleInquiryCompleteScreen() {
 				)}
 			>
 				<InfoIcon size={18} color='black' />
-				<Text className='text-xs text-primary leading-5 font-medium'>
+				<Text
+					className={cn(
+						'text-xs text-primary leading-5 font-medium',
+						isCompany && 'text-primary-xcar',
+					)}
+				>
 					Verifique o veículo antes de qualquer pagamento.
 				</Text>
 			</View>

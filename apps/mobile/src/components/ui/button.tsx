@@ -79,7 +79,10 @@ const buttonTextVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: 'text-primary-foreground',
+				default: cn(
+					'text-primary-foreground',
+					isCompany && 'text-primary-xcar',
+				),
 				destructive: 'text-white',
 				outline: cn(
 					'group-active:text-accent-foreground',
@@ -88,7 +91,10 @@ const buttonTextVariants = cva(
 				secondary: 'text-secondary-foreground',
 				ghost: 'group-active:text-accent-foreground',
 				link: cn(
-					'text-primary group-active:underline',
+					cn(
+						'text-primary group-active:underline',
+						isCompany && 'text-primary-xcar',
+					),
 					Platform.select({
 						web: 'underline-offset-4 hover:underline group-hover:underline',
 					}),

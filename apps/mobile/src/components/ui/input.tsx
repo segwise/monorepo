@@ -57,7 +57,7 @@ function InputError({ children }: { children: string }) {
 	return (
 		<Text
 			allowFontScaling={false}
-			className='mt-1 text-destructive font-semibold text-sm'
+			className='mt-1 text-destructive font-semibold text-sm leading-tight'
 		>
 			{children}
 		</Text>

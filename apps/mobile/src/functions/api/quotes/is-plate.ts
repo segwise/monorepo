@@ -14,12 +14,13 @@ async function isQuotePlate(
 		return null;
 	}
 
-	const { data } = await api.get<QuoteSimple>(
-		`/quotes/simple/plate/${plate.replaceAll('-', '').toLowerCase()}`,
-		{
-			signal,
-		},
-	);
+	const { data } = await api.get<
+		QuoteSimple & {
+			type: 'quote';
+		}
+	>(`/quotes/simple/plate/${plate.replaceAll('-', '').toLowerCase()}`, {
+		signal,
+	});
 
 	return data;
 }

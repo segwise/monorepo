@@ -508,7 +508,10 @@ function RequestQuoteFinancing() {
 									<Text
 										allowFontScaling={false}
 										accessible={false}
-										className='text-sm leading-tight font-semibold text-primary text-center'
+										className={cn(
+											'text-sm leading-tight font-semibold text-primary text-center',
+											isCompany && 'text-primary-xcar',
+										)}
 									>
 										FECHAR E IR PARA
 										{'\n'}

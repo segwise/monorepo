@@ -207,7 +207,10 @@ function RequestQuoteVehicle() {
 		if (quoteIsPlate) {
 			setTimeout(() => {
 				setError('plate', {
-					message: 'Veículo já registrado',
+					message:
+						quoteIsPlate?.type === 'safe'
+							? 'Cliente Ativo\nAcesse: Meus Seguros'
+							: 'Veículo já registrado',
 				});
 			}, 100);
 		}
@@ -1003,7 +1006,10 @@ function RequestQuoteVehicle() {
 								<Text
 									allowFontScaling={false}
 									accessible={false}
-									className='font-extrabold text-primary'
+									className={cn(
+										'font-extrabold text-primary',
+										isCompany && 'text-primary-xcar',
+									)}
 								>
 									Meus Seguros
 								</Text>
@@ -1029,7 +1035,10 @@ function RequestQuoteVehicle() {
 									<Text
 										allowFontScaling={false}
 										accessible={false}
-										className='text-sm leading-tight font-semibold text-primary text-center'
+										className={cn(
+											'text-sm leading-tight font-semibold text-primary text-center',
+											isCompany && 'text-primary-xcar',
+										)}
 									>
 										FECHAR E CLICAR EM
 										{'\n'}

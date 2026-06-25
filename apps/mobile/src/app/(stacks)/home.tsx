@@ -13,9 +13,8 @@ import { ShareApp } from '@/functions/share-app';
 import { useSafes } from '@/libraries/hooks/api/safe';
 import { useStorageBoolean } from '@/libraries/storage';
 import { useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { Fragment } from 'react';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import Svg, { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
 
 function HomeScreen() {
@@ -39,11 +38,29 @@ function HomeScreen() {
 				<DialogContent showClose={false}>
 					<DialogHeader>
 						<DialogTitle className='leading-snug text-center'>
-							Gostaria de receber agora sua cotação de{' '}
-							<Text className='font-extrabold'>SEGURO AUTO?</Text>
+							TEM SEGURO AUTO, INCLUA AGORA
 						</DialogTitle>
-						<DialogFooter className='flex-row items-center justify-between mt-3'>
-							<Button
+						<View className='mt-2'>
+							<Text className='text-base text-left font-medium mb-1'>
+								Benefícios:
+							</Text>
+							<Text className='text-base text-left font-normal leading-tight mt-1'>
+								1 - Acesso rápido as assistências da sua seguradora;
+							</Text>
+							<Text className='text-base text-left font-normal leading-tight mt-1'>
+								2 - Orçamento grátis e sem compromisso com os melhores
+								descontos;
+							</Text>
+							<Text className='text-base text-left font-normal leading-tight mt-1'>
+								3 - Inclua todos os seguros da família e ganhe agilidade na
+								consulta das renovações e acesso às assistências.
+							</Text>
+							<Text className='mt-5 text-base font-medium leading-tight'>
+								Obs: Após incluir o(s) seguro(s){'\n'}Acesse: Meus Seguros
+							</Text>
+						</View>
+						<DialogFooter className='flex-row items-center justify-between mt-2'>
+							{/* <Button
 								className='w-1/2'
 								onPress={() => {
 									setStoreFirstQuote(true);
@@ -59,24 +76,28 @@ function HomeScreen() {
 									SIM
 								</Text>
 								<SymbolView name='checkmark' size={20} tintColor='white' />
-							</Button>
+							</Button> */}
 							<DialogClose asChild>
-								<Button variant='outline' className='w-1/2'>
+								<Button className='w-full'>
 									<Text
 										allowFontScaling={false}
 										accessible={false}
-										className='text-bold mr-3'
+										className='text-white font-bold text-base'
 									>
-										NÃO
+										OK
 									</Text>
-									<SymbolView name='x.circle' size={20} tintColor='black' />
+									{/* <SymbolView name='x.circle' size={20} tintColor='black' /> */}
 								</Button>
 							</DialogClose>
 						</DialogFooter>
 					</DialogHeader>
 				</DialogContent>
 			</Dialog>
-			<View className='flex-1'>
+			<ScrollView
+				className='flex-1'
+				contentContainerClassName='pb-safe-offset-2'
+				showsVerticalScrollIndicator={false}
+			>
 				<View className='py-4 gap-y-3'>
 					<View className='px-4 gap-y-2'>
 						<ButtonLink
@@ -86,6 +107,10 @@ function HomeScreen() {
 									? '/(stacks)/(insurances)/listining'
 									: '/(stacks)/(insurances)'
 							}
+						/>
+						<ButtonLink
+							title='INCLUIR SEGUROS'
+							href='/(stacks)/(request-quote)/vehicle'
 						/>
 						<ButtonLink
 							title='FAÇA SUA COTAÇÃO'
@@ -287,7 +312,7 @@ function HomeScreen() {
 					</View>
 				</View>
 				{/* <Advertisement /> */}
-			</View>
+			</ScrollView>
 		</Fragment>
 	);
 }

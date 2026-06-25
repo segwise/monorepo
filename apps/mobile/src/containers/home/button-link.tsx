@@ -1,13 +1,10 @@
 import { isCompany } from '@/configs/consts/company';
 import { cn } from '@/libraries/classname';
-import Constants from 'expo-constants';
 import { openURL } from 'expo-linking';
 import { type Href, useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
-
-const company = Constants.expoConfig?.extra?.company?.id;
 
 type ButtonLinkVariant =
 	| { href: Href; onPress?: never }
@@ -59,8 +56,7 @@ function ButtonLink(props: ButtonLinkProps) {
 				className={cn(
 					'text-lg font-semibold',
 					invert && 'text-white',
-					secondary &&
-						cn('text-destructive font-bold', company && 'text-primary'),
+					secondary && 'text-destructive font-bold',
 				)}
 			>
 				{title}

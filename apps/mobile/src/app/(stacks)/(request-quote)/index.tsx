@@ -70,7 +70,12 @@ const insurances: Array<{
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					coberturas:
 				</Text>{' '}
-				<Text className='text-sm font-medium text-primary'>
+				<Text
+					className={cn(
+						'text-sm font-medium text-primary',
+						isCompany && 'text-primary-xcar',
+					)}
+				>
 					( de acordo com o seu plano )
 				</Text>
 				{`\n`}
@@ -107,7 +112,12 @@ const insurances: Array<{
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					coberturas:
 				</Text>{' '}
-				<Text className='text-sm font-medium text-primary'>
+				<Text
+					className={cn(
+						'text-sm font-medium text-primary',
+						isCompany && 'text-primary-xcar',
+					)}
+				>
 					( de acordo com o seu plano )
 				</Text>
 				{`\n`}
@@ -136,7 +146,12 @@ const insurances: Array<{
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					assistência:
 				</Text>{' '}
-				<Text className='text-sm font-medium text-primary'>
+				<Text
+					className={cn(
+						'text-sm font-medium text-primary',
+						isCompany && 'text-primary-xcar',
+					)}
+				>
 					( de acordo com o seu plano )
 				</Text>
 				{`\n`}
@@ -181,7 +196,12 @@ const insurances: Array<{
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					coberturas:
 				</Text>{' '}
-				<Text className='text-sm font-medium text-primary'>
+				<Text
+					className={cn(
+						'text-sm font-medium text-primary',
+						isCompany && 'text-primary-xcar',
+					)}
+				>
 					( de acordo com o seu plano )
 				</Text>
 				{`\n`}
@@ -202,7 +222,12 @@ const insurances: Array<{
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					assistência:
 				</Text>{' '}
-				<Text className='text-sm font-medium text-primary'>
+				<Text
+					className={cn(
+						'text-sm font-medium text-primary',
+						isCompany && 'text-primary-xcar',
+					)}
+				>
 					( de acordo com o seu plano )
 				</Text>
 				{`\n`}
@@ -274,7 +299,12 @@ const insurances: Array<{
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					coberturas:
 				</Text>{' '}
-				<Text className='text-sm font-medium text-primary'>
+				<Text
+					className={cn(
+						'text-sm font-medium text-primary',
+						isCompany && 'text-primary-xcar',
+					)}
+				>
 					( de acordo com o seu plano )
 				</Text>
 				{`\n`}
@@ -319,7 +349,12 @@ const insurances: Array<{
 				<Text className='text-lg font-bold text-foreground uppercase'>
 					coberturas:
 				</Text>{' '}
-				<Text className='text-sm font-medium text-primary'>
+				<Text
+					className={cn(
+						'text-sm font-medium text-primary',
+						isCompany && 'text-primary-xcar',
+					)}
+				>
 					( de acordo com o seu plano )
 				</Text>
 				{`\n`}

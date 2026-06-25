@@ -114,9 +114,9 @@ function Item(props: SafeSimple) {
 							<Text
 								allowFontScaling={false}
 								accessible={false}
-								className='font-medium text-sm leading-none text-muted-foreground mt-0.5'
+								className='font-medium text-sm leading-none text-muted-foreground mt-1'
 							>
-								Assistência 24 horas
+								Clique para ver telefones
 							</Text>
 						</View>
 					</View>
