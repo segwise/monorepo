@@ -386,7 +386,7 @@ function VehicleInquiryPlateScreen() {
 					</View>
 					<View className='mt-4 flex-row items-baseline justify-center gap-1'>
 						<Text className='text-xs text-slate-600 uppercase font-semibold'>
-							a partir de
+							Por
 						</Text>
 						<Text className='text-[24px] font-black text-black'>
 							R$ ___,__

@@ -6,20 +6,13 @@ const useQuoteIsPlate = (plate: string) =>
 	useQuery({
 		queryKey: ['quote', 'isPlate', plate],
 		queryFn: async ({ signal }) => {
-			const response = await Promise.all([
-				fetchApi.quotes
-					.isPlate(plate, {
-						signal,
-					})
-					.catch(() => null),
-				fetchApi.safes
-					.isPlate(plate, {
-						signal,
-					})
-					.catch(() => null),
-			]);
+			const response = await fetchApi.safes
+				.isPlate(plate, {
+					signal,
+				})
+				.catch(() => null);
 
-			return response[1] ?? response[0];
+			return response;
 		},
 		retry: 0,
 		enabled: SchemaPlate.safeParse(plate).success,

@@ -116,14 +116,14 @@ function Item(props: SafeSimple) {
 								accessible={false}
 								className='font-medium text-sm leading-none text-muted-foreground mt-1'
 							>
-								Clique para ver telefones
+								Assistência 24 horas
 							</Text>
 						</View>
 					</View>
 					<SymbolView
 						name={{
-							ios: 'arrow.right',
-							android: 'arrow_right',
+							ios: 'phone.fill.arrow.up.right',
+							android: 'phone_in_talk',
 						}}
 						size={24}
 						tintColor='#232323'
