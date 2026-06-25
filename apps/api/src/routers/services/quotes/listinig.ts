@@ -269,6 +269,8 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				);
 			}
 
+			console.log('quote:', quote);
+
 			return ctx.json(
 				{
 					type: 'quote',
