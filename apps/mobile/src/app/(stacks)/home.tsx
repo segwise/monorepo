@@ -12,14 +12,11 @@ import { ButtonLink } from '@/containers/home/button-link';
 import { ShareApp } from '@/functions/share-app';
 import { useSafes } from '@/libraries/hooks/api/safe';
 import { useStorageBoolean } from '@/libraries/storage';
-import { useRouter } from 'expo-router';
 import { Fragment } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import Svg, { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
 
 function HomeScreen() {
-	const { push } = useRouter();
-
 	const { data: safes } = useSafes();
 
 	const [storeFirstQuote, setStoreFirstQuote] =
@@ -60,23 +57,6 @@ function HomeScreen() {
 							</Text>
 						</View>
 						<DialogFooter className='flex-row items-center justify-between mt-2'>
-							{/* <Button
-								className='w-1/2'
-								onPress={() => {
-									setStoreFirstQuote(true);
-
-									push('/(stacks)/(request-quote)/vehicle');
-								}}
-							>
-								<Text
-									allowFontScaling={false}
-									accessible={false}
-									className='text-white font-bold mr-3'
-								>
-									SIM
-								</Text>
-								<SymbolView name='checkmark' size={20} tintColor='white' />
-							</Button> */}
 							<DialogClose asChild>
 								<Button className='w-full'>
 									<Text
@@ -86,7 +66,6 @@ function HomeScreen() {
 									>
 										OK
 									</Text>
-									{/* <SymbolView name='x.circle' size={20} tintColor='black' /> */}
 								</Button>
 							</DialogClose>
 						</DialogFooter>
