@@ -395,8 +395,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				);
 			}
 
-			console.log('safe:', safe);
-
 			return ctx.json(
 				{
 					type: 'safe',
