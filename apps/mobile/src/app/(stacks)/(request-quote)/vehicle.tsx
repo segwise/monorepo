@@ -230,14 +230,7 @@ function RequestQuoteVehicle() {
 					}}
 				/>
 			)}
-			<Dialog
-				open={openIHaveInsurance}
-				onOpenChange={(open) => {
-					if (!open) {
-						setOpenIHaveInsurance(true);
-					}
-				}}
-			>
+			<Dialog open={openIHaveInsurance} onOpenChange={setOpenIHaveInsurance}>
 				<DialogContent showClose={false}>
 					<DialogHeader>
 						<DialogTitle className='leading-snug text-center'>
