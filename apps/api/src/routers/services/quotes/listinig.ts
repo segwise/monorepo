@@ -269,7 +269,13 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				);
 			}
 
-			return ctx.json(serializer(quote), 200);
+			return ctx.json(
+				{
+					type: 'quote',
+					...serializer(quote),
+				},
+				200,
+			);
 		},
 	);
 }

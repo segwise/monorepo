@@ -395,7 +395,13 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				);
 			}
 
-			return ctx.json(serializer(safe), 200);
+			return ctx.json(
+				{
+					type: 'safe',
+					...serializer(safe),
+				},
+				200,
+			);
 		},
 	);
 }
