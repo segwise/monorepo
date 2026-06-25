@@ -10,6 +10,8 @@ const PUBLIC_ROUTES = [
 	'/accept-invitation',
 ];
 
+const PUBLIC_ROUTES_NOT_ROLE = ['/contato'];
+
 const COOKIE_PREFIX = getCookiePrefix();
 
 const getSessionCached = unstable_cache(
@@ -53,6 +55,14 @@ async function proxy(request: NextRequest) {
 
 	if (session && pathname === '/') {
 		return NextResponse.redirect(new URL('/dashboard', request.url));
+	}
+
+	const isPublicRouteNotRole = PUBLIC_ROUTES_NOT_ROLE.some(
+		(route) => pathname === route,
+	);
+
+	if (isPublicRouteNotRole) {
+		return NextResponse.next();
 	}
 
 	const isPublicRoute = PUBLIC_ROUTES.some((route) =>
