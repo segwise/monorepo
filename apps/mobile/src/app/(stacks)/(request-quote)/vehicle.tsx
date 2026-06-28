@@ -164,6 +164,10 @@ function RequestQuoteVehicle() {
 	const { isVisible: keyboardIsVisible, height: keyboardHeight } =
 		useKeyboardState();
 
+	const isPlateExists = errors.plate?.message
+		?.toLowerCase()
+		.includes('meus seguros');
+
 	function onSubmit(props: QuoteSimpleRegister) {
 		Keyboard.dismiss();
 
@@ -293,8 +297,9 @@ function RequestQuoteVehicle() {
 									name='vehicleWithLicensePlate'
 									render={({ field }) => (
 										<TouchableOpacity
+											disabled={isPlateExists}
 											onPress={() => field.onChange(true)}
-											className='flex flex-row items-center justify-start gap-x-2'
+											className='flex flex-row items-center justify-start gap-x-2 disabled:opacity-50'
 										>
 											<Checkbox
 												checked={field.value as boolean}
@@ -315,6 +320,7 @@ function RequestQuoteVehicle() {
 									name='vehicleWithLicensePlate'
 									render={({ field }) => (
 										<TouchableOpacity
+											disabled={isPlateExists}
 											onPress={() => {
 												field.onChange(false);
 
@@ -323,7 +329,7 @@ function RequestQuoteVehicle() {
 													clearErrors('plate');
 												}
 											}}
-											className='flex flex-row items-center justify-start gap-x-2'
+											className='flex flex-row items-center justify-start gap-x-2 disabled:opacity-50'
 										>
 											<Checkbox
 												checked={!field.value as boolean}
@@ -401,7 +407,7 @@ function RequestQuoteVehicle() {
 							control={control}
 							name='usage'
 							render={({ field, fieldState }) => (
-								<View>
+								<View className={cn('', isPlateExists && 'opacity-50')}>
 									{/* @ts-ignore */}
 									<Select
 										{...field}
@@ -419,12 +425,20 @@ function RequestQuoteVehicle() {
 												setFocus('postalCode');
 											}
 										}}
+										disabled={isPlateExists}
+										className='disabled:opacity-50'
 									>
 										<SelectTrigger
 											ref={selectTriggerRefUse}
 											label='Uso do Veículo'
+											disabled={isPlateExists}
+											className='disabled:opacity-50'
 										>
-											<SelectValue placeholder='Selecionar' />
+											<SelectValue
+												placeholder='Selecionar'
+												disabled={isPlateExists}
+												className='disabled:opacity-50'
+											/>
 										</SelectTrigger>
 										<SelectContent style={{ width: width - 32 }}>
 											<SelectItem
@@ -481,12 +495,13 @@ function RequestQuoteVehicle() {
 							control={control}
 							name='postalCode'
 							render={({ field, fieldState }) => (
-								<View>
+								<View className={cn('', isPlateExists && 'opacity-50')}>
 									<Input
 										{...field}
 										onChangeText={(value) =>
 											field.onChange(maskPostalCode(value))
 										}
+										readOnly={isPlateExists}
 										label='CEP de Pernoite'
 										placeholder='00000-000'
 										maxLength={9}
@@ -515,6 +530,7 @@ function RequestQuoteVehicle() {
 												setFocus('insured.name');
 											}
 										}}
+										className='read-only:opacity-50'
 									/>
 									{fieldState.error?.message && (
 										<InputError>{fieldState.error.message}</InputError>
@@ -535,7 +551,7 @@ function RequestQuoteVehicle() {
 							control={control}
 							name='insured.name'
 							render={({ field, fieldState }) => (
-								<View>
+								<View className={cn('', isPlateExists && 'opacity-50')}>
 									<Input
 										{...field}
 										value={field.value || undefined}
@@ -544,7 +560,7 @@ function RequestQuoteVehicle() {
 										}
 										label='Nome e Sobrenome'
 										placeholder='Nome e Sobrenome'
-										className='uppercase'
+										className='uppercase read-only:opacity-50'
 										keyboardAppearance='dark'
 										autoCapitalize='characters'
 										autoComplete='off'
@@ -573,6 +589,7 @@ function RequestQuoteVehicle() {
 												setFocus('insured.registration');
 											}
 										}}
+										readOnly={isPlateExists}
 									/>
 									{fieldState.error?.message && (
 										<InputError>{fieldState.error.message}</InputError>
@@ -584,7 +601,7 @@ function RequestQuoteVehicle() {
 							control={control}
 							name='insured.registration'
 							render={({ field, fieldState }) => (
-								<View>
+								<View className={cn('', isPlateExists && 'opacity-50')}>
 									<Input
 										{...field}
 										value={field.value || undefined}
@@ -595,7 +612,8 @@ function RequestQuoteVehicle() {
 										}
 										label='CPF'
 										placeholder='000.000.000-00'
-										className='uppercase'
+										readOnly={isPlateExists}
+										className='uppercase read-only:opacity-50'
 										keyboardAppearance='dark'
 										autoCapitalize='characters'
 										autoComplete='off'
@@ -634,7 +652,7 @@ function RequestQuoteVehicle() {
 							control={control}
 							name='insured.phone'
 							render={({ field, fieldState }) => (
-								<View>
+								<View className={cn('', isPlateExists && 'opacity-50')}>
 									<Input
 										{...field}
 										onChangeText={(value) => field.onChange(maskPhone(value))}
@@ -667,6 +685,8 @@ function RequestQuoteVehicle() {
 												selectTriggerRefMaritalStatus.current?.open();
 											}
 										}}
+										readOnly={isPlateExists}
+										className='read-only:opacity-50'
 									/>
 									{fieldState.error?.message && (
 										<InputError>{fieldState.error.message}</InputError>
@@ -678,7 +698,7 @@ function RequestQuoteVehicle() {
 							control={control}
 							name='insured.maritalStatus'
 							render={({ field, fieldState }) => (
-								<View>
+								<View className={cn('', isPlateExists && 'opacity-50')}>
 									{/* @ts-ignore */}
 									<Select
 										{...field}
@@ -696,12 +716,20 @@ function RequestQuoteVehicle() {
 												selectTriggerRefType.current?.open();
 											}
 										}}
+										disabled={isPlateExists}
+										className='disabled:opacity-50'
 									>
 										<SelectTrigger
 											ref={selectTriggerRefMaritalStatus}
 											label='Estado Civil'
+											disabled={isPlateExists}
+											className='disabled:opacity-50'
 										>
-											<SelectValue placeholder='Selecionar' />
+											<SelectValue
+												placeholder='Selecionar'
+												disabled={isPlateExists}
+												className='disabled:opacity-50'
+											/>
 										</SelectTrigger>
 										<SelectContent style={{ width: width - 32 }}>
 											{SchemaMaritalStatus.options.map((item) => (
@@ -725,55 +753,65 @@ function RequestQuoteVehicle() {
 								control={control}
 								name='type'
 								render={({ field }) => (
-									// @ts-expect-error
-									<Select
-										{...field}
-										onOpenChange={(open) => {
-											if (open) {
-												Keyboard.dismiss();
-											}
-										}}
-										onValueChange={(value) => {
-											field.onChange(value);
-
-											if (
-												value?.value === 'renewal' ||
-												value?.value === 'association'
-											) {
-												const { invalid, isDirty } =
-													getFieldState('insuranceCompany');
-
-												if (!isDirty || invalid) {
-													setTimeout(() => {
-														scrollViewRef.current?.scrollToEnd({
-															animated: true,
-														});
-													}, 100);
-
-													setTimeout(() => {
-														if (value.value === 'renewal') {
-															selectTriggerRefInsuranceCompany.current?.open();
-														}
-
-														if (value.value === 'association') {
-															selectTriggerRefInsuranceAssociationCompany.current?.open();
-														}
-													}, 500);
+									<View className={cn('', isPlateExists && 'opacity-50')}>
+										{/* @ts-expect-error */}
+										<Select
+											{...field}
+											onOpenChange={(open) => {
+												if (open) {
+													Keyboard.dismiss();
 												}
-											}
-										}}
-									>
-										<SelectTrigger
-											ref={selectTriggerRefType}
-											label='Tipo de Cotação'
+											}}
+											onValueChange={(value) => {
+												field.onChange(value);
+
+												if (
+													value?.value === 'renewal' ||
+													value?.value === 'association'
+												) {
+													const { invalid, isDirty } =
+														getFieldState('insuranceCompany');
+
+													if (!isDirty || invalid) {
+														setTimeout(() => {
+															scrollViewRef.current?.scrollToEnd({
+																animated: true,
+															});
+														}, 100);
+
+														setTimeout(() => {
+															if (value.value === 'renewal') {
+																selectTriggerRefInsuranceCompany.current?.open();
+															}
+
+															if (value.value === 'association') {
+																selectTriggerRefInsuranceAssociationCompany.current?.open();
+															}
+														}, 500);
+													}
+												}
+											}}
+											disabled={isPlateExists}
+											className='disabled:opacity-50'
 										>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-										<SelectContent style={{ width: width - 32 }}>
-											<SelectItem value='new' label='SEGURO NOVO' />
-											<SelectItem value='renewal' label='RENOVAÇÃO' />
-										</SelectContent>
-									</Select>
+											<SelectTrigger
+												ref={selectTriggerRefType}
+												label='Tipo de Cotação'
+												disabled={isPlateExists}
+												className='disabled:opacity-50'
+											>
+												<SelectValue
+													placeholder='Selecionar'
+													disabled={isPlateExists}
+													className='disabled:opacity-50'
+												/>
+											</SelectTrigger>
+											<SelectContent style={{ width: width - 32 }}>
+												<SelectItem value='new' label='SEGURO NOVO' />
+												<SelectItem value='renewal' label='RENOVAÇÃO' />
+											</SelectContent>
+										</Select>
+									</View>
 								)}
 							/>
 						)}
@@ -783,7 +821,7 @@ function RequestQuoteVehicle() {
 									control={control}
 									name='insuranceCompany'
 									render={({ field, fieldState }) => (
-										<View>
+										<View className={cn('', isPlateExists && 'opacity-50')}>
 											<Select
 												{...field}
 												// @ts-expect-error
@@ -805,12 +843,20 @@ function RequestQuoteVehicle() {
 														setFocus('expiration');
 													}
 												}}
+												disabled={isPlateExists}
+												className='disabled:opacity-50'
 											>
 												<SelectTrigger
 													ref={selectTriggerRefInsuranceCompany}
 													label='Seguradora'
+													disabled={isPlateExists}
+													className='disabled:opacity-50'
 												>
-													<SelectValue placeholder='Selecionar' />
+													<SelectValue
+														placeholder='Selecionar'
+														disabled={isPlateExists}
+														className='disabled:opacity-50'
+													/>
 												</SelectTrigger>
 												<SelectContent
 													style={{ width: width - 32 }}
@@ -883,7 +929,7 @@ function RequestQuoteVehicle() {
 									control={control}
 									name='expiration'
 									render={({ field, fieldState }) => (
-										<View>
+										<View className={cn('', isPlateExists && 'opacity-50')}>
 											<Input
 												{...field}
 												// @ts-expect-error
@@ -921,6 +967,8 @@ function RequestQuoteVehicle() {
 														setFocus('franchise');
 													}
 												}}
+												readOnly={isPlateExists}
+												className='read-only:opacity-50'
 											/>
 											{fieldState.error?.message && (
 												<InputError>{fieldState.error.message}</InputError>
@@ -932,7 +980,7 @@ function RequestQuoteVehicle() {
 									control={control}
 									name='franchise'
 									render={({ field, fieldState }) => (
-										<View>
+										<View className={cn('', isPlateExists && 'opacity-50')}>
 											{/* @ts-expect-error */}
 											<CurrencyInput
 												{...field}
@@ -966,6 +1014,8 @@ function RequestQuoteVehicle() {
 
 													handleSubmit(onSubmit);
 												}}
+												readOnly={isPlateExists}
+												className='read-only:opacity-50'
 											/>
 											{fieldState.error?.message && (
 												<InputError>{fieldState.error.message}</InputError>
@@ -980,7 +1030,7 @@ function RequestQuoteVehicle() {
 						size='lg'
 						className='h-12 flex-row items-center'
 						onPress={handleSubmit(onSubmit)}
-						disabled={isPending || !isDirty || !isValid}
+						disabled={isPlateExists || isPending || !isDirty || !isValid}
 					>
 						<Text className='text-base text-white font-semibold'>
 							{isPending
