@@ -134,6 +134,8 @@ const INSURER_MAP: Record<string, string> = {
 		'019ee062-2581-7000-8567-2633383c08be',
 	'3bf7a588-36b1-4a2c-bd80-0a4541fb58a6':
 		'019ee062-0cc6-7000-a66b-f724d0358a2b',
+	'c5fbb8f5-2d0b-4ea6-96f6-bf482d5a5102':
+		'019ee062-3575-7000-aae9-4490e5e821d3',
 };
 
 const PRODUCER_MAP: Record<string, string> = {};
@@ -220,10 +222,12 @@ function getCommission(receivables: OldSafe['receivables']): number {
 	return receivables.commission ?? receivables.comission ?? 0;
 }
 
+const MIGRATION_MAP_KEY = 'safesMigration:idMap';
+
 function registerRoutersServicesMigration(server: Server) {
 	const base = server.basePath('/migration');
 
-	base.post('/match-insurers', async (ctx) => {
+	base.get('/match-insurers', async (ctx) => {
 		const { data: listData } = await xior.get<{
 			results: Array<{ insurer: string }>;
 		}>(OLD_LIST_URL);
@@ -358,7 +362,7 @@ function registerRoutersServicesMigration(server: Server) {
 		);
 	});
 
-	base.post('/', async (ctx) => {
+	base.get('/', async (ctx) => {
 		if (!BROKER_ID) {
 			return ctx.json(
 				{ error: 'BROKER_ID não configurado no arquivo de migração.' },
@@ -385,6 +389,9 @@ function registerRoutersServicesMigration(server: Server) {
 		}>(OLD_LIST_URL);
 		const ids = listData.results.map((s) => s.id).reverse();
 
+		// ⚠️ Removido: deleteMany() e cache.del() — eles apagavam o histórico
+		// de migração e forçavam reprocessar tudo do zero a cada execução.
+
 		const report = {
 			total: ids.length,
 			success: 0,
@@ -394,19 +401,21 @@ function registerRoutersServicesMigration(server: Server) {
 			errors: [] as Array<{ old_id: string; reason: string }>,
 		};
 
-		// await ctx.database.safe.deleteMany();
-		// await ctx.cache.del('indexSafeMigration');
+		for (const [index, id] of ids.entries()) {
+			// Checagem no banco (fonte da verdade) em vez de só no cache
+			const existing = await ctx.database.safe.findUnique({
+				where: { externalId: id },
+				select: { id: true },
+			});
 
-		for (const id of ids) {
-			const indexMigration = ids.indexOf(id) + 1;
-
-			const reportCache = JSON.parse(
-				(await ctx.cache.get('reportSafeMigration')) ?? '{}',
-			);
-
-			if (reportCache?.id_map?.[id]) {
+			if (existing) {
+				console.log(`${id}: já migrado -> ${existing.id}, pulando.`);
+				report.id_map[id] = existing.id;
+				report.skipped++;
 				continue;
 			}
+
+			console.log(id, `${index + 1}/${ids.length}`);
 
 			let oldSafe: OldSafe;
 			try {
@@ -445,16 +454,10 @@ function registerRoutersServicesMigration(server: Server) {
 					// @ts-expect-error
 					where: {
 						...(cpf.length === 11 && {
-							brokerId_cpf: {
-								brokerId: BROKER_ID,
-								cpf,
-							},
+							brokerId_cpf: { brokerId: BROKER_ID, cpf },
 						}),
 						...(cpf.length === 14 && {
-							brokerId_cnpj: {
-								brokerId: BROKER_ID,
-								cnpj: cpf,
-							},
+							brokerId_cnpj: { brokerId: BROKER_ID, cnpj: cpf },
 						}),
 					},
 					update: {
@@ -464,12 +467,8 @@ function registerRoutersServicesMigration(server: Server) {
 					create: {
 						name: oldSafe.insured.name,
 						phone,
-						...(cpf.length === 11 && {
-							cpf,
-						}),
-						...(cpf.length === 14 && {
-							cnpj: cpf,
-						}),
+						...(cpf.length === 11 && { cpf }),
+						...(cpf.length === 14 && { cnpj: cpf }),
 						birth: oldSafe.insured.additional_information?.birth
 							? parse(
 									oldSafe.insured.additional_information.birth.split(
@@ -547,33 +546,23 @@ function registerRoutersServicesMigration(server: Server) {
 								}
 							: {}),
 					},
-					select: {
-						id: true,
-					},
+					select: { id: true },
 				});
 
 				report.id_map[oldSafe.id] = newSafe.id;
 				report.success++;
-
-				await ctx.cache.set('indexSafeMigration', String(indexMigration));
-
-				await ctx.cache.set('reportSafeMigration', JSON.stringify(report));
 			} catch (err) {
 				report.errors.push({
 					old_id: id,
 					reason: err instanceof Error ? err.message : String(err),
 				});
-
 				report.failed++;
 			}
+
+			await ctx.cache.set('reportSafeMigration', JSON.stringify(report));
 		}
 
-		const reportCache = await ctx.cache.set(
-			'reportSafeMigration',
-			JSON.stringify(report),
-		);
-
-		return ctx.json(reportCache, 200);
+		return ctx.json(report, 200);
 	});
 
 	base.get('/report', async (ctx) => {

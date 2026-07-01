@@ -1,22 +1,5 @@
-import { faker } from '@faker-js/faker/locale/pt_BR';
-import { generateReferral } from '@segwise/core/utils';
-import type { User } from 'better-auth';
-import {
-	addDays,
-	endOfDay,
-	endOfYear,
-	subDays,
-	subHours,
-	subYears,
-} from 'date-fns';
 import xior from 'xior';
-import {
-	ModalityInsurance,
-	Role,
-	StatusQuote,
-	StatusSafe,
-	VehicleUsage,
-} from '@/generated/prisma/enums';
+import { Role } from '@/generated/prisma/enums';
 import { environment } from '@/libraries/environment';
 import { auth } from '@/services/auth';
 import { database } from '@/services/database';
@@ -46,8 +29,6 @@ const OWNER_BROKER: AuthProfile =
 				email: 'contato@juniormelo.com',
 				password: 'Jr271101!',
 			};
-
-const PRODUCER_BROKER: AuthProfile | null = null;
 
 const insuranceCompaniesSeed = [
 	{
@@ -692,7 +673,28 @@ const insuranceCompaniesSeed = [
 		image:
 			'https://eerbunnlzzosgfxsuskw.supabase.co/storage/v1/object/public/insurers/77bfb521-a940-4ebb-98e4-0d2ef86ce09e/logo',
 		created_at: '2024-11-11T00:14:36.470Z',
-		assistance_contacts: [],
+		assistance_contacts: [
+			{
+				description: 'assistência 24h',
+				contacts: [
+					{
+						value: '08009833993',
+						whatsapp: false,
+						region: 'all_regions',
+					},
+				],
+			},
+			{
+				description: 'vidros',
+				contacts: [
+					{
+						value: '08007044441',
+						whatsapp: false,
+						region: 'all_regions',
+					},
+				],
+			},
+		],
 	},
 	{
 		name: 'generali brasil seguros s/a',
@@ -1877,7 +1879,7 @@ async function seed() {
 			},
 		});
 
-		const broker = await database.broker.update({
+		await database.broker.update({
 			where: {
 				id: brokerOrg.id,
 			},
@@ -1885,459 +1887,6 @@ async function seed() {
 				id: '019e71c7-bd45-7f19-9715-d7a92e94cfcd',
 			},
 		});
-
-		if (environment.NODE_ENV === 'preview') {
-			await database.manufacturerVehicle.createMany({
-				data: Array.from({ length: 10 }).map(() => ({
-					name: faker.vehicle.manufacturer(),
-				})),
-			});
-
-			const [insuranceCompanies, manufacturers] = await database.$transaction([
-				database.insuranceCompany.findMany({
-					select: {
-						id: true,
-					},
-				}),
-				database.manufacturerVehicle.findMany({
-					select: {
-						id: true,
-					},
-				}),
-			]);
-
-			if (PRODUCER_BROKER) {
-				const producerResponse = await auth.api
-					.createUser({
-						body: {
-							name: PRODUCER_BROKER.name,
-							email: PRODUCER_BROKER.email,
-							password: PRODUCER_BROKER.password,
-							// @ts-expect-error
-							role: Role.customer,
-							data: {
-								emailVerified: true,
-							},
-						},
-						asResponse: true,
-					})
-					.then(async (response) => (await response.json()) as { user: User });
-
-				await auth.api.addMember({
-					body: {
-						userId: producerResponse.user.id,
-						role: Role.producer,
-						organizationId: broker.id,
-						referral: generateReferral(),
-					},
-				});
-			}
-
-			for (let i = 0; i < 10; i++) {
-				const id = Bun.randomUUIDv7();
-
-				const image = faker.helpers.arrayElement([null, faker.image.avatar()]);
-
-				let pathImage: string | null = image ? `/users/${id}` : null;
-
-				if (pathImage && image) {
-					const { data } = await xior
-						.get(image, {
-							responseType: 'blob',
-						})
-						.catch(() => ({
-							data: 'error',
-						}));
-
-					if (data !== 'error') {
-						await storage.write(pathImage, data);
-					}
-
-					if (data === 'error') {
-						pathImage = null;
-					}
-				}
-
-				const producerResponse = await auth.api
-					.createUser({
-						body: {
-							name: faker.person.fullName(),
-							email: faker.internet.email(),
-							// @ts-expect-error
-							role: Role.customer,
-							data: {
-								id,
-								...(pathImage && {
-									image: pathImage,
-								}),
-								emailVerified: true,
-							},
-						},
-						asResponse: true,
-					})
-					.then(async (response) => (await response.json()) as { user: User });
-
-				await auth.api.addMember({
-					body: {
-						userId: producerResponse.user.id,
-						role: Role.producer,
-						organizationId: broker.id,
-						referral: generateReferral(),
-					},
-				});
-			}
-
-			const producers = await database.user.findMany({
-				where: {
-					role: Role.customer,
-					members: {
-						some: {
-							role: Role.producer,
-						},
-					},
-				},
-				select: {
-					id: true,
-				},
-			});
-
-			for (let i = 0; i < 500; i++) {
-				const renewal = faker.datatype.boolean();
-
-				const status = faker.helpers.enumValue(StatusQuote);
-
-				const isPlate = faker.datatype.boolean();
-
-				const producer = faker.datatype.boolean()
-					? null
-					: faker.helpers.arrayElement(producers);
-
-				await database.quote.create({
-					data: {
-						broker: {
-							connect: {
-								id: broker.id,
-							},
-						},
-						...(!!producer && {
-							producer: {
-								connect: {
-									id: producer.id,
-								},
-							},
-						}),
-						...(!!renewal && {
-							insuranceCompany: {
-								connect: {
-									id: insuranceCompanies[
-										faker.number.int({
-											min: 0,
-											max: insuranceCompanies.length - 1 || 0,
-										})
-									]?.id as string,
-								},
-							},
-							expiration: addDays(
-								new Date(),
-								faker.number.int({ min: 1, max: 100 }),
-							),
-							franchise: faker.helpers.arrayElement([
-								undefined,
-								faker.number.int({ min: 1_000, max: 5_000 }),
-							]),
-						}),
-						temporaryInsured: {
-							create: {
-								broker: {
-									connect: {
-										id: broker.id,
-									},
-								},
-								name: faker.person.fullName(),
-								phone: faker.phone.number({ style: 'international' }).slice(1),
-							},
-						},
-						modality: faker.helpers.enumValue(ModalityInsurance),
-						quoteVehicle: {
-							create: {
-								usage: faker.helpers.enumValue(VehicleUsage),
-								overnightPostalCode: faker.location.zipCode('########'),
-								...(!!isPlate && {
-									vehicle: {
-										create: {
-											plate: faker.vehicle.vrm(),
-											plateAlternative: faker.vehicle.vrm(),
-											model: faker.vehicle.model(),
-											modelYear: faker.date
-												.between({
-													from: subYears(
-														new Date(),
-														faker.number.int({ min: 0, max: 7 }),
-													),
-													to: endOfYear(endOfDay(new Date())),
-												})
-												.getFullYear(),
-											manufacturer: {
-												connect: {
-													id: manufacturers[
-														faker.number.int({
-															min: 0,
-															max: manufacturers.length - 1,
-														})
-													]?.id as string,
-												},
-											},
-										},
-									},
-								}),
-								...(!isPlate && {
-									vehicleWithoutPlate: {
-										create: {},
-									},
-								}),
-							},
-						},
-						renewal,
-						requestedAt: subHours(
-							new Date(),
-							faker.number.int({ min: 30, max: 10000 }),
-						),
-						status,
-						statusAt: subHours(
-							new Date(),
-							faker.number.int({ min: 30, max: 10000 }),
-						),
-						...(status === 'recused' && {
-							statusMessage: faker.lorem.lines(1),
-						}),
-					},
-				});
-			}
-
-			for (let i = 0; i < 500; i++) {
-				const renewal = faker.datatype.boolean();
-
-				const status = faker.helpers.enumValue(StatusSafe);
-
-				const isPlate = faker.datatype.boolean();
-
-				const previousSafe = faker.datatype.boolean()
-					? null
-					: renewal
-						? await database.safe.findFirst({
-								select: {
-									id: true,
-								},
-								orderBy: {
-									createdAt: 'asc',
-								},
-							})
-						: null;
-
-				const producer = faker.datatype.boolean()
-					? null
-					: faker.helpers.arrayElement(producers);
-
-				const effectivedAt = faker.datatype.boolean()
-					? subHours(
-							addDays(new Date(), faker.number.int({ min: 0, max: 5 })),
-							faker.number.int({ min: 30, max: 10000 }),
-						)
-					: null;
-
-				await database.safe.create({
-					data: {
-						broker: {
-							connect: {
-								id: broker.id,
-							},
-						},
-						...(!!producer && {
-							producer: {
-								connect: {
-									id: producer.id,
-								},
-							},
-						}),
-						renewal,
-						...(!!renewal &&
-							!!previousSafe && {
-								previousSafe: {
-									connect: {
-										id: previousSafe.id,
-									},
-								},
-							}),
-						expiration: addDays(
-							new Date(),
-							faker.number.int({ min: 1, max: 100 }),
-						),
-						insuranceCompany: {
-							connect: {
-								id: insuranceCompanies[
-									faker.number.int({
-										min: 0,
-										max: insuranceCompanies.length - 1 || 0,
-									})
-								]?.id as string,
-							},
-						},
-						franchise: faker.helpers.arrayElement([
-							undefined,
-							faker.number.int({ min: 1_000, max: 5_000 }),
-						]),
-						temporaryInsured: {
-							create: {
-								broker: {
-									connect: {
-										id: broker.id,
-									},
-								},
-								name: faker.person.fullName(),
-								phone: faker.phone.number({ style: 'international' }).slice(1),
-							},
-						},
-						modality: faker.helpers.enumValue(ModalityInsurance),
-						safeVehicle: {
-							create: {
-								usage: faker.helpers.enumValue(VehicleUsage),
-								overnightPostalCode: faker.location.zipCode('########'),
-								...(!!isPlate && {
-									vehicle: {
-										create: {
-											plate: faker.vehicle.vrm(),
-											plateAlternative: faker.vehicle.vrm(),
-											model: faker.vehicle.model(),
-											modelYear: faker.date
-												.between({
-													from: subYears(
-														new Date(),
-														faker.number.int({ min: 0, max: 7 }),
-													),
-													to: endOfYear(endOfDay(new Date())),
-												})
-												.getFullYear(),
-											manufacturer: {
-												connect: {
-													id: manufacturers[
-														faker.number.int({
-															min: 0,
-															max: manufacturers.length - 1,
-														})
-													]?.id as string,
-												},
-											},
-										},
-									},
-								}),
-								...(!isPlate && {
-									vehicleWithoutPlate: {
-										create: {},
-									},
-								}),
-							},
-						},
-						requestedAt: effectivedAt
-							? subDays(effectivedAt, faker.number.int({ min: 1, max: 7 }))
-							: subDays(
-									subDays(new Date(), faker.number.int({ min: 0, max: 5 })),
-									faker.number.int({ min: 1, max: 7 }),
-								),
-						...(!!effectivedAt && {
-							effectivedAt,
-						}),
-						status,
-						statusAt: subHours(
-							new Date(),
-							faker.number.int({ min: 30, max: 10000 }),
-						),
-						...((status === 'canceled' || status === 'suspended') && {
-							statusMessage: faker.lorem.lines(1),
-						}),
-						commissionGross: faker.number.int({ min: 100, max: 1000 }),
-						commissionNet: faker.number.int({ min: 100, max: 1000 }),
-					},
-				});
-			}
-
-			// const insureds = await database.user.findMany({
-			// 	where: {
-			// 		role: 'customer',
-			// 	},
-			// });
-
-			// for (let i = 0; i < 100; i++) {
-			// 	await database.marketplaceVehicle.create({
-			// 		data: {
-			// 			insured: {
-			// 				connect: {
-			// 					id: faker.helpers.arrayElement(insureds).id,
-			// 				},
-			// 			},
-			// 			photos: Array.from(
-			// 				{ length: faker.number.int({ min: 1, max: 6 }) },
-			// 				() => faker.image.url(),
-			// 			),
-			// 			type: faker.helpers.enumValue(MarketplaceVehicleType),
-			// 			manufacturer: faker.vehicle.manufacturer(),
-			// 			model: faker.vehicle.model(),
-			// 			year: faker.number.int({
-			// 				min: 1990,
-			// 				max: new Date().getFullYear(),
-			// 			}),
-			// 			modelYear: faker.number.int({
-			// 				min: 1990,
-			// 				max: new Date().getFullYear(),
-			// 			}),
-			// 			plate: 'nas6888',
-			// 			color: faker.vehicle.color(),
-			// 			fuel: faker.helpers.enumValue(MarketplaceVehicleFuel),
-			// 			transmission: faker.helpers.enumValue(
-			// 				MarketplaceVehicleTransmission,
-			// 			),
-			// 			direction: faker.helpers.enumValue(MarketplaceVehicleDirection),
-			// 			financialState: faker.helpers.enumValue(
-			// 				MarketplaceVehicleFinancialState,
-			// 			),
-			// 			price: faker.number.float({
-			// 				min: 15_000,
-			// 				max: 350_000,
-			// 				fractionDigits: 2,
-			// 			}),
-			// 			mileage: faker.number.int({ min: 0, max: 300_000 }),
-			// 			optionals: [
-			// 				faker.helpers.enumValue(SchemaMarketplaceVehicleFeatures.enum),
-			// 			],
-			// 			conservations: [
-			// 				faker.helpers.enumValue(
-			// 					SchemaMarketplaceVehicleConservations.enum,
-			// 				),
-			// 			],
-			// 			description: faker.lorem.sentences({ min: 1, max: 4 }),
-			// 			phone: faker.phone.number({ style: 'national' }),
-
-			// 			postalCode: faker.location.zipCode('########'),
-			// 			state: faker.location.state(),
-			// 			city: faker.location.city(),
-			// 			acceptExchange: faker.datatype.boolean(),
-			// 			acceptExchangeAmount: faker.datatype.boolean()
-			// 				? faker.helpers.enumValue(MarketplaceVehicleAcceptExchangeAmount)
-			// 				: null,
-			// 			acceptExchangeChange1: faker.datatype.boolean()
-			// 				? faker.vehicle.model()
-			// 				: null,
-			// 			acceptExchangeChange2: faker.datatype.boolean()
-			// 				? faker.vehicle.model()
-			// 				: null,
-			// 			acceptExchangeChange3: faker.datatype.boolean()
-			// 				? faker.vehicle.model()
-			// 				: null,
-
-			// 			status: faker.helpers.enumValue(MarketplaceVehicleStatus),
-			// 		},
-			// 	});
-			// }
-		}
 	} catch (error) {
 		console.error(error);
 	}

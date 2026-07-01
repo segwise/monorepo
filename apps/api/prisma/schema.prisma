@@ -239,6 +239,8 @@ model Safe {
 
   isExternal Boolean? @map("is_external")
 
+  externalId String? @db.Uuid
+
   producerId String? @map("producer_id") @db.Uuid
   producer   User?   @relation("producer_safes", fields: [producerId], references: [id], onDelete: Restrict)
 
