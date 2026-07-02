@@ -15,7 +15,7 @@ async function registerSchedulers() {
 	await migrationUpdaterQueue.upsertJobScheduler(
 		'migration-updater',
 		{
-			pattern: '0 */5 * * * *',
+			pattern: '0 */1 * * * *',
 			tz: 'America/Sao_Paulo',
 		},
 		{

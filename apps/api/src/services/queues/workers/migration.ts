@@ -424,14 +424,12 @@ async function migrationUpdater() {
 	}
 
 	const { data: listData } = await xior.get<{
-		results: Pick<OldSafe, 'id' | 'updated_at' | 'active'>[];
+		results: Pick<OldSafe, 'id' | 'updated_at'>[];
 	}>(OLD_LIST_URL);
 	const ids = listData.results
 		.filter((e) => differenceInMinutes(new Date(), new Date(e.updated_at)) <= 5)
 		.map((s) => s.id)
 		.reverse();
-
-	console.log(ids.length);
 
 	for (const [index, id] of ids.entries()) {
 		let oldSafe: OldSafe;
