@@ -6,7 +6,6 @@ const SchemaEnvironment = z.object({
 	APPLICATION_URL: z.url('APPLICATION_URL inválida'),
 	DATABASE_URL: z.url('DATABASE_URL inválido'),
 	CACHE_URL: z.url('CACHE_URL inválido'),
-	CACHE_QUEUE_URL: z.url('CACHE_QUEUE_URL inválido'),
 	BASE_URL: z.url('BASE_URL inválido'),
 	AUTH_SECRET: z.string('AUTH_SECRET inválido'),
 	MINIO_ENDPOINT: z.url('MINIO_ENDPOINT inválido'),
