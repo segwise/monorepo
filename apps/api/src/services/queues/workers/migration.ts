@@ -244,7 +244,7 @@ async function migration() {
 		errors: [] as Array<{ old_id: string; reason: string }>,
 	};
 
-	for (const [index, id] of ids.entries()) {
+	for (const [_, id] of ids.entries()) {
 		const existing = await database.safe.findUnique({
 			where: { externalId: id },
 			select: { id: true },
@@ -393,11 +393,6 @@ async function migration() {
 
 			report.id_map[oldSafe.id] = newSafe.id;
 			report.success++;
-
-			console.log(
-				id,
-				`${index + 1}/${ids.length} | Restante: ${ids.length - ids.indexOf(id) - 1}`,
-			);
 		} catch (err) {
 			report.errors.push({
 				old_id: id,
@@ -431,7 +426,7 @@ async function migrationUpdater() {
 		.map((s) => s.id)
 		.reverse();
 
-	for (const [index, id] of ids.entries()) {
+	for (const [_, id] of ids.entries()) {
 		let oldSafe: OldSafe;
 
 		try {
@@ -602,11 +597,6 @@ async function migrationUpdater() {
 			},
 			select: { id: true },
 		});
-
-		console.log(
-			id,
-			`${index + 1}/${ids.length} | Restante: ${ids.length - ids.indexOf(id) - 1} | Updater`,
-		);
 	}
 }
 
