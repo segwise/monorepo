@@ -14,4 +14,17 @@ const migrationQueue = new Queue('migration', {
 	},
 });
 
-export { migrationQueue };
+const migrationUpdaterQueue = new Queue('migration-updater', {
+	...options,
+	defaultJobOptions: {
+		attempts: 5,
+		backoff: {
+			type: 'exponential',
+			delay: 60_000,
+		},
+		removeOnComplete: 100,
+		removeOnFail: 1000,
+	},
+});
+
+export { migrationQueue, migrationUpdaterQueue };

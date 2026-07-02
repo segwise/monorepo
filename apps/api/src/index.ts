@@ -2,14 +2,11 @@ import { gracefulShutdown } from '@/libraries/shutdown';
 import { registerRouters } from '@/routers';
 import { server } from '@/server';
 import { environment } from './libraries/environment';
-import { checkMissedJobs } from './services/queues/check-missed';
 import { registerSchedulers } from './services/queues/schedulers';
 import { startWorkers } from './services/queues/workers';
 
-startWorkers();
-
 await registerSchedulers();
-await checkMissedJobs();
+startWorkers();
 
 registerRouters(server);
 
