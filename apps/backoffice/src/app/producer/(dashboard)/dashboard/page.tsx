@@ -1004,7 +1004,10 @@ function ProducerDashboard() {
 							</Empty>
 						) : (
 							period?.quotes.map((ins) => (
-								<div key={ins.id} className='divide-y divide-zinc-200 px-3'>
+								<div
+									key={ins.id + Math.random()}
+									className='divide-y divide-zinc-200 px-3'
+								>
 									<div className='flex items-center gap-2 py-3.5'>
 										<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
 											<User2Icon />
@@ -1071,7 +1074,10 @@ function ProducerDashboard() {
 							</Empty>
 						) : (
 							period?.insurances.map((ins) => (
-								<div key={ins.id} className='divide-y divide-zinc-200 px-3'>
+								<div
+									key={ins.id + Math.random()}
+									className='divide-y divide-zinc-200 px-3'
+								>
 									<div className='flex items-center gap-2 py-3.5'>
 										<div className='size-9 rounded-sm overflow-hidden bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0'>
 											<Image
