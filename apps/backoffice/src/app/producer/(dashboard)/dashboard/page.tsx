@@ -6,7 +6,7 @@ import type { ProducerType, QuoteStatus } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { isPlate } from '@segwise/core/valids';
 import { useQuery } from '@tanstack/react-query';
-import { format, parseISO } from 'date-fns';
+import { addHours, format, parseISO } from 'date-fns';
 import {
 	ArrowUpRightIcon,
 	Building2Icon,
@@ -19,10 +19,13 @@ import {
 	Eye,
 	EyeOff,
 	FileIcon,
+	Loader2Icon,
+	LogOutIcon,
 	User2Icon,
 	X,
 } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +41,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/libraries/api';
 import { auth } from '@/libraries/auth';
+import { useSignOut } from '@/libraries/hooks/auth/use-sign-out';
 
 type Insurance = {
 	id: string;
@@ -88,6 +92,8 @@ function ProducerDashboard() {
 		cep: string;
 		state: string;
 	} | null>(null);
+
+	const { replace } = useRouter();
 
 	const { data, isSuccess } = useQuery({
 		queryKey: ['profile', 'details-producer'],
@@ -154,7 +160,8 @@ function ProducerDashboard() {
 		const groupedPeriods = quotes?.reduce<Record<string, any>>((acc, quote) => {
 			const dateStr =
 				quote?.requestAt || quote?.dateOfReceipt || quote?.issueDate;
-			const date = parseISO(dateStr);
+
+			const date = addHours(parseISO(dateStr), 3);
 
 			const year = date.getFullYear();
 			const month = date.getMonth() + 1;
@@ -163,11 +170,9 @@ function ProducerDashboard() {
 
 			if (!acc[key]) {
 				acc[key] = {
-					label: date
-						.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-						.replace(/^\w/, (c) => c.toUpperCase()),
-					month,
+					label: format(date, 'MMMM yyyy'),
 					year,
+					month,
 					totalInsurances: 0,
 					netPremium: 0,
 					totalCommission: 0,
@@ -209,7 +214,8 @@ function ProducerDashboard() {
 
 		safes?.forEach((safe) => {
 			const dateStr = safe?.requestAt || safe?.dateOfReceipt || safe?.issueDate;
-			const date = parseISO(dateStr);
+
+			const date = addHours(parseISO(dateStr), 3);
 
 			const year = date.getFullYear();
 			const month = date.getMonth() + 1;
@@ -218,11 +224,9 @@ function ProducerDashboard() {
 
 			if (!groupedPeriods[key]) {
 				groupedPeriods[key] = {
-					label: date
-						.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-						.replace(/^\w/, (c) => c.toUpperCase()),
-					month,
+					label: format(date, 'MMMM yyyy'),
 					year,
+					month,
 					totalInsurances: 0,
 					netPremium: 0,
 					totalCommission: 0,
@@ -731,31 +735,32 @@ function ProducerDashboard() {
 	}
 
 	const period = periods[periodIdx];
+
 	const canPrev = periodIdx > 0;
 	const canNext = periodIdx < periods.length - 1;
 
 	const groupsCeps = buildCepGroups(ALL_YEAR_INSURANCES);
 
-	// const { mutate: signOut, isPending: isPendingSignout } = useSignOut();
+	const { mutate: signOut, isPending: isPendingSignout } = useSignOut();
 
 	const { data: session, isPending } = auth.useSession();
 
-	// function logout() {
-	// 	toast.dismiss();
+	function logout() {
+		toast.dismiss();
 
-	// 	signOut(undefined, {
-	// 		onSuccess(_data, _variables, _result, ctx) {
-	// 			setTimeout(() => {
-	// 				ctx.client.clear();
-	// 			}, 1000);
+		signOut(undefined, {
+			onSuccess(_data, _variables, _result, ctx) {
+				setTimeout(() => {
+					ctx.client.clear();
+				}, 1000);
 
-	// 			replace('/sign-in');
-	// 		},
-	// 		onError(error) {
-	// 			toast.error(error.message);
-	// 		},
-	// 	});
-	// }
+				replace('/sign-in');
+			},
+			onError(error) {
+				toast.error(error.message);
+			},
+		});
+	}
 
 	async function copyReferral() {
 		try {
@@ -783,15 +788,7 @@ function ProducerDashboard() {
 
 	useEffect(() => {
 		if (isSuccess) {
-			setPeriodIdx(
-				periods.findIndex(
-					(e) =>
-						e.label
-							.toLowerCase()
-							.includes(format(new Date(), 'MMMM').toLowerCase()) &&
-						e.label.toLowerCase().includes(new Date().getFullYear().toString()),
-				),
-			);
+			setPeriodIdx(periods.length - 1);
 		}
 	}, [periods, isSuccess]);
 
@@ -837,15 +834,12 @@ function ProducerDashboard() {
 								<Skeleton className='w-24 h-4 bg-muted-foreground' />
 							)}
 							{!isPending && session?.user.name && (
-								<p className='text-white text-sm font-semibold leading-none'>
-									{capitalizeFirstLetters(session?.user.name as string)
-										.split(' ')
-										.slice(0, 2)
-										.join(' ')}
+								<p className='text-white text-sm font-semibold leading-none line-clamp-1 max-w-36'>
+									{capitalizeFirstLetters(session?.user.name as string)}
 								</p>
 							)}
 						</div>
-						{/* <button
+						<button
 							type='button'
 							className='ml-1 h-7 w-7 rounded-full flex items-center justify-center transition-colors cursor-pointer'
 							style={{
@@ -856,14 +850,14 @@ function ProducerDashboard() {
 							onClick={logout}
 						>
 							{!isPendingSignout && (
-								<LogOut className='size-3.5 text-white/50' />
+								<LogOutIcon className='size-3.5 text-white/50' />
 							)}
 							{!!isPendingSignout && (
 								<Loader2Icon className='size-3.5 text-white/50 animate-spin' />
 							)}
-						</button> */}
+						</button>
 					</div>
-					<div>
+					<div className='flex flex-col items-end'>
 						<div
 							className='flex items-center rounded-full px-1 py-1 w-fit ml-auto'
 							style={{
