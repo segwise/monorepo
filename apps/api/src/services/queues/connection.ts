@@ -1,13 +1,14 @@
-import type { QueueOptions, WorkerOptions } from 'bullmq';
-import IORedis from 'ioredis';
-import { environment } from '@/libraries/environment';
+import {
+	createBunRedisClient,
+	type QueueOptions,
+	type WorkerOptions,
+} from 'bullmq';
+import { cache } from '../cache';
 
-const connection = new IORedis(environment.CACHE_URL, {
-	maxRetriesPerRequest: null,
-});
+// @ts-expect-error
+const connection = createBunRedisClient(cache);
 
 const options: WorkerOptions | QueueOptions = {
-	// @ts-expect-error
 	connection,
 	prefix: 'bullmq',
 };

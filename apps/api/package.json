@@ -34,7 +34,6 @@
 		"date-fns": "^4.1.0",
 		"handlebars": "^4.7.9",
 		"hono": "^4.12.9",
-		"ioredis": "^5.11.1",
 		"pdf-lib": "^1.17.1",
 		"playwright": "^1.58.2",
 		"quick-lru": "^7.3.0",
