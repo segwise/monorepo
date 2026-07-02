@@ -1,4 +1,8 @@
-import { migrationQueue, migrationUpdaterQueue } from './queues';
+import {
+	migrationQueue,
+	migrationRecentQueue,
+	migrationUpdaterQueue,
+} from './queues';
 
 async function registerSchedulers() {
 	await migrationQueue.upsertJobScheduler(
@@ -20,6 +24,17 @@ async function registerSchedulers() {
 		},
 		{
 			name: 'migration-updater',
+		},
+	);
+
+	await migrationRecentQueue.upsertJobScheduler(
+		'migration-recent',
+		{
+			pattern: '0 */1 * * * *',
+			tz: 'America/Sao_Paulo',
+		},
+		{
+			name: 'migration-recent',
 		},
 	);
 }
