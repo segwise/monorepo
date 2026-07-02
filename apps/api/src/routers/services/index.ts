@@ -34,27 +34,6 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesPayments(base);
 
 	registerRoutersServicesMigration(base);
-
-	base.get('/', async (ctx) => {
-		const results = await ctx.database.safe.findMany({
-			where: {
-				insured: {
-					cpf: '06874064479',
-				},
-			},
-			include: {
-				insured: {
-					select: {
-						name: true,
-						cpf: true,
-					},
-				},
-			},
-			relationLoadStrategy: 'join',
-		});
-
-		return ctx.json(results, 200);
-	});
 }
 
 export { registerRoutersServices };
