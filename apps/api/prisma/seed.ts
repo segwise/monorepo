@@ -1463,7 +1463,7 @@ const insuranceCompaniesSeed = [
 				description: 'guincho / sinistro',
 				contacts: [
 					{
-						value: '551131321001',
+						value: '551132061414',
 						whatsapp: true,
 						region: 'all_regions',
 					},
@@ -1744,6 +1744,76 @@ const insuranceCompaniesSeed = [
 				contacts: [
 					{
 						value: '08000276131',
+						whatsapp: null,
+						region: 'all_regions',
+					},
+				],
+			},
+		],
+	},
+	{
+		name: 'aliro seguro s/a',
+		image:
+			'https://maprisegurossumare.com.br/imagens/textos/000038_aliro_logo.jpg',
+		short_name: 'aliro seguro',
+		registration: '61550141000172',
+		created_at: '2023-12-05T02:38:46.183Z',
+		assistance_contacts: [
+			{
+				description: 'guincho / sinistro',
+				contacts: [
+					{
+						value: '551131321001',
+						whatsapp: true,
+						region: 'all_regions',
+					},
+					{
+						value: '40045423',
+						whatsapp: null,
+						region: 'capital_and_metropolis',
+					},
+					{
+						value: '08007095423',
+						whatsapp: null,
+						region: 'all_regions',
+					},
+				],
+			},
+			{
+				description: 'deficientes auditivos',
+				contacts: [
+					{
+						value: '08007219104',
+						whatsapp: null,
+						region: 'all_regions',
+					},
+				],
+			},
+			{
+				description: 'vidros',
+				contacts: [
+					{
+						value: '08007014120',
+						whatsapp: null,
+						region: 'all_regions',
+					},
+				],
+			},
+			{
+				description: 'ouvidoria',
+				contacts: [
+					{
+						value: '08002202124',
+						whatsapp: null,
+						region: 'all_regions',
+					},
+				],
+			},
+			{
+				description: 'sac',
+				contacts: [
+					{
+						value: '08002202128',
 						whatsapp: null,
 						region: 'all_regions',
 					},

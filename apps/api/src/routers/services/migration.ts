@@ -136,6 +136,7 @@ const INSURER_MAP: Record<string, string> = {
 		'019ee062-0cc6-7000-a66b-f724d0358a2b',
 	'c5fbb8f5-2d0b-4ea6-96f6-bf482d5a5102':
 		'019ee062-3575-7000-aae9-4490e5e821d3',
+	'120338c4-4da2-4b0d-991c-4b4a70cd46e4': '',
 };
 
 const PRODUCER_MAP: Record<string, string> = {};
@@ -174,8 +175,8 @@ const OLD_API_BASE = 'https://xcarcorretora.com.br/api';
 const OLD_COMPANY_ID = '4f629317-e7a5-466f-8716-a2a0521cb459';
 const OLD_LIST_URL =
 	`${OLD_API_BASE}/safes?is_external=false&is_to_win=false&page=1` +
-	`&active=true&limit=3000&type[]=new&type[]=renovation` +
-	`&company=${OLD_COMPANY_ID}&name=&order_by=desc`;
+	`&active=true&limit=3000` +
+	`&company=${OLD_COMPANY_ID}&order_by=desc`;
 
 function getPhone(contacts: OldContact[]): string {
 	const contact = contacts.find((c) => c.type === 'phone');
@@ -221,8 +222,6 @@ function mapExchange(
 function getCommission(receivables: OldSafe['receivables']): number {
 	return receivables.commission ?? receivables.comission ?? 0;
 }
-
-const MIGRATION_MAP_KEY = 'safesMigration:idMap';
 
 function registerRoutersServicesMigration(server: Server) {
 	const base = server.basePath('/migration');
@@ -389,9 +388,6 @@ function registerRoutersServicesMigration(server: Server) {
 		}>(OLD_LIST_URL);
 		const ids = listData.results.map((s) => s.id).reverse();
 
-		// ⚠️ Removido: deleteMany() e cache.del() — eles apagavam o histórico
-		// de migração e forçavam reprocessar tudo do zero a cada execução.
-
 		const report = {
 			total: ids.length,
 			success: 0,
@@ -401,8 +397,9 @@ function registerRoutersServicesMigration(server: Server) {
 			errors: [] as Array<{ old_id: string; reason: string }>,
 		};
 
+		await ctx.database.safe.deleteMany();
+
 		for (const [index, id] of ids.entries()) {
-			// Checagem no banco (fonte da verdade) em vez de só no cache
 			const existing = await ctx.database.safe.findUnique({
 				where: { externalId: id },
 				select: { id: true },
@@ -414,8 +411,6 @@ function registerRoutersServicesMigration(server: Server) {
 				report.skipped++;
 				continue;
 			}
-
-			console.log(id, `${index + 1}/${ids.length}`);
 
 			let oldSafe: OldSafe;
 			try {
@@ -497,8 +492,11 @@ function registerRoutersServicesMigration(server: Server) {
 				const producerAmount = oldSafe.receivables.producer?.amount ?? null;
 				const commissionNet = commissionGross - (producerAmount ?? 0);
 
-				const newSafe = await ctx.database.safe.create({
-					data: {
+				const newSafe = await ctx.database.safe.upsert({
+					where: { externalId: oldSafe.id },
+					update: {},
+					create: {
+						externalId: oldSafe.id,
 						isExternal: false,
 						// biome-ignore lint/suspicious/noExplicitAny: modality
 						modality: modality as any,
@@ -507,9 +505,9 @@ function registerRoutersServicesMigration(server: Server) {
 						insuranceCompanyId,
 						insuredId: insured.id,
 						producerId,
-						expiration: new Date(oldSafe.validity_end),
-						requestedAt: new Date(oldSafe.created_at),
-						effectivedAt: new Date(oldSafe.validity_start),
+						expiration: oldSafe.validity_end,
+						requestedAt: oldSafe.created_at,
+						effectivedAt: oldSafe.validity_start,
 						installments: oldSafe.receivables.installments_number,
 						award: oldSafe.receivables.amount_award,
 						franchise: oldSafe.receivables.franchise,
@@ -521,8 +519,8 @@ function registerRoutersServicesMigration(server: Server) {
 						commissionInstallments:
 							oldSafe.receivables.producer?.installments ?? null,
 						status: oldSafe.active ? 'active' : 'canceled',
-						statusAt: new Date(oldSafe.updated_at),
-						createdAt: new Date(oldSafe.created_at),
+						statusAt: oldSafe.updated_at,
+						createdAt: oldSafe.created_at,
 						...(vehicle && modality === 'vehicle'
 							? {
 									safeVehicle: {
@@ -551,6 +549,11 @@ function registerRoutersServicesMigration(server: Server) {
 
 				report.id_map[oldSafe.id] = newSafe.id;
 				report.success++;
+
+				console.log(
+					id,
+					`${index + 1}/${ids.length} | Restante: ${ids.length - ids.indexOf(id) - 1}`,
+				);
 			} catch (err) {
 				report.errors.push({
 					old_id: id,
