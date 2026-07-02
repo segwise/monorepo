@@ -3,10 +3,12 @@ import {
 	type QueueOptions,
 	type WorkerOptions,
 } from 'bullmq';
-import { cache } from '../cache';
+import { environment } from '@/libraries/environment';
+
+const rawClient = new Bun.RedisClient(environment.CACHE_URL);
 
 // @ts-expect-error
-const connection = createBunRedisClient(cache);
+const connection = createBunRedisClient(rawClient);
 
 const options: WorkerOptions | QueueOptions = {
 	connection,
