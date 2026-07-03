@@ -17,11 +17,18 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import {
 	AlertTriangleIcon,
+	ChevronLeftIcon,
 	FileWarningIcon,
 	ReceiptIcon,
 } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import {
+	ActivityIndicator,
+	Pressable,
+	ScrollView,
+	Text,
+	View,
+} from 'react-native';
 import { useMMKVObject } from 'react-native-mmkv';
 
 function VehicleInquiryPlateScreen() {
@@ -73,11 +80,32 @@ function VehicleInquiryPlateScreen() {
 	}, [isPending, isSuccess, back]);
 
 	if (isPending) {
-		return;
+		return (
+			<View className='flex-1 items-center justify-center'>
+				<View>
+					<ActivityIndicator size='large' color='#000000' />
+					<Text className='text-lg font-semibold mt-2 text-black'>
+						CARREGANDO
+					</Text>
+				</View>
+			</View>
+		);
 	}
 
 	if (!data) {
-		return;
+		return (
+			<View className='flex-1 items-center justify-center'>
+				<Text className='text-lg font-semibold text-black'>
+					NENHUM REGISTRO ENCONTRADO!
+				</Text>
+				<Button size='lg' className='mt-3' onPress={back}>
+					<ChevronLeftIcon color='#FFFFFF' />
+					<Text className='text-white font-semibold text-lg'>
+						Voltar Página
+					</Text>
+				</Button>
+			</View>
+		);
 	}
 
 	return (
