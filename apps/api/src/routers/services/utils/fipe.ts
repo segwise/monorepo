@@ -18,17 +18,19 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 		const cacheName = CACHE_KEY(plate);
 
 		try {
-			const isCache = await ctx.cache.exists(cacheName);
+			// const isCache = await ctx.cache.exists(cacheName);
 
-			if (isCache) {
-				const data = JSON.parse((await ctx.cache.get(cacheName)) || '{}');
+			// if (isCache) {
+			// 	const data = JSON.parse((await ctx.cache.get(cacheName)) || '{}');
 
-				return ctx.json(data, 200);
-			}
+			// 	return ctx.json(data, 200);
+			// }
 
 			const { data } = await xior.get(
 				`https://wdapi2.com.br/consulta/${plate}/${environment.APIPLACAS_TOKEN}`,
 			);
+
+			console.log(data);
 
 			if (data?.detail?.toLowerCase().includes('erro')) {
 				throw new Error(data.detail);
@@ -55,7 +57,7 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 					: 'trucks';
 
 			const querySearch = {
-				model: data.extra?.modelo || data.modelo,
+				model: data.modelo,
 				modelYear: Number(data.anoModelo),
 				manufacturer: brand,
 			};
@@ -66,7 +68,7 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				code: data.fipe.dados[0]?.codigo_fipe,
 				plate,
 				manufacturer: data.marca,
-				model: data.fipe.dados?.[0]?.texto_modelo ?? data.modelo,
+				model: data.modelo,
 				year: data.ano,
 				yearModel: data.anoModelo,
 				address: {
