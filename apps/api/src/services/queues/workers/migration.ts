@@ -1,4 +1,4 @@
-import { differenceInMinutes, parse } from 'date-fns';
+import { isSameDay, parse } from 'date-fns';
 import xior from 'xior';
 import { cache } from '@/services/cache';
 import { database } from '@/services/database';
@@ -428,7 +428,8 @@ async function migrationUpdater() {
 	}>(OLD_LIST_URL);
 	const ids = listData.results
 		.filter(
-			(e) => differenceInMinutes(new Date(), new Date(e.updated_at)) <= 10,
+			// (e) => differenceInMinutes(new Date(), new Date(e.updated_at)) <= 10,
+			(e) => isSameDay(new Date(), new Date(e.updated_at)),
 		)
 		.map((s) => s.id)
 		.reverse();
