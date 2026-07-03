@@ -19,13 +19,7 @@ import { maskPlate, maskPostalCode } from '@segwise/core/masks';
 import { translateVehicleUsage } from '@segwise/core/translate';
 import type { SafeSimple } from '@segwise/core/types';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-	differenceInDays,
-	endOfDay,
-	format,
-	formatDistanceStrict,
-	parseISO,
-} from 'date-fns';
+import { endOfDay, format, parseISO } from 'date-fns';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { replace } from 'expo-router/build/global-state/routing';
@@ -146,25 +140,15 @@ function Item(props: SafeSimple) {
 				)}
 				<List
 					label='FINAL DA VIGÊNCIA'
-					value={`${format(
+					value={format(
 						endOfDay(parseISO(props.expiration as string)),
 						"dd/MM/yyyy 'ás' HH:mm'h'",
-					).toUpperCase()} ${
-						differenceInDays(
-							parseISO(props.expiration as string),
-							new Date(),
-						) <= 30
-							? ` - ${formatDistanceStrict(
-									parseISO(props.expiration as string),
-									new Date(),
-								)}`
-							: ''
-					}`}
+					).toUpperCase()}
 				/>
 				{props.vehicle?.model && (
 					<List
 						label='MODELO / ANO'
-						value={`${props.vehicle.model.toUpperCase()} ${props.vehicle.modelYear}`}
+						value={`${props.vehicle.model.toUpperCase()} - ${props.vehicle.modelYear}`}
 					/>
 				)}
 				<List
@@ -212,16 +196,16 @@ function Item(props: SafeSimple) {
 											color: 'red',
 										}}
 									>
-										Excluir
+										Remover
 									</Text>
 								</View>
 							</TouchableOpacity>
 						</DialogTrigger>
 						<DialogContent showClose={false}>
 							<DialogHeader>
-								<DialogTitle>Excluir Registro</DialogTitle>
+								<DialogTitle>Remover Registro</DialogTitle>
 								<DialogDescription className='leading-none'>
-									Deseja realmente excluir o registro?
+									Deseja realmente remover o registro?
 								</DialogDescription>
 							</DialogHeader>
 							<DialogFooter>
@@ -231,7 +215,7 @@ function Item(props: SafeSimple) {
 									</Button>
 								</DialogClose>
 								<Button onPress={removeItem}>
-									<Text className='text-white font-semibold'>EXCLUIR</Text>
+									<Text className='text-white font-semibold'>REMOVER</Text>
 								</Button>
 							</DialogFooter>
 						</DialogContent>

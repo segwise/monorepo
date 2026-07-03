@@ -39,6 +39,7 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 		data: data.data
 			// @ts-expect-error
 			.sort((a, b) => parseISO(a.expiration) - parseISO(b.expiration))
+			.filter((e) => e.status === 'active')
 			.filter((e) => parseISO(e.expiration as string) >= new Date()),
 	};
 }
