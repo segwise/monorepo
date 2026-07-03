@@ -1,13 +1,8 @@
 import { Worker } from 'bullmq';
 import { options } from '../connection';
-import { migration, migrationRecent, migrationUpdater } from './migration';
+import { migrationRecent, migrationUpdater } from './migration';
 
 function startWorkers() {
-	new Worker('migration', migration, {
-		...options,
-		name: 'migration',
-	});
-
 	new Worker('migration-updater', migrationUpdater, {
 		...options,
 		name: 'migration-updater',

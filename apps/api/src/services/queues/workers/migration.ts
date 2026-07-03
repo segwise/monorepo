@@ -132,12 +132,11 @@ const OLD_API_BASE = 'https://xcarcorretora.com.br/api';
 const OLD_COMPANY_ID = '4f629317-e7a5-466f-8716-a2a0521cb459';
 const OLD_LIST_URL =
 	`${OLD_API_BASE}/safes?is_external=false&is_to_win=false&page=1` +
-	`&active=true&limit=3000` +
 	`&company=${OLD_COMPANY_ID}&order_by=desc`;
 const OLD_LIST_URL_RECENT =
 	`${OLD_API_BASE}/safes?is_external=false&is_to_win=false&page=1` +
-	`&limit=10` +
-	`&company=${OLD_COMPANY_ID}&order_by=desc`;
+	`&limit=50` +
+	`&company=${OLD_COMPANY_ID}&order_by=asc`;
 
 const INSURER_MAP: Record<string, string> = {
 	'9df4e00c-2c12-448a-94a7-50949f6854eb':
@@ -410,7 +409,6 @@ async function migration() {
 }
 
 async function migrationUpdater() {
-	console.log('migrationUpdater...');
 	if (!BROKER_ID) {
 		throw new Error('BROKER_ID não configurado no arquivo de migração.');
 	}
@@ -428,7 +426,7 @@ async function migrationUpdater() {
 	}>(OLD_LIST_URL);
 	const ids = listData.results
 		.filter(
-			// (e) => differenceInMinutes(new Date(), new Date(e.updated_at)) <= 10,
+			// (e) => differenceInMinutes(new Date(), new Date(e.updated_at)) <= 15,
 			(e) => isSameDay(new Date(), new Date(e.updated_at)),
 		)
 		.map((s) => s.id)
@@ -609,7 +607,6 @@ async function migrationUpdater() {
 }
 
 async function migrationRecent() {
-	console.log('migrationRecent...');
 	if (!BROKER_ID) {
 		throw new Error('BROKER_ID não configurado no arquivo de migração.');
 	}
