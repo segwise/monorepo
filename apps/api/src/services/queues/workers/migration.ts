@@ -410,6 +410,7 @@ async function migration() {
 }
 
 async function migrationUpdater() {
+	console.log('migrationUpdater...');
 	if (!BROKER_ID) {
 		throw new Error('BROKER_ID não configurado no arquivo de migração.');
 	}
@@ -605,6 +606,7 @@ async function migrationUpdater() {
 }
 
 async function migrationRecent() {
+	console.log('migrationRecent...');
 	if (!BROKER_ID) {
 		throw new Error('BROKER_ID não configurado no arquivo de migração.');
 	}
