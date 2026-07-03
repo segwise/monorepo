@@ -427,7 +427,9 @@ async function migrationUpdater() {
 		results: Pick<OldSafe, 'id' | 'updated_at'>[];
 	}>(OLD_LIST_URL);
 	const ids = listData.results
-		.filter((e) => differenceInMinutes(new Date(), new Date(e.updated_at)) <= 5)
+		.filter(
+			(e) => differenceInMinutes(new Date(), new Date(e.updated_at)) <= 10,
+		)
 		.map((s) => s.id)
 		.reverse();
 
