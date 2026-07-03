@@ -7,7 +7,6 @@ import {
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import {
-	addHours,
 	differenceInDays,
 	format,
 	formatDistanceToNow,
@@ -308,33 +307,10 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 														Final da Vigência
 													</span>
 													<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
-														{format(
-															addHours(
-																expiration,
-																new Date().getTimezoneOffset(),
-															),
-															'dd/MM/yyyy',
-														)}{' '}
-														{isAfter(
-															addHours(
-																expiration,
-																new Date().getTimezoneOffset(),
-															),
-															new Date(),
-														) &&
-															differenceInDays(
-																addHours(
-																	expiration,
-																	new Date().getTimezoneOffset(),
-																),
-																new Date(),
-															) <= 7 &&
-															`- ${formatDistanceToNow(
-																addHours(
-																	expiration,
-																	new Date().getTimezoneOffset(),
-																),
-															)
+														{format(expiration, 'dd/MM/yyyy')}{' '}
+														{isAfter(expiration, new Date()) &&
+															differenceInDays(expiration, new Date()) <= 7 &&
+															`- ${formatDistanceToNow(expiration)
 																.replace('cerca de ', '')
 																.replace('mais de ', '')}`}
 													</span>
