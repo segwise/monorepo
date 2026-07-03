@@ -136,7 +136,7 @@ const OLD_LIST_URL =
 	`&company=${OLD_COMPANY_ID}&order_by=desc`;
 const OLD_LIST_URL_RECENT =
 	`${OLD_API_BASE}/safes?is_external=false&is_to_win=false&page=1` +
-	`&active=true&limit=5` +
+	`&limit=10` +
 	`&company=${OLD_COMPANY_ID}&order_by=desc`;
 
 const INSURER_MAP: Record<string, string> = {
