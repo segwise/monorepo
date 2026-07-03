@@ -1,4 +1,4 @@
-import { isSameDay, parse } from 'date-fns';
+import { endOfDay, isSameDay, parse, subHours } from 'date-fns';
 import xior from 'xior';
 import { cache } from '@/services/cache';
 import { database } from '@/services/database';
@@ -352,7 +352,7 @@ async function migration() {
 					insuranceCompanyId,
 					insuredId: insured.id,
 					producerId,
-					expiration: oldSafe.validity_end,
+					expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
 					requestedAt: oldSafe.created_at,
 					effectivedAt: oldSafe.validity_start,
 					installments: oldSafe.receivables.installments_number,
@@ -513,7 +513,7 @@ async function migrationUpdater() {
 				insuranceCompanyId,
 				insuredId: insured.id,
 				producerId,
-				expiration: oldSafe.validity_end,
+				expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
 				requestedAt: oldSafe.created_at,
 				effectivedAt: oldSafe.validity_start,
 				installments: oldSafe.receivables.installments_number,
@@ -562,7 +562,7 @@ async function migrationUpdater() {
 				insuranceCompanyId,
 				insuredId: insured.id,
 				producerId,
-				expiration: oldSafe.validity_end,
+				expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
 				requestedAt: oldSafe.created_at,
 				effectivedAt: oldSafe.validity_start,
 				installments: oldSafe.receivables.installments_number,
@@ -706,7 +706,7 @@ async function migrationRecent() {
 				insuranceCompanyId,
 				insuredId: insured.id,
 				producerId,
-				expiration: oldSafe.validity_end,
+				expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
 				requestedAt: oldSafe.created_at,
 				effectivedAt: oldSafe.validity_start,
 				installments: oldSafe.receivables.installments_number,
@@ -755,7 +755,7 @@ async function migrationRecent() {
 				insuranceCompanyId,
 				insuredId: insured.id,
 				producerId,
-				expiration: oldSafe.validity_end,
+				expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
 				requestedAt: oldSafe.created_at,
 				effectivedAt: oldSafe.validity_start,
 				installments: oldSafe.receivables.installments_number,
