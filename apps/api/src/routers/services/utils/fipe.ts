@@ -18,19 +18,17 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 		const cacheName = CACHE_KEY(plate);
 
 		try {
-			const isCache = await ctx.cache.exists(cacheName);
+			// const isCache = await ctx.cache.exists(cacheName);
 
-			if (isCache) {
-				const data = JSON.parse((await ctx.cache.get(cacheName)) || '{}');
+			// if (isCache) {
+			// 	const data = JSON.parse((await ctx.cache.get(cacheName)) || '{}');
 
-				return ctx.json(data, 200);
-			}
+			// 	return ctx.json(data, 200);
+			// }
 
 			const { data } = await xior.get(
 				`https://wdapi2.com.br/consulta/${plate}/${environment.APIPLACAS_TOKEN}`,
 			);
-
-			console.log(data);
 
 			if (data?.detail?.toLowerCase().includes('erro')) {
 				throw new Error(data.detail);
@@ -57,7 +55,17 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 					: 'trucks';
 
 			const querySearch = {
-				model: data.modelo,
+				model:
+					`${data?.extra?.modelo ?? data.modelo} ${data?.extra?.combustivel?.toLowerCase()?.includes('alcool') && data?.extra?.combustivel?.toLowerCase()?.includes('gasolina') ? 'flex' : ''}`
+						.replaceAll('/', ' / ')
+						.replaceAll(' 10 ', ' 1.0 ')
+						.replaceAll(' 14 ', ' 1.4 ')
+						.replaceAll(' 16 ', ' 1.6 ')
+						.replaceAll(' 24 ', ' 2.4 ')
+						.replaceAll(' 25 ', ' 2.5 ')
+						.replaceAll(' 30 ', ' 3.0 ')
+						.toLowerCase()
+						.trim(),
 				modelYear: Number(data.anoModelo),
 				manufacturer: brand,
 			};
@@ -68,7 +76,7 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				code: data.fipe.dados[0]?.codigo_fipe,
 				plate,
 				manufacturer: data.marca,
-				model: data.modelo,
+				model: fipe?.details?.[0]?.model.toLowerCase() ?? querySearch.model,
 				year: data.ano,
 				yearModel: data.anoModelo,
 				address: {
@@ -76,9 +84,17 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 					uf: data.uf,
 				},
 				color: data.cor,
-				exchage: data.fipe.dados?.[0]?.texto_modelo.includes('Aut')
-					? 'Automático'
-					: 'Manual',
+				exchage:
+					data.fipe.dados?.[0]?.texto_modelo
+						.toLowerCase()
+						.includes('automático') ||
+					data.fipe.dados?.[0]?.texto_modelo
+						.toLowerCase()
+						.includes('automatico') ||
+					data.fipe.dados?.[0]?.texto_modelo.toLowerCase().includes('auto.') ||
+					data.fipe.dados?.[0]?.texto_modelo.toLowerCase().includes('aut.')
+						? 'Automático'
+						: 'Manual',
 				fuel: data.extra?.combustivel || 'Gasolina',
 				fipe: fipe.details.map(
 					({ modelYear, price, model, codeFipe, fuel, referenceMonth }) => ({
