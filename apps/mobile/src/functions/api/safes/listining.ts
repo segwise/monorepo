@@ -5,7 +5,7 @@ import type {
 	SafeRegistration,
 	SafeSimple,
 } from '@segwise/core/types';
-import { format, parseISO } from 'date-fns';
+import { endOfDay, format, parseISO } from 'date-fns';
 import { XiorError } from 'xior';
 
 async function safesListining({ signal }: { signal: AbortSignal }) {
@@ -37,10 +37,13 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 	return {
 		...data,
 		data: data.data
-			// @ts-expect-error
-			.sort((a, b) => parseISO(a.expiration) - parseISO(b.expiration))
+			.sort(
+				(a, b) =>
+					// @ts-expect-error
+					endOfDay(parseISO(a.expiration)) - endOfDay(parseISO(b.expiration)),
+			)
 			.filter((e) => e.status === 'active')
-			.filter((e) => parseISO(e.expiration as string) >= new Date()),
+			.filter((e) => endOfDay(parseISO(e.expiration as string)) >= new Date()),
 	};
 }
 
