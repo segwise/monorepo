@@ -30,7 +30,6 @@
 		"@prisma/client": "^7.6.0",
 		"@segwise/core": "^1.1.349",
 		"better-auth": "^1.5.6",
-		"bullmq": "^5.79.2",
 		"date-fns": "^4.1.0",
 		"handlebars": "^4.7.9",
 		"hono": "^4.12.9",

@@ -12,6 +12,7 @@ import { registerRoutersServicesMarketplace } from './marketplace';
 import { registerRoutersServicesMigration } from './migration';
 import { registerRoutersServicesPIX } from './pix';
 import { registerRoutersServicesQuoteFinancing } from './quote-financing';
+import { registerRoutersServicesWebhooks } from './webhooks';
 
 function registerRoutersServices(server: Server) {
 	const base = server.basePath('/services');
@@ -32,6 +33,8 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesQuotes(base);
 	registerRoutersServicesAnalytics(base);
 	registerRoutersServicesPayments(base);
+
+	registerRoutersServicesWebhooks(base);
 
 	registerRoutersServicesMigration(base);
 }

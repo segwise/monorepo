@@ -2,11 +2,6 @@ import { gracefulShutdown } from '@/libraries/shutdown';
 import { registerRouters } from '@/routers';
 import { server } from '@/server';
 import { environment } from './libraries/environment';
-import { registerSchedulers } from './services/queues/schedulers';
-import { startWorkers } from './services/queues/workers';
-
-await registerSchedulers();
-startWorkers();
 
 registerRouters(server);
 
