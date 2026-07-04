@@ -104,6 +104,8 @@ function matchScore(candidate: string, target: string): number {
 const MATCH_THRESHOLD = 0.5;
 const RECALL_THRESHOLD = 0.5;
 
+const MAX_MODEL_CANDIDATES = 15;
+
 export function bestMatch<T extends VehicleBrand | VehicleModel>(
 	items: T[],
 	query: string,
@@ -217,8 +219,6 @@ class FipeClient {
 	}
 }
 
-const MAX_MODEL_CANDIDATES = 15;
-
 class FipeService {
 	private client: FipeClient;
 
@@ -242,8 +242,12 @@ class FipeService {
 
 		const models = await this.client.getModelsByBrand(vehicleType, brand.code);
 
-		console.log(vehicle.model);
-		const modelCandidates = rankMatches(models, vehicle.model).slice(
+		const modelsLowerCase = models.map((response) => ({
+			...response,
+			name: response.name.toLowerCase(),
+		}));
+
+		const modelCandidates = rankMatches(modelsLowerCase, vehicle.model).slice(
 			0,
 			MAX_MODEL_CANDIDATES,
 		);
@@ -257,7 +261,28 @@ class FipeService {
 
 		let firstCandidateYears: VehicleYear[] | null = null;
 
-		for (const model of modelCandidates) {
+		for (const model of modelCandidates.filter((response) => {
+			if (
+				vehicle.model.includes('1.0') ||
+				vehicle.model.includes('1.6') ||
+				vehicle.model.includes('2.0') ||
+				vehicle.model.includes('2.4') ||
+				vehicle.model.includes('2.5') ||
+				vehicle.model.includes('3.0')
+			) {
+				return (
+					(vehicle.model.includes('1.0') && response.name.includes('1.0')) ||
+					(vehicle.model.includes('1.6') && response.name.includes('1.6')) ||
+					(vehicle.model.includes('1.6') && response.name.includes('2.0')) ||
+					(vehicle.model.includes('1.6') && response.name.includes('2.4')) ||
+					(vehicle.model.includes('1.6') && response.name.includes('2.5')) ||
+					(vehicle.model.includes('1.6') && response.name.includes('3.0')) ||
+					false
+				);
+			}
+
+			return true;
+		})) {
 			const years = await this.client.getYearsByModel(
 				vehicleType,
 				brand.code,

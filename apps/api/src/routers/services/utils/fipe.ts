@@ -55,17 +55,16 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 					: 'trucks';
 
 			const querySearch = {
-				model:
-					`${data?.extra?.modelo ?? data.modelo} ${data?.extra?.combustivel?.toLowerCase()?.includes('alcool') && data?.extra?.combustivel?.toLowerCase()?.includes('gasolina') ? 'flex' : ''}`
-						.replaceAll('/', ' / ')
-						.replaceAll(' 10 ', ' 1.0 ')
-						.replaceAll(' 14 ', ' 1.4 ')
-						.replaceAll(' 16 ', ' 1.6 ')
-						.replaceAll(' 24 ', ' 2.4 ')
-						.replaceAll(' 25 ', ' 2.5 ')
-						.replaceAll(' 30 ', ' 3.0 ')
-						.toLowerCase()
-						.trim(),
+				model: `${data?.extra?.modelo ?? data.modelo} `
+					.replaceAll('/', ' / ')
+					.replaceAll(' 10 ', ' 1.0 ')
+					.replaceAll(' 14 ', ' 1.4 ')
+					.replaceAll(' 16 ', ' 1.6 ')
+					.replaceAll(' 24 ', ' 2.4 ')
+					.replaceAll(' 25 ', ' 2.5 ')
+					.replaceAll(' 30 ', ' 3.0 ')
+					.toLowerCase()
+					.trim(),
 				modelYear: Number(data.anoModelo),
 				manufacturer: brand,
 			};
