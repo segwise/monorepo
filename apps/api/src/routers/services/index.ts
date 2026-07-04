@@ -9,7 +9,6 @@ import { registerRoutersServicesSafes } from '@/routers/services/safes';
 import { registerRoutersServicesUtils } from '@/routers/services/utils';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
 import { registerRoutersServicesMarketplace } from './marketplace';
-import { registerRoutersServicesMigration } from './migration';
 import { registerRoutersServicesPIX } from './pix';
 import { registerRoutersServicesQuoteFinancing } from './quote-financing';
 import { registerRoutersServicesWebhooks } from './webhooks';
@@ -35,8 +34,6 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesPayments(base);
 
 	registerRoutersServicesWebhooks(base);
-
-	registerRoutersServicesMigration(base);
 }
 
 export { registerRoutersServices };
