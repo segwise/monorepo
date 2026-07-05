@@ -18,13 +18,13 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 		const cacheName = CACHE_KEY(plate);
 
 		try {
-			// const isCache = await ctx.cache.exists(cacheName);
+			const isCache = await ctx.cache.exists(cacheName);
 
-			// if (isCache) {
-			// 	const data = JSON.parse((await ctx.cache.get(cacheName)) || '{}');
+			if (isCache) {
+				const data = JSON.parse((await ctx.cache.get(cacheName)) || '{}');
 
-			// 	return ctx.json(data, 200);
-			// }
+				return ctx.json(data, 200);
+			}
 
 			const { data } = await xior.get(
 				`https://wdapi2.com.br/consulta/${plate}/${environment.APIPLACAS_TOKEN}`,
@@ -48,10 +48,10 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				brand = 'chevrolet';
 			}
 
-			const vehicleType = bestMatch(cars, brand)
-				? 'cars'
-				: bestMatch(motorcycles, brand)
-					? 'motorcycles'
+			const vehicleType = bestMatch(motorcycles, brand)
+				? 'motorcycles'
+				: bestMatch(cars, brand)
+					? 'cars'
 					: 'trucks';
 
 			const querySearch = {
