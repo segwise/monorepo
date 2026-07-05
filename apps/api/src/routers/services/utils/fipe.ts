@@ -2,7 +2,7 @@ import { parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import xior, { XiorError } from 'xior';
 import type { Server } from '@/@types/server';
-import { bestMatch, FipeService } from '@/controllers/fipe';
+import { FipeService } from '@/controllers/fipe';
 import { environment } from '@/libraries/environment';
 
 const fipeService = new FipeService();
@@ -34,42 +34,33 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				throw new Error(data.detail);
 			}
 
-			const [cars, motorcycles] = await Promise.all(
-				['cars', 'motorcycles', 'trucks'].map((type) =>
-					xior
-						.get(`https://fipe.parallelum.com.br/api/v2/${type}/brands`)
-						.then((response) => response.data),
-				),
-			);
-
 			let brand = data.marca.toLowerCase();
 
 			if (brand === 'chev') {
 				brand = 'chevrolet';
 			}
 
-			const vehicleType = bestMatch(motorcycles, brand)
-				? 'motorcycles'
-				: bestMatch(cars, brand)
-					? 'cars'
-					: 'trucks';
-
 			const querySearch = {
 				model: `${data?.extra?.modelo ?? data.modelo} `
 					.replaceAll('/', ' / ')
-					.replaceAll(' 10 ', ' 1.0 ')
-					.replaceAll(' 14 ', ' 1.4 ')
 					.replaceAll(' 16 ', ' 1.6 ')
-					.replaceAll(' 24 ', ' 2.4 ')
-					.replaceAll(' 25 ', ' 2.5 ')
-					.replaceAll(' 30 ', ' 3.0 ')
 					.toLowerCase()
 					.trim(),
 				modelYear: Number(data.anoModelo),
 				manufacturer: brand,
 			};
 
-			const fipe = await fipeService.findByPlateData(querySearch, vehicleType);
+			let fipe = null;
+
+			try {
+				fipe = await fipeService.findByPlateData(querySearch, 'cars');
+			} catch {
+				try {
+					fipe = await fipeService.findByPlateData(querySearch, 'motorcycles');
+				} catch {
+					fipe = await fipeService.findByPlateData(querySearch, 'trucks');
+				}
+			}
 
 			const response = {
 				code: data.fipe.dados[0]?.codigo_fipe,
