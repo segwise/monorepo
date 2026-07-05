@@ -8,7 +8,7 @@ import { maskPlate } from '@segwise/core/masks';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { isPlate } from '@segwise/core/valids';
 import { Link } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useMMKVObject } from 'react-native-mmkv';
 
@@ -22,6 +22,11 @@ function VehicleInquiryScreen() {
 			year: number;
 		}>
 	>('vehicle-inquiry-plate');
+
+	const historiesMap = useMemo(
+		() => histories?.reverse().slice(0, 3),
+		[histories],
+	);
 
 	const { data: amountSearchVehicleComplete } =
 		useGetAmountSearchVehicleComplete();
@@ -107,47 +112,44 @@ function VehicleInquiryScreen() {
 					Débitos e Outros.
 				</Text>
 			</View>
-			{!!histories?.length && (
+			{!!historiesMap?.length && (
 				<View>
 					<Text className='font-bold text-base capitalize'>
 						Consultas Recentes
 					</Text>
 					<View className='mt-2 gap-y-2'>
-						{histories
-							.reverse()
-							.slice(0, 3)
-							?.map(({ plate, model, year }) => (
-								<Link href={`/(vehicle-inquiry)/${plate}`} key={plate} asChild>
-									<TouchableOpacity
-										className={cn(
-											'flex-row items-center justify-between gap-x-2 border border-primary/20 rounded-md p-2 gap-2 bg-primary/5',
-											isCompany && 'bg-primary-xcar/5 border-r-primary-xcar/20',
-										)}
-									>
-										<View className='flex-row items-center justify-start gap-x-2'>
-											<View
-												className={cn(
-													'size-8 rounded-sm bg-primary items-center justify-center flex-row',
-													isCompany && 'bg-primary-xcar',
-												)}
-											>
-												<Feather name='clock' size={20} color='#FFFFFF' />
-											</View>
-											<View>
-												<Text className='font-bold text-sm mb-0.5'>
-													{maskPlate(plate)}
-												</Text>
-												<Text className='text-muted-foreground text-sm leading-none capitalize'>
-													{capitalizeFirstLetters(model)} {year}
-												</Text>
-											</View>
+						{historiesMap.map(({ plate, model, year }) => (
+							<Link href={`/(vehicle-inquiry)/${plate}`} key={plate} asChild>
+								<TouchableOpacity
+									className={cn(
+										'flex-row items-center justify-between gap-x-2 border border-primary/20 rounded-md p-2 gap-2 bg-primary/5',
+										isCompany && 'bg-primary-xcar/5 border-r-primary-xcar/20',
+									)}
+								>
+									<View className='flex-row items-center justify-start gap-x-2'>
+										<View
+											className={cn(
+												'size-8 rounded-sm bg-primary items-center justify-center flex-row',
+												isCompany && 'bg-primary-xcar',
+											)}
+										>
+											<Feather name='clock' size={20} color='#FFFFFF' />
 										</View>
 										<View>
-											<Feather name='arrow-up-right' size={20} />
+											<Text className='font-bold text-sm mb-0.5'>
+												{maskPlate(plate)}
+											</Text>
+											<Text className='text-muted-foreground text-sm leading-none capitalize'>
+												{capitalizeFirstLetters(model)} {year}
+											</Text>
 										</View>
-									</TouchableOpacity>
-								</Link>
-							))}
+									</View>
+									<View>
+										<Feather name='arrow-up-right' size={20} />
+									</View>
+								</TouchableOpacity>
+							</Link>
+						))}
 					</View>
 				</View>
 			)}
