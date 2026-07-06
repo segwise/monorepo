@@ -6,7 +6,12 @@ import { cn } from '@/libraries/classname';
 import { useSafesRegistration } from '@/libraries/hooks/api/safe';
 import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { maskCNPJ, maskCPF, maskDateString } from '@segwise/core/masks';
+import {
+	maskCNPJ,
+	maskCPF,
+	maskDateString,
+	maskNumber,
+} from '@segwise/core/masks';
 import { SchemaSearchParamsSafeRegistration } from '@segwise/core/schemas';
 import type { SafeRegistration } from '@segwise/core/types';
 import { isCPF } from '@segwise/core/valids';
@@ -151,9 +156,11 @@ function InsurancesScreen() {
 								placeholder='CPF OU CNPJ'
 								onChangeText={(value) =>
 									field.onChange(
-										isCPF(value) && value.length >= 11
-											? maskCPF(value)
-											: maskCNPJ(value),
+										value.length >= 11
+											? isCPF(value)
+												? maskCPF(value)
+												: maskCNPJ(value)
+											: maskNumber(value),
 									)
 								}
 								keyboardAppearance='dark'
