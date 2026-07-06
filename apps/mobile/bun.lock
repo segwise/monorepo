@@ -19,7 +19,7 @@
         "@rn-primitives/select": "^1.2.0",
         "@rn-primitives/separator": "^1.2.0",
         "@rn-primitives/slot": "^1.2.0",
-        "@segwise/core": "^1.1.349",
+        "@segwise/core": "^1.1.350",
         "@tanstack/react-query": "^5.90.21",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -669,7 +669,7 @@
 
     "@sec-ant/readable-stream": ["@sec-ant/readable-stream@0.4.1", "", {}, "sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg=="],
 
-    "@segwise/core": ["@segwise/core@1.1.349", "https://npm.pkg.github.com/download/@segwise/core/1.1.349/7aaad20b4f7c630efc891e036043ddef115c6ff2", { "dependencies": { "decimal.js": "^10.6.0" }, "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-QTzJdOgGrnGeYmqHyP11wOh5Lpw82UF7eXt+4S5iFneXEr+YhtsxI2y+mL6bq8iAptZ4QpOJIH7xqYECjVys5g=="],
+    "@segwise/core": ["@segwise/core@1.1.350", "https://npm.pkg.github.com/download/@segwise/core/1.1.350/13666b412cb68a42601ec18ed28f23a902e7213e", { "dependencies": { "decimal.js": "^10.6.0" }, "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-IGAnrRI1AJBBNpOegz1FbNXO6P4U+KAtPND7zMuIdrFS/eaXac280IpZbllop1xgRFruGzlSdhltEuiqjod+yg=="],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.27.10", "", {}, "sha512-MTBk/3jGLNB2tVxv6uLlFh1iu64iYOQ2PbdOSK3NW8JZsmlaOh2q6sdtKowBhfw8QFLmYNzTW4/oK4uATIi6ZA=="],
 
