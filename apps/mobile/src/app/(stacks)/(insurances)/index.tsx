@@ -89,7 +89,7 @@ function InsurancesScreen() {
 					<TouchableOpacity
 						className='py-2 bg-transparent border border-input rounded-sm'
 						onPress={() =>
-							push('/(stacks)/request-quote/vehicle?i-have-insurance=true')
+							push('/(stacks)/(request-quote)/vehicle?i-have-insurance=true')
 						}
 					>
 						<View className='flex-row text-center items-center justify-center'>
@@ -146,8 +146,8 @@ function InsurancesScreen() {
 						<View>
 							<Input
 								{...field}
-								label='CPF'
-								placeholder='000.000.000-00'
+								label='CPF / CNPJ'
+								placeholder='INFORME O CPF OU CNPJ'
 								onChangeText={(value) => field.onChange(maskCPF(value))}
 								keyboardAppearance='dark'
 							/>
@@ -164,7 +164,7 @@ function InsurancesScreen() {
 						<View>
 							<Input
 								{...field}
-								label='DATA DE NASCIMENTO'
+								label='DATA DE NASCIMENTO / ABERTURA'
 								placeholder='00/00/0000'
 								onChangeText={(value) => field.onChange(maskDateString(value))}
 								keyboardAppearance='dark'
