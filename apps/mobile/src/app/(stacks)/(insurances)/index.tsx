@@ -164,7 +164,7 @@ function InsurancesScreen() {
 						<View>
 							<Input
 								{...field}
-								label='DATA DE NASCIMENTO / ABERTURA'
+								label='NASCIMENTO / ABERTURA'
 								placeholder='00/00/0000'
 								onChangeText={(value) => field.onChange(maskDateString(value))}
 								keyboardAppearance='dark'
