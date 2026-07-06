@@ -842,6 +842,15 @@ async function migrationById(id: string) {
 		update: {
 			name: oldSafe.insured.name,
 			phone,
+			birth: oldSafe.insured.additional_information?.birth
+				? parse(
+						oldSafe.insured.additional_information.birth.split(
+							'T',
+						)[0] as string,
+						'yyyy-MM-dd',
+						new Date(),
+					)
+				: null,
 		},
 		create: {
 			name: oldSafe.insured.name,
