@@ -3,7 +3,7 @@ import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
-import { format, set } from 'date-fns';
+import { set, startOfDay } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
@@ -334,7 +334,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 									cnpj: registration,
 								},
 							],
-							birth: format('yyyy-MM-dd', birth.toISOString()),
+							birth: startOfDay(birth),
 						},
 					},
 					select: selectPrisma,
