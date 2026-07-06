@@ -44,12 +44,12 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				informacoes_veiculo: {
 					marca: string;
 					modelo: string;
-					ano: string;
+					ano: string | null;
 					ano_modelo: string;
 					cor: string;
 					chassi: string;
 					motor: string;
-					municipio: string;
+					municipio: string | null;
 					uf: string;
 					segmento: string;
 					sub_segmento: string;
@@ -70,10 +70,12 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				plate,
 				manufacturer: data.informacoes_veiculo.marca,
 				model: fipe?.[0]?.modelo,
-				year: data.informacoes_veiculo.ano,
+				year: Number(
+					data.informacoes_veiculo?.ano || data.informacoes_veiculo.ano_modelo,
+				),
 				yearModel: data.informacoes_veiculo.ano_modelo,
 				address: {
-					city: data.informacoes_veiculo.municipio,
+					city: data.informacoes_veiculo?.municipio ?? '',
 					uf: data.informacoes_veiculo.uf,
 				},
 				color: data.informacoes_veiculo.cor,
@@ -95,9 +97,7 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 						mes_referencia,
 					}) => ({
 						year: Number(ano_modelo),
-						value: Number(
-							valor.replace('R$ ', '').replace('.', '').replace(',', '.'),
-						),
+						value: Number.parseFloat(valor),
 						model: modelo.toLowerCase(),
 						code: codigo_fipe,
 						fuel: combustivel.toLowerCase(),
@@ -109,9 +109,6 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				),
 				chassi: data.informacoes_veiculo.chassi,
 			};
-
-			console.log(fipe);
-			console.log(response);
 
 			await ctx.cache.set(
 				cacheName,
