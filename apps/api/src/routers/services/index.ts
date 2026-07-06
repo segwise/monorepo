@@ -34,6 +34,29 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesPayments(base);
 
 	registerRoutersServicesWebhooks(base);
+
+	base.get('/test', async (ctx) => {
+		const results = await ctx.database.safe.findMany({
+			where: {
+				insured: {
+					name: {
+						search: 'requim',
+					},
+				},
+			},
+			select: {
+				insured: {
+					select: {
+						cpf: true,
+						cnpj: true,
+						birth: true,
+					},
+				},
+			},
+		});
+
+		return ctx.json(results, 200);
+	});
 }
 
 export { registerRoutersServices };
