@@ -322,6 +322,10 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 		async (ctx) => {
 			const { registration, birth } = ctx.req.valid('query');
 
+			const birthUtc = new Date(
+				Date.UTC(birth.getFullYear(), birth.getMonth(), birth.getDate()),
+			);
+
 			const [safes, count] = await ctx.database.$transaction([
 				ctx.database.safe.findMany({
 					where: {
@@ -334,7 +338,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 									cnpj: registration,
 								},
 							],
-							// birth: startOfDay(birth),
+							birth: birthUtc,
 						},
 					},
 					select: selectPrisma,
