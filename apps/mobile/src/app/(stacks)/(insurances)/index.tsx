@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { maskCNPJ, maskCPF, maskDateString } from '@segwise/core/masks';
 import { SchemaSearchParamsSafeRegistration } from '@segwise/core/schemas';
 import type { SafeRegistration } from '@segwise/core/types';
-import { isCNPJ } from '@segwise/core/valids';
+import { isCPF } from '@segwise/core/valids';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -151,7 +151,9 @@ function InsurancesScreen() {
 								placeholder='CPF OU CNPJ'
 								onChangeText={(value) =>
 									field.onChange(
-										isCNPJ(value) ? maskCNPJ(value) : maskCPF(value),
+										isCPF(value) && value.length >= 11
+											? maskCPF(value)
+											: maskCNPJ(value),
 									)
 								}
 								keyboardAppearance='dark'
