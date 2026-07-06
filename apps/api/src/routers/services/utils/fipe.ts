@@ -63,13 +63,13 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 
 			const fipe = data.fipe.sort(
 				(a, b) => Number(a.similaridade) - Number(b.similaridade),
-			)[0];
+			);
 
 			const response = {
-				code: fipe?.codigo_fipe,
+				code: fipe?.[0]?.codigo_fipe,
 				plate,
 				manufacturer: data.informacoes_veiculo.marca,
-				model: fipe?.modelo,
+				model: fipe?.[0]?.modelo,
 				year: data.informacoes_veiculo.ano,
 				yearModel: data.informacoes_veiculo.ano_modelo,
 				address: {
@@ -78,39 +78,40 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				},
 				color: data.informacoes_veiculo.cor,
 				exchage:
-					fipe?.modelo.toLowerCase().includes('automático') ||
-					fipe?.modelo.toLowerCase().includes('automatico') ||
-					fipe?.modelo.toLowerCase().includes('auto.') ||
-					fipe?.modelo.toLowerCase().includes('aut.')
+					fipe?.[0]?.modelo.toLowerCase().includes('automático') ||
+					fipe?.[0]?.modelo.toLowerCase().includes('automatico') ||
+					fipe?.[0]?.modelo.toLowerCase().includes('auto.') ||
+					fipe?.[0]?.modelo.toLowerCase().includes('aut.')
 						? 'Automático'
 						: 'Manual',
 				fuel: data.informacoes_veiculo.combustivel,
-				fipe: data.fipe
-					.sort((a, b) => Number(a.similaridade) - Number(b.similaridade))
-					.map(
-						({
-							ano_modelo,
-							valor,
-							modelo,
-							codigo_fipe,
-							combustivel,
-							mes_referencia,
-						}) => ({
-							year: Number(ano_modelo),
-							value: Number(
-								valor.replace('R$ ', '').replace('.', '').replace(',', '.'),
-							),
-							model: modelo.toLowerCase(),
-							code: codigo_fipe,
-							fuel: combustivel.toLowerCase(),
-							reference: parse(mes_referencia, "MMMM 'de' yyyy", new Date(), {
-								locale: ptBR,
-							}),
-							score: 0,
+				fipe: fipe.map(
+					({
+						ano_modelo,
+						valor,
+						modelo,
+						codigo_fipe,
+						combustivel,
+						mes_referencia,
+					}) => ({
+						year: Number(ano_modelo),
+						value: Number(
+							valor.replace('R$ ', '').replace('.', '').replace(',', '.'),
+						),
+						model: modelo.toLowerCase(),
+						code: codigo_fipe,
+						fuel: combustivel.toLowerCase(),
+						reference: parse(mes_referencia, "MMMM 'de' yyyy", new Date(), {
+							locale: ptBR,
 						}),
-					),
+						score: 0,
+					}),
+				),
 				chassi: data.informacoes_veiculo.chassi,
 			};
+
+			console.log(fipe);
+			console.log(response);
 
 			await ctx.cache.set(
 				cacheName,
