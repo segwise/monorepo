@@ -326,7 +326,14 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				ctx.database.safe.findMany({
 					where: {
 						insured: {
-							cpf: registration,
+							OR: [
+								{
+									cpf: registration,
+								},
+								{
+									cnpj: registration,
+								},
+							],
 							birth: {
 								lte: birth,
 								gte: birth,
