@@ -14,6 +14,7 @@ const SchemaEnvironment = z.object({
 	RESEND_API_KEY: z.string('RESEND_API_KEY inválido'),
 	APIPLACAS_TOKEN: z.string('APIPLACAS_TOKEN inválido'),
 	CPFCNPJ_TOKEN: z.string('CPFCNPJ_TOKEN inválido'),
+	PLACA_FIPE_TOKEN: z.string('PLACA_FIPE_TOKEN inválido'),
 	AMOUNT_SEARCH_VEHICLE_COMPLETE: z.coerce.number(
 		'AMOUNT_SEARCH_VEHICLE_COMPLETE inválido',
 	),

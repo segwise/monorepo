@@ -2,10 +2,7 @@ import { parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import xior, { XiorError } from 'xior';
 import type { Server } from '@/@types/server';
-import { FipeService } from '@/controllers/fipe';
 import { environment } from '@/libraries/environment';
-
-const fipeService = new FipeService();
 
 const CACHE_KEY = (plate: string) => `fipe-plates:${plate}`;
 
@@ -13,7 +10,7 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 	const base = server.basePath('/fipe');
 
 	base.get('/:plate{^[A-Za-z]{3}[0-9][A-Za-z0-9][0-9]{2}$}', async (ctx) => {
-		const plate = ctx.req.param('plate');
+		const plate = ctx.req.param('plate').toLowerCase();
 
 		const cacheName = CACHE_KEY(plate);
 
@@ -26,82 +23,93 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				return ctx.json(data, 200);
 			}
 
-			const { data } = await xior.get(
-				`https://wdapi2.com.br/consulta/${plate}/${environment.APIPLACAS_TOKEN}`,
+			const { data } = await xior.get<{
+				codigo: number;
+				msg: string;
+				fipe: Array<{
+					similaridade: string;
+					correspondencia: string;
+					marca: string;
+					modelo: string;
+					ano_modelo: number;
+					codigo_fipe: string;
+					codigo_marca: string;
+					codigo_modelo: string;
+					mes_referencia: string;
+					combustivel: string;
+					valor: string;
+					desvalorizometro: string;
+					unidade_valor: string;
+				}>;
+				informacoes_veiculo: {
+					marca: string;
+					modelo: string;
+					ano: string;
+					ano_modelo: string;
+					cor: string;
+					chassi: string;
+					motor: string;
+					municipio: string;
+					uf: string;
+					segmento: string;
+					sub_segmento: string;
+					placa: string;
+					cilindradas: string;
+					combustivel: string;
+				};
+			}>(
+				`https://api.placafipe.com.br/getplacafipe/${plate}/${environment.PLACA_FIPE_TOKEN}`,
 			);
 
-			if (data?.detail?.toLowerCase().includes('erro')) {
-				throw new Error(data.detail);
-			}
-
-			let brand = data.marca.toLowerCase();
-
-			if (brand === 'chev') {
-				brand = 'chevrolet';
-			}
-
-			const querySearch = {
-				model: `${data?.extra?.modelo ?? data.modelo} `
-					.replaceAll('/', ' / ')
-					.replaceAll(' 16 ', ' 1.6 ')
-					.toLowerCase()
-					.trim(),
-				modelYear: Number(data.anoModelo),
-				manufacturer: brand,
-			};
-
-			let fipe = null;
-
-			try {
-				fipe = await fipeService.findByPlateData(querySearch, 'cars');
-			} catch {
-				try {
-					fipe = await fipeService.findByPlateData(querySearch, 'motorcycles');
-				} catch {
-					fipe = await fipeService.findByPlateData(querySearch, 'trucks');
-				}
-			}
+			const fipe = data.fipe.sort(
+				(a, b) => Number(a.similaridade) - Number(b.similaridade),
+			)[0];
 
 			const response = {
-				code: data.fipe.dados[0]?.codigo_fipe,
+				code: fipe?.codigo_fipe,
 				plate,
-				manufacturer: data.marca,
-				model: fipe?.details?.[0]?.model.toLowerCase() ?? querySearch.model,
-				year: data.ano,
-				yearModel: data.anoModelo,
+				manufacturer: data.informacoes_veiculo.marca,
+				model: fipe?.modelo,
+				year: data.informacoes_veiculo.ano,
+				yearModel: data.informacoes_veiculo.ano_modelo,
 				address: {
-					city: data.municipio,
-					uf: data.uf,
+					city: data.informacoes_veiculo.municipio,
+					uf: data.informacoes_veiculo.uf,
 				},
-				color: data.cor,
+				color: data.informacoes_veiculo.cor,
 				exchage:
-					data.fipe.dados?.[0]?.texto_modelo
-						.toLowerCase()
-						.includes('automático') ||
-					data.fipe.dados?.[0]?.texto_modelo
-						.toLowerCase()
-						.includes('automatico') ||
-					data.fipe.dados?.[0]?.texto_modelo.toLowerCase().includes('auto.') ||
-					data.fipe.dados?.[0]?.texto_modelo.toLowerCase().includes('aut.')
+					fipe?.modelo.toLowerCase().includes('automático') ||
+					fipe?.modelo.toLowerCase().includes('automatico') ||
+					fipe?.modelo.toLowerCase().includes('auto.') ||
+					fipe?.modelo.toLowerCase().includes('aut.')
 						? 'Automático'
 						: 'Manual',
-				fuel: data.extra?.combustivel || 'Gasolina',
-				fipe: fipe.details.map(
-					({ modelYear, price, model, codeFipe, fuel, referenceMonth }) => ({
-						year: Number(modelYear),
-						value: Number(
-							price.replace('R$ ', '').replace('.', '').replace(',', '.'),
-						),
-						model: model.toLowerCase(),
-						code: codeFipe,
-						fuel: fuel.toLowerCase() || 'Gasolina',
-						reference: parse(referenceMonth, "MMMM 'de' yyyy", new Date(), {
-							locale: ptBR,
+				fuel: data.informacoes_veiculo.combustivel,
+				fipe: data.fipe
+					.sort((a, b) => Number(a.similaridade) - Number(b.similaridade))
+					.map(
+						({
+							ano_modelo,
+							valor,
+							modelo,
+							codigo_fipe,
+							combustivel,
+							mes_referencia,
+						}) => ({
+							year: Number(ano_modelo),
+							value: Number(
+								valor.replace('R$ ', '').replace('.', '').replace(',', '.'),
+							),
+							model: modelo.toLowerCase(),
+							code: codigo_fipe,
+							fuel: combustivel.toLowerCase(),
+							reference: parse(mes_referencia, "MMMM 'de' yyyy", new Date(), {
+								locale: ptBR,
+							}),
+							score: 0,
 						}),
-						score: 0,
-					}),
-				),
-				chassi: data.chassi,
+					),
+				chassi: data.informacoes_veiculo.chassi,
 			};
 
 			await ctx.cache.set(
