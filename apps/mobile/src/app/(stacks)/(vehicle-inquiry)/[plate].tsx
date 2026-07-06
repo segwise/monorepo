@@ -151,7 +151,9 @@ function VehicleInquiryPlateScreen() {
 								</Text>
 							</View>
 							<Text className='text-sm font-medium text-muted-foreground'>
-								{capitalizeFirstLetters(data.address.city)} /{' '}
+								{data.address.city
+									? `${capitalizeFirstLetters(data.address.city)} / `
+									: ''}
 								{data.address.uf.toUpperCase()}
 							</Text>
 						</View>
@@ -218,32 +220,36 @@ function VehicleInquiryPlateScreen() {
 						readOnly
 						value={data.color}
 					/>
-					<Input
-						label='Combustível'
-						placeholder='Combustível'
-						className='uppercase'
-						autoCapitalize='characters'
-						autoComplete='off'
-						autoCorrect={false}
-						keyboardAppearance='dark'
-						returnKeyLabel='Próximo'
-						enablesReturnKeyAutomatically
-						readOnly
-						value={data.fuel}
-					/>
-					<Input
-						label='Chassi'
-						placeholder='Chassi'
-						className='uppercase'
-						autoCapitalize='characters'
-						autoComplete='off'
-						autoCorrect={false}
-						keyboardAppearance='dark'
-						returnKeyLabel='Próximo'
-						enablesReturnKeyAutomatically
-						readOnly
-						value={data.chassi}
-					/>
+					{data.fuel && (
+						<Input
+							label='Combustível'
+							placeholder='Combustível'
+							className='uppercase'
+							autoCapitalize='characters'
+							autoComplete='off'
+							autoCorrect={false}
+							keyboardAppearance='dark'
+							returnKeyLabel='Próximo'
+							enablesReturnKeyAutomatically
+							readOnly
+							value={data.fuel}
+						/>
+					)}
+					{data.chassi && (
+						<Input
+							label='Chassi'
+							placeholder='Chassi'
+							className='uppercase'
+							autoCapitalize='characters'
+							autoComplete='off'
+							autoCorrect={false}
+							keyboardAppearance='dark'
+							returnKeyLabel='Próximo'
+							enablesReturnKeyAutomatically
+							readOnly
+							value={data.chassi}
+						/>
+					)}
 					<Input
 						label='Município / UF'
 						placeholder='Município / UF'
@@ -255,7 +261,7 @@ function VehicleInquiryPlateScreen() {
 						returnKeyLabel='Próximo'
 						enablesReturnKeyAutomatically
 						readOnly
-						value={`${data.address.city} - ${data.address.uf}`}
+						value={`${data.address.city ? `${data.address.city} - ` : ''}${data.address.uf}`}
 					/>
 				</View>
 				<Separator />
