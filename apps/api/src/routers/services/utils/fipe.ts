@@ -62,7 +62,7 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 			);
 
 			const fipe = data.fipe.sort(
-				(a, b) => Number(a.similaridade) - Number(b.similaridade),
+				(a, b) => Number(b.similaridade) - Number(a.similaridade),
 			);
 
 			const response = {
