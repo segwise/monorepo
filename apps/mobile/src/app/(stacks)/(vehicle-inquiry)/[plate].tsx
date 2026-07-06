@@ -325,32 +325,35 @@ function VehicleInquiryPlateScreen() {
 													fuel: string;
 													reference: string;
 												}>
-											).map((item) => (
-												<Pressable
-													key={item.code}
-													className='flex-row items-center gap-3 px-3 py-2'
-												>
-													<View className='flex-1 min-w-0'>
-														<Text className='text-[13px] font-bold text-black'>
-															{capitalizeFirstLetters(item.model)}
-														</Text>
-														<Text className='text-xs text-slate-500 mt-0.5'>
-															{item.year} · {capitalizeFirstLetters(item.fuel)}
-														</Text>
-													</View>
-													<View className='items-end'>
-														<Text className='text-[13px] font-bold text-black'>
-															{new Intl.NumberFormat('pt-BR', {
-																style: 'currency',
-																currency: 'BRL',
-															}).format(item.value)}
-														</Text>
-														<Text className='text-xs text-slate-500 mt-0.5'>
-															Código FIPE: {item.code}
-														</Text>
-													</View>
-												</Pressable>
-											))}
+											)
+												.slice(1)
+												.map((item) => (
+													<Pressable
+														key={item.code}
+														className='flex-row items-center gap-3 px-3 py-2'
+													>
+														<View className='flex-1 min-w-0'>
+															<Text className='text-[13px] font-bold text-black'>
+																{capitalizeFirstLetters(item.model)}
+															</Text>
+															<Text className='text-xs text-slate-500 mt-0.5'>
+																{item.year} ·{' '}
+																{capitalizeFirstLetters(item.fuel)}
+															</Text>
+														</View>
+														<View className='items-end'>
+															<Text className='text-[13px] font-bold text-black'>
+																{new Intl.NumberFormat('pt-BR', {
+																	style: 'currency',
+																	currency: 'BRL',
+																}).format(item.value)}
+															</Text>
+															<Text className='text-xs text-slate-500 mt-0.5'>
+																Código FIPE: {item.code}
+															</Text>
+														</View>
+													</Pressable>
+												))}
 										</View>
 									</CollapsibleContent>
 								</Collapsible>
