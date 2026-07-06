@@ -48,6 +48,7 @@ function serializer(
 		requestedAt: props.requestedAt,
 		modality: props.modality,
 		status: props.status,
+		franchise: props.franchise?.toNumber(),
 	} satisfies SafeSimple;
 }
 
