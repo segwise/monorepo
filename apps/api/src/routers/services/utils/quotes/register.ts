@@ -84,6 +84,7 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 
 				await ctx.database.$transaction(async (transaction) => {
 					const temporaryInsured = await transaction.temporaryInsured.upsert({
+						// @ts-expect-error
 						where: {
 							...(isCPF(insured.registration) && {
 								brokerId_cpf: {
