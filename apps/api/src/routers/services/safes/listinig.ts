@@ -405,8 +405,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				relationLoadStrategy: 'join',
 			});
 
-			console.log(safe);
-
 			if (!safe) {
 				return ctx.json(
 					{
