@@ -148,7 +148,6 @@ model TemporaryInsured {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@unique([brokerId, cpf])
   @@index([name])
   @@index([phone])
   @@index([cpf])
@@ -630,7 +629,6 @@ model PaymentPayerAndReceiver {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@unique([id])
   @@map("payment_payers")
 }
 
