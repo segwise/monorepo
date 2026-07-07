@@ -924,7 +924,7 @@ async function migrationById(id: string) {
 								driverName: vehicle.conductor?.name ?? null,
 								driverPhone: null,
 								vehicleWithoutPlate: {
-									create: {
+									update: {
 										model: vehicle.model,
 										modelYear: vehicle.model_year,
 										exchange: mapExchange(vehicle.exchange),
