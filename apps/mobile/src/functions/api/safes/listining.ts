@@ -40,17 +40,17 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 
 	return {
 		...data,
-		data: data.data.sort((a, b) =>
-			compareAsc(
-				endOfDay(toDate(a.expiration)),
-				endOfDay(toDate(b.expiration)),
-			),
-		),
+		data: data.data
+			.sort((a, b) =>
+				compareAsc(
+					endOfDay(toDate(a.expiration)),
+					endOfDay(toDate(b.expiration)),
+				),
+			)
+			.filter((e) => e.status === 'active')
+			.filter((e) => endOfDay(toDate(e.expiration)) >= new Date()),
 	};
 }
-
-// .filter((e) => e.status === 'active')
-// .filter((e) => endOfDay(parseISO(e.expiration as string)) >= new Date())
 
 async function safesListiningRegistration({
 	registration,
