@@ -340,6 +340,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 							],
 							birth: birthUtc,
 						},
+						isExternal: false,
 						status: StatusSafe.active,
 						expiration: {
 							gte: new Date(),
