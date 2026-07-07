@@ -372,7 +372,8 @@ async function migration() {
 						? {
 								safeVehicle: {
 									create: {
-										plate: vehicle.plate?.toUpperCase() ?? null,
+										plate:
+											vehicle.plate?.toLowerCase().replace('-', '') ?? null,
 										// biome-ignore lint/suspicious/noExplicitAny: usage
 										usage: vehicleUse as any,
 										overnightPostalCode,
@@ -533,7 +534,7 @@ async function migrationUpdater() {
 					? {
 							safeVehicle: {
 								update: {
-									plate: vehicle.plate?.toUpperCase() ?? null,
+									plate: vehicle.plate?.toLowerCase().replace('-', '') ?? null,
 									// biome-ignore lint/suspicious/noExplicitAny: usage
 									usage: vehicleUse as any,
 									overnightPostalCode,
@@ -582,7 +583,7 @@ async function migrationUpdater() {
 					? {
 							safeVehicle: {
 								create: {
-									plate: vehicle.plate?.toUpperCase() ?? null,
+									plate: vehicle.plate?.toLowerCase().replace('-', '') ?? null,
 									// biome-ignore lint/suspicious/noExplicitAny: usage
 									usage: vehicleUse as any,
 									overnightPostalCode,
@@ -726,7 +727,7 @@ async function migrationRecent() {
 					? {
 							safeVehicle: {
 								update: {
-									plate: vehicle.plate?.toUpperCase() ?? null,
+									plate: vehicle.plate?.toLowerCase().replace('-', '') ?? null,
 									// biome-ignore lint/suspicious/noExplicitAny: usage
 									usage: vehicleUse as any,
 									overnightPostalCode,
@@ -775,7 +776,7 @@ async function migrationRecent() {
 					? {
 							safeVehicle: {
 								create: {
-									plate: vehicle.plate?.toUpperCase() ?? null,
+									plate: vehicle.plate?.toLowerCase().replace('-', '') ?? null,
 									// biome-ignore lint/suspicious/noExplicitAny: usage
 									usage: vehicleUse as any,
 									overnightPostalCode,
@@ -915,7 +916,7 @@ async function migrationById(id: string) {
 				? {
 						safeVehicle: {
 							update: {
-								plate: vehicle.plate?.toUpperCase() ?? null,
+								plate: vehicle.plate?.toLowerCase().replace('-', '') ?? null,
 								// biome-ignore lint/suspicious/noExplicitAny: usage
 								usage: vehicleUse as any,
 								overnightPostalCode,
@@ -964,7 +965,7 @@ async function migrationById(id: string) {
 				? {
 						safeVehicle: {
 							create: {
-								plate: vehicle.plate?.toUpperCase() ?? null,
+								plate: vehicle.plate?.toLowerCase().replace('-', '') ?? null,
 								// biome-ignore lint/suspicious/noExplicitAny: usage
 								usage: vehicleUse as any,
 								overnightPostalCode,
