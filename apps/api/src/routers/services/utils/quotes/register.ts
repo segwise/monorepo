@@ -99,7 +99,14 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 								},
 							}),
 						},
-						data: {
+						update: {
+							name: insured?.name as string,
+							phone: insured?.phone as string,
+							...(insured?.maritalStatus && {
+								maritalStatus: insured?.maritalStatus,
+							}),
+						},
+						create: {
 							broker: {
 								connect: {
 									id: brokerId,
