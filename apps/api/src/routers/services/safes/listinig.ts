@@ -391,6 +391,9 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 							plate: plateFormatter,
 						},
 						{
+							plate: plateFormatter.toUpperCase(),
+						},
+						{
 							vehicle: {
 								OR: [
 									{
@@ -398,6 +401,12 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 									},
 									{
 										plateAlternative: plateFormatter,
+									},
+									{
+										plate: plateFormatter.toUpperCase(),
+									},
+									{
+										plateAlternative: plateFormatter.toUpperCase(),
 									},
 								],
 							},

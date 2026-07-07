@@ -55,6 +55,8 @@ function registerRoutersServices(server: Server) {
 		});
 
 		for (const result of results) {
+			const index = results.indexOf(result);
+
 			await ctx.database.safe.update({
 				where: {
 					id: result.id,
@@ -67,6 +69,8 @@ function registerRoutersServices(server: Server) {
 					},
 				},
 			});
+
+			console.log(results.length, index);
 		}
 
 		return ctx.json(
