@@ -83,7 +83,21 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 				let safe = null;
 
 				await ctx.database.$transaction(async (transaction) => {
-					const temporaryInsured = await transaction.temporaryInsured.create({
+					const temporaryInsured = await transaction.temporaryInsured.upsert({
+						where: {
+							...(isCPF(insured.registration) && {
+								brokerId_cpf: {
+									brokerId,
+									cpf: insured.registration,
+								},
+							}),
+							...(isCNPJ(insured.registration) && {
+								brokerId_cnpj: {
+									brokerId,
+									cnpj: insured.registration,
+								},
+							}),
+						},
 						data: {
 							broker: {
 								connect: {

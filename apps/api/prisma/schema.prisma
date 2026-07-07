@@ -149,6 +149,7 @@ model TemporaryInsured {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique([brokerId, cpf])
+  @@unique([brokerId, cnpj])
   @@index([name])
   @@index([phone])
   @@index([cpf])
