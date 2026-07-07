@@ -8,7 +8,7 @@ import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
 import { serializer } from '@/db-serializers/safe/simple';
-import { type Prisma, Role } from '@/generated/prisma/client';
+import { type Prisma, Role, StatusSafe } from '@/generated/prisma/client';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 
 function registerRoutersServicesSafesSimpleListining(server: Server) {
@@ -340,6 +340,11 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 								},
 							],
 							birth: birthUtc,
+						},
+						isExternal: false,
+						status: StatusSafe.active,
+						expiration: {
+							lte: new Date(),
 						},
 					},
 					select: selectPrisma,
