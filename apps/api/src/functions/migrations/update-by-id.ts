@@ -817,6 +817,8 @@ async function migrationById(id: string) {
 		`${OLD_API_BASE}/safes/${id}`,
 	);
 
+	console.log(oldSafe);
+
 	const insuranceCompanyId = INSURER_MAP[oldSafe.insurer];
 	if (!insuranceCompanyId) {
 	}
