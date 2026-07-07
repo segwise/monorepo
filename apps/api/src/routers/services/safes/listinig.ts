@@ -318,6 +318,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					}),
 				}),
 			),
+			(ctx) => console.log(ctx),
 		),
 		async (ctx) => {
 			const { registration, birth } = ctx.req.valid('query');
@@ -392,24 +393,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						},
 						{
 							plate: plateFormatter.toUpperCase(),
-						},
-						{
-							vehicle: {
-								OR: [
-									{
-										plate: plateFormatter,
-									},
-									{
-										plateAlternative: plateFormatter,
-									},
-									{
-										plate: plateFormatter.toUpperCase(),
-									},
-									{
-										plateAlternative: plateFormatter.toUpperCase(),
-									},
-								],
-							},
 						},
 					],
 				},
