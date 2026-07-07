@@ -6,7 +6,7 @@ import {
 	translateVehicleUsage,
 } from '@segwise/core';
 import type { QuotePrint } from '@segwise/core/types';
-import { parseISO } from 'date-fns';
+import { format, parseISO, toDate } from 'date-fns';
 import hbs from 'handlebars';
 import { PDFDocument } from 'pdf-lib';
 import type { Server } from '@/@types/server.d';
@@ -655,10 +655,13 @@ async function compile(
 
 	return hbs.compile(htmlText)({
 		validity: quote.expiration
-			? new Intl.DateTimeFormat('pt-BR').format(
-					typeof quote.expiration === 'string'
-						? parseISO(quote.expiration)
-						: quote.expiration,
+			? format(
+					toDate(
+						quote.expiration instanceof Date
+							? quote.expiration
+							: parseISO(quote.expiration),
+					),
+					'dd/MM/yyyy',
 				)
 			: undefined,
 		type: quote.renewal ? 'renovação' : 'seguro novo',
