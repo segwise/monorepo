@@ -34,6 +34,48 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesPayments(base);
 
 	registerRoutersServicesWebhooks(base);
+
+	base.get('/test', async (ctx) => {
+		const results = await ctx.database.safe.findMany({
+			where: {
+				safeVehicle: {
+					plate: {
+						not: null,
+					},
+				},
+			},
+			select: {
+				id: true,
+				safeVehicle: {
+					select: {
+						plate: true,
+					},
+				},
+			},
+		});
+
+		for (const result of results) {
+			await ctx.database.safe.update({
+				where: {
+					id: result.id,
+				},
+				data: {
+					safeVehicle: {
+						update: {
+							plate: result.safeVehicle?.plate?.toLowerCase().replace('-', ''),
+						},
+					},
+				},
+			});
+		}
+
+		return ctx.json(
+			{
+				ok: true,
+			},
+			200,
+		);
+	});
 }
 
 export { registerRoutersServices };
