@@ -45,12 +45,15 @@ function SelectValue({
 function SelectTrigger({
 	ref,
 	className,
+	classNameRoot,
 	children,
 	label,
 	size = 'default',
+	disabled,
 	...props
 }: SelectPrimitive.TriggerProps &
 	React.RefAttributes<SelectPrimitive.TriggerRef> & {
+		classNameRoot?: string;
 		children?: React.ReactNode;
 		size?: 'default' | 'sm';
 		label?: string;
@@ -59,10 +62,10 @@ function SelectTrigger({
 	const { width } = useWindowDimensions();
 
 	return (
-		<View className='relative'>
+		<View className={cn('relative', classNameRoot)}>
 			{label && (
 				<Label
-					classNameRoot='absolute left-4 -top-1.5 z-10 bg-background px-1'
+					classNameRoot={cn('absolute left-4 -top-1.5 z-10 bg-background px-1')}
 					className='leading-none'
 				>
 					{label}
@@ -76,10 +79,10 @@ function SelectTrigger({
 					Platform.select({
 						web: 'focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:hover:bg-input/50 w-fit whitespace-nowrap text-sm outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:shrink-0',
 					}),
-					props.disabled && 'opacity-50',
 					size === 'sm' && 'h-8 py-2 sm:py-1.5',
 					className,
 				)}
+				disabled={disabled}
 				{...props}
 			>
 				{children}

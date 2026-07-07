@@ -10,14 +10,16 @@ import { Label } from './label';
 
 function Input({
 	className,
+	classNameRoot,
 	label,
 	...props
 }: TextInputProps &
 	React.RefAttributes<TextInput> & {
 		label?: string;
+		classNameRoot?: string;
 	}) {
 	return (
-		<View className='relative'>
+		<View className={cn('relative', classNameRoot)}>
 			{label && (
 				<Label
 					classNameRoot='absolute left-4 -top-1.5 z-10 bg-background px-1'
