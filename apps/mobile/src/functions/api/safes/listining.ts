@@ -36,16 +36,16 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 
 	return {
 		...data,
-		data: data.data
-			.sort(
-				(a, b) =>
-					// @ts-expect-error
-					endOfDay(parseISO(a.expiration)) - endOfDay(parseISO(b.expiration)),
-			)
-			.filter((e) => e.status === 'active')
-			.filter((e) => endOfDay(parseISO(e.expiration as string)) >= new Date()),
+		data: data.data.sort(
+			(a, b) =>
+				// @ts-expect-error
+				endOfDay(parseISO(a.expiration)) - endOfDay(parseISO(b.expiration)),
+		),
 	};
 }
+
+// .filter((e) => e.status === 'active')
+// .filter((e) => endOfDay(parseISO(e.expiration as string)) >= new Date())
 
 async function safesListiningRegistration({
 	registration,
