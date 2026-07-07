@@ -70,7 +70,7 @@ function registerRoutersServices(server: Server) {
 				},
 			});
 
-			console.log(results.length, index);
+			console.log(results.length, index + 1);
 		}
 
 		return ctx.json(
