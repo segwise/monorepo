@@ -344,7 +344,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						isExternal: false,
 						status: StatusSafe.active,
 						expiration: {
-							lt: new Date(),
+							gte: new Date(),
 						},
 					},
 					select: selectPrisma,
