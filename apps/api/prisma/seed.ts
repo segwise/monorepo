@@ -1821,6 +1821,51 @@ const insuranceCompaniesSeed = [
 			},
 		],
 	},
+	{
+		name: 'akad seguros a.a',
+		image:
+			'https://akadseguros.com.br/content/uploads/2023/07/logo-icone-rosa-akad.png',
+		short_name: 'AKAD Seguradora',
+		registration: '14868712000131',
+		created_at: '2023-12-05T02:38:46.183Z',
+		assistance_contacts: [
+			{
+				description: 'central 24h',
+				contacts: [
+					{
+						value: '551151962523',
+						whatsapp: true,
+						region: 'all_regions',
+					},
+					{
+						value: '08007772746',
+						whatsapp: true,
+						region: 'all_regions',
+					},
+				],
+			},
+			{
+				description: 'assistências e sinistros',
+				contacts: [
+					{
+						value: '08009422746',
+						whatsapp: null,
+						region: 'all_regions',
+					},
+				],
+			},
+			{
+				description: 'sac',
+				contacts: [
+					{
+						value: '40001246',
+						whatsapp: null,
+						region: 'all_regions',
+					},
+				],
+			},
+		],
+	},
 ];
 
 async function seed() {
