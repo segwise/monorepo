@@ -93,7 +93,9 @@ function RequestQuoteVehicle() {
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaQuoteSimpleCustomRegister),
 		defaultValues: {
-			referral,
+			...(!isCompany && {
+				referral,
+			}),
 			// @ts-expect-error
 			type,
 			insured: {

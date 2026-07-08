@@ -133,7 +133,9 @@ function RequestQuoteVehicle() {
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaQuoteSimpleRegister),
 		defaultValues: {
-			referral,
+			...(!isCompany && {
+				referral,
+			}),
 			modality: 'vehicle',
 			vehicleWithLicensePlate: true,
 			...(iHaveInsurance && {
