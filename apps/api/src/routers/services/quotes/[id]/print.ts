@@ -33,12 +33,14 @@ const htmlText = `
           de seguro veicular
         </h1>
         <div class='flex flex-col gap-2 leading-tight text-right text-xs'>
-          <span class='uppercase font-extrabold text-black leading-tight'>
-            indicação:
-            <span class='underline text-[20px] font-bold'>
-              {{producer}}
+          {{#if producer}}
+            <span class='uppercase font-extrabold text-black leading-tight'>
+              indicação:
+              <span class='underline text-[20px] font-bold'>
+                {{producer}}
+              </span>
             </span>
-          </span>
+          {{/if}}
           <span class='uppercase font-extrabold text-black leading-tight'>
             data:
             <span class='font-normal'>{{created_at}}</span>
@@ -759,9 +761,9 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 			...(!!quote.producer && {
 				producer: quote.producer.name,
 			}),
-			...(!quote.producer && {
-				producer: 'SEGWISE',
-			}),
+			// ...(!quote.producer && {
+			// 	producer: 'SEGWISE',
+			// }),
 			...(!!quote.insuranceCompany && {
 				insuranceCompany: {
 					name: quote.insuranceCompany.name,
