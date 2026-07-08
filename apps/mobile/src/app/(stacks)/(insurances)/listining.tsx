@@ -135,6 +135,12 @@ function Item(props: SafeSimple) {
 						value={props.vehicle.driver.name.toUpperCase()}
 					/>
 				)}
+				{props.vehicle?.model && (
+					<List
+						label='MODELO / ANO'
+						value={`${props.vehicle.model.toUpperCase()} - ${props.vehicle.modelYear}`}
+					/>
+				)}
 				{props.vehicle?.plate && (
 					<List label='PLACA' value={maskPlate(props.vehicle.plate)} />
 				)}
@@ -145,12 +151,6 @@ function Item(props: SafeSimple) {
 						"dd/MM/yyyy 'ás' HH:mm'h'",
 					).toUpperCase()}
 				/>
-				{props.vehicle?.model && (
-					<List
-						label='MODELO / ANO'
-						value={`${props.vehicle.model.toUpperCase()} - ${props.vehicle.modelYear}`}
-					/>
-				)}
 				<List
 					label='USO DO VEÍCULO'
 					value={translateVehicleUsage(
@@ -239,54 +239,49 @@ function InsurancesListiningScreen() {
 	}, [data?.data.length]);
 
 	return (
-		<ScrollView showsVerticalScrollIndicator={false}>
-			<View
-				className='p-4'
-				style={{
-					marginBottom: bottom + 20,
-				}}
-			>
-				<View className='flex-row items-center justify-between'>
-					<Text
-						allowFontScaling={false}
-						accessible={false}
-						className='text-xl font-medium'
+		<View className='pt-4 px-4 flex-1'>
+			<View className='flex-row items-center justify-between'>
+				<Text
+					allowFontScaling={false}
+					accessible={false}
+					className='text-xl font-medium'
+				>
+					Seguros:{' '}
+					<Text className='font-extrabold'>{data?.data.length || 0}</Text>
+				</Text>
+				<TouchableOpacity onPress={() => push('/(stacks)/(insurances)')}>
+					<View
+						className={cn(
+							'flex-row items-center justify-end bg-primary rounded px-3 py-2',
+							isCompany && 'bg-primary-xcar',
+						)}
 					>
-						Seguros:{' '}
-						<Text className='font-extrabold'>{data?.data.length || 0}</Text>
-					</Text>
-					<TouchableOpacity onPress={() => push('/(stacks)/(insurances)')}>
-						<View
-							className={cn(
-								'flex-row items-center justify-end bg-primary rounded px-3 py-2',
-								isCompany && 'bg-primary-xcar',
-							)}
+						<Text
+							allowFontScaling={false}
+							accessible={false}
+							className='text-sm text-white font-semibold mr-2 uppercase'
 						>
-							<Text
-								allowFontScaling={false}
-								accessible={false}
-								className='text-sm text-white font-semibold mr-2 uppercase'
-							>
-								Buscar
-							</Text>
-							<SymbolView
-								name={{
-									ios: 'magnifyingglass',
-									android: 'search',
-								}}
-								size={18}
-								tintColor='#FFFFFF'
-							/>
-						</View>
-					</TouchableOpacity>
-				</View>
-				<View className='gap-y-4 mt-4 mb-20'>
+							Buscar
+						</Text>
+						<SymbolView
+							name={{
+								ios: 'magnifyingglass',
+								android: 'search',
+							}}
+							size={18}
+							tintColor='#FFFFFF'
+						/>
+					</View>
+				</TouchableOpacity>
+			</View>
+			<ScrollView showsVerticalScrollIndicator={false} className='mt-4'>
+				<View className='gap-y-4 mb-20'>
 					{data?.data.map((props) => (
 						<Item key={props.id} {...props} />
 					))}
 				</View>
-			</View>
-		</ScrollView>
+			</ScrollView>
+		</View>
 	);
 }
 
