@@ -91,69 +91,70 @@ function InsuranceCompaniesDetailsScreen() {
 										</Text>
 										<Separator className='mt-1 mb-3' />
 										<View className='gap-y-6'>
-											{contacts.map(
-												({ value, coverage, isWhatsapp }, index) => (
-													<TouchableOpacity
-														key={index.toString()}
-														className='flex-row items-center justify-between gap-x-3 pr-1'
-														onPress={() => {
-															if (isWhatsapp) {
-																Linking.openURL(`https://wa.me/${value}`);
+											{[
+												...contacts.filter((e) => !e.isWhatsapp),
+												...contacts.filter((e) => e.isWhatsapp),
+											].map(({ value, coverage, isWhatsapp }, index) => (
+												<TouchableOpacity
+													key={index.toString()}
+													className='flex-row items-center justify-between gap-x-3 pr-1'
+													onPress={() => {
+														if (isWhatsapp) {
+															Linking.openURL(`https://wa.me/${value}`);
 
-																return;
-															}
+															return;
+														}
 
-															Linking.openURL(`tel:${value}`);
+														Linking.openURL(`tel:${value}`);
+													}}
+												>
+													<View>
+														<Text
+															allowFontScaling={false}
+															accessible={false}
+															className={cn(
+																'text-base font-bold leading-none',
+																isWhatsapp && 'text-green-600',
+															)}
+														>
+															{maskPhone(
+																value.startsWith('55') ? value.slice(2) : value,
+															)}
+															{isWhatsapp && (
+																<Text
+																	allowFontScaling={false}
+																	accessible={false}
+																	className='text-xs leading-none font-medium'
+																>
+																	{' '}
+																	- Whatsapp
+																</Text>
+															)}
+														</Text>
+														<Text
+															allowFontScaling={false}
+															accessible={false}
+															className={cn(
+																'text-xs font-medium leading-none mt-1',
+																isWhatsapp && 'text-green-600',
+															)}
+														>
+															{coverage === 'all_regions'
+																? 'Todas as Regiões'
+																: 'Capitais e Regiões Metropolitanas'}
+														</Text>
+													</View>
+													<SymbolView
+														name={{
+															ios: isWhatsapp
+																? 'phone.circle.fill'
+																: 'phone.fill.arrow.up.right',
+															android: isWhatsapp ? 'message' : 'phone_in_talk',
 														}}
-													>
-														<View>
-															<Text
-																allowFontScaling={false}
-																accessible={false}
-																className={cn(
-																	'text-base font-bold leading-none',
-																	isWhatsapp && 'text-green-600',
-																)}
-															>
-																{maskPhone(value)}
-																{isWhatsapp && (
-																	<Text
-																		allowFontScaling={false}
-																		accessible={false}
-																		className='text-xs leading-none font-medium'
-																	>
-																		{' '}
-																		- Whatsapp
-																	</Text>
-																)}
-															</Text>
-															<Text
-																allowFontScaling={false}
-																accessible={false}
-																className={cn(
-																	'text-xs font-medium leading-none mt-1',
-																	isWhatsapp && 'text-green-600',
-																)}
-															>
-																{coverage === 'all_regions'
-																	? 'Todas as Regiões'
-																	: 'Capitais e Regiões Metropolitanas'}
-															</Text>
-														</View>
-														<SymbolView
-															name={{
-																ios: isWhatsapp
-																	? 'phone.circle.fill'
-																	: 'phone.fill.arrow.up.right',
-																android: isWhatsapp
-																	? 'message'
-																	: 'phone_in_talk',
-															}}
-															tintColor={isWhatsapp ? '#16a34a' : '#232323'}
-														/>
-													</TouchableOpacity>
-												),
-											)}
+														tintColor={isWhatsapp ? '#16a34a' : '#232323'}
+													/>
+												</TouchableOpacity>
+											))}
 										</View>
 									</View>
 								))}
