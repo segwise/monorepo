@@ -33,14 +33,16 @@ const htmlText = `
           de seguro veicular
         </h1>
         <div class='flex flex-col gap-2 leading-tight text-right text-xs'>
-          {{#if producer}}
-            <span class='uppercase font-extrabold text-black leading-tight'>
-              indicação:
-              <span class='underline text-[20px] font-bold'>
+          <span class='uppercase font-extrabold text-black leading-tight'>
+            indicação:
+            <span class='underline text-[20px] font-bold'>
+              {{#if producer}}
                 {{producer}}
-              </span>
+              {{else}}
+                SEM INDICAÇÃO
+              {{/if}}
             </span>
-          {{/if}}
+          </span>
           <span class='uppercase font-extrabold text-black leading-tight'>
             data:
             <span class='font-normal'>{{created_at}}</span>
