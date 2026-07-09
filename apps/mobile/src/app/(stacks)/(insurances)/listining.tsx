@@ -26,7 +26,6 @@ import { replace } from 'expo-router/build/global-state/routing';
 import { SymbolView } from 'expo-symbols';
 import { useEffect } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function List({ label, value }: { label: string; value: string }) {
 	return (
@@ -226,8 +225,6 @@ function Item(props: SafeSimple) {
 }
 
 function InsurancesListiningScreen() {
-	const { bottom } = useSafeAreaInsets();
-
 	const { data } = useSafes();
 
 	const { push } = useRouter();
