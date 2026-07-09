@@ -1,5 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsQuoteSimple } from '@segwise/core/schemas';
+import { endOfDay, startOfDay } from 'date-fns';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/quote/simple';
 import { serializer } from '@/db-serializers/quote/simple';
@@ -72,8 +73,8 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 					},
 				}),
 				requestedAt: {
-					gte: requestedAt.start,
-					lte: requestedAt.end,
+					gte: startOfDay(requestedAt.start),
+					lte: endOfDay(requestedAt.end),
 				},
 				...(!!modality && {
 					modality: {

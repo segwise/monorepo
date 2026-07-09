@@ -97,14 +97,14 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					},
 					// ...(!!effectived && {
 					// 	effectivedAt: {
-					// 		gte: effectivedAt.start,
-					// 		lte: effectivedAt.end,
+					// 		gte: startOfDay(effectivedAt.start),
+					// 		lte: endOfDay(effectivedAt.end),
 					// 	},
 					// }),
 					// ...(!effectived && {
 					// 	requestedAt: {
-					// 		gte: effectivedAt.start,
-					// 		lte: effectivedAt.end,
+					// 		gte: startOfDay(effectivedAt.start),
+					// 		lte: endOfDay(effectivedAt.end),
 					// 	},
 					// 	effectivedAt: null,
 					// }),
