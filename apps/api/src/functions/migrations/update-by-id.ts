@@ -1,6 +1,5 @@
-import { endOfDay, isSameDay, parse, subHours } from 'date-fns';
+import { endOfDay, parse, subHours } from 'date-fns';
 import xior from 'xior';
-import { cache } from '@/services/cache';
 import { database } from '@/services/database';
 
 type OldContact = {
@@ -133,10 +132,6 @@ const OLD_COMPANY_ID = '4f629317-e7a5-466f-8716-a2a0521cb459';
 const OLD_LIST_URL =
 	`${OLD_API_BASE}/safes?is_external=false&is_to_win=false&page=1` +
 	`&company=${OLD_COMPANY_ID}&order_by=desc`;
-const OLD_LIST_URL_RECENT =
-	`${OLD_API_BASE}/safes?is_external=false&is_to_win=false&page=1` +
-	`&limit=50` +
-	`&company=${OLD_COMPANY_ID}&order_by=desc`;
 
 const INSURER_MAP: Record<string, string> = {
 	'9df4e00c-2c12-448a-94a7-50949f6854eb':
@@ -236,222 +231,22 @@ async function migration() {
 	const { data: listData } = await xior.get<{
 		results: Pick<OldSafe, 'id'>[];
 	}>(OLD_LIST_URL);
+
 	const ids = listData.results.map((s) => s.id).reverse();
 
-	const report = {
-		total: ids.length,
-		success: 0,
-		skipped: 0,
-		failed: 0,
-		id_map: {} as Record<string, string>,
-		errors: [] as Array<{ old_id: string; reason: string }>,
-	};
-
-	for (const [_, id] of ids.entries()) {
-		const existing = await database.safe.findUnique({
-			where: { externalId: id },
-			select: { id: true },
-		});
-
-		if (existing) {
-			report.id_map[id] = existing.id;
-			report.skipped++;
-			continue;
-		}
-
-		let oldSafe: OldSafe;
-		try {
-			const { data } = await xior.get<OldSafe>(`${OLD_API_BASE}/safes/${id}`);
-			oldSafe = data;
-		} catch (err) {
-			report.errors.push({
-				old_id: id,
-				reason: `Falha ao buscar: ${String(err)}`,
-			});
-			report.failed++;
-			continue;
-		}
-
-		try {
-			const insuranceCompanyId = INSURER_MAP[oldSafe.insurer];
-			if (!insuranceCompanyId) {
-				report.errors.push({
-					old_id: id,
-					reason: `Seguradora não mapeada: ${oldSafe.insurer}. Rode /migration/inspect.`,
-				});
-				report.skipped++;
-				continue;
-			}
-
-			const producerId = oldSafe.producer
-				? (PRODUCER_MAP[oldSafe.producer] ?? null)
-				: null;
-
-			const cpf = oldSafe.insured.registration;
-			if (!cpf) throw new Error('Segurado sem CPF (registration).');
-
-			const phone = getPhone(oldSafe.insured.contacts);
-
-			const insured = await database.insured.upsert({
-				// @ts-expect-error
-				where: {
-					...(cpf.length === 11 && {
-						brokerId_cpf: { brokerId: BROKER_ID, cpf },
-					}),
-					...(cpf.length === 14 && {
-						brokerId_cnpj: { brokerId: BROKER_ID, cnpj: cpf },
-					}),
-				},
-				update: {
-					name: oldSafe.insured.name,
-					phone,
-				},
-				create: {
-					...(cpf.length === 11 && { cpf }),
-					...(cpf.length === 14 && { cnpj: cpf }),
-					name: oldSafe.insured.name,
-					phone,
-					birth: oldSafe.insured.additional_information?.birth
-						? parse(
-								oldSafe.insured.additional_information.birth.split(
-									'T',
-								)[0] as string,
-								'yyyy-MM-dd',
-								new Date(),
-							)
-						: null,
-					brokerId: BROKER_ID,
-				},
-			});
-
-			const vehicle = oldSafe.details.vehicle ?? null;
-			const modality = mapModality(oldSafe.category);
-
-			const overnightPostalCode = normalizePostalCode(
-				vehicle?.additional_information?.overnight_zip_code ??
-					oldSafe.insured.address?.zip_code,
-			);
-			const vehicleUse = mapVehicleUse(
-				vehicle?.additional_information?.vehicle_use,
-			);
-
-			const commissionGross = getCommission(oldSafe.receivables);
-			const producerAmount = oldSafe.receivables.producer?.amount ?? null;
-			const commissionNet = commissionGross - (producerAmount ?? 0);
-
-			const newSafe = await database.safe.upsert({
-				where: { externalId: oldSafe.id },
-				update: {},
-				create: {
-					externalId: oldSafe.id,
-					isExternal: false,
-					// biome-ignore lint/suspicious/noExplicitAny: modality
-					modality: modality as any,
-					renewal: oldSafe.type === 'renovation',
-					brokerId: BROKER_ID,
-					insuranceCompanyId,
-					insuredId: insured.id,
-					producerId,
-					expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
-					requestedAt: oldSafe.created_at,
-					effectivedAt: oldSafe.validity_start,
-					installments: oldSafe.receivables.installments_number,
-					award: oldSafe.receivables.amount_award,
-					franchise: oldSafe.receivables.franchise,
-					commissionPercentage: oldSafe.receivables.percentage,
-					commissionAmount: commissionGross,
-					commissionGross,
-					commissionNet,
-					commissionAmountProducer: producerAmount,
-					commissionInstallments:
-						oldSafe.receivables.producer?.installments ?? null,
-					status: oldSafe.active ? 'active' : 'canceled',
-					statusAt: oldSafe.updated_at,
-					createdAt: oldSafe.created_at,
-					...(vehicle && modality === 'vehicle'
-						? {
-								safeVehicle: {
-									create: {
-										plate:
-											vehicle.plate?.toLowerCase().replace('-', '') ?? null,
-										// biome-ignore lint/suspicious/noExplicitAny: usage
-										usage: vehicleUse as any,
-										overnightPostalCode,
-										driverCPF:
-											oldSafe.details.vehicle?.conductor?.registration ??
-											vehicle.conductor?.registration ??
-											null,
-										driverName:
-											oldSafe.details.vehicle?.conductor?.name ??
-											vehicle.conductor?.name ??
-											null,
-										driverPhone: null,
-										vehicleWithoutPlate: {
-											create: {
-												model: vehicle.model,
-												modelYear: vehicle.model_year,
-												exchange: mapExchange(vehicle.exchange),
-											},
-										},
-									},
-								},
-							}
-						: {}),
-				},
-				select: { id: true },
-			});
-
-			report.id_map[oldSafe.id] = newSafe.id;
-			report.success++;
-		} catch (err) {
-			report.errors.push({
-				old_id: id,
-				reason: err instanceof Error ? err.message : String(err),
-			});
-			report.failed++;
-		}
-
-		console.log(ids.length, ids.indexOf(id) + 1);
-
-		await cache.set('reportSafeMigration', JSON.stringify(report));
-	}
-}
-
-async function migrationUpdater() {
-	if (!BROKER_ID) {
-		throw new Error('BROKER_ID não configurado no arquivo de migração.');
-	}
-
-	const unmappedInsurerIds = Object.entries(INSURER_MAP)
-		.filter(([, v]) => !v)
-		.map(([k]) => k);
-
-	if (unmappedInsurerIds.length > 0) {
-		throw Error('Existem seguradoras sem mapeamento. Preencha INSURER_MAP.');
-	}
-
-	const { data: listData } = await xior.get<{
-		results: Pick<OldSafe, 'id' | 'updated_at'>[];
-	}>(OLD_LIST_URL);
-	const ids = listData.results
-		.filter(
-			// (e) => differenceInMinutes(new Date(), new Date(e.updated_at)) <= 15,
-			(e) => isSameDay(new Date(), new Date(e.updated_at)),
-		)
-		.map((s) => s.id)
-		.reverse();
-
 	for (const [_, id] of ids.entries()) {
 		let oldSafe: OldSafe;
 
 		try {
 			const { data } = await xior.get<OldSafe>(`${OLD_API_BASE}/safes/${id}`);
+
 			oldSafe = data;
 		} catch {
 			continue;
 		}
 
 		const insuranceCompanyId = INSURER_MAP[oldSafe.insurer];
+
 		if (!insuranceCompanyId) {
 			continue;
 		}
@@ -461,7 +256,10 @@ async function migrationUpdater() {
 			: null;
 
 		const cpf = oldSafe.insured.registration;
-		if (!cpf) throw new Error('Segurado sem CPF (registration).');
+
+		if (!cpf) {
+			continue;
+		}
 
 		const phone = getPhone(oldSafe.insured.contacts);
 
@@ -478,6 +276,15 @@ async function migrationUpdater() {
 			update: {
 				name: oldSafe.insured.name,
 				phone,
+				birth: oldSafe.insured.additional_information?.birth
+					? parse(
+							oldSafe.insured.additional_information.birth.split(
+								'T',
+							)[0] as string,
+							'yyyy-MM-dd',
+							new Date(),
+						)
+					: null,
 			},
 			create: {
 				name: oldSafe.insured.name,
@@ -550,7 +357,7 @@ async function migrationUpdater() {
 									driverName: vehicle.conductor?.name ?? null,
 									driverPhone: null,
 									vehicleWithoutPlate: {
-										create: {
+										update: {
 											model: vehicle.model,
 											modelYear: vehicle.model_year,
 											exchange: mapExchange(vehicle.exchange),
@@ -610,200 +417,6 @@ async function migrationUpdater() {
 						}
 					: {}),
 			},
-			select: { id: true },
-		});
-	}
-}
-
-async function migrationRecent() {
-	if (!BROKER_ID) {
-		throw new Error('BROKER_ID não configurado no arquivo de migração.');
-	}
-
-	const unmappedInsurerIds = Object.entries(INSURER_MAP)
-		.filter(([, v]) => !v)
-		.map(([k]) => k);
-
-	if (unmappedInsurerIds.length > 0) {
-		throw Error('Existem seguradoras sem mapeamento. Preencha INSURER_MAP.');
-	}
-
-	const { data: listData } = await xior.get<{
-		results: Pick<OldSafe, 'id' | 'updated_at'>[];
-	}>(OLD_LIST_URL_RECENT);
-
-	const ids = listData.results.map((s) => s.id).reverse();
-
-	for (const [_, id] of ids.entries()) {
-		let oldSafe: OldSafe;
-
-		try {
-			const { data } = await xior.get<OldSafe>(`${OLD_API_BASE}/safes/${id}`);
-			oldSafe = data;
-		} catch {
-			continue;
-		}
-
-		const insuranceCompanyId = INSURER_MAP[oldSafe.insurer];
-		if (!insuranceCompanyId) {
-			continue;
-		}
-
-		const producerId = oldSafe.producer
-			? (PRODUCER_MAP[oldSafe.producer] ?? null)
-			: null;
-
-		const cpf = oldSafe.insured.registration;
-		if (!cpf) throw new Error('Segurado sem CPF (registration).');
-
-		const phone = getPhone(oldSafe.insured.contacts);
-
-		const insured = await database.insured.upsert({
-			// @ts-expect-error
-			where: {
-				...(cpf.length === 11 && {
-					brokerId_cpf: { brokerId: BROKER_ID, cpf },
-				}),
-				...(cpf.length === 14 && {
-					brokerId_cnpj: { brokerId: BROKER_ID, cnpj: cpf },
-				}),
-			},
-			update: {
-				name: oldSafe.insured.name,
-				phone,
-			},
-			create: {
-				name: oldSafe.insured.name,
-				phone,
-				...(cpf.length === 11 && { cpf }),
-				...(cpf.length === 14 && { cnpj: cpf }),
-				birth: oldSafe.insured.additional_information?.birth
-					? parse(
-							oldSafe.insured.additional_information.birth.split(
-								'T',
-							)[0] as string,
-							'yyyy-MM-dd',
-							new Date(),
-						)
-					: null,
-				brokerId: BROKER_ID,
-			},
-		});
-
-		const vehicle = oldSafe.details.vehicle ?? null;
-		const modality = mapModality(oldSafe.category);
-
-		const overnightPostalCode = normalizePostalCode(
-			vehicle?.additional_information?.overnight_zip_code ??
-				oldSafe.insured.address?.zip_code,
-		);
-		const vehicleUse = mapVehicleUse(
-			vehicle?.additional_information?.vehicle_use,
-		);
-
-		const commissionGross = getCommission(oldSafe.receivables);
-		const producerAmount = oldSafe.receivables.producer?.amount ?? null;
-		const commissionNet = commissionGross - (producerAmount ?? 0);
-
-		await database.safe.upsert({
-			where: { externalId: oldSafe.id },
-			update: {
-				// biome-ignore lint/suspicious/noExplicitAny: modality
-				modality: modality as any,
-				renewal: oldSafe.type === 'renovation',
-				brokerId: BROKER_ID,
-				insuranceCompanyId,
-				insuredId: insured.id,
-				producerId,
-				expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
-				requestedAt: oldSafe.created_at,
-				effectivedAt: oldSafe.validity_start,
-				installments: oldSafe.receivables.installments_number,
-				award: oldSafe.receivables.amount_award,
-				franchise: oldSafe.receivables.franchise,
-				commissionPercentage: oldSafe.receivables.percentage,
-				commissionAmount: commissionGross,
-				commissionGross,
-				commissionNet,
-				commissionAmountProducer: producerAmount,
-				commissionInstallments:
-					oldSafe.receivables.producer?.installments ?? null,
-				status: oldSafe.active ? 'active' : 'canceled',
-				statusAt: oldSafe.updated_at,
-				createdAt: oldSafe.created_at,
-				...(vehicle && modality === 'vehicle'
-					? {
-							safeVehicle: {
-								update: {
-									plate: vehicle.plate?.toLowerCase().replace('-', '') ?? null,
-									// biome-ignore lint/suspicious/noExplicitAny: usage
-									usage: vehicleUse as any,
-									overnightPostalCode,
-									driverCPF: vehicle.conductor?.registration ?? null,
-									driverName: vehicle.conductor?.name ?? null,
-									driverPhone: null,
-									vehicleWithoutPlate: {
-										create: {
-											model: vehicle.model,
-											modelYear: vehicle.model_year,
-											exchange: mapExchange(vehicle.exchange),
-										},
-									},
-								},
-							},
-						}
-					: {}),
-			},
-			create: {
-				externalId: oldSafe.id,
-				isExternal: false,
-				// biome-ignore lint/suspicious/noExplicitAny: modality
-				modality: modality as any,
-				renewal: oldSafe.type === 'renovation',
-				brokerId: BROKER_ID,
-				insuranceCompanyId,
-				insuredId: insured.id,
-				producerId,
-				expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
-				requestedAt: oldSafe.created_at,
-				effectivedAt: oldSafe.validity_start,
-				installments: oldSafe.receivables.installments_number,
-				award: oldSafe.receivables.amount_award,
-				franchise: oldSafe.receivables.franchise,
-				commissionPercentage: oldSafe.receivables.percentage,
-				commissionAmount: commissionGross,
-				commissionGross,
-				commissionNet,
-				commissionAmountProducer: producerAmount,
-				commissionInstallments:
-					oldSafe.receivables.producer?.installments ?? null,
-				status: oldSafe.active ? 'active' : 'canceled',
-				statusAt: oldSafe.updated_at,
-				createdAt: oldSafe.created_at,
-				...(vehicle && modality === 'vehicle'
-					? {
-							safeVehicle: {
-								create: {
-									plate: vehicle.plate?.toLowerCase().replace('-', '') ?? null,
-									// biome-ignore lint/suspicious/noExplicitAny: usage
-									usage: vehicleUse as any,
-									overnightPostalCode,
-									driverCPF: vehicle.conductor?.registration ?? null,
-									driverName: vehicle.conductor?.name ?? null,
-									driverPhone: null,
-									vehicleWithoutPlate: {
-										create: {
-											model: vehicle.model,
-											modelYear: vehicle.model_year,
-											exchange: mapExchange(vehicle.exchange),
-										},
-									},
-								},
-							},
-						}
-					: {}),
-			},
-			select: { id: true },
 		});
 	}
 }
@@ -992,8 +605,7 @@ async function migrationById(id: string) {
 					}
 				: {}),
 		},
-		select: { id: true },
 	});
 }
 
-export { migration, migrationUpdater, migrationRecent, migrationById };
+export { migration, migrationById };
