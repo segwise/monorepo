@@ -22,6 +22,7 @@ const selectPrisma = {
 	safeVehicle: {
 		select: {
 			plate: true,
+			driverName: true,
 			vehicle: {
 				select: {
 					plate: true,
