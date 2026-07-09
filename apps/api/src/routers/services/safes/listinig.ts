@@ -3,7 +3,7 @@ import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
-import { set } from 'date-fns';
+import { endOfDay, set, startOfDay } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
@@ -90,8 +90,8 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				}),
 				...(!ids?.length && {
 					requestedAt: {
-						gte: effectivedAt.start,
-						lte: effectivedAt.end,
+						gte: startOfDay(effectivedAt.start),
+						lte: endOfDay(effectivedAt.end),
 					},
 					// ...(!!effectived && {
 					// 	effectivedAt: {
