@@ -307,10 +307,10 @@ async function migration() {
 					phone,
 				},
 				create: {
-					name: oldSafe.insured.name,
-					phone,
 					...(cpf.length === 11 && { cpf }),
 					...(cpf.length === 14 && { cnpj: cpf }),
+					name: oldSafe.insured.name,
+					phone,
 					birth: oldSafe.insured.additional_information?.birth
 						? parse(
 								oldSafe.insured.additional_information.birth.split(
@@ -377,8 +377,14 @@ async function migration() {
 										// biome-ignore lint/suspicious/noExplicitAny: usage
 										usage: vehicleUse as any,
 										overnightPostalCode,
-										driverCPF: vehicle.conductor?.registration ?? null,
-										driverName: vehicle.conductor?.name ?? null,
+										driverCPF:
+											oldSafe.details.vehicle?.conductor?.registration ??
+											vehicle.conductor?.registration ??
+											null,
+										driverName:
+											oldSafe.details.vehicle?.conductor?.name ??
+											vehicle.conductor?.name ??
+											null,
 										driverPhone: null,
 										vehicleWithoutPlate: {
 											create: {
@@ -404,6 +410,8 @@ async function migration() {
 			});
 			report.failed++;
 		}
+
+		console.log(ids.length, ids.indexOf(id) + 1);
 
 		await cache.set('reportSafeMigration', JSON.stringify(report));
 	}

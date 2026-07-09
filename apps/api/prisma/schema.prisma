@@ -161,7 +161,7 @@ model Insured {
   id String @id @default(uuid(7)) @db.Uuid
 
   name  String
-  phone String @db.VarChar(13)
+  phone String? @db.VarChar(13)
 
   cpf           String?        @db.VarChar(11)
   cnpj          String?        @db.VarChar(14)

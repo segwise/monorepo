@@ -1839,7 +1839,7 @@ const insuranceCompaniesSeed = [
 					},
 					{
 						value: '08007772746',
-						whatsapp: true,
+						whatsapp: false,
 						region: 'all_regions',
 					},
 				],
