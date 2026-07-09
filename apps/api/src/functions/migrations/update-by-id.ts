@@ -235,189 +235,193 @@ async function migration() {
 	const ids = listData.results.map((s) => s.id).reverse();
 
 	for (const [_, id] of ids.entries()) {
-		let oldSafe: OldSafe;
-
 		try {
-			const { data } = await xior.get<OldSafe>(`${OLD_API_BASE}/safes/${id}`);
+			let oldSafe: OldSafe;
 
-			oldSafe = data;
-		} catch {
-			continue;
-		}
+			try {
+				const { data } = await xior.get<OldSafe>(`${OLD_API_BASE}/safes/${id}`);
 
-		const insuranceCompanyId = INSURER_MAP[oldSafe.insurer];
+				oldSafe = data;
+			} catch {
+				continue;
+			}
 
-		if (!insuranceCompanyId) {
-			continue;
-		}
+			const insuranceCompanyId = INSURER_MAP[oldSafe.insurer];
 
-		const producerId = oldSafe.producer
-			? (PRODUCER_MAP[oldSafe.producer] ?? null)
-			: null;
+			if (!insuranceCompanyId) {
+				continue;
+			}
 
-		const cpf = oldSafe.insured.registration;
+			const producerId = oldSafe.producer
+				? (PRODUCER_MAP[oldSafe.producer] ?? null)
+				: null;
 
-		if (!cpf) {
-			continue;
-		}
+			const cpf = oldSafe.insured.registration;
 
-		const phone = getPhone(oldSafe.insured.contacts);
+			if (!cpf) {
+				continue;
+			}
 
-		const insured = await database.insured.upsert({
-			// @ts-expect-error
-			where: {
-				...(cpf.length === 11 && {
-					brokerId_cpf: { brokerId: BROKER_ID, cpf },
-				}),
-				...(cpf.length === 14 && {
-					brokerId_cnpj: { brokerId: BROKER_ID, cnpj: cpf },
-				}),
-			},
-			update: {
-				name: oldSafe.insured.name,
-				phone,
-				birth: oldSafe.insured.additional_information?.birth
-					? parse(
-							oldSafe.insured.additional_information.birth.split(
-								'T',
-							)[0] as string,
-							'yyyy-MM-dd',
-							new Date(),
-						)
-					: null,
-			},
-			create: {
-				name: oldSafe.insured.name,
-				phone,
-				...(cpf.length === 11 && { cpf }),
-				...(cpf.length === 14 && { cnpj: cpf }),
-				birth: oldSafe.insured.additional_information?.birth
-					? parse(
-							oldSafe.insured.additional_information.birth.split(
-								'T',
-							)[0] as string,
-							'yyyy-MM-dd',
-							new Date(),
-						)
-					: null,
-				brokerId: BROKER_ID,
-			},
-		});
+			const phone = getPhone(oldSafe.insured.contacts);
 
-		const vehicle = oldSafe.details.vehicle ?? null;
-		const modality = mapModality(oldSafe.category);
+			const insured = await database.insured.upsert({
+				// @ts-expect-error
+				where: {
+					...(cpf.length === 11 && {
+						brokerId_cpf: { brokerId: BROKER_ID, cpf },
+					}),
+					...(cpf.length === 14 && {
+						brokerId_cnpj: { brokerId: BROKER_ID, cnpj: cpf },
+					}),
+				},
+				update: {
+					name: oldSafe.insured.name,
+					phone,
+					birth: oldSafe.insured.additional_information?.birth
+						? parse(
+								oldSafe.insured.additional_information.birth.split(
+									'T',
+								)[0] as string,
+								'yyyy-MM-dd',
+								new Date(),
+							)
+						: null,
+				},
+				create: {
+					name: oldSafe.insured.name,
+					phone,
+					...(cpf.length === 11 && { cpf }),
+					...(cpf.length === 14 && { cnpj: cpf }),
+					birth: oldSafe.insured.additional_information?.birth
+						? parse(
+								oldSafe.insured.additional_information.birth.split(
+									'T',
+								)[0] as string,
+								'yyyy-MM-dd',
+								new Date(),
+							)
+						: null,
+					brokerId: BROKER_ID,
+				},
+			});
 
-		const overnightPostalCode = normalizePostalCode(
-			vehicle?.additional_information?.overnight_zip_code ??
-				oldSafe.insured.address?.zip_code,
-		);
-		const vehicleUse = mapVehicleUse(
-			vehicle?.additional_information?.vehicle_use,
-		);
+			const vehicle = oldSafe.details.vehicle ?? null;
+			const modality = mapModality(oldSafe.category);
 
-		const commissionGross = getCommission(oldSafe.receivables);
-		const producerAmount = oldSafe.receivables.producer?.amount ?? null;
-		const commissionNet = commissionGross - (producerAmount ?? 0);
+			const overnightPostalCode = normalizePostalCode(
+				vehicle?.additional_information?.overnight_zip_code ??
+					oldSafe.insured.address?.zip_code,
+			);
+			const vehicleUse = mapVehicleUse(
+				vehicle?.additional_information?.vehicle_use,
+			);
 
-		await database.safe.upsert({
-			where: { externalId: oldSafe.id },
-			update: {
-				// biome-ignore lint/suspicious/noExplicitAny: modality
-				modality: modality as any,
-				renewal: oldSafe.type === 'renovation',
-				brokerId: BROKER_ID,
-				insuranceCompanyId,
-				insuredId: insured.id,
-				producerId,
-				expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
-				requestedAt: oldSafe.created_at,
-				effectivedAt: oldSafe.validity_start,
-				installments: oldSafe.receivables.installments_number,
-				award: oldSafe.receivables.amount_award,
-				franchise: oldSafe.receivables.franchise,
-				commissionPercentage: oldSafe.receivables.percentage,
-				commissionAmount: commissionGross,
-				commissionGross,
-				commissionNet,
-				commissionAmountProducer: producerAmount,
-				commissionInstallments:
-					oldSafe.receivables.producer?.installments ?? null,
-				status: oldSafe.active ? 'active' : 'canceled',
-				statusAt: oldSafe.updated_at,
-				createdAt: oldSafe.created_at,
-				...(vehicle && modality === 'vehicle'
-					? {
-							safeVehicle: {
-								update: {
-									plate: vehicle.plate?.toLowerCase().replace('-', '') ?? null,
-									// biome-ignore lint/suspicious/noExplicitAny: usage
-									usage: vehicleUse as any,
-									overnightPostalCode,
-									driverCPF: vehicle.conductor?.registration ?? null,
-									driverName: vehicle.conductor?.name ?? null,
-									driverPhone: null,
-									vehicleWithoutPlate: {
-										update: {
-											model: vehicle.model,
-											modelYear: vehicle.model_year,
-											exchange: mapExchange(vehicle.exchange),
+			const commissionGross = getCommission(oldSafe.receivables);
+			const producerAmount = oldSafe.receivables.producer?.amount ?? null;
+			const commissionNet = commissionGross - (producerAmount ?? 0);
+
+			await database.safe.upsert({
+				where: { externalId: oldSafe.id },
+				update: {
+					// biome-ignore lint/suspicious/noExplicitAny: modality
+					modality: modality as any,
+					renewal: oldSafe.type === 'renovation',
+					brokerId: BROKER_ID,
+					insuranceCompanyId,
+					insuredId: insured.id,
+					producerId,
+					expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
+					requestedAt: oldSafe.created_at,
+					effectivedAt: oldSafe.validity_start,
+					installments: oldSafe.receivables.installments_number,
+					award: oldSafe.receivables.amount_award,
+					franchise: oldSafe.receivables.franchise,
+					commissionPercentage: oldSafe.receivables.percentage,
+					commissionAmount: commissionGross,
+					commissionGross,
+					commissionNet,
+					commissionAmountProducer: producerAmount,
+					commissionInstallments:
+						oldSafe.receivables.producer?.installments ?? null,
+					status: oldSafe.active ? 'active' : 'canceled',
+					statusAt: oldSafe.updated_at,
+					createdAt: oldSafe.created_at,
+					...(vehicle && modality === 'vehicle'
+						? {
+								safeVehicle: {
+									update: {
+										plate:
+											vehicle.plate?.toLowerCase().replace('-', '') ?? null,
+										// biome-ignore lint/suspicious/noExplicitAny: usage
+										usage: vehicleUse as any,
+										overnightPostalCode,
+										driverCPF: vehicle.conductor?.registration ?? null,
+										driverName: vehicle.conductor?.name ?? null,
+										driverPhone: null,
+										vehicleWithoutPlate: {
+											update: {
+												model: vehicle.model,
+												modelYear: vehicle.model_year,
+												exchange: mapExchange(vehicle.exchange),
+											},
 										},
 									},
 								},
-							},
-						}
-					: {}),
-			},
-			create: {
-				externalId: oldSafe.id,
-				isExternal: false,
-				// biome-ignore lint/suspicious/noExplicitAny: modality
-				modality: modality as any,
-				renewal: oldSafe.type === 'renovation',
-				brokerId: BROKER_ID,
-				insuranceCompanyId,
-				insuredId: insured.id,
-				producerId,
-				expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
-				requestedAt: oldSafe.created_at,
-				effectivedAt: oldSafe.validity_start,
-				installments: oldSafe.receivables.installments_number,
-				award: oldSafe.receivables.amount_award,
-				franchise: oldSafe.receivables.franchise,
-				commissionPercentage: oldSafe.receivables.percentage,
-				commissionAmount: commissionGross,
-				commissionGross,
-				commissionNet,
-				commissionAmountProducer: producerAmount,
-				commissionInstallments:
-					oldSafe.receivables.producer?.installments ?? null,
-				status: oldSafe.active ? 'active' : 'canceled',
-				statusAt: oldSafe.updated_at,
-				createdAt: oldSafe.created_at,
-				...(vehicle && modality === 'vehicle'
-					? {
-							safeVehicle: {
-								create: {
-									plate: vehicle.plate?.toLowerCase().replace('-', '') ?? null,
-									// biome-ignore lint/suspicious/noExplicitAny: usage
-									usage: vehicleUse as any,
-									overnightPostalCode,
-									driverCPF: vehicle.conductor?.registration ?? null,
-									driverName: vehicle.conductor?.name ?? null,
-									driverPhone: null,
-									vehicleWithoutPlate: {
-										create: {
-											model: vehicle.model,
-											modelYear: vehicle.model_year,
-											exchange: mapExchange(vehicle.exchange),
+							}
+						: {}),
+				},
+				create: {
+					externalId: oldSafe.id,
+					isExternal: false,
+					// biome-ignore lint/suspicious/noExplicitAny: modality
+					modality: modality as any,
+					renewal: oldSafe.type === 'renovation',
+					brokerId: BROKER_ID,
+					insuranceCompanyId,
+					insuredId: insured.id,
+					producerId,
+					expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
+					requestedAt: oldSafe.created_at,
+					effectivedAt: oldSafe.validity_start,
+					installments: oldSafe.receivables.installments_number,
+					award: oldSafe.receivables.amount_award,
+					franchise: oldSafe.receivables.franchise,
+					commissionPercentage: oldSafe.receivables.percentage,
+					commissionAmount: commissionGross,
+					commissionGross,
+					commissionNet,
+					commissionAmountProducer: producerAmount,
+					commissionInstallments:
+						oldSafe.receivables.producer?.installments ?? null,
+					status: oldSafe.active ? 'active' : 'canceled',
+					statusAt: oldSafe.updated_at,
+					createdAt: oldSafe.created_at,
+					...(vehicle && modality === 'vehicle'
+						? {
+								safeVehicle: {
+									create: {
+										plate:
+											vehicle.plate?.toLowerCase().replace('-', '') ?? null,
+										// biome-ignore lint/suspicious/noExplicitAny: usage
+										usage: vehicleUse as any,
+										overnightPostalCode,
+										driverCPF: vehicle.conductor?.registration ?? null,
+										driverName: vehicle.conductor?.name ?? null,
+										driverPhone: null,
+										vehicleWithoutPlate: {
+											create: {
+												model: vehicle.model,
+												modelYear: vehicle.model_year,
+												exchange: mapExchange(vehicle.exchange),
+											},
 										},
 									},
 								},
-							},
-						}
-					: {}),
-			},
-		});
+							}
+						: {}),
+				},
+			});
+		} catch {}
 
 		console.log(ids.length, ids.indexOf(id) + 1);
 	}
