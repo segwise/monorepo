@@ -56,8 +56,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				isExternal,
 			} = ctx.req.valid('query');
 
-			console.log(effectivedAt);
-
 			const pageMargins = 2;
 
 			const where: Prisma.SafeWhereInput = {
