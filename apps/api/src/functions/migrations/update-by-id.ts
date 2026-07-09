@@ -418,6 +418,8 @@ async function migration() {
 					: {}),
 			},
 		});
+
+		console.log(ids.length, ids.indexOf(id) + 1);
 	}
 }
 
