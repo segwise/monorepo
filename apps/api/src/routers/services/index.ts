@@ -36,7 +36,7 @@ function registerRoutersServices(server: Server) {
 
 	registerRoutersServicesWebhooks(base);
 
-	base.get('/migration', async (ctx) => {
+	base.post('/migration', async (ctx) => {
 		await migration();
 
 		return ctx.json(
