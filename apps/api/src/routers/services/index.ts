@@ -1,5 +1,4 @@
 import type { Server } from '@/@types/server.d';
-import { migration } from '@/functions/migrations/update-by-id';
 import { registerRoutersServicesAnalytics } from '@/routers/services/analytics';
 import { registerRoutersServicesAuth } from '@/routers/services/auth';
 import { registerRoutersServicesCpfOrCnpj } from '@/routers/services/cpf-or-cnpj';
@@ -35,17 +34,6 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesPayments(base);
 
 	registerRoutersServicesWebhooks(base);
-
-	base.post('/migration', async (ctx) => {
-		await migration();
-
-		return ctx.json(
-			{
-				ok: true,
-			},
-			200,
-		);
-	});
 }
 
 export { registerRoutersServices };
