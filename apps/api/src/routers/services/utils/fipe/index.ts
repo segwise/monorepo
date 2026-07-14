@@ -3,6 +3,7 @@ import { ptBR } from 'date-fns/locale';
 import xior, { XiorError } from 'xior';
 import type { Server } from '@/@types/server';
 import { environment } from '@/libraries/environment';
+import { rankFipeCandidates, type FipeCandidate } from './vehicle-matcher';
 
 const CACHE_KEY = (plate: string) => `fipe-plates:${plate}`;
 
@@ -26,21 +27,7 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 			const { data } = await xior.get<{
 				codigo: number;
 				msg: string;
-				fipe: Array<{
-					similaridade: string;
-					correspondencia: string;
-					marca: string;
-					modelo: string;
-					ano_modelo: number;
-					codigo_fipe: string;
-					codigo_marca: string;
-					codigo_modelo: string;
-					mes_referencia: string;
-					combustivel: string;
-					valor: string;
-					desvalorizometro: string;
-					unidade_valor: string;
-				}>;
+				fipe: FipeCandidate[];
 				informacoes_veiculo: {
 					marca: string;
 					modelo: string;
@@ -61,15 +48,18 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				`https://api.placafipe.com.br/getplacafipe/${plate}/${environment.PLACA_FIPE_TOKEN}`,
 			);
 
-			const fipe = data.fipe.sort(
-				(a, b) => Number(b.similaridade) - Number(a.similaridade),
+			const { ranked: fipe, strategy } = rankFipeCandidates(
+				data.informacoes_veiculo.modelo,
+				data.fipe,
 			);
 
+			const best = fipe[0];
+
 			const response = {
-				code: fipe?.[0]?.codigo_fipe,
+				code: best?.codigo_fipe,
 				plate,
 				manufacturer: data.informacoes_veiculo.marca,
-				model: fipe?.[0]?.modelo,
+				model: best?.modelo,
 				year: Number(
 					data.informacoes_veiculo?.ano || data.informacoes_veiculo.ano_modelo,
 				),
@@ -80,13 +70,14 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 				},
 				color: data.informacoes_veiculo.cor,
 				exchage:
-					fipe?.[0]?.modelo.toLowerCase().includes('automático') ||
-					fipe?.[0]?.modelo.toLowerCase().includes('automatico') ||
-					fipe?.[0]?.modelo.toLowerCase().includes('auto.') ||
-					fipe?.[0]?.modelo.toLowerCase().includes('aut.')
+					best?.modelo.toLowerCase().includes('automático') ||
+					best?.modelo.toLowerCase().includes('automatico') ||
+					best?.modelo.toLowerCase().includes('auto.') ||
+					best?.modelo.toLowerCase().includes('aut.')
 						? 'Automático'
 						: 'Manual',
 				fuel: data.informacoes_veiculo.combustivel,
+				matchStrategy: strategy,
 				fipe: fipe.map(
 					({
 						ano_modelo,
@@ -95,6 +86,8 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 						codigo_fipe,
 						combustivel,
 						mes_referencia,
+						score,
+						matchedSignals,
 					}) => ({
 						year: Number(ano_modelo),
 						value: Number.parseFloat(valor),
@@ -104,7 +97,8 @@ function registerRoutersServicesUtilsFipe(server: Server) {
 						reference: parse(mes_referencia, "MMMM 'de' yyyy", new Date(), {
 							locale: ptBR,
 						}),
-						score: 0,
+						score,
+						matchedSignals,
 					}),
 				),
 				chassi: data.informacoes_veiculo.chassi,
