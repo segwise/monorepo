@@ -25,7 +25,7 @@
 		"@rn-primitives/select": "^1.2.0",
 		"@rn-primitives/separator": "^1.2.0",
 		"@rn-primitives/slot": "^1.2.0",
-		"@segwise/core": "^1.1.367",
+		"@segwise/core": "^1.1.368",
 		"@tanstack/react-query": "^5.90.21",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
