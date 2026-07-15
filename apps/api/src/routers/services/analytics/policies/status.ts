@@ -106,9 +106,16 @@ function registerRoutersServicesAnalyticsPoliciesStatus(server: Server) {
 					},
 				}),
 				...(!producers?.length && {
-					producerId: {
-						not: '019f249d-8880-7000-b962-aace743e68e2',
-					},
+					OR: [
+						{
+							producerId: {
+								not: '019f249d-8880-7000-b962-aace743e68e2',
+							},
+						},
+						{
+							producerId: null,
+						},
+					],
 				}),
 				...(!!insuranceCompanies?.length && {
 					insuranceCompanyId: {
