@@ -1,6 +1,7 @@
 import { startOfDay } from 'date-fns';
 import z from 'zod';
 import {
+	SchemaMaritalStatus,
 	SchemaModality,
 	SchemaName,
 	SchemaPhone,
@@ -23,6 +24,7 @@ const SchemaQuoteSimpleRegister = z
 		insured: z.object({
 			name: SchemaName,
 			phone: SchemaPhone,
+			maritalStatus: SchemaMaritalStatus,
 		}),
 		renewal: z.object({
 			label: z.string(),
