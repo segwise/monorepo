@@ -1,7 +1,6 @@
 import z from 'zod';
 
 import { SchemaQuoteStatus } from '@/schemas/quotes/status';
-import { SchemaQuoteType } from '@/schemas/quotes/type';
 import { SchemaEmail } from '@/schemas/utils/email';
 import { SchemaName } from '@/schemas/utils/name';
 import { SchemaPhone } from '@/schemas/utils/phone';
@@ -22,7 +21,6 @@ const SchemaQuoteSimple = z.object({
 		},
 		'Segurado inválido',
 	),
-	type: SchemaQuoteType,
 	modality: SchemaModality,
 	status: SchemaQuoteStatus,
 	vehicle: z
