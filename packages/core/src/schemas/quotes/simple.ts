@@ -6,6 +6,7 @@ import { SchemaEmail } from '@/schemas/utils/email';
 import { SchemaName } from '@/schemas/utils/name';
 import { SchemaPhone } from '@/schemas/utils/phone';
 import { SchemaPlate } from '@/schemas/utils/vehicle/plate';
+import { SchemaModality } from '../utils';
 
 const SchemaQuoteSimple = z.object({
 	id: z.uuidv7('ID inválido'),
@@ -22,6 +23,7 @@ const SchemaQuoteSimple = z.object({
 		'Segurado inválido',
 	),
 	type: SchemaQuoteType,
+	modality: SchemaModality,
 	status: SchemaQuoteStatus,
 	vehicle: z
 		.object({
