@@ -39,7 +39,7 @@ const SchemaQuoteSimpleRegister = z
 		postalCode: SchemaPostalCode,
 		insured: z.object({
 			name: SchemaName,
-			registration: SchemaCPFOrCNPJ,
+			registration: SchemaCPFOrCNPJ.nullish(),
 			phone: SchemaPhone,
 			maritalStatus: z
 				.object({
