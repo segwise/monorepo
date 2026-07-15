@@ -328,6 +328,7 @@ const auth = betterAuth({
 					`,
 				});
 			},
+			invitationExpiresIn: 60 * 60 * 24 * 30,
 		}),
 		customSession(async ({ user, session }) => {
 			if (user?.image) {

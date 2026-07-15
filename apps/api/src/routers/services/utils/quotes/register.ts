@@ -83,51 +83,53 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 				let safe = null;
 
 				await ctx.database.$transaction(async (transaction) => {
-					const temporaryInsured = await transaction.temporaryInsured.upsert({
-						// @ts-expect-error
-						where: {
-							...(isCPF(insured.registration) && {
-								brokerId_cpf: {
-									brokerId,
-									cpf: insured.registration,
+					const temporaryInsured = insured.registration
+						? await transaction.temporaryInsured.upsert({
+								// @ts-expect-error
+								where: {
+									...(isCPF(insured.registration) && {
+										brokerId_cpf: {
+											brokerId,
+											cpf: insured.registration,
+										},
+									}),
+									...(isCNPJ(insured.registration) && {
+										brokerId_cnpj: {
+											brokerId,
+											cnpj: insured.registration,
+										},
+									}),
 								},
-							}),
-							...(isCNPJ(insured.registration) && {
-								brokerId_cnpj: {
-									brokerId,
-									cnpj: insured.registration,
+								update: {
+									name: insured?.name as string,
+									phone: insured?.phone as string,
+									...(insured?.maritalStatus && {
+										maritalStatus: insured?.maritalStatus,
+									}),
 								},
-							}),
-						},
-						update: {
-							name: insured?.name as string,
-							phone: insured?.phone as string,
-							...(insured?.maritalStatus && {
-								maritalStatus: insured?.maritalStatus,
-							}),
-						},
-						create: {
-							broker: {
-								connect: {
-									id: brokerId,
+								create: {
+									broker: {
+										connect: {
+											id: brokerId,
+										},
+									},
+									name: insured?.name as string,
+									...(isCPF(insured.registration) && {
+										cpf: insured.registration,
+									}),
+									...(isCNPJ(insured.registration) && {
+										cnpj: insured.registration,
+									}),
+									phone: insured?.phone as string,
+									...(insured?.maritalStatus && {
+										maritalStatus: insured?.maritalStatus,
+									}),
 								},
-							},
-							name: insured?.name as string,
-							...(isCPF(insured.registration) && {
-								cpf: insured.registration,
-							}),
-							...(isCNPJ(insured.registration) && {
-								cnpj: insured.registration,
-							}),
-							phone: insured?.phone as string,
-							...(insured?.maritalStatus && {
-								maritalStatus: insured?.maritalStatus,
-							}),
-						},
-						select: {
-							id: true,
-						},
-					});
+								select: {
+									id: true,
+								},
+							})
+						: null;
 
 					const vehicle = plate ? await vehicleByPlate(plate) : null;
 
@@ -156,11 +158,13 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 							...(!!association && {
 								association,
 							}),
-							temporaryInsured: {
-								connect: {
-									id: temporaryInsured.id,
+							...(temporaryInsured && {
+								temporaryInsured: {
+									connect: {
+										id: temporaryInsured.id,
+									},
 								},
-							},
+							}),
 							quoteVehicle: {
 								create: {
 									plate,
@@ -235,11 +239,13 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 									},
 								},
 								isExternal: true,
-								temporaryInsured: {
-									connect: {
-										id: temporaryInsured.id,
+								...(temporaryInsured && {
+									temporaryInsured: {
+										connect: {
+											id: temporaryInsured.id,
+										},
 									},
-								},
+								}),
 								modality: ModalityInsurance.vehicle,
 								...(!!insuranceCompany && {
 									insuranceCompany: {

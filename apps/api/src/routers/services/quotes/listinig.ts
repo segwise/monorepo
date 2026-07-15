@@ -27,8 +27,6 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				renewal,
 			} = ctx.req.valid('query');
 
-			console.log(requestedAt);
-
 			const pageMargins = 2;
 
 			const where: Prisma.QuoteWhereInput = {
@@ -89,6 +87,11 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 					},
 				}),
 			};
+
+			console.log({
+				gte: startOfDay(requestedAt.start),
+				lte: endOfDay(requestedAt.end),
+			});
 
 			const [quotes, total, itemsBefore] = await ctx.database.$transaction([
 				ctx.database.quote.findMany({
