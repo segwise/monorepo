@@ -8,7 +8,7 @@ function serializer(
 	}>,
 ): SafeSimple {
 	if (!props.insured && !props.temporaryInsured) {
-		throw new Error(`Segurado não registrado no seguro`);
+		throw new Error(`Segurado não registrado no seguro: ${props.id}`);
 	}
 
 	return {

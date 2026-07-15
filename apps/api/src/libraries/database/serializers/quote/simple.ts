@@ -8,7 +8,7 @@ function serializer(
 	}>,
 ): QuoteSimple {
 	if (!props.temporaryInsured) {
-		throw new Error(`Segurado não registrado na cotação`);
+		throw new Error(`Segurado não registrado na cotação: ${props.id}`);
 	}
 
 	return {
