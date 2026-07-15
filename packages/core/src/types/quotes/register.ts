@@ -1,6 +1,11 @@
 import type z from 'zod';
-import type { SchemaQuoteRegister } from '@/schemas/quotes/register';
+import type {
+	SchemaQuoteRegister,
+	SchemaQuoteSimpleRegister,
+} from '@/schemas/quotes/register';
 
 type QuoteRegister = z.infer<typeof SchemaQuoteRegister>;
 
-export type { QuoteRegister };
+type QuoteSimpleRegister = z.infer<typeof SchemaQuoteSimpleRegister>;
+
+export type { QuoteRegister, QuoteSimpleRegister };
