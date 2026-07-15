@@ -91,11 +91,13 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 								},
 							},
 							name: insured?.name as string,
-							...(isCPF(insured.registration) && {
-								cpf: insured.registration,
-							}),
-							...(isCNPJ(insured.registration) && {
-								cnpj: insured.registration,
+							...(insured.registration && {
+								...(isCPF(insured.registration) && {
+									cpf: insured.registration,
+								}),
+								...(isCNPJ(insured.registration) && {
+									cnpj: insured.registration,
+								}),
 							}),
 							phone: insured?.phone as string,
 							...(insured?.maritalStatus && {
