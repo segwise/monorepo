@@ -105,6 +105,11 @@ function registerRoutersServicesAnalyticsPoliciesStatus(server: Server) {
 						in: producers,
 					},
 				}),
+				...(!producers?.length && {
+					producerId: {
+						not: '019f249d-8880-7000-b962-aace743e68e2',
+					},
+				}),
 				...(!!insuranceCompanies?.length && {
 					insuranceCompanyId: {
 						in: insuranceCompanies,
