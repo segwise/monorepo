@@ -43,7 +43,7 @@ const SchemaQuotePrint = z.object({
 			overnightPostalCode: SchemaPostalCode,
 		})
 		.nullish(),
-	producer: z.uuidv7('ID do produtor inválido'),
+	producer: z.uuidv7('ID do produtor inválido').nullish(),
 	expiration: z
 		.date('Data do final vigência inválida')
 		.or(z.iso.datetime('Data do final vigência inválida'))
