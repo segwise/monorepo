@@ -21,14 +21,13 @@
 		"outDir": "./dist",
 		"rootDir": "./src",
 		"forceConsistentCasingInFileNames": true,
-		"baseUrl": "./src",
 		"paths": {
-			"@/schemas/*": ["schemas/*"],
-			"@/types/*": ["types/*"],
-			"@/valids/*": ["valids/*"],
-			"@/masks/*": ["masks/*"],
-			"@/translate/*": ["translate/*"],
-			"@/utils/*": ["utils/*"]
+			"@/schemas/*": ["./src/schemas/*"],
+			"@/types/*": ["./src/types/*"],
+			"@/valids/*": ["./src/valids/*"],
+			"@/masks/*": ["./src/masks/*"],
+			"@/translate/*": ["./src/translate/*"],
+			"@/utils/*": ["./src/utils/*"]
 		}
 	},
 	"include": ["src/**/*"],

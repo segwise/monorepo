@@ -4,6 +4,7 @@ export * from './cpf';
 export * from './email';
 export * from './garage';
 export * from './marital-status';
+export * from './modality';
 export * from './name';
 export * from './phone';
 export * from './postal-code';

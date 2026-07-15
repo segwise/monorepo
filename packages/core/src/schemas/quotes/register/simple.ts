@@ -1,6 +1,7 @@
 import { startOfDay } from 'date-fns';
 import z from 'zod';
 import {
+	SchemaModality,
 	SchemaName,
 	SchemaPhone,
 	SchemaPlate,
@@ -13,7 +14,8 @@ const SchemaQuoteSimpleRegister = z
 	.object({
 		vehicleWithLicensePlate: z.coerce.boolean(),
 		plate: SchemaPlate.nullish(),
-		use: z.object({
+		modality: SchemaModality,
+		usage: z.object({
 			label: z.string(),
 			value: SchemaVehicleUsage,
 		}),
@@ -58,7 +60,7 @@ const SchemaQuoteSimpleRegister = z
 			.nullish(),
 		franchise: z.coerce.number('Frânquia inválido').nullish(),
 	})
-	.transform((props) => ({ ...props, use: props.use.value }))
+	.transform((props) => ({ ...props, use: props.usage.value }))
 	.transform(
 		({
 			plate,
