@@ -14,6 +14,7 @@ const selectPrisma = {
 	},
 	insuranceCompany: {
 		select: {
+			id: true,
 			name: true,
 			icon: true,
 		},

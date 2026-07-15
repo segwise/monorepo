@@ -83,53 +83,29 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 				let safe = null;
 
 				await ctx.database.$transaction(async (transaction) => {
-					const temporaryInsured = insured.registration
-						? await transaction.temporaryInsured.upsert({
-								// @ts-expect-error
-								where: {
-									...(isCPF(insured.registration) && {
-										brokerId_cpf: {
-											brokerId,
-											cpf: insured.registration,
-										},
-									}),
-									...(isCNPJ(insured.registration) && {
-										brokerId_cnpj: {
-											brokerId,
-											cnpj: insured.registration,
-										},
-									}),
+					const temporaryInsured = await transaction.temporaryInsured.create({
+						data: {
+							broker: {
+								connect: {
+									id: brokerId,
 								},
-								update: {
-									name: insured?.name as string,
-									phone: insured?.phone as string,
-									...(insured?.maritalStatus && {
-										maritalStatus: insured?.maritalStatus,
-									}),
-								},
-								create: {
-									broker: {
-										connect: {
-											id: brokerId,
-										},
-									},
-									name: insured?.name as string,
-									...(isCPF(insured.registration) && {
-										cpf: insured.registration,
-									}),
-									...(isCNPJ(insured.registration) && {
-										cnpj: insured.registration,
-									}),
-									phone: insured?.phone as string,
-									...(insured?.maritalStatus && {
-										maritalStatus: insured?.maritalStatus,
-									}),
-								},
-								select: {
-									id: true,
-								},
-							})
-						: null;
+							},
+							name: insured?.name as string,
+							...(isCPF(insured.registration) && {
+								cpf: insured.registration,
+							}),
+							...(isCNPJ(insured.registration) && {
+								cnpj: insured.registration,
+							}),
+							phone: insured?.phone as string,
+							...(insured?.maritalStatus && {
+								maritalStatus: insured?.maritalStatus,
+							}),
+						},
+						select: {
+							id: true,
+						},
+					});
 
 					const vehicle = plate ? await vehicleByPlate(plate) : null;
 
@@ -158,13 +134,11 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 							...(!!association && {
 								association,
 							}),
-							...(temporaryInsured && {
-								temporaryInsured: {
-									connect: {
-										id: temporaryInsured.id,
-									},
+							temporaryInsured: {
+								connect: {
+									id: temporaryInsured.id,
 								},
-							}),
+							},
 							quoteVehicle: {
 								create: {
 									plate,
@@ -239,13 +213,11 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 									},
 								},
 								isExternal: true,
-								...(temporaryInsured && {
-									temporaryInsured: {
-										connect: {
-											id: temporaryInsured.id,
-										},
+								temporaryInsured: {
+									connect: {
+										id: temporaryInsured.id,
 									},
-								}),
+								},
 								modality: ModalityInsurance.vehicle,
 								...(!!insuranceCompany && {
 									insuranceCompany: {

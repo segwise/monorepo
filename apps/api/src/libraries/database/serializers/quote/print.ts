@@ -27,8 +27,8 @@ function serializer(
 				phone: props.temporaryInsured.phone,
 			},
 		},
-		...(props.insuranceCompanyId && {
-			insuranceCompany: props.insuranceCompanyId,
+		...(props.insuranceCompany?.id && {
+			insuranceCompany: props.insuranceCompany.id,
 		}),
 		...(!!props.quoteVehicle && {
 			vehicle: {
@@ -51,6 +51,9 @@ function serializer(
 		}),
 		expiration: props.expiration,
 		requestedAt: props.requestedAt,
+		...(props.producer && {
+			producer: props.producer.name,
+		}),
 	} satisfies QuotePrint;
 }
 
