@@ -27,6 +27,8 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				renewal,
 			} = ctx.req.valid('query');
 
+			console.log(requestedAt);
+
 			const pageMargins = 2;
 
 			const where: Prisma.QuoteWhereInput = {
