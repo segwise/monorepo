@@ -1,6 +1,6 @@
-import z, { type ZodType } from 'zod';
+import z from 'zod';
 
-const parseJsonQuery = (schema: ZodType) =>
+const parseJsonQuery = <T extends z.ZodType>(schema: T) =>
 	z.string('JSON inválido').transform((val, ctx) => {
 		try {
 			return schema.parse(val);
