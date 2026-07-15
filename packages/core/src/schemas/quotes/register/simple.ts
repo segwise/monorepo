@@ -20,6 +20,10 @@ const SchemaQuoteSimpleRegister = z
 			label: z.string(),
 			value: SchemaVehicleUsage,
 		}),
+		type: z.object({
+			label: z.string(),
+			value: z.enum(['new', 'renewal']),
+		}),
 		postalCode: SchemaPostalCode,
 		insured: z.object({
 			name: SchemaName,
