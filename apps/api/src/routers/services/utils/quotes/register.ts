@@ -91,7 +91,7 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 								},
 							},
 							name: insured?.name as string,
-							...(insured.registration && {
+							...(!!insured.registration && {
 								...(isCPF(insured.registration) && {
 									cpf: insured.registration,
 								}),
