@@ -1,6 +1,5 @@
 import type z from 'zod';
-
-import type { SchemaVehicleUsage } from '@/schemas/utils/vehicle/usage';
+import type { SchemaVehicleUsage } from '../../schemas/utils/vehicle/usage';
 
 type VehicleUsage = z.infer<typeof SchemaVehicleUsage>;
 

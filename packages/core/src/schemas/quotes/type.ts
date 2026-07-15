@@ -1,5 +1,5 @@
 import z from 'zod';
 
-const SchemaQuoteType = z.enum(['car'], 'Tipo inválido');
+const SchemaQuoteType = z.enum(['new', 'renewal'], 'Tipo inválido');
 
 export { SchemaQuoteType };

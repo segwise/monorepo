@@ -1,4 +1,5 @@
 import z from 'zod';
+
 import { SchemaPostalCode } from './postal-code';
 
 const SchemaAddress = z.object({

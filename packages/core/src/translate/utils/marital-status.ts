@@ -1,4 +1,4 @@
-import type { MaritalStatus } from '@/types/utils';
+import type { MaritalStatus } from '../../types/utils';
 
 function translateMaritalStatus(maritalStatus: MaritalStatus) {
 	switch (maritalStatus) {

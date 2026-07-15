@@ -1,10 +1,9 @@
 import type z from 'zod';
-
 import type {
 	SchemaGarage,
 	SchemaGarageSchool,
 	SchemaGarageWork,
-} from '@/schemas/utils/garage';
+} from '../../schemas/utils/garage';
 
 type Garage = z.infer<typeof SchemaGarage>;
 type GarageWork = z.infer<typeof SchemaGarageWork>;

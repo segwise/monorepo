@@ -1,4 +1,4 @@
-import type { Residence } from '@/types/utils/residence';
+import type { Residence } from '../../types/utils';
 
 function translateResidence(garage: Residence) {
 	switch (garage) {

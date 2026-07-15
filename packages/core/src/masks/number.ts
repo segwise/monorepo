@@ -1,4 +1,4 @@
-function maskNumber(value: string): string {
+function maskNumber(value: string) {
 	return value.replace(/\D/g, '');
 }
 

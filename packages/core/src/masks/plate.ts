@@ -1,4 +1,4 @@
-function maskPlate(plate: string): string {
+function maskPlate(plate: string) {
 	const placa = plate.toUpperCase().replace(/\W/g, '');
 
 	const validadorPosicoes = [

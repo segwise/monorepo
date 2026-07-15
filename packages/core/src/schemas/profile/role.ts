@@ -3,11 +3,12 @@ import z from 'zod';
 const SchemaRole = z.enum([
 	'owner',
 	'admin',
-	'user',
+	'manager',
 	'broker',
-	'producer',
 	'finance',
 	'counter',
+	'producer',
+	'customer',
 ]);
 
 export { SchemaRole };

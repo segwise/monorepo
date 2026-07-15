@@ -1,9 +1,10 @@
-import { maskNumber } from '@/masks/number';
+import { maskNumber } from '../masks/number';
 
-function isPhone(phone: string): boolean {
+function isPhone(phone: string) {
 	const apenasNumeros = maskNumber(phone);
 
 	let numeroSemDDI = apenasNumeros;
+
 	if (numeroSemDDI.startsWith('55')) {
 		numeroSemDDI = numeroSemDDI.slice(2);
 	}
@@ -13,6 +14,7 @@ function isPhone(phone: string): boolean {
 	}
 
 	const ddd = numeroSemDDI.slice(0, 2);
+
 	const numero = numeroSemDDI.slice(2);
 
 	if (!/^[1-9][0-9]$/.test(ddd)) {

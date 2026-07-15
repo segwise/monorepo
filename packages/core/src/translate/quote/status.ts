@@ -1,4 +1,4 @@
-import type { QuoteStatus } from '@/types/quotes';
+import type { QuoteStatus } from '../../types/quotes';
 
 function translateQuoteStatus(status: QuoteStatus) {
 	switch (status) {

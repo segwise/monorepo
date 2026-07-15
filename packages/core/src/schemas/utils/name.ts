@@ -2,7 +2,7 @@ import z from 'zod';
 
 const SchemaName = z
 	.string('Nome inválido')
-	.min(4, 'Nome deve conter ao menos 4 caracteres')
+	.min(3, 'Nome deve conter ao menos 3 caracteres')
 	.trim()
 	.toLowerCase();
 

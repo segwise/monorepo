@@ -1,4 +1,4 @@
-import type { Garage, GarageSchool, GarageWork } from '@/types/utils/garage';
+import type { Garage, GarageSchool, GarageWork } from '../../types/utils';
 
 function translateGarage(garage: Garage) {
 	switch (garage) {
@@ -14,7 +14,6 @@ function translateGarage(garage: Garage) {
 			return garage;
 	}
 }
-
 function translateGarageWork(garage: GarageWork) {
 	switch (garage) {
 		case 'does_not_work':
@@ -25,7 +24,6 @@ function translateGarageWork(garage: GarageWork) {
 			return 'Não';
 		case 'does_not_use':
 			return 'Não Utiliza Para Trabalho';
-
 		default:
 			return garage;
 	}
@@ -41,7 +39,6 @@ function translateGarageSchool(garage: GarageSchool) {
 			return 'Não';
 		case 'does_not_use':
 			return 'Não Utiliza Para Estudar';
-
 		default:
 			return garage;
 	}

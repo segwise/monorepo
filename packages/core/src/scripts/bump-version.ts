@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const type = process.argv[2] as 'major' | 'minor' | 'patch' | undefined;
+const type = process.argv[2];
 
 if (!type || !['major', 'minor', 'patch'].includes(type)) {
 	process.exit(1);
@@ -9,8 +9,8 @@ if (!type || !['major', 'minor', 'patch'].includes(type)) {
 const pkgPath = './package.json';
 const pkgText = readFileSync(pkgPath, 'utf-8');
 const pkg = JSON.parse(pkgText);
-
 const [majorStr, minorStr, patchStr] = pkg.version.split('.');
+
 let major = Number(majorStr);
 let minor = Number(minorStr);
 let patch = Number(patchStr);
@@ -27,6 +27,7 @@ if (type === 'major') {
 }
 
 const newVersion = `${major}.${minor}.${patch}`;
+
 pkg.version = newVersion;
 
 writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);

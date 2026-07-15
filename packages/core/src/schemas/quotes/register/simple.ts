@@ -1,38 +1,52 @@
-import { startOfDay } from 'date-fns';
+import { endOfDay } from 'date-fns';
 import z from 'zod';
+import { isDateString } from '../../../valids/date';
+import { SchemaReferral } from '../../producers';
 import {
+	SchemaCPFOrCNPJ,
 	SchemaMaritalStatus,
-	SchemaModality,
 	SchemaName,
 	SchemaPhone,
 	SchemaPlate,
 	SchemaPostalCode,
 	SchemaVehicleUsage,
-} from '@/schemas/utils';
-import { isDateString } from '@/valids/date';
+} from '../../utils';
+import { SchemaModality } from '../../utils/modality';
+import { SchemaQuoteType } from '../type';
+
+const SchemaQuoteTypeEdit = z.enum([
+	...Object.values(SchemaQuoteType.enum),
+	'association',
+]);
 
 const SchemaQuoteSimpleRegister = z
 	.object({
-		vehicleWithLicensePlate: z.coerce.boolean(),
-		plate: SchemaPlate.nullish(),
+		type: z
+			.object({
+				label: z.string(),
+				value: SchemaQuoteTypeEdit,
+			})
+			.or(SchemaQuoteTypeEdit),
 		modality: SchemaModality,
-		usage: z.object({
-			label: z.string(),
-			value: SchemaVehicleUsage,
-		}),
-		type: z.object({
-			label: z.string(),
-			value: z.enum(['new', 'renewal']),
-		}),
+		vehicleWithLicensePlate: z.boolean(),
+		plate: SchemaPlate.nullish(),
+		usage: z
+			.object({
+				label: z.string(),
+				value: SchemaVehicleUsage,
+			})
+			.or(SchemaVehicleUsage),
 		postalCode: SchemaPostalCode,
 		insured: z.object({
 			name: SchemaName,
+			registration: SchemaCPFOrCNPJ,
 			phone: SchemaPhone,
-			maritalStatus: SchemaMaritalStatus,
-		}),
-		renewal: z.object({
-			label: z.string(),
-			value: z.enum(['new', 'renewal']),
+			maritalStatus: z
+				.object({
+					label: z.string(),
+					value: SchemaMaritalStatus,
+				})
+				.or(SchemaMaritalStatus),
 		}),
 		insuranceCompany: z
 			.object(
@@ -42,47 +56,68 @@ const SchemaQuoteSimpleRegister = z
 				},
 				'Seguradora inválida',
 			)
+			.or(z.uuidv7('Seguradora inválida'))
 			.nullish(),
 		expiration: z
 			.string()
 			.refine(isDateString, 'Vigência inválida')
 			.transform((value) => {
 				const splits = value.split('/').flatMap((value) => Number(value));
-
 				if (!splits[0] || !splits[1] || !splits[2]) {
 					throw new Error('Falha ao transformar data');
 				}
-
 				const day = splits[0];
 				const month = splits[1] - 1;
 				const year = splits[2];
-
 				return new Date(year, month, day);
 			})
-			.refine(
-				(value) => startOfDay(new Date()) < startOfDay(value),
-				'Vigência não pode ser retroativa',
-			)
+			.or(z.date('Vigência inválida'))
+			.or(z.iso.datetime('Vigência inválida'))
+			.transform((value) => endOfDay(value))
 			.nullish(),
 		franchise: z.coerce.number('Frânquia inválido').nullish(),
+		referral: SchemaReferral.nullish(),
 	})
-	.transform((props) => ({ ...props, use: props.usage.value }))
+	.transform((props) => ({
+		...props,
+		usage: typeof props.usage === 'string' ? props.usage : props.usage.value,
+	}))
 	.transform(
 		({
+			type,
 			plate,
-			renewal,
 			insuranceCompany,
 			expiration,
 			franchise,
+			insured,
 			...props
 		}) => ({
 			...props,
+			type,
 			...(props.vehicleWithLicensePlate && {
 				plate,
 			}),
-			...(renewal.value === 'renewal' && {
-				renewal: true,
-				insuranceCompany,
+			insured: {
+				...insured,
+				maritalStatus:
+					typeof insured.maritalStatus !== 'string'
+						? insured.maritalStatus?.value
+						: insured.maritalStatus,
+			},
+			association:
+				typeof type === 'string'
+					? type === 'association'
+					: typeof type === 'object' && type.value === 'association',
+			renewal:
+				typeof type === 'string'
+					? type === 'renewal'
+					: typeof type === 'object' && type.value === 'renewal',
+			...(((typeof type === 'string' && type === 'renewal') ||
+				(typeof type === 'object' && type.value === 'renewal')) && {
+				insuranceCompany:
+					typeof insuranceCompany !== 'string'
+						? insuranceCompany?.value
+						: insuranceCompany,
 				expiration,
 				franchise,
 			}),
@@ -98,7 +133,6 @@ const SchemaQuoteSimpleRegister = z
 				});
 			}
 		}
-
 		if (values.renewal) {
 			if (!values.insuranceCompany) {
 				ctx.addIssue({
@@ -107,7 +141,6 @@ const SchemaQuoteSimpleRegister = z
 					message: 'Seguradora inválida',
 				});
 			}
-
 			if (!values.expiration) {
 				ctx.addIssue({
 					code: 'custom',
@@ -116,8 +149,24 @@ const SchemaQuoteSimpleRegister = z
 				});
 			}
 		}
-
 		return z.NEVER;
 	});
 
-export { SchemaQuoteSimpleRegister };
+const SchemaQuoteSimpleCustomRegister = z.object({
+	referral: SchemaReferral.nullish(),
+	type: z.enum([
+		'health',
+		'residence',
+		'business',
+		'condominium',
+		'travel',
+		'professional',
+		'construction',
+	]),
+	insured: z.object({
+		name: SchemaName,
+		phone: SchemaPhone,
+	}),
+});
+
+export { SchemaQuoteSimpleRegister, SchemaQuoteSimpleCustomRegister };

@@ -1,6 +1,9 @@
 import z from 'zod';
 
-const SchemaReferral = z.string('Código inválido').min(5, 'Código inválido');
+const SchemaReferral = z
+	.string('Código de indicação inválido')
+	.min(5, 'Código de indicação inválido')
+	.toLowerCase();
 
 const SchemaProducerReferral = z.object({
 	referral: SchemaReferral,
@@ -11,4 +14,8 @@ const SchemaProducerReferralResponse = z.object({
 	referral: SchemaReferral,
 });
 
-export { SchemaProducerReferral, SchemaProducerReferralResponse };
+export {
+	SchemaReferral,
+	SchemaProducerReferral,
+	SchemaProducerReferralResponse,
+};

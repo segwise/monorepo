@@ -21,14 +21,6 @@
 		"outDir": "./dist",
 		"rootDir": "./src",
 		"forceConsistentCasingInFileNames": true,
-		"paths": {
-			"@/schemas/*": ["./src/schemas/*"],
-			"@/types/*": ["./src/types/*"],
-			"@/valids/*": ["./src/valids/*"],
-			"@/masks/*": ["./src/masks/*"],
-			"@/translate/*": ["./src/translate/*"],
-			"@/utils/*": ["./src/utils/*"]
-		}
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist"]

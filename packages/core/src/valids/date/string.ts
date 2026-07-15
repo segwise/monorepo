@@ -1,6 +1,6 @@
 import { format, isValid, parse } from 'date-fns';
 
-function isDateString(value: string): boolean {
+function isDateString(value: string) {
 	if (!value || value.length !== 10) {
 		return false;
 	}

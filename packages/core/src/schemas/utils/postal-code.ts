@@ -1,6 +1,7 @@
 import z from 'zod';
-import { maskNumber } from '@/masks/number';
-import { isPostalCode } from '@/valids/postal-code';
+
+import { maskNumber } from '../../masks/number';
+import { isPostalCode } from '../../valids/postal-code';
 
 const SchemaPostalCode = z
 	.string('CEP inválido')
