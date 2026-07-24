@@ -16,8 +16,6 @@ import {
 	ChevronRightIcon,
 	Clock,
 	CopyIcon,
-	Eye,
-	EyeOff,
 	FileIcon,
 	Loader2Icon,
 	LogOutIcon,
@@ -82,8 +80,6 @@ type CepGroup = {
 };
 
 function ProducerDashboard() {
-	const [hidden, setHidden] = useState(true);
-
 	const [periodIdx, setPeriodIdx] = useState(0);
 
 	const [showAllQuotes, setShowAllQuotes] = useState(false);
@@ -779,14 +775,6 @@ function ProducerDashboard() {
 	}
 
 	useEffect(() => {
-		const isVisibleBalance = localStorage.getItem('visible:balance');
-
-		if (isVisibleBalance === 'true') {
-			setHidden(false);
-		}
-	}, []);
-
-	useEffect(() => {
 		if (isSuccess) {
 			setPeriodIdx(periods.length - 1);
 		}
@@ -906,31 +894,9 @@ function ProducerDashboard() {
 						<p className='text-white/50 text-xs uppercase tracking-widest'>
 							{period?.paid ? 'Comissão paga' : 'Comissão a receber'}
 						</p>
-						<button
-							type='button'
-							onClick={() =>
-								setHidden((h) => {
-									localStorage.setItem('visible:balance', String(h));
-
-									return !h;
-								})
-							}
-							className='text-white/30 hover:text-white/60 transition-colors'
-						>
-							{hidden ? (
-								<EyeOff className='size-3.5' />
-							) : (
-								<Eye className='size-3.5' />
-							)}
-						</button>
 					</div>
-
 					<p className='text-4xl font-bold text-white tracking-tight mb-3'>
-						{hidden
-							? 'R$ ••••••'
-							: !period?.commission
-								? 'R$ 0,00'
-								: fmt(period.commission)}
+						{!period?.commission ? 'R$ 0,00' : fmt(period.commission)}
 					</p>
 
 					{period?.paid ? (

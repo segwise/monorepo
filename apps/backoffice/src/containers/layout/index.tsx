@@ -16,16 +16,6 @@ function Layout({ children }: React.PropsWithChildren) {
 						<TitlePage />
 					</div>
 					<div className='flex flex-row items-center justify-end gap-x-2'>
-						{/*
-							<div className='mr-2'>
-								<Timer />
-							</div>
-						*/}
-						{/* <Separator orientation='vertical' className='h-6' /> */}
-						{/* <ChangeTheme /> */}
-						{/* <Separator orientation='vertical' className='h-6' /> */}
-						{/* <SheetNotification /> */}
-						{/* <Separator orientation='vertical' className='h-6' /> */}
 						<DropdownMenuProfile variant='topbar' />
 					</div>
 				</Header>
