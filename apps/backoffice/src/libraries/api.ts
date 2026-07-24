@@ -73,7 +73,7 @@ api.interceptors.request.use(
 
 		config.headers = {
 			...config.headers,
-			'x-system': process.env.NEXT_PUBLIC_ROLE_SYSTEM,
+			'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM,
 		};
 
 		return config;
