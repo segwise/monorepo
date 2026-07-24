@@ -1,5 +1,5 @@
+import { cookiesAuthRelevant } from '@segwise/core';
 import type { MiddlewareHandler } from '@/@types/server.d';
-
 import type { Role } from '@/generated/prisma/enums';
 
 const sessionMiddleware: MiddlewareHandler = async (ctx, next) => {
@@ -35,29 +35,28 @@ const requireSession: MiddlewareHandler = async (ctx, next) => {
 const replaceSession: MiddlewareHandler = async (ctx, next) => {
 	const cookies = ctx.req.raw.headers.get('cookie');
 
-	if (
-		cookies?.includes('backoffice.auth') ||
-		cookies?.includes('producer.auth') ||
-		cookies?.includes('customer.auth') ||
-		cookies?.includes(`backoffice.${ctx.environment.NODE_ENV}.auth`) ||
-		cookies?.includes(`producer.${ctx.environment.NODE_ENV}.auth`) ||
-		cookies?.includes(`customer.${ctx.environment.NODE_ENV}.auth`)
-	) {
-		const prefix =
-			ctx.environment.NODE_ENV === 'production'
-				? 'auth'
-				: `${ctx.environment.NODE_ENV}.auth`;
+	if (cookies) {
+		const ACCESS = ctx.req.raw.headers.get('X-Client-App');
+		const cookieString = ACCESS
+			? cookiesAuthRelevant(
+					// @ts-expect-error
+					ACCESS,
+					cookies ?? '',
+				)
+			: cookies;
 
-		const modifiedCookies =
-			cookies
-				?.replaceAll('backoffice.auth', prefix)
-				.replaceAll(`backoffice.${ctx.environment.NODE_ENV}.auth`, prefix)
-				.replaceAll(`producer.auth`, prefix)
-				.replaceAll(`producer.${ctx.environment.NODE_ENV}.auth`, prefix)
-				.replaceAll(`customer.auth`, prefix)
-				.replaceAll(`customer.${ctx.environment.NODE_ENV}.auth`, prefix) || '';
+		const environment = ctx.environment.NODE_ENV;
+		const targetPrefix =
+			environment === 'production' ? 'auth' : `${environment}.auth`;
 
-		ctx.req.raw.headers.set('cookie', modifiedCookies);
+		const normalized = cookieString?.replace(
+			/(?:backoffice|customer|producer|app)\.(?:(?:production|preview|development)\.)?auth/g,
+			targetPrefix,
+		);
+
+		if (normalized && normalized !== cookieString) {
+			ctx.req.raw.headers.set('cookie', normalized);
+		}
 	}
 
 	return await next();
