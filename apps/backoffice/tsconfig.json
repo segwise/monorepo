@@ -18,24 +18,23 @@
 				"name": "next"
 			}
 		],
-		"baseUrl": "./src",
 		"paths": {
-			"@/*": ["*"],
-			"@/public/*": ["../public/*"],
-			"@/@types/*": ["@types/*"],
-			"@/styles": ["styles/globals.css"],
-			"@/styles/*": ["styles/*"],
-			"@/fonts/*": ["assets/fonts/*"],
-			"@/utils": ["libraries/utils"],
-			"@/hooks/*": ["libraries/hooks/*"],
-			"@/helpers/*": ["libraries/helpers/*"],
-			"@/schemas/*": ["libraries/schemas/*"],
-			"@/providers/*": ["providers/*"],
-			"@/auth": ["libraries/auth"],
-			"@/data/*": ["data/*"],
-			"@/config/*": ["config/*"],
-			"@/cards/*": ["containers/cards/*"],
-			"@/charts/*": ["containers/charts/*"]
+			"@/*": ["./src/*"],
+			"@/public/*": ["./public/*"],
+			"@/@types/*": ["./src/@types/*"],
+			"@/styles": ["./src/styles/globals.css"],
+			"@/styles/*": ["./src/styles/*"],
+			"@/fonts/*": ["./src/assets/fonts/*"],
+			"@/utils": ["./src/libraries/utils"],
+			"@/hooks/*": ["./src/libraries/hooks/*"],
+			"@/helpers/*": ["./src/libraries/helpers/*"],
+			"@/schemas/*": ["./src/libraries/schemas/*"],
+			"@/providers/*": ["./src/providers/*"],
+			"@/auth": ["./src/libraries/auth"],
+			"@/data/*": ["./src/data/*"],
+			"@/config/*": ["./src/config/*"],
+			"@/cards/*": ["./src/containers/cards/*"],
+			"@/charts/*": ["./src/containers/charts/*"]
 		}
 	},
 	"include": [
