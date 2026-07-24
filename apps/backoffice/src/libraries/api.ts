@@ -1,3 +1,4 @@
+import { cookiesAuthRelevant } from '@segwise/core';
 import xior from 'xior';
 
 const api = xior.create({
@@ -47,5 +48,39 @@ const api = xior.create({
 		return searchParams.toString();
 	},
 });
+
+api.interceptors.request.use(
+	async (config) => {
+		if (typeof window === 'undefined') {
+			try {
+				const { cookies } = await import('next/headers');
+
+				const cookieStore = await cookies();
+				const cookieString = cookiesAuthRelevant(
+					// @ts-expect-error
+					process.env.NEXT_PUBLIC_ROLE_SYSTEM,
+					cookieStore.toString() ?? '',
+				);
+
+				if (cookieString) {
+					config.headers = {
+						...config.headers,
+						cookie: cookieString,
+					};
+				}
+			} catch {}
+		}
+
+		config.headers = {
+			...config.headers,
+			'x-system': process.env.NEXT_PUBLIC_ROLE_SYSTEM,
+		};
+
+		return config;
+	},
+	(error) => {
+		return Promise.reject(error);
+	},
+);
 
 export { api };

@@ -1,4 +1,4 @@
-import '@/styles';
+import '@/styles/globals.css';
 
 import type { Metadata } from 'next';
 import { TopLoader } from '@/components/top-loader';
