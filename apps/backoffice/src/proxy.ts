@@ -1,7 +1,10 @@
+import { cookiesAuthRelevant } from '@segwise/core/utils';
 import { getSessionCookie } from 'better-auth/cookies';
 import { unstable_cache } from 'next/cache';
 import { type NextRequest, NextResponse } from 'next/server';
 import { auth, getCookiePrefix } from './libraries/auth';
+
+const ACCESS = process.env.NEXT_PUBLIC_ROLE_SYSTEM;
 
 const PUBLIC_ROUTES = [
 	'/sign-in',
@@ -17,7 +20,7 @@ const getSessionCached = unstable_cache(
 		const sessionCookie = getSessionCookie(
 			new Headers({
 				cookie,
-				// 'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
+				'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
 			}),
 			{
 				cookiePrefix: COOKIE_PREFIX,
@@ -32,7 +35,7 @@ const getSessionCached = unstable_cache(
 			fetchOptions: {
 				headers: {
 					cookie,
-					// 'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
+					'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
 				},
 			},
 		});
@@ -41,7 +44,7 @@ const getSessionCached = unstable_cache(
 	},
 	['session-proxy', COOKIE_PREFIX],
 	{
-		tags: [`session-proxy-${COOKIE_PREFIX}`],
+		tags: ['session-proxy', COOKIE_PREFIX],
 		revalidate: 60 * 30,
 	},
 );
@@ -49,7 +52,10 @@ const getSessionCached = unstable_cache(
 async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
-	const session = await getSessionCached(request.cookies.toString());
+	const session = await getSessionCached(
+		// @ts-expect-error
+		cookiesAuthRelevant(ACCESS, request.cookies.toString()),
+	);
 
 	if (session && pathname === '/') {
 		return NextResponse.redirect(new URL('/dashboard', request.url));

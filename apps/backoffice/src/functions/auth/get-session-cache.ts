@@ -11,7 +11,7 @@ async function getSessionCache() {
 
 	const newHeader = new Headers(headerList);
 
-	// newHeader.set('X-Client-App', process.env.NEXT_PUBLIC_ROLE_SYSTEM as string);
+	newHeader.set('X-Client-App', process.env.NEXT_PUBLIC_ROLE_SYSTEM as string);
 
 	const { data } = await auth.getSession({
 		fetchOptions: {
