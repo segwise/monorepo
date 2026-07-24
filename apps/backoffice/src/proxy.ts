@@ -50,6 +50,8 @@ const getSessionCached = unstable_cache(
 async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
 
+	console.log(ACCESS, cookiesAuthRelevant(ACCESS, request.cookies.toString()));
+
 	const session = await getSessionCached(
 		// @ts-expect-error
 		cookiesAuthRelevant(ACCESS, request.cookies.toString()),
