@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"lib": ["ESNext"],
 		"target": "ESNext",
-		"module": "ESNext",
+		"module": "ES2015",
 		"moduleResolution": "Bundler",
 		"allowJs": true,
 		"verbatimModuleSyntax": true,
