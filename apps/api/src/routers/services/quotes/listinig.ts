@@ -100,11 +100,6 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				}),
 			};
 
-			console.log({
-				gte: startOfDay(requestedAt.start),
-				lte: endOfDay(requestedAt.end),
-			});
-
 			const [quotes, total, itemsBefore] = await ctx.database.$transaction([
 				ctx.database.quote.findMany({
 					where,
