@@ -11,6 +11,7 @@ const roleApplication = {
 	admin: 'backoffice',
 	producer: 'producer',
 	customer: 'customer',
+	app: 'app',
 };
 
 function getCookiePrefix() {
@@ -22,6 +23,23 @@ function getCookiePrefix() {
 const auth = createAuthClient({
 	baseURL,
 	basePath,
+	$InferAuth: {
+		advanced: {
+			cookiePrefix: getCookiePrefix(),
+			crossSubDomainCookies: {
+				enabled: true,
+			},
+			useSecureCookies: true,
+		},
+	},
+	fetchOptions: {
+		credentials: 'include',
+		priority: 'high',
+		headers: new Headers({
+			...xior.defaults.headers,
+			'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
+		}),
+	},
 	plugins: [
 		nextCookies(),
 		adminClient(),
@@ -57,24 +75,6 @@ const auth = createAuthClient({
 			},
 		}),
 	],
-	fetchOptions: {
-		credentials: 'include',
-		priority: 'high',
-		headers: new Headers({
-			...xior.defaults.headers,
-			'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
-		}),
-	},
-	$InferAuth: {
-		basePath,
-		advanced: {
-			cookiePrefix: getCookiePrefix(),
-			crossSubDomainCookies: {
-				enabled: true,
-			},
-			useSecureCookies: true,
-		},
-	},
 });
 
 export { auth, getCookiePrefix };
