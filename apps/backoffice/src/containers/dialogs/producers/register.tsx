@@ -437,13 +437,13 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 									className='col-span-full'
 								>
 									<FieldLabel htmlFor='pix'>Chave PIX: </FieldLabel>
-									<Textarea
+									<Input
 										{...field}
 										id='pix'
 										value={field.value || ''}
 										aria-invalid={fieldState.invalid}
 										placeholder='Informar Chave PIX'
-										className='uppercase min-h-40'
+										className='uppercase'
 										onChange={({ target: { value } }) =>
 											field.onChange(!value ? null : value)
 										}
