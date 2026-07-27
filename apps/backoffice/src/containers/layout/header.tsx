@@ -38,7 +38,7 @@ function Header({ children }: React.PropsWithChildren) {
 		<header
 			ref={headerRef}
 			className={cn(
-				'sticky top-0 left-0 right-0 z-50 px-6 pt-5 pb-3 flex items-center justify-between transition-all ease-out',
+				'sticky top-0 left-0 right-0 z-50 px-6 max-sm:px-3 pt-5 pb-3 flex items-center justify-between transition-all ease-out',
 				!scrolled &&
 					'bg-transparent backdrop-blur-none border-b border-transparent shadow-none',
 				scrolled && 'bg-background backdrop-blur-md border-b border-input py-3',

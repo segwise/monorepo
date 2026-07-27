@@ -68,6 +68,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 				phone: '',
 				email: '',
 				referral: '',
+				pix: '',
 			},
 		});
 
@@ -106,7 +107,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 	return (
 		<Dialog open={open} onOpenChange={(open) => [setOpen(open), reset()]}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className='max-w-5xl'>
+			<DialogContent className='max-w-5xl h-screen'>
 				<DialogHeader>
 					<DialogTitle>Cadastrar Novo Produtor</DialogTitle>
 					<DialogDescription>Atenção ao realizar a ação</DialogDescription>
@@ -114,9 +115,9 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 				<Separator />
 				<form
 					onSubmit={handleSubmit(onSubmit)}
-					className='grid grid-cols-[55%_auto] gap-4'
+					className='grid grid-cols-1 sm:grid-cols-[55%_auto] gap-4 overflow-scroll'
 				>
-					<FieldGroup className='grid grid-cols-2 gap-4'>
+					<FieldGroup className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
 						<Controller
 							control={control}
 							name='cpfOrCnpj'
@@ -414,6 +415,34 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										value={field.value || ''}
 										aria-invalid={fieldState.invalid}
 										placeholder='Informar Código'
+										className='uppercase min-h-40'
+										onChange={({ target: { value } }) =>
+											field.onChange(!value ? null : value)
+										}
+									/>
+									{fieldState.invalid && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+					</FieldGroup>
+					<FieldGroup>
+						<Controller
+							control={control}
+							name='pix'
+							render={({ field, fieldState }) => (
+								<Field
+									data-invalid={fieldState.invalid}
+									className='col-span-full'
+								>
+									<FieldLabel htmlFor='pix'>Chave PIX: </FieldLabel>
+									<Textarea
+										{...field}
+										id='pix'
+										value={field.value || ''}
+										aria-invalid={fieldState.invalid}
+										placeholder='Informar Chave PIX'
 										className='uppercase min-h-40'
 										onChange={({ target: { value } }) =>
 											field.onChange(!value ? null : value)

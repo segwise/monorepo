@@ -112,14 +112,14 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 	}, [queryCllient, type, searchParams, setSearchParams]);
 
 	return (
-		<div className='flex flex-row items-center justify-between **:gap-x-2'>
+		<div className='flex flex-row max-sm:flex-col sm:items-center sm:justify-between **:gap-x-2 max-sm:space-y-2'>
 			<div>
-				<span className='text-sm px-2 text-muted-foreground flex flex-row items-center justify-start'>
+				<span className='text-sm sm:px-2 text-muted-foreground flex flex-row items-center justify-start'>
 					Total: {total} registros
 				</span>
 			</div>
-			<div className='flex flex-row items-center justify-end'>
-				<div className='flex flex-row items-center justify-end gap-x-1'>
+			<div className='flex flex-col sm:flex-row sm:items-center sm:justify-end'>
+				<div className='max-sm:hidden flex flex-row items-center justify-end gap-x-1'>
 					<span className='text-sm font-normal leading-none text-muted-foreground'>
 						Registros:
 					</span>
@@ -145,9 +145,9 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 						</SelectContent>
 					</Select>
 				</div>
-				<Separator orientation='vertical' className='h-7 mx-2' />
-				<Pagination>
-					<PaginationContent>
+				<Separator orientation='vertical' className='h-7 mx-2 max-sm:hidden' />
+				<Pagination className='max-sm:w-full'>
+					<PaginationContent className='max-sm:w-full'>
 						<Button
 							size='sm'
 							disabled={!previous}
@@ -159,7 +159,7 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 								})
 							}
 							variant='outline'
-							className='gap-1 pl-2.5'
+							className='gap-1 pl-2.5 max-sm:flex-1'
 						>
 							<ChevronLeftIcon className='size-4' />
 							Anterior
@@ -224,7 +224,7 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 								})
 							}
 							variant='outline'
-							className='gap-1 pr-2.5'
+							className='gap-1 pr-2.5 max-sm:flex-1'
 						>
 							Próximo
 							<ChevronRightIcon className='size-4' />

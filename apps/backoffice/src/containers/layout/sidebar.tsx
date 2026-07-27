@@ -1,7 +1,8 @@
-import { LockIcon } from 'lucide-react';
+import { LockIcon, XCircleIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Activity, Suspense } from 'react';
+import { Button } from '@/components/ui/button';
 import {
 	SidebarContent,
 	SidebarFooter,
@@ -14,6 +15,7 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarSeparator,
+	SidebarTrigger,
 	Sidebar as SidebarUI,
 } from '@/components/ui/sidebar';
 import { brand } from '@/config/brand';
@@ -23,7 +25,12 @@ import { cn } from '@/utils';
 
 function Sidebar() {
 	return (
-		<SidebarUI side='left' variant='inset' collapsible='icon' className='dark'>
+		<SidebarUI
+			side='left'
+			variant='inset'
+			collapsible='icon'
+			className='dark w-10px!'
+		>
 			<SidebarHeader>
 				<SidebarMenu>
 					<SidebarMenuItem className='pointer-events-none'>
@@ -42,6 +49,11 @@ function Sidebar() {
 								/>
 							</Link>
 						</SidebarMenuButton>
+						<SidebarTrigger asChild>
+							<Button className='absolute top-0 right-0'>
+								<XCircleIcon />
+							</Button>
+						</SidebarTrigger>
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>

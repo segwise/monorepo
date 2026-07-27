@@ -5,6 +5,7 @@ import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { SearchIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from '@/libraries/search-params/quotes';
+import { cn } from '@/libraries/utils';
 import {
 	InputGroup,
 	InputGroupAddon,
@@ -12,7 +13,7 @@ import {
 	InputGroupInput,
 } from './ui/input-group';
 
-function InputSearch() {
+function InputSearch({ className }: { className?: string }) {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [search, setSearch] = useState<string>(searchParams.search || '');
@@ -36,7 +37,7 @@ function InputSearch() {
 	}
 
 	return (
-		<InputGroup className='w-60'>
+		<InputGroup className={cn('w-60', className)}>
 			<InputGroupInput
 				value={capitalizeFirstLetters(search)}
 				placeholder='Pesquisar...'
