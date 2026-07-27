@@ -24,6 +24,7 @@ function registerRoutersServicesProducersRegister(server: Server) {
 			referral,
 			cpfOrCnpj,
 			message,
+			pix,
 		} = ctx.req.valid('json');
 
 		if (!brokerId) {
@@ -71,6 +72,15 @@ function registerRoutersServicesProducersRegister(server: Server) {
 			} else {
 				userId = isUser.id;
 			}
+
+			await ctx.database.user.update({
+				where: {
+					id: userId,
+				},
+				data: {
+					pix,
+				},
+			});
 
 			const isMember = await ctx.database.member.findUnique({
 				where: {
