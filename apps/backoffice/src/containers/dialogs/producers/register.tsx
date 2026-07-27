@@ -445,7 +445,7 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 										placeholder='Informar Chave PIX'
 										className='uppercase'
 										onChange={({ target: { value } }) =>
-											field.onChange(!value ? null : value)
+											field.onChange(!value ? null : value.trim())
 										}
 									/>
 									{fieldState.invalid && (
