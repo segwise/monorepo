@@ -16,7 +16,7 @@ import type { ProducerRegister } from '@segwise/core/types';
 import { capitalizeFirstLetters, generateReferral } from '@segwise/core/utils';
 import { isCPF } from '@segwise/core/valids';
 import { SaveIcon, XCircleIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -49,60 +49,59 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useProducersRegister } from '@/libraries/hooks/producers/use-producers-register';
-import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 
 function DialogProducerRegister({ children }: React.PropsWithChildren) {
 	const [open, setOpen] = useState<boolean>(false);
 
 	const { mutate, isPending } = useProducersRegister();
 
-	const { control, handleSubmit, reset, watch, setValue, clearErrors } =
-		useForm({
-			mode: 'all',
-			criteriaMode: 'all',
-			reValidateMode: 'onChange',
-			resolver: zodResolver(SchemaProducerRegister),
-			defaultValues: {
-				cpfOrCnpj: '',
-				name: '',
-				phone: '',
-				email: '',
-				referral: '',
-				pix: '',
-			},
-		});
-
-	const { data: cpfOrCnpj } = useCpfOrCnpj(watch('cpfOrCnpj'));
+	const { control, handleSubmit, reset, setValue } = useForm({
+		mode: 'all',
+		criteriaMode: 'all',
+		reValidateMode: 'onChange',
+		resolver: zodResolver(SchemaProducerRegister),
+		defaultValues: {
+			cpfOrCnpj: '',
+			name: '',
+			phone: '',
+			email: '',
+			referral: '',
+			pix: '',
+			message: `Novidade\n{{DISPLAY_NAME}} em parceria com a segwise/xcar corretora vem ofertar a promoção\n\nGANHE EM DOBRO\n\n1 - Cashback de até R$ 500,00 na renovação ou contratação do seu seguro.\n    Utilizando o código: *{{CODE}}*\n2 - Orientações em caso de sinistro\n3 - Consulta veicular\n4 - Acesso direto às assistências das seguradoras\n5 - Plataforma de compra e venda de veículos mais segura ( apenas clientes segwise/xcar tem acesso)\n6 - Inclua todos os seguros da família, ganhe agilidade na consulta das renovações e acesso às assistências\n\nGaranta seus benefícios  *{{CODE}}*\n\nBaixe agora o aplicativo\n\n*SEGWISE*\n\nou acesse pelo link abaixo:`,
+		},
+	});
 
 	function onSubmit(props: ProducerRegister) {
-		mutate(props, {
-			async onSuccess(_data, _variables, _mutate, ctx) {
-				toast.success('CADASTRADO COM SUCESSO!');
-
-				await Promise.all([
-					ctx.client.invalidateQueries({
-						queryKey: ['producers', 'simple'],
-					}),
-					ctx.client.invalidateQueries({
-						queryKey: ['producers', 'simple', 'full'],
-					}),
-				]);
-
-				setOpen(false);
+		mutate(
+			{
+				...props,
+				...(props.message && {
+					message: props.message
+						.replaceAll('{{DISPLAY_NAME}}', props.name)
+						.replaceAll('{{CODE}}', props.referral),
+				}),
 			},
-			onError(error) {
-				toast.error(error.message || 'Falha ao cadastrar registro');
+			{
+				async onSuccess(_data, _variables, _mutate, ctx) {
+					toast.success('CADASTRADO COM SUCESSO!');
+
+					await Promise.all([
+						ctx.client.invalidateQueries({
+							queryKey: ['producers', 'simple'],
+						}),
+						ctx.client.invalidateQueries({
+							queryKey: ['producers', 'simple', 'full'],
+						}),
+					]);
+
+					setOpen(false);
+				},
+				onError(error) {
+					toast.error(error.message || 'Falha ao cadastrar registro');
+				},
 			},
-		});
+		);
 	}
-
-	useEffect(() => {
-		if (cpfOrCnpj) {
-			setValue('name', capitalizeFirstLetters(cpfOrCnpj.name));
-
-			clearErrors('name');
-		}
-	}, [cpfOrCnpj, setValue, clearErrors]);
 
 	return (
 		<Dialog open={open} onOpenChange={(open) => [setOpen(open), reset()]}>
@@ -155,12 +154,12 @@ function DialogProducerRegister({ children }: React.PropsWithChildren) {
 							name='name'
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid} className='col-span-1'>
-									<FieldLabel htmlFor='name'>Nome Completo:</FieldLabel>
+									<FieldLabel htmlFor='name'>Nome:</FieldLabel>
 									<Input
 										{...field}
 										id='name'
 										aria-invalid={fieldState.invalid}
-										placeholder='Nome Completo'
+										placeholder='Nome'
 										onChange={({ target: { value } }) =>
 											field.onChange(capitalizeFirstLetters(value))
 										}
