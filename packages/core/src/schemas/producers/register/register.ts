@@ -25,6 +25,7 @@ const SchemaProducerRegister = z.object({
 		.string('Mensagem de indicação inválida')
 		.min(1, 'Mensagem de indicação inválida')
 		.nullish(),
+	pix: z.string('Chave PIX inválida'),
 });
 
 export { SchemaProducerRegister };
