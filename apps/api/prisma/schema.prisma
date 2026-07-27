@@ -45,6 +45,8 @@ model User {
 
   paymentPayerAndReceivers PaymentPayerAndReceiver[] @relation("payment_payer_and_receiver_to_user", map: "payment_payer_and_receivers")
 
+  pix String?
+
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
