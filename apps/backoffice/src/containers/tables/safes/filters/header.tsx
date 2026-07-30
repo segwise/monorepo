@@ -6,7 +6,15 @@ import {
 	translateSafeStatus,
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
-import { addYears, endOfToday, format, isSameDay, parseISO } from 'date-fns';
+import {
+	addYears,
+	endOfMonth,
+	endOfToday,
+	format,
+	isSameDay,
+	parseISO,
+	startOfToday,
+} from 'date-fns';
 import {
 	CarIcon,
 	ChevronsUpDownIcon,
@@ -150,8 +158,8 @@ function FilterEffectivedAt() {
 		() =>
 			!searchParams.effectivedAt
 				? {
-						from: defaultFilterDate.start,
-						to: defaultFilterDate.end,
+						from: startOfToday(),
+						to: endOfMonth(startOfToday()),
 					}
 				: typeof searchParams.effectivedAt === 'string'
 					? {
@@ -248,8 +256,8 @@ function FilterEffectivedAt() {
 				<PopoverTrigger>
 					<span className='text-muted-foreground truncate cursor-pointer flex flex-row items-center justify-start gap-x-1'>
 						{!searchParams.effectivedAt &&
-							`${format(defaultFilterDate.start, 'dd/MM/yyyy')} - ${format(
-								defaultFilterDate.end,
+							`${format(startOfToday(), 'dd/MM/yyyy')} - ${format(
+								endOfMonth(startOfToday()),
 								'dd/MM/yyyy',
 							)}`}
 						{!!searchParams.effectivedAt && (

@@ -154,35 +154,35 @@ function FilterrequestedAt() {
 
 	const [open, setOpen] = useState<boolean>(false);
 
-	const defaultDate = useMemo(() => {
-		const search = !searchParams.requestedAt
-			? {
-					from: startOfToday(),
-					to: endOfMonth(startOfToday()),
-				}
-			: typeof searchParams.requestedAt === 'string'
+	const defaultDate = useMemo(
+		() =>
+			!searchParams.requestedAt
 				? {
-						from: parseISO(searchParams.requestedAt),
-						to: parseISO(searchParams.requestedAt),
+						from: startOfToday(),
+						to: endOfMonth(startOfToday()),
 					}
-				: searchParams.requestedAt instanceof Date
+				: typeof searchParams.requestedAt === 'string'
 					? {
-							from: searchParams.requestedAt,
-							to: searchParams.requestedAt,
+							from: parseISO(searchParams.requestedAt),
+							to: parseISO(searchParams.requestedAt),
 						}
-					: typeof searchParams.requestedAt.start === 'string' &&
-							typeof searchParams.requestedAt.end === 'string'
+					: searchParams.requestedAt instanceof Date
 						? {
-								from: parseISO(searchParams.requestedAt.start),
-								to: parseISO(searchParams.requestedAt.end),
+								from: searchParams.requestedAt,
+								to: searchParams.requestedAt,
 							}
-						: {
-								from: searchParams.requestedAt.start as Date,
-								to: searchParams.requestedAt.end as Date,
-							};
-
-		return search;
-	}, [searchParams]);
+						: typeof searchParams.requestedAt.start === 'string' &&
+								typeof searchParams.requestedAt.end === 'string'
+							? {
+									from: parseISO(searchParams.requestedAt.start),
+									to: parseISO(searchParams.requestedAt.end),
+								}
+							: {
+									from: searchParams.requestedAt.start as Date,
+									to: searchParams.requestedAt.end as Date,
+								},
+		[searchParams],
+	);
 
 	const [date, setDate] = useState<DateRange>(defaultDate);
 
