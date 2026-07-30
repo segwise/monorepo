@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { logger } from 'hono/logger';
 import { trimTrailingSlash } from 'hono/trailing-slash';
 import type { AppBindings } from '@/@types/server.d';
 import { environment } from '@/libraries/environment';
@@ -41,10 +40,6 @@ const server = new Hono<AppBindings>({
 		},
 	}),
 });
-
-if (environment.NODE_ENV === 'development') {
-	server.use(logger());
-}
 
 server.use(trimTrailingSlash());
 
