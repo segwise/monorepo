@@ -35,7 +35,9 @@ const SchemaDateRange = z
 						start: startOfDay(
 							props.start instanceof Date ? props.start : parseISO(props.start),
 						),
-						end: '',
+						end: endOfDay(
+							props.end instanceof Date ? props.end : parseISO(props.end),
+						),
 					},
 	);
 

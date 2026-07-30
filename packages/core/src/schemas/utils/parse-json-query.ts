@@ -7,6 +7,7 @@ const parseJsonQuery = <T extends z.ZodType>(schema: T) =>
 		} catch {
 			try {
 				const parse = JSON.parse(val);
+
 				return schema.parse(parse);
 			} catch {
 				ctx.addIssue({
