@@ -51,7 +51,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				modality,
 				status,
 				renewal,
-				effectived,
 				ids,
 				isExternal,
 			} = ctx.req.valid('query');
@@ -89,23 +88,10 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					],
 				}),
 				...(!ids?.length && {
-					requestedAt: {
+					expiration: {
 						gte: startOfDay(effectivedAt.start),
 						lte: endOfDay(effectivedAt.end),
 					},
-					// ...(!!effectived && {
-					// 	effectivedAt: {
-					// 		gte: startOfDay(effectivedAt.start),
-					// 		lte: endOfDay(effectivedAt.end),
-					// 	},
-					// }),
-					// ...(!effectived && {
-					// 	requestedAt: {
-					// 		gte: startOfDay(effectivedAt.start),
-					// 		lte: endOfDay(effectivedAt.end),
-					// 	},
-					// 	effectivedAt: null,
-					// }),
 				}),
 				...(!!renewal && {
 					renewal,

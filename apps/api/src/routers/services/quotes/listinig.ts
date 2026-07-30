@@ -84,7 +84,7 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						in: insuranceCompanies,
 					},
 				}),
-				requestedAt: {
+				expiration: {
 					gte: startOfDay(requestedAt.start),
 					lte: endOfDay(requestedAt.end),
 				},
