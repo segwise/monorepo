@@ -84,7 +84,7 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						in: insuranceCompanies,
 					},
 				}),
-				expiration: {
+				requestedAt: {
 					gte: startOfDay(requestedAt.start),
 					lte: endOfDay(requestedAt.end),
 				},
@@ -109,16 +109,9 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						},
 					}),
 					take: (limit as number) + 1,
-					orderBy: [
-						{
-							expiration: 'desc',
-						},
-						{
-							insured: {
-								name: 'asc',
-							},
-						},
-					],
+					orderBy: {
+						id: 'desc',
+					},
 					select: selectPrisma,
 					relationLoadStrategy: 'join',
 				}),
