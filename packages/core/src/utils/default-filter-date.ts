@@ -1,8 +1,8 @@
-import { endOfMonth, startOfToday } from 'date-fns';
+import { endOfMonth, endOfToday, startOfToday } from 'date-fns';
 
 const defaultFilterDate = {
 	start: startOfToday(),
-	end: endOfMonth(startOfToday()),
+	end: endOfMonth(endOfToday()),
 };
 
 export { defaultFilterDate };
