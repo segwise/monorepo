@@ -1,5 +1,4 @@
 import z from 'zod';
-import { defaultFilterDate } from '../../../utils/default-filter-date';
 import { transformArray } from '../../../utils/transform-array';
 import { SchemaSafeStatus } from '../../safes';
 import { SchemaModality } from '../../utils';
@@ -45,9 +44,7 @@ const SchemaSearchParamsSafeSimple = z
 			.or(SchemaSafeStatus)
 			.transform(transformArray)
 			.nullish(),
-		effectivedAt: SchemaDateRange.or(parseJsonQuery(SchemaDateRange)).default(
-			defaultFilterDate,
-		),
+		effectivedAt: SchemaDateRange.or(parseJsonQuery(SchemaDateRange)),
 		effectived: z
 			.boolean('Seletor de efetivação inválido')
 			.or(z.literal(['true', 'false']).transform((value) => value === 'true'))
