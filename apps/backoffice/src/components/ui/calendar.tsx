@@ -1,12 +1,15 @@
 'use client';
 
+import { addYears, subYears } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
 	ChevronDownIcon,
 	ChevronLeftIcon,
 	ChevronRightIcon,
+	ChevronsLeftIcon,
+	ChevronsRightIcon,
 } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
 	type DayButton,
 	DayPicker,
@@ -25,14 +28,20 @@ function Calendar({
 	locale = ptBR,
 	formatters,
 	components,
+	skipYear,
 	...props
 }: React.ComponentProps<typeof DayPicker> & {
 	buttonVariant?: React.ComponentProps<typeof Button>['variant'];
+	skipYear?: boolean;
 }) {
+	const [month, setMonth] = useState(new Date());
+
 	const defaultClassNames = getDefaultClassNames();
 
 	return (
 		<DayPicker
+			startMonth={new Date(new Date().getFullYear() - 10, 0)}
+			endMonth={new Date(new Date().getFullYear() + 3, 11)}
 			showOutsideDays={showOutsideDays}
 			className={cn(
 				'group/calendar bg-background p-2 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(7)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent',
@@ -148,6 +157,48 @@ function Calendar({
 						/>
 					);
 				},
+				...(skipYear && {
+					Nav: ({ onPreviousClick, onNextClick }) => (
+						<div className='absolute inset-x-0 top-0 flex items-center justify-between gap-0 w-full'>
+							<div className='flex flex-row items-center justify-start gap-0 h-7'>
+								<Button
+									variant='ghost'
+									size='icon'
+									className='size-6 p-0!'
+									onClick={() => setMonth((m) => subYears(m, 1))}
+								>
+									<ChevronsLeftIcon className='size-4' />
+								</Button>
+								<Button
+									variant='ghost'
+									size='icon'
+									className='size-6 p-0!'
+									onClick={onPreviousClick}
+								>
+									<ChevronLeftIcon className='size-4' />
+								</Button>
+							</div>
+							<div className='flex flex-row items-center justify-end gap-0 h-7'>
+								<Button
+									variant='ghost'
+									size='icon'
+									className='size-6 p-0!'
+									onClick={onNextClick}
+								>
+									<ChevronRightIcon className='size-4' />
+								</Button>
+								<Button
+									variant='ghost'
+									size='icon'
+									className='size-6 p-0!'
+									onClick={() => setMonth((m) => addYears(m, 1))}
+								>
+									<ChevronsRightIcon className='size-4' />
+								</Button>
+							</div>
+						</div>
+					),
+				}),
 				Chevron: ({ className, orientation, ...props }) => {
 					if (orientation === 'left') {
 						return (
@@ -185,6 +236,8 @@ function Calendar({
 				},
 				...components,
 			}}
+			month={props.month ?? month}
+			onMonthChange={props.onMonthChange ?? setMonth}
 			{...props}
 		/>
 	);

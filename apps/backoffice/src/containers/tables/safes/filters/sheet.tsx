@@ -244,7 +244,7 @@ function FilterEffectivedAt({
 
 	return (
 		<Field>
-			<FieldLabel>Data de Solicitação</FieldLabel>
+			<FieldLabel>Final da Vigência</FieldLabel>
 			<Popover open={open} onOpenChange={setOpen}>
 				<PopoverTrigger asChild>
 					<Button
@@ -278,8 +278,11 @@ function FilterEffectivedAt({
 				<PopoverContent className='w-auto p-0' align='end'>
 					<Calendar
 						required
+						skipYear
 						mode='range'
-						defaultMonth={value?.from}
+						{...(value?.from && {
+							defaultMonth: value.from,
+						})}
 						selected={value}
 						onSelect={({ from, to }) =>
 							onChange({

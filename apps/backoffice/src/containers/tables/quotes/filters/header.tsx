@@ -6,7 +6,7 @@ import {
 	translateQuoteStatus,
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
-import { endOfToday, format, isSameDay, parseISO } from 'date-fns';
+import { addYears, endOfToday, format, isSameDay, parseISO } from 'date-fns';
 import {
 	CarIcon,
 	ChevronsUpDownIcon,
@@ -236,7 +236,7 @@ function FilterrequestedAt() {
 	return (
 		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
 			<span className='font-medium mr-1 flex flex-row items-center justify-between w-full mb-1'>
-				Período:
+				Final da Vigência:
 				{!isDateDefault && (
 					<XCircleIcon
 						className='size-3 ml-1 -mt-1.5 cursor-pointer text-destructive'
@@ -302,9 +302,15 @@ function FilterrequestedAt() {
 						<ChevronsUpDownIcon className='size-3' />
 					</span>
 				</PopoverTrigger>
-				<PopoverContent align='start' side='bottom' className='w-auto p-0'>
+				<PopoverContent
+					align='start'
+					side='bottom'
+					className='w-[calc(100%+3rem)] p-0'
+				>
 					<Calendar
+						className='w-full'
 						required
+						skipYear
 						mode='range'
 						defaultMonth={
 							searchParams.requestedAt instanceof Date ||
@@ -319,7 +325,7 @@ function FilterrequestedAt() {
 						selected={date}
 						onSelect={setDate}
 						disabled={{
-							after: endOfToday(),
+							after: addYears(endOfToday(), 1),
 						}}
 						numberOfMonths={2}
 					/>
