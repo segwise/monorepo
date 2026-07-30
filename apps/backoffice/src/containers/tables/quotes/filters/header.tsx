@@ -6,7 +6,15 @@ import {
 	translateQuoteStatus,
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
-import { addYears, endOfToday, format, isSameDay, parseISO } from 'date-fns';
+import {
+	addYears,
+	endOfMonth,
+	endOfToday,
+	format,
+	isSameDay,
+	parseISO,
+	startOfToday,
+} from 'date-fns';
 import {
 	CarIcon,
 	ChevronsUpDownIcon,
@@ -146,35 +154,35 @@ function FilterrequestedAt() {
 
 	const [open, setOpen] = useState<boolean>(false);
 
-	const defaultDate = useMemo(
-		() =>
-			!searchParams.requestedAt
+	const defaultDate = useMemo(() => {
+		const search = !searchParams.requestedAt
+			? {
+					from: startOfToday(),
+					to: endOfMonth(startOfToday()),
+				}
+			: typeof searchParams.requestedAt === 'string'
 				? {
-						from: defaultFilterDate.start,
-						to: defaultFilterDate.end,
+						from: parseISO(searchParams.requestedAt),
+						to: parseISO(searchParams.requestedAt),
 					}
-				: typeof searchParams.requestedAt === 'string'
+				: searchParams.requestedAt instanceof Date
 					? {
-							from: parseISO(searchParams.requestedAt),
-							to: parseISO(searchParams.requestedAt),
+							from: searchParams.requestedAt,
+							to: searchParams.requestedAt,
 						}
-					: searchParams.requestedAt instanceof Date
+					: typeof searchParams.requestedAt.start === 'string' &&
+							typeof searchParams.requestedAt.end === 'string'
 						? {
-								from: searchParams.requestedAt,
-								to: searchParams.requestedAt,
+								from: parseISO(searchParams.requestedAt.start),
+								to: parseISO(searchParams.requestedAt.end),
 							}
-						: typeof searchParams.requestedAt.start === 'string' &&
-								typeof searchParams.requestedAt.end === 'string'
-							? {
-									from: parseISO(searchParams.requestedAt.start),
-									to: parseISO(searchParams.requestedAt.end),
-								}
-							: {
-									from: searchParams.requestedAt.start as Date,
-									to: searchParams.requestedAt.end as Date,
-								},
-		[searchParams],
-	);
+						: {
+								from: searchParams.requestedAt.start as Date,
+								to: searchParams.requestedAt.end as Date,
+							};
+
+		return search;
+	}, [searchParams]);
 
 	const [date, setDate] = useState<DateRange>(defaultDate);
 
@@ -248,8 +256,8 @@ function FilterrequestedAt() {
 				<PopoverTrigger>
 					<span className='text-muted-foreground truncate cursor-pointer flex flex-row items-center justify-start gap-x-1'>
 						{!searchParams.requestedAt &&
-							`${format(defaultFilterDate.start, 'dd/MM/yyyy')} - ${format(
-								defaultFilterDate.end,
+							`${format(startOfToday(), 'dd/MM/yyyy')} - ${format(
+								endOfMonth(startOfToday()),
 								'dd/MM/yyyy',
 							)}`}
 						{!!searchParams.requestedAt && (
