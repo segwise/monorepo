@@ -159,7 +159,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					take: (limit as number) + 1,
 					orderBy: [
 						{
-							expiration: 'desc',
+							expiration: 'asc',
 						},
 						{
 							insured: {
