@@ -109,9 +109,16 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 						},
 					}),
 					take: (limit as number) + 1,
-					orderBy: {
-						id: 'desc',
-					},
+					orderBy: [
+						{
+							expiration: 'desc',
+						},
+						{
+							insured: {
+								name: 'asc',
+							},
+						},
+					],
 					select: selectPrisma,
 					relationLoadStrategy: 'join',
 				}),
