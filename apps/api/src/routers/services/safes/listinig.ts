@@ -14,6 +14,10 @@ import { serializerCursor } from '@/libraries/database/serializers/cursor';
 function registerRoutersServicesSafesSimpleListining(server: Server) {
 	server.get(
 		'/simple',
+		async (ctx, next) => {
+			console.log(ctx.req.queries());
+			return await next();
+		},
 		zValidator(
 			'query',
 			SchemaSearchParamsSafeSimple.extend({
