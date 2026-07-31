@@ -19,7 +19,6 @@ import { database } from '@/services/database';
 import { email } from '@/services/email';
 import { storage } from '../storage/images';
 
-console.log(environment.NODE_ENV);
 const mainDomain = getMainDomain(environment.BASE_URL);
 
 const accessControlOrganization = createAccessControl(defaultStatements);
