@@ -1,3 +1,4 @@
+import { subDays } from 'date-fns';
 import type { Server } from '@/@types/server.d';
 import { registerRoutersServicesAnalytics } from '@/routers/services/analytics';
 import { registerRoutersServicesAuth } from '@/routers/services/auth';
@@ -34,6 +35,41 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesPayments(base);
 
 	registerRoutersServicesWebhooks(base);
+
+	base.post('/test', async (ctx) => {
+		const signatures = await ctx.database.safe.findMany({
+			where: {
+				id: {
+					notIn: [
+						'019fb2eb-ffff-7652-91d2-0150953ea942',
+						'019fb94d-be34-705f-9bf9-87b38aa493a4',
+					],
+				},
+			},
+			select: {
+				id: true,
+				expiration: true,
+			},
+		});
+
+		for (const signature of signatures) {
+			await ctx.database.safe.update({
+				where: {
+					id: signature.id,
+				},
+				data: {
+					expiration: subDays(signature.expiration, 1),
+				},
+			});
+		}
+
+		return ctx.json(
+			{
+				ok: true,
+			},
+			200,
+		);
+	});
 }
 
 export { registerRoutersServices };
