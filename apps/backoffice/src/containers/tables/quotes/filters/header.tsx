@@ -7,9 +7,7 @@ import {
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
 import {
-	addYears,
 	endOfMonth,
-	endOfToday,
 	format,
 	isSameDay,
 	parseISO,
@@ -332,9 +330,6 @@ function FilterrequestedAt() {
 						}
 						selected={date}
 						onSelect={setDate}
-						disabled={{
-							after: addYears(endOfToday(), 1),
-						}}
 						numberOfMonths={2}
 					/>
 					<Separator />

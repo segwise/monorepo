@@ -7,7 +7,6 @@ import {
 } from '@segwise/core/translate';
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
 import {
-	addYears,
 	endOfDay,
 	endOfMonth,
 	endOfToday,
@@ -349,9 +348,6 @@ function FilterEffectivedAt() {
 							})
 						}
 						numberOfMonths={2}
-						disabled={{
-							after: addYears(endOfToday(), 1),
-						}}
 					/>
 					<Separator />
 					<div className='flex flex-row items-center justify-between gap-x-2 p-2'>
