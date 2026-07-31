@@ -159,12 +159,12 @@ function FilterEffectivedAt() {
 			!searchParams.effectivedAt
 				? isSameDay(startOfToday(), endOfMonth(endOfToday()))
 					? {
-							start: startOfToday(),
-							end: endOfToday(),
+							from: startOfToday(),
+							to: endOfToday(),
 						}
 					: {
-							start: startOfToday(),
-							end: endOfMonth(endOfToday()),
+							from: startOfToday(),
+							to: endOfMonth(endOfToday()),
 						}
 				: typeof searchParams.effectivedAt === 'string'
 					? {
