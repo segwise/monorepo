@@ -5,6 +5,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { auth, getCookiePrefix } from './libraries/auth';
 
 const ACCESS = process.env.NEXT_PUBLIC_ROLE_SYSTEM;
+console.log(ACCESS);
 
 const PUBLIC_ROUTES = [
 	'/sign-in',
