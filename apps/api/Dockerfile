@@ -43,23 +43,22 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 ENV PLAYWRIGHT_BROWSERS_PATH=0 \
     CHROMIUM_PATH=/usr/bin/chromium-browser
 
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/bun.lock* ./
-COPY --from=builder /app/.npmrc ./
+COPY --from=builder --chown=appuser:appgroup /app/package.json ./
+COPY --from=builder --chown=appuser:appgroup /app/bun.lock* ./
+COPY --from=builder --chown=appuser:appgroup /app/.npmrc ./
 
 RUN bun --bun install --frozen-lockfile --production
 
-COPY --from=builder /app/src ./src
+COPY --from=builder --chown=appuser:appgroup /app/src ./src
 
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./
-COPY --from=builder /app/tsconfig.json ./
+COPY --from=builder --chown=appuser:appgroup /app/prisma ./prisma
+COPY --from=builder --chown=appuser:appgroup /app/prisma.config.ts ./
+COPY --from=builder --chown=appuser:appgroup /app/tsconfig.json ./
 
-COPY --from=builder /app/generated ./generated
+COPY --from=builder --chown=appuser:appgroup /app/generated ./generated
 
-COPY --from=builder /app/entrypoint.sh ./
+COPY --from=builder --chown=appuser:appgroup /app/entrypoint.sh ./
 
-RUN chown -R appuser:appgroup /app
 RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser
 
 USER appuser
