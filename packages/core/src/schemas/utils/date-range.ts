@@ -12,7 +12,7 @@ const SchemaIsoDateTimeRange = z.iso
 		}),
 	);
 
-const SchemaDateRange = z
+const SchemaDateRange = z.coerce
 	.date('Data de solicitação inválida')
 	.or(
 		z.object({
