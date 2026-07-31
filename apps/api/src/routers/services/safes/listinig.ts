@@ -14,10 +14,6 @@ import { serializerCursor } from '@/libraries/database/serializers/cursor';
 function registerRoutersServicesSafesSimpleListining(server: Server) {
 	server.get(
 		'/simple',
-		async (ctx, next) => {
-			console.log(ctx.req.queries());
-			return await next();
-		},
 		zValidator(
 			'query',
 			SchemaSearchParamsSafeSimple.extend({
@@ -58,7 +54,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				ids,
 				isExternal,
 			} = ctx.req.valid('query');
-			console.log(ctx.req.valid('query').effectivedAt);
 
 			const pageMargins = 2;
 
@@ -82,16 +77,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				...(!!isExternal && {
 					isExternal: true,
 				}),
-				...(isExternal === false && {
-					OR: [
-						{
-							isExternal: false,
-						},
-						{
-							isExternal: null,
-						},
-					],
-				}),
 				...(!ids?.length && {
 					expiration: {
 						gte: startOfDay(effectivedAt.start),
@@ -101,40 +86,10 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				...(!!renewal && {
 					renewal,
 				}),
-				...(!!search && {
-					OR: [
-						{
-							insured: {
-								name: {
-									search: search.replaceAll(' ', '&'),
-								},
-							},
-						},
-						{
-							temporaryInsured: {
-								name: {
-									search: search.replaceAll(' ', '&'),
-								},
-							},
-						},
-					],
-				}),
 				...(!!producers?.length && {
 					producerId: {
 						in: producers,
 					},
-				}),
-				...(!producers?.length && {
-					OR: [
-						{
-							producerId: {
-								not: '019f249d-8880-7000-b962-aace743e68e2',
-							},
-						},
-						{
-							producerId: null,
-						},
-					],
 				}),
 				...(!!insuranceCompanies?.length && {
 					insuranceCompanyId: {
@@ -152,6 +107,47 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					},
 				}),
 			};
+
+			if (isExternal === false) {
+				where.AND = where.AND ?? [];
+
+				// @ts-expect-error
+				where.AND.push({
+					OR: [{ isExternal: false }, { isExternal: null }],
+				});
+			}
+
+			if (search) {
+				where.AND = where.AND ?? [];
+
+				// @ts-expect-error
+				where.AND.push({
+					OR: [
+						{
+							insured: {
+								name: { search: search.replaceAll(' ', '&') },
+							},
+						},
+						{
+							temporaryInsured: {
+								name: { search: search.replaceAll(' ', '&') },
+							},
+						},
+					],
+				});
+			}
+
+			if (!producers?.length) {
+				where.AND = where.AND ?? [];
+
+				// @ts-expect-error
+				where.AND.push({
+					OR: [
+						{ producerId: { not: '019f249d-8880-7000-b962-aace743e68e2' } },
+						{ producerId: null },
+					],
+				});
+			}
 
 			const [safes, total, itemsBefore] = await ctx.database.$transaction([
 				ctx.database.safe.findMany({
