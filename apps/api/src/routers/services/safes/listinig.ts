@@ -4,6 +4,7 @@ import {
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
 import { endOfDay, set, startOfDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
@@ -80,8 +81,8 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				}),
 				...(!ids?.length && {
 					expiration: {
-						gte: startOfDay(effectivedAt.start),
-						lte: endOfDay(effectivedAt.end),
+						gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+						lte: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
 					},
 				}),
 				...(!!renewal && {
