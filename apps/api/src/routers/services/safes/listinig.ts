@@ -82,7 +82,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				...(!ids?.length && {
 					expiration: {
 						gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-						lte: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+						lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
 					},
 				}),
 				...(!!renewal && {
