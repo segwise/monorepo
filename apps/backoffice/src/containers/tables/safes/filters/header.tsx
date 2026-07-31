@@ -222,13 +222,13 @@ function FilterEffectivedAt() {
 						...(!!date?.from &&
 							!!date.to && {
 								effectivedAt: {
-									start: date.from.toISOString(),
-									end: date.to.toISOString(),
+									start: date.from,
+									end: date.to,
 								},
 							}),
 						...(!!date?.from &&
 							!date.to && {
-								effectivedAt: date.from.toISOString(),
+								effectivedAt: date.from,
 							}),
 					}),
 		});
