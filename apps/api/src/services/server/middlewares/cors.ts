@@ -5,6 +5,8 @@ import { environment } from '@/libraries/environment';
 
 const mainDomain = getMainDomain(environment.APPLICATION_URL);
 
+console.log(mainDomain);
+
 const isAllowedOrigin = (origin: string | null | undefined): string | null => {
 	if (!origin) {
 		return null;
