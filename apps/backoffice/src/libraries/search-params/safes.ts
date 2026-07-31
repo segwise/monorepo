@@ -4,7 +4,7 @@ import {
 	SchemaSafeStatus,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
-import { endOfMonth, endOfToday, isSameDay, startOfToday } from 'date-fns';
+import { endOfMonth, isSameDay, startOfToday } from 'date-fns';
 import {
 	parseAsArrayOf,
 	parseAsBoolean,
@@ -32,10 +32,7 @@ const useSearchParams = () =>
 			SchemaSearchParamsSafeSimple.shape.effectivedAt,
 		).withDefault(
 			isSameDay(startOfToday(), endOfMonth(startOfToday()))
-				? {
-						start: startOfToday(),
-						end: endOfToday(),
-					}
+				? startOfToday()
 				: {
 						start: startOfToday(),
 						end: endOfMonth(startOfToday()),
