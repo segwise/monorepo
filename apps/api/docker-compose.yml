@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: segwise/backend:latest
     environment:
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
