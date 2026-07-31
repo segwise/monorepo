@@ -312,9 +312,17 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 															toZonedTime(expiration, 'UTC'),
 															'dd/MM/yyyy',
 														)}{' '}
-														{isAfter(expiration, new Date()) &&
-															differenceInDays(expiration, new Date()) <= 7 &&
-															`- ${formatDistanceToNow(expiration)
+														{isAfter(
+															toZonedTime(expiration, 'UTC'),
+															toZonedTime(new Date(), 'America/Sao_Paulo'),
+														) &&
+															differenceInDays(
+																toZonedTime(expiration, 'UTC'),
+																toZonedTime(new Date(), 'America/Sao_Paulo'),
+															) <= 7 &&
+															`- ${formatDistanceToNow(
+																toZonedTime(expiration, 'UTC'),
+															)
 																.replace('cerca de ', '')
 																.replace('mais de ', '')}`}
 													</span>
