@@ -55,7 +55,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				ids,
 				isExternal,
 			} = ctx.req.valid('query');
-			console.log(effectivedAt);
 
 			const pageMargins = 2;
 
