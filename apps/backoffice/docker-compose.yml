@@ -1,0 +1,48 @@
+services:
+  backoffice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: ${PORT}
+      NODE_ENV: ${NODE_ENV}
+
+      NEXT_TELEMETRY_DISABLED: 1
+
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+
+      NEXT_PUBLIC_ROLE_SYSTEM: backoffice
+    restart: unless-stopped
+
+  customer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: ${PORT}
+      NODE_ENV: ${NODE_ENV}
+
+      NEXT_TELEMETRY_DISABLED: 1
+
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+
+      NEXT_PUBLIC_ROLE_SYSTEM: customer
+    restart: unless-stopped
+
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: ${PORT}
+      NODE_ENV: ${NODE_ENV}
+
+      NEXT_TELEMETRY_DISABLED: 1
+
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+
+      NEXT_PUBLIC_ROLE_SYSTEM: producer
+    restart: unless-stopped
