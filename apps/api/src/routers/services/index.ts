@@ -52,7 +52,13 @@ function registerRoutersServices(server: Server) {
 			},
 		});
 
+		console.log(signatures.length);
 		for (const signature of signatures) {
+			console.log(
+				signatures.length,
+				(signatures.findIndex(({ id }) => id === signature.id) ?? 0) + 1,
+			);
+
 			await ctx.database.safe.update({
 				where: {
 					id: signature.id,
