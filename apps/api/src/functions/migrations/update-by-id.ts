@@ -180,7 +180,7 @@ const INSURER_MAP: Record<string, string> = {
 
 function zonedTime(date: string) {
 	return subDays(
-		toZonedTime(startOfDay(subHours(parseISO(date), 4)), 'UTC'),
+		toZonedTime(startOfDay(subHours(parseISO(date), 4)), 'America/Sao_Paulo'),
 		1,
 	);
 }
