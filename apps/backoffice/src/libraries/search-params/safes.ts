@@ -32,7 +32,10 @@ const useSearchParams = () =>
 			SchemaSearchParamsSafeSimple.shape.effectivedAt,
 		).withDefault(
 			isSameDay(startOfToday(), endOfMonth(endOfToday()))
-				? startOfToday()
+				? {
+						start: startOfToday(),
+						end: endOfToday(),
+					}
 				: {
 						start: startOfToday(),
 						end: endOfMonth(endOfToday()),
