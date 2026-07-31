@@ -5,8 +5,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "bun --bun run --watch src/index.ts",
-		"start:server": "bun --bun run src/index.ts",
-		"start:renderer-pdf": "bun --bun run src/renderer-pdf.ts",
+		"start": "bun --bun run src/index.ts",
 		"auth:generate": "bun x --bun @better-auth/cli generate --config src/services/auth/index.ts",
 		"auth:migrate": "bun x --bun @better-auth/cli migrate --config src/services/auth/index.ts",
 		"db:generate": "bun x --bun prisma generate",
