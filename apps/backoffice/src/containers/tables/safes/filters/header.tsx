@@ -8,6 +8,7 @@ import {
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
 import {
 	addYears,
+	endOfDay,
 	endOfMonth,
 	endOfToday,
 	format,
@@ -336,7 +337,14 @@ function FilterEffectivedAt() {
 									: searchParams.effectivedAt?.start
 						}
 						selected={date}
-						onSelect={setDate}
+						onSelect={(data) =>
+							setDate({
+								from: data.from,
+								...(data.to && {
+									to: endOfDay(data.to),
+								}),
+							})
+						}
 						numberOfMonths={2}
 						disabled={{
 							after: addYears(endOfToday(), 1),
