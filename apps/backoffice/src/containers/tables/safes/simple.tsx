@@ -13,6 +13,7 @@ import {
 	formatDistanceToNowStrict,
 	isAfter,
 } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { CarIcon, InfoIcon, Trash2Icon } from 'lucide-react';
 import { Fragment } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -307,7 +308,10 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 														Final da Vigência
 													</span>
 													<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
-														{format(expiration, 'dd/MM/yyyy')}{' '}
+														{format(
+															toZonedTime(expiration, 'UTC'),
+															'dd/MM/yyyy',
+														)}{' '}
 														{isAfter(expiration, new Date()) &&
 															differenceInDays(expiration, new Date()) <= 7 &&
 															`- ${formatDistanceToNow(expiration)
