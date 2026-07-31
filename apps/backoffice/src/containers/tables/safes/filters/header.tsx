@@ -157,10 +157,15 @@ function FilterEffectivedAt() {
 	const defaultDate = useMemo(
 		() =>
 			!searchParams.effectivedAt
-				? {
-						from: startOfToday(),
-						to: endOfMonth(startOfToday()),
-					}
+				? isSameDay(startOfToday(), endOfMonth(startOfToday()))
+					? {
+							from: startOfToday(),
+							to: endOfToday(),
+						}
+					: {
+							from: startOfToday(),
+							to: endOfMonth(startOfToday()),
+						}
 				: typeof searchParams.effectivedAt === 'string'
 					? {
 							from: parseISO(searchParams.effectivedAt),
