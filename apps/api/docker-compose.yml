@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: segwise@backend:latest
+    image: segwise/backend:latest
     environment:
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
@@ -41,7 +41,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.renderer-pdf
-    image: segwise@renderer-pdf:latest
+    image: segwise/renderer-pdf:latest
     command: ["bun", "--bun run", "start:renderer-pdf"]
     environment:
       PORT: ${PORT}
