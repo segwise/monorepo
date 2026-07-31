@@ -21,6 +21,7 @@ const server = new Hono<AppBindings>({
 	strict: true,
 	...(environment.NODE_ENV === 'development' && {
 		getPath: (req) => {
+			console.log('fsdfdsfdsf');
 			const host = req.headers.get('host') || '';
 
 			const domain = host.split(':')[0]?.split('.').shift();
