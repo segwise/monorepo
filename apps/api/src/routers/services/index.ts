@@ -69,6 +69,8 @@ function registerRoutersServices(server: Server) {
 			});
 		}
 
+		console.log('Troca de datas concluída');
+
 		return ctx.json(
 			{
 				ok: true,
