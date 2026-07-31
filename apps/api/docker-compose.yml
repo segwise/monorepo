@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: segwise@backend:latest
     environment:
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
@@ -35,21 +36,22 @@ services:
       - cache
       - renderer-pdf
     restart: unless-stopped
+
+  renderer-pdf:
+    build:
+      context: .
+      dockerfile: Dockerfile.renderer-pdf
+    image: segwise@renderer-pdf:latest
+    environment:
+      PORT: ${PORT}
+      NODE_ENV: ${NODE_ENV}
+    restart: unless-stopped
     
   cache:
     image: redis:8
     command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
     volumes:
       - cache-data:/data
-    restart: unless-stopped
-  
-  renderer-pdf:
-    build:
-      context: .
-      dockerfile: Dockerfile.renderer-pdf
-    environment:
-      PORT: ${PORT}
-      NODE_ENV: ${NODE_ENV}
     restart: unless-stopped
 
 networks:
