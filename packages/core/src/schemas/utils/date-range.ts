@@ -1,4 +1,5 @@
 import { endOfDay, parseISO, startOfDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 import z from 'zod';
 
@@ -23,20 +24,28 @@ const SchemaDateRange = z
 	.transform((props) =>
 		typeof props === 'string'
 			? {
-					start: startOfDay(parseISO(props)),
-					end: endOfDay(parseISO(props)),
+					start: startOfDay(toZonedTime(parseISO(props), 'UTC')),
+					end: endOfDay(toZonedTime(parseISO(props), 'UTC')),
 				}
 			: props instanceof Date
 				? {
-						start: startOfDay(props),
-						end: endOfDay(props),
+						start: startOfDay(toZonedTime(props, 'UTC')),
+						end: endOfDay(toZonedTime(props, 'UTC')),
 					}
 				: {
 						start: startOfDay(
-							props.start instanceof Date ? props.start : parseISO(props.start),
+							toZonedTime(
+								props.start instanceof Date
+									? props.start
+									: parseISO(props.start),
+								'UTC',
+							),
 						),
 						end: endOfDay(
-							props.end instanceof Date ? props.end : parseISO(props.end),
+							toZonedTime(
+								props.end instanceof Date ? props.end : parseISO(props.end),
+								'UTC',
+							),
 						),
 					},
 	);

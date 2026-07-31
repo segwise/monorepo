@@ -1,6 +1,6 @@
 {
   "name": "@segwise/core",
-  "version": "1.1.380",
+  "version": "1.1.381",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "module": "./dist/index.js",
@@ -69,6 +69,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "dependencies": {
+    "date-fns-tz": "^3.2.0",
     "decimal.js": "^10.6.0"
   }
 }
