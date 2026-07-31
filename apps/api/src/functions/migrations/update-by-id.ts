@@ -1,4 +1,11 @@
-import { endOfDay, parse, parseISO, startOfDay, subHours } from 'date-fns';
+import {
+	endOfDay,
+	parse,
+	parseISO,
+	startOfDay,
+	subDays,
+	subHours,
+} from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import xior from 'xior';
 import { database } from '@/services/database';
@@ -172,7 +179,10 @@ const INSURER_MAP: Record<string, string> = {
 };
 
 function zonedTime(date: string) {
-	return toZonedTime(startOfDay(subHours(parseISO(date), 4)), 'UTC');
+	return subDays(
+		toZonedTime(startOfDay(subHours(parseISO(date), 4)), 'UTC'),
+		1,
+	);
 }
 
 function getPhone(contacts: OldContact[]): string {
