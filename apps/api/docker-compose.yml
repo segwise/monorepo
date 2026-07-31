@@ -10,7 +10,7 @@ services:
       BASE_URL: ${BASE_URL}
       AUTH_SECRET: ${AUTH_SECRET}
       DATABASE_URL: ${DATABASE_URL}
-      CACHE_URL: ${CACHE_URL}  
+      CACHE_URL: redis://cache:6379
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
@@ -31,6 +31,17 @@ services:
       ANDROID_XCAR_APP_URL: ${ANDROID_XCAR_APP_URL}
     networks:
       - dokploy-network
+    depends_on:
+      - cache
+      - renderer-pdf
+    restart: unless-stopped
+    
+  cache:
+    image: redis:8
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - cache-data:/data
+    restart: unless-stopped
   
   renderer-pdf:
     build:
@@ -39,7 +50,11 @@ services:
     environment:
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
+    restart: unless-stopped
 
 networks:
   dokploy-network:
     external: true
+
+volumes:
+  cache-data:
