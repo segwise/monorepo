@@ -19,9 +19,9 @@ import { database } from '@/services/database';
 import { email } from '@/services/email';
 import { storage } from '../storage/images';
 
+console.log(environment.NODE_ENV);
 const mainDomain = getMainDomain(environment.BASE_URL);
 
-console.log(mainDomain);
 const accessControlOrganization = createAccessControl(defaultStatements);
 
 const accessControlOrganizationProducer = accessControlOrganization.newRole({
