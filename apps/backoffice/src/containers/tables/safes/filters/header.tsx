@@ -213,7 +213,10 @@ function FilterEffectivedAt() {
 		setSearchParams({
 			...(!!date.from && !!date.to && isSameDay(date.from, date.to)
 				? {
-						effectivedAt: date.from.toISOString(),
+						effectivedAt: {
+							start: date.from,
+							end: endOfDay(date.from),
+						},
 					}
 				: {
 						...(!!date?.from &&
@@ -340,8 +343,8 @@ function FilterEffectivedAt() {
 						onSelect={(data) =>
 							setDate({
 								from: data.from,
-								...(data.to && {
-									to: endOfDay(data.to),
+								...((!!data.to || !!data.from) && {
+									to: endOfDay(data.to ?? (data.from as Date)),
 								}),
 							})
 						}
