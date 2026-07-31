@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_ROLE_SYSTEM: backoffice
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     environment:
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
@@ -18,6 +21,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_ROLE_SYSTEM: customer
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     environment:
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
@@ -33,6 +39,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_ROLE_SYSTEM: producer
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     environment:
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
