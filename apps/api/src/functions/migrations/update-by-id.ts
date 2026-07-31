@@ -180,7 +180,7 @@ function zonedTime(date: string) {
 		'yyyy-MM-dd',
 	);
 
-	return new Date(`${dataLocal}T00:00:00.000Z`),
+	return new Date(`${dataLocal}T00:00:00.000Z`);
 }
 
 function getPhone(contacts: OldContact[]): string {
