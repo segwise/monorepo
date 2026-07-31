@@ -1,4 +1,4 @@
-import { endOfDay, parse, subHours } from 'date-fns';
+import { endOfDay, parse, parseISO, startOfDay, subHours } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import xior from 'xior';
 import { database } from '@/services/database';
@@ -171,6 +171,10 @@ const INSURER_MAP: Record<string, string> = {
 		'019f22ff-3450-7000-bee0-2d20c28c173a',
 };
 
+function zonedTime(date: string) {
+	return toZonedTime(startOfDay(subHours(parseISO(date), 4)), 'UTC');
+}
+
 function getPhone(contacts: OldContact[]): string {
 	const contact = contacts.find((c) => c.type === 'phone');
 	const digits = (contact?.value ?? '').replace(/\D/g, '');
@@ -332,8 +336,8 @@ async function migration() {
 					insuredId: insured.id,
 					producerId,
 					expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
-					requestedAt: toZonedTime(oldSafe.created_at, 'UTC'),
-					effectivedAt: toZonedTime(oldSafe.validity_start, 'UTC'),
+					requestedAt: zonedTime(oldSafe.created_at),
+					effectivedAt: zonedTime(oldSafe.validity_start),
 					installments: oldSafe.receivables.installments_number,
 					award: oldSafe.receivables.amount_award,
 					franchise: oldSafe.receivables.franchise,
@@ -345,8 +349,8 @@ async function migration() {
 					commissionInstallments:
 						oldSafe.receivables.producer?.installments ?? null,
 					status: oldSafe.active ? 'active' : 'canceled',
-					statusAt: toZonedTime(oldSafe.updated_at, 'UTC'),
-					createdAt: toZonedTime(oldSafe.created_at, 'UTC'),
+					statusAt: zonedTime(oldSafe.updated_at),
+					createdAt: zonedTime(oldSafe.created_at),
 					...(vehicle && modality === 'vehicle'
 						? {
 								safeVehicle: {
@@ -382,8 +386,8 @@ async function migration() {
 					insuredId: insured.id,
 					producerId,
 					expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
-					requestedAt: toZonedTime(oldSafe.created_at, 'UTC'),
-					effectivedAt: toZonedTime(oldSafe.validity_start, 'UTC'),
+					requestedAt: zonedTime(oldSafe.created_at),
+					effectivedAt: zonedTime(oldSafe.validity_start),
 					installments: oldSafe.receivables.installments_number,
 					award: oldSafe.receivables.amount_award,
 					franchise: oldSafe.receivables.franchise,
@@ -395,8 +399,8 @@ async function migration() {
 					commissionInstallments:
 						oldSafe.receivables.producer?.installments ?? null,
 					status: oldSafe.active ? 'active' : 'canceled',
-					statusAt: toZonedTime(oldSafe.updated_at, 'UTC'),
-					createdAt: toZonedTime(oldSafe.created_at, 'UTC'),
+					statusAt: zonedTime(oldSafe.updated_at),
+					createdAt: zonedTime(oldSafe.created_at),
 					...(vehicle && modality === 'vehicle'
 						? {
 								safeVehicle: {
@@ -523,8 +527,8 @@ async function migrationById(id: string) {
 			insuredId: insured.id,
 			producerId,
 			expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
-			requestedAt: toZonedTime(oldSafe.created_at, 'UTC'),
-			effectivedAt: toZonedTime(oldSafe.validity_start, 'UTC'),
+			requestedAt: zonedTime(oldSafe.created_at),
+			effectivedAt: zonedTime(oldSafe.validity_start),
 			installments: oldSafe.receivables.installments_number,
 			award: oldSafe.receivables.amount_award,
 			franchise: oldSafe.receivables.franchise,
@@ -536,8 +540,8 @@ async function migrationById(id: string) {
 			commissionInstallments:
 				oldSafe.receivables.producer?.installments ?? null,
 			status: oldSafe.active ? 'active' : 'canceled',
-			statusAt: toZonedTime(oldSafe.updated_at, 'UTC'),
-			createdAt: toZonedTime(oldSafe.created_at, 'UTC'),
+			statusAt: zonedTime(oldSafe.updated_at),
+			createdAt: zonedTime(oldSafe.created_at),
 			...(vehicle && modality === 'vehicle'
 				? {
 						safeVehicle: {
@@ -572,8 +576,8 @@ async function migrationById(id: string) {
 			insuredId: insured.id,
 			producerId,
 			expiration: endOfDay(subHours(oldSafe.validity_end, 1)),
-			requestedAt: toZonedTime(oldSafe.created_at, 'UTC'),
-			effectivedAt: toZonedTime(oldSafe.validity_start, 'UTC'),
+			requestedAt: zonedTime(oldSafe.created_at),
+			effectivedAt: zonedTime(oldSafe.validity_start),
 			installments: oldSafe.receivables.installments_number,
 			award: oldSafe.receivables.amount_award,
 			franchise: oldSafe.receivables.franchise,
@@ -585,8 +589,8 @@ async function migrationById(id: string) {
 			commissionInstallments:
 				oldSafe.receivables.producer?.installments ?? null,
 			status: oldSafe.active ? 'active' : 'canceled',
-			statusAt: toZonedTime(oldSafe.updated_at, 'UTC'),
-			createdAt: toZonedTime(oldSafe.created_at, 'UTC'),
+			statusAt: zonedTime(oldSafe.updated_at),
+			createdAt: zonedTime(oldSafe.created_at),
 			...(vehicle && modality === 'vehicle'
 				? {
 						safeVehicle: {
