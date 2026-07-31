@@ -37,7 +37,7 @@ function registerRoutersServices(server: Server) {
 
 	base.post('/test', async (ctx) => {
 		const result = await ctx.database.$executeRaw`
-			UPDATE "Safe"
+			UPDATE "safes"
 			SET expiration = expiration - INTERVAL '1 day'
 			WHERE id NOT IN (
 				'019fb2eb-ffff-7652-91d2-0150953ea942',
