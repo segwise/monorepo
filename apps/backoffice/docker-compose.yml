@@ -10,6 +10,8 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       NEXT_PUBLIC_ROLE_SYSTEM: backoffice
+    networks:
+      - dokploy-network
     restart: unless-stopped
 
   customer:
@@ -23,6 +25,8 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       NEXT_PUBLIC_ROLE_SYSTEM: customer
+    networks:
+      - dokploy-network
     restart: unless-stopped
 
   producer:
@@ -36,4 +40,10 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       NEXT_PUBLIC_ROLE_SYSTEM: producer
+    networks:
+      - dokploy-network
     restart: unless-stopped
+
+networks:
+  dokploy-network:
+    external: true
