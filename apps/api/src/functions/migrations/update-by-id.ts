@@ -181,7 +181,7 @@ const INSURER_MAP: Record<string, string> = {
 function zonedTime(date: string) {
 	return subDays(
 		toZonedTime(startOfDay(subHours(parseISO(date), 4)), 'UTC'),
-		1,
+		2,
 	);
 }
 
@@ -456,6 +456,8 @@ async function migrationById(id: string) {
 	const { data: oldSafe } = await xior.get<OldSafe>(
 		`${OLD_API_BASE}/safes/${id}`,
 	);
+
+	console.log(oldSafe);
 
 	const insuranceCompanyId = INSURER_MAP[oldSafe.insurer];
 	if (!insuranceCompanyId) {
