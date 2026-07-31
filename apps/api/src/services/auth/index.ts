@@ -21,6 +21,7 @@ import { storage } from '../storage/images';
 
 const mainDomain = getMainDomain(environment.BASE_URL);
 
+console.log(mainDomain);
 const accessControlOrganization = createAccessControl(defaultStatements);
 
 const accessControlOrganizationProducer = accessControlOrganization.newRole({
