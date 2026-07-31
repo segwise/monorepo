@@ -1,16 +1,12 @@
 'use client';
 
 import { maskPhone, maskPlate } from '@segwise/core/masks';
-import {
-	translateModality,
-	translateSafeStatus,
-} from '@segwise/core/translate';
+import { translateModality } from '@segwise/core/translate';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import {
 	differenceInDays,
 	format,
 	formatDistanceToNow,
-	formatDistanceToNowStrict,
 	isAfter,
 } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
@@ -82,10 +78,6 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 					<TableHead className='text-left w-50'>Seguradora</TableHead>
 					<TableHead className='text-center w-30'>Produtor</TableHead>
 					<TableHead className='text-center w-40'>Tipo</TableHead>
-					<TableHead className='text-center w-40'>Status</TableHead>
-					<TableHead className='text-center w-40 truncate'>
-						{type === 'proposals' ? 'Solicitado' : 'Efetivado'} Em
-					</TableHead>
 					<TableHead className='text-right w-30'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
@@ -116,12 +108,6 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 								<div className='flex flex-row items-center justify-center gap-x-2'>
 									<Skeleton className='size-8 rounded-full' />
 								</div>
-							</TableCell>
-							<TableCell className='w-40'>
-								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
-							</TableCell>
-							<TableCell className='w-40'>
-								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 							</TableCell>
 							<TableCell className='w-40'>
 								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
@@ -163,12 +149,10 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 						modality,
 						insured,
 						vehicle,
+						renewal,
 						insuranceCompany,
 						producer,
-						status,
-						requestedAt,
 						expiration,
-						effectivedAt,
 					}) => (
 						<TableRow key={id}>
 							<TableCell className='text-left w-50'>
@@ -376,31 +360,6 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 											<CarIcon className='size-4' />{' '}
 											{translateModality(modality)}
 										</Fragment>
-									)}
-								</Badge>
-							</TableCell>
-							<TableCell className='text-center w-40'>
-								<Badge
-									className='w-25 truncate line-clamp-1 mx-auto dark:border dark:border-input'
-									variant={
-										status === 'active'
-											? 'success'
-											: status === 'canceled'
-												? 'destructive'
-												: status === 'suspended'
-													? 'warning'
-													: 'default'
-									}
-								>
-									{translateSafeStatus(status)}
-								</Badge>
-							</TableCell>
-							<TableCell className='text-center w-40'>
-								<Badge className='w-20 truncate line-clamp-1 mx-auto dark:border dark:border-input'>
-									{formatDistanceToNowStrict(
-										type === 'proposals'
-											? requestedAt
-											: (effectivedAt as string),
 									)}
 								</Badge>
 							</TableCell>
