@@ -29,6 +29,8 @@ services:
       ANDROID_APP_URL: ${ANDROID_APP_URL}
       IOS_XCAR_APP_URL: ${IOS_XCAR_APP_URL}
       ANDROID_XCAR_APP_URL: ${ANDROID_XCAR_APP_URL}
+    networks:
+      - dokploy-network
   
   renderer-pdf:
     build:
@@ -37,3 +39,7 @@ services:
     environment:
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
+
+networks:
+  dokploy-network:
+    external: true
