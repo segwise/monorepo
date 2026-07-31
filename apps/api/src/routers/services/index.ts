@@ -34,19 +34,6 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesPayments(base);
 
 	registerRoutersServicesWebhooks(base);
-
-	base.post('/test', async (ctx) => {
-		const result = await ctx.database.$executeRaw`
-			UPDATE "safes"
-				SET expiration = expiration - INTERVAL '1 day'
-			WHERE id NOT IN (
-				'019fb2eb-ffff-7652-91d2-0150953ea942',
-				'019fb94d-be34-705f-9bf9-87b38aa493a4'
-			)
-		`;
-
-		return ctx.json(result, 200);
-	});
 }
 
 export { registerRoutersServices };
