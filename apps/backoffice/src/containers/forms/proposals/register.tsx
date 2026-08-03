@@ -44,22 +44,17 @@ import {
 import {
 	BikeIcon,
 	Building2Icon,
-	BuildingIcon,
 	CalendarIcon,
 	CarIcon,
 	ChevronLeftIcon,
 	CircleDollarSignIcon,
 	ClipboardIcon,
 	FileTextIcon,
-	HeartIcon,
-	HomeIcon,
-	PlaneIcon,
 	SaveIcon,
 	SearchIcon,
 	TruckIcon,
 	User2Icon,
 	UserCircle2Icon,
-	UserIcon,
 	XCircleIcon,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -604,28 +599,35 @@ function FormProposalRegister() {
 														<SelectValue placeholder='Selecionar' />
 													</SelectTrigger>
 													<SelectContent>
-														{SchemaModality.options.map((item) => (
-															<SelectItem value={item} key={item}>
-																<div className='flex flex-row items-center justify-start gap-x-2'>
-																	{item === 'vehicle' && <CarIcon />}
-																	{item === 'motorcycle' && <BikeIcon />}
-																	{item === 'truck' && <TruckIcon />}
-																	{item === 'health' && <HeartIcon />}
+														{SchemaModality.options
+															.filter(
+																(e) =>
+																	e === 'vehicle' ||
+																	e === 'motorcycle' ||
+																	e === 'truck',
+															)
+															.map((item) => (
+																<SelectItem value={item} key={item}>
+																	<div className='flex flex-row items-center justify-start gap-x-2'>
+																		{item === 'vehicle' && <CarIcon />}
+																		{item === 'motorcycle' && <BikeIcon />}
+																		{item === 'truck' && <TruckIcon />}
+																		{/* {item === 'health' && <HeartIcon />}
 																	{item === 'residence' && <HomeIcon />}
 																	{item === 'business' && <BuildingIcon />}
 																	{item === 'condominium' && <BuildingIcon />}
 																	{item === 'travel' && <PlaneIcon />}
 																	{item === 'professional' && <UserIcon />}
-																	{item === 'construction' && <BuildingIcon />}
-																	{capitalizeFirstLetters(
-																		translateModality(item)
-																			.toLowerCase()
-																			.replace('seguro', '')
-																			.trim(),
-																	)}
-																</div>
-															</SelectItem>
-														))}
+																	{item === 'construction' && <BuildingIcon />} */}
+																		{capitalizeFirstLetters(
+																			translateModality(item)
+																				.toLowerCase()
+																				.replace('seguro', '')
+																				.trim(),
+																		)}
+																	</div>
+																</SelectItem>
+															))}
 													</SelectContent>
 												</Select>
 												{fieldState.invalid && (
