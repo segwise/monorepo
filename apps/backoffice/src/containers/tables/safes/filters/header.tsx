@@ -13,6 +13,7 @@ import {
 	format,
 	isSameDay,
 	parseISO,
+	startOfMonth,
 	startOfToday,
 } from 'date-fns';
 import {
@@ -166,8 +167,8 @@ function FilterEffectivedAt() {
 			!searchParams.effectivedAt
 				? isSameDay(startOfToday(), endOfMonth(endOfToday()))
 					? {
-							from: startOfToday(),
-							to: endOfToday(),
+							from: startOfMonth(startOfToday()),
+							to: endOfMonth(startOfToday()),
 						}
 					: {
 							from: startOfToday(),
@@ -205,14 +206,18 @@ function FilterEffectivedAt() {
 					typeof searchParams.effectivedAt === 'string'
 					? searchParams.effectivedAt
 					: searchParams.effectivedAt.start,
-				defaultFilterDate.start,
+				isSameDay(startOfToday(), endOfMonth(endOfToday()))
+					? startOfMonth(startOfToday())
+					: startOfToday(),
 			) &&
 			isSameDay(
 				searchParams.effectivedAt instanceof Date ||
 					typeof searchParams.effectivedAt === 'string'
 					? searchParams.effectivedAt
 					: searchParams.effectivedAt.end,
-				defaultFilterDate.end,
+				isSameDay(startOfToday(), endOfMonth(endOfToday()))
+					? endOfMonth(startOfToday())
+					: endOfMonth(endOfToday()),
 			);
 
 	function onChange() {

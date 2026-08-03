@@ -11,6 +11,7 @@ import {
 	format,
 	isSameDay,
 	parseISO,
+	startOfMonth,
 	startOfToday,
 } from 'date-fns';
 import {
@@ -163,7 +164,7 @@ function FilterrequestedAt() {
 		() =>
 			!searchParams.requestedAt
 				? {
-						from: startOfToday(),
+						from: startOfMonth(startOfToday()),
 						to: endOfMonth(startOfToday()),
 					}
 				: typeof searchParams.requestedAt === 'string'
