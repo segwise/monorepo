@@ -67,10 +67,6 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 							},
 						},
 					}),
-				expiration: {
-					gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-					lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-				},
 				...(!!renewal && {
 					renewal,
 				}),
@@ -137,7 +133,13 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 
 			const [current, after] = await ctx.database.$transaction([
 				ctx.database.safe.count({
-					where,
+					where: {
+						...where,
+						expiration: {
+							gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+							lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+						},
+					},
 					orderBy: [
 						{
 							expiration: 'asc',
@@ -176,8 +178,8 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 
 			return ctx.json(
 				{
-					current: after,
-					after: current,
+					current,
+					after,
 				},
 				200,
 			);
