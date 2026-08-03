@@ -14,9 +14,16 @@ import type {
 import { capitalizeFirstLetters, defaultFilterDate } from '@segwise/core/utils';
 import { endOfDay, format, isSameDay, parseISO, startOfDay } from 'date-fns';
 import {
+	BikeIcon,
+	BuildingIcon,
 	CalendarIcon,
 	CarIcon,
+	HeartIcon,
+	HomeIcon,
+	PlaneIcon,
 	SaveIcon,
+	TruckIcon,
+	UserIcon,
 	XCircleIcon,
 	XIcon,
 } from 'lucide-react';
@@ -559,7 +566,21 @@ function FilterModality({
 						onClick={() => onChangeValue(modality)}
 					>
 						{modality === 'vehicle' && <CarIcon />}
-						{translateModality(modality)}{' '}
+						{modality === 'motorcycle' && <BikeIcon />}
+						{modality === 'truck' && <TruckIcon />}
+						{modality === 'health' && <HeartIcon />}
+						{modality === 'residence' && <HomeIcon />}
+						{modality === 'business' && <BuildingIcon />}
+						{modality === 'condominium' && <BuildingIcon />}
+						{modality === 'travel' && <PlaneIcon />}
+						{modality === 'professional' && <UserIcon />}
+						{modality === 'construction' && <BuildingIcon />}
+						{capitalizeFirstLetters(
+							translateModality(modality)
+								.toLowerCase()
+								.replace('seguro', '')
+								.trim(),
+						)}{' '}
 						{value.includes(modality) && <XIcon className='size-2.5!' />}
 					</Badge>
 				))}
