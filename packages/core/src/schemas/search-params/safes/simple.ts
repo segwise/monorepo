@@ -44,7 +44,9 @@ const SchemaSearchParamsSafeSimple = z
 			.or(SchemaSafeStatus)
 			.transform(transformArray)
 			.nullish(),
-		effectivedAt: SchemaDateRange.or(parseJsonQuery(SchemaDateRange)),
+		effectivedAt: SchemaDateRange.or(
+			parseJsonQuery(SchemaDateRange.nullish()),
+		).nullish(),
 		effectived: z
 			.boolean('Seletor de efetivação inválido')
 			.or(z.literal(['true', 'false']).transform((value) => value === 'true'))
