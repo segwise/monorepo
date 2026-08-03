@@ -135,7 +135,7 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 				ctx.database.safe.count({
 					where: {
 						...where,
-						expiration: {
+						effectivedAt: {
 							gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
 							lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
 						},
@@ -148,16 +148,24 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 							gte: startOfDay(
 								toZonedTime(
 									basisOfAnalysis === 'year'
-										? getNextDueDateYearly(effectivedAt.start)
-										: getNextDueDate(effectivedAt.start),
+										? getNextDueDateYearly(
+												startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+											)
+										: getNextDueDate(
+												startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+											),
 									'UTC',
 								),
 							),
 							lte: endOfDay(
 								toZonedTime(
 									basisOfAnalysis === 'year'
-										? getNextDueDateYearly(effectivedAt.end)
-										: getNextDueDate(effectivedAt.end),
+										? getNextDueDateYearly(
+												endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+											)
+										: getNextDueDate(
+												endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+											),
 									'UTC',
 								),
 							),
