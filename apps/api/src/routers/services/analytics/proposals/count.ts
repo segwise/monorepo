@@ -135,7 +135,7 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 				ctx.database.safe.count({
 					where: {
 						...where,
-						createdAt: {
+						expiration: {
 							gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
 							lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
 						},
