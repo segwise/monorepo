@@ -42,6 +42,7 @@ import {
 	startOfToday,
 } from 'date-fns';
 import {
+	BikeIcon,
 	Building2Icon,
 	BuildingIcon,
 	CalendarIcon,
@@ -55,6 +56,7 @@ import {
 	PlaneIcon,
 	SaveIcon,
 	SearchIcon,
+	TruckIcon,
 	User2Icon,
 	UserCircle2Icon,
 	UserIcon,
@@ -598,7 +600,6 @@ function FormProposalRegister() {
 													<SelectTrigger
 														id='category'
 														aria-invalid={fieldState.invalid}
-														className='pointer-events-none'
 													>
 														<SelectValue placeholder='Selecionar' />
 													</SelectTrigger>
@@ -607,6 +608,8 @@ function FormProposalRegister() {
 															<SelectItem value={item} key={item}>
 																<div className='flex flex-row items-center justify-start gap-x-2'>
 																	{item === 'vehicle' && <CarIcon />}
+																	{item === 'motorcycle' && <BikeIcon />}
+																	{item === 'truck' && <TruckIcon />}
 																	{item === 'health' && <HeartIcon />}
 																	{item === 'residence' && <HomeIcon />}
 																	{item === 'business' && <BuildingIcon />}
@@ -614,7 +617,12 @@ function FormProposalRegister() {
 																	{item === 'travel' && <PlaneIcon />}
 																	{item === 'professional' && <UserIcon />}
 																	{item === 'construction' && <BuildingIcon />}
-																	{translateModality(item)}
+																	{capitalizeFirstLetters(
+																		translateModality(item)
+																			.toLowerCase()
+																			.replace('seguro', '')
+																			.trim(),
+																	)}
 																</div>
 															</SelectItem>
 														))}
