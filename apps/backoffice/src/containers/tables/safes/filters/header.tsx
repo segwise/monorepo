@@ -96,7 +96,7 @@ function TableSafesHeaderFilters() {
 				<FilterInsuranceCompanies />
 				<FilterModality />
 				<FilterStatus />
-				{isSearchParams && (
+				{isSearchParams && !searchParams.search && (
 					<Button
 						variant='link'
 						size='sm'
