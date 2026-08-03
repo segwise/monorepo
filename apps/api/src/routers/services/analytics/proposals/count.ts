@@ -135,41 +135,45 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 				ctx.database.safe.count({
 					where: {
 						...where,
-						expiration: {
-							gte: startOfDay(
-								toZonedTime(
-									basisOfAnalysis === 'year'
-										? getNextDueDateYearly(
-												startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-											)
-										: getNextDueDate(
-												startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-											),
-									'UTC',
+						...(effectivedAt && {
+							expiration: {
+								gte: startOfDay(
+									toZonedTime(
+										basisOfAnalysis === 'year'
+											? getNextDueDateYearly(
+													startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+												)
+											: getNextDueDate(
+													startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+												),
+										'UTC',
+									),
 								),
-							),
-							lte: endOfDay(
-								toZonedTime(
-									basisOfAnalysis === 'year'
-										? getNextDueDateYearly(
-												endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-											)
-										: getNextDueDate(
-												endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-											),
-									'UTC',
+								lte: endOfDay(
+									toZonedTime(
+										basisOfAnalysis === 'year'
+											? getNextDueDateYearly(
+													endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+												)
+											: getNextDueDate(
+													endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+												),
+										'UTC',
+									),
 								),
-							),
-						},
+							},
+						}),
 					},
 				}),
 				ctx.database.safe.count({
 					where: {
 						...where,
-						expiration: {
-							gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-							lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-						},
+						...(effectivedAt && {
+							expiration: {
+								gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+								lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+							},
+						}),
 					},
 				}),
 			]);

@@ -3,7 +3,7 @@ import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
-import { endOfDay, set, startOfDay } from 'date-fns';
+import { endOfDay, set, startOfDay, subYears } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
@@ -56,6 +56,8 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				isExternal,
 			} = ctx.req.valid('query');
 
+			console.log(effectivedAt);
+
 			const pageMargins = 2;
 
 			const where: Prisma.SafeWhereInput = {
@@ -78,12 +80,33 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				...(!!isExternal && {
 					isExternal: true,
 				}),
-				...(!ids?.length && {
+				...(!!search && {
 					expiration: {
-						gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-						lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+						gte: subYears(
+							startOfDay(
+								toZonedTime(
+									effectivedAt ? effectivedAt.start : new Date(),
+									'UTC',
+								),
+							),
+							1,
+						),
+						lte: startOfDay(
+							toZonedTime(
+								effectivedAt ? effectivedAt.start : new Date(),
+								'UTC',
+							),
+						),
 					},
 				}),
+				...(!search &&
+					!ids?.length &&
+					effectivedAt && {
+						expiration: {
+							gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+							lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+						},
+					}),
 				...(!!renewal && {
 					renewal,
 				}),
