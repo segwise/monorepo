@@ -291,7 +291,7 @@ function FormProposalRegister() {
 					producer: null,
 					renewal: null,
 					status: 'active',
-					modality: 'car',
+					modality: 'vehicle',
 					insuranceCompany: '',
 					requestedAt: startOfToday(),
 					insured: {
