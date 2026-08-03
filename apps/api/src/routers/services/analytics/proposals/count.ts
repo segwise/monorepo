@@ -136,15 +136,6 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 					where: {
 						...where,
 						expiration: {
-							gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-							lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-						},
-					},
-				}),
-				ctx.database.safe.count({
-					where: {
-						...where,
-						expiration: {
 							gte: startOfDay(
 								toZonedTime(
 									basisOfAnalysis === 'year'
@@ -169,6 +160,15 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 									'UTC',
 								),
 							),
+						},
+					},
+				}),
+				ctx.database.safe.count({
+					where: {
+						...where,
+						expiration: {
+							gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+							lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
 						},
 					},
 				}),
