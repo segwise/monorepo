@@ -140,16 +140,6 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 							lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
 						},
 					},
-					orderBy: [
-						{
-							expiration: 'asc',
-						},
-						{
-							insured: {
-								name: 'asc',
-							},
-						},
-					],
 				}),
 				ctx.database.safe.count({
 					where: {
