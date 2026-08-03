@@ -3,11 +3,15 @@ import {
 	SchemaBasisOfAnalysis,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core';
-import { endOfDay, startOfDay, subMonths, subYears } from 'date-fns';
+import { endOfDay, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { type Prisma, Role } from '@/generated/prisma/client';
+import {
+	getNextDueDate,
+	getNextDueDateYearly,
+} from '@/libraries/get-next-due-date';
 
 function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 	const base = server.basePath('/count');
@@ -152,12 +156,12 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 						expiration: {
 							gte:
 								basisOfAnalysis === 'year'
-									? subYears(effectivedAt.start, 1)
-									: subMonths(effectivedAt.start, 1),
+									? getNextDueDateYearly(effectivedAt.start)
+									: getNextDueDate(effectivedAt.start),
 							lte:
 								basisOfAnalysis === 'year'
-									? subYears(effectivedAt.end, 1)
-									: subMonths(effectivedAt.end, 1),
+									? getNextDueDateYearly(effectivedAt.end)
+									: getNextDueDate(effectivedAt.end),
 						},
 					},
 				}),
