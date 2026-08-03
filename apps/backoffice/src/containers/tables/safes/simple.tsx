@@ -76,7 +76,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 					<TableHead className='text-left w-50'>Segurado</TableHead>
 					<TableHead className='text-left flex-1'>Dados</TableHead>
 					<TableHead className='text-left w-50'>Seguradora</TableHead>
-					<TableHead className='text-center w-30'>Produtor</TableHead>
+					<TableHead className='text-center w-30' />
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-right w-30'>Ações</TableHead>
 				</TableRow>
@@ -149,7 +149,6 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 						modality,
 						insured,
 						vehicle,
-						renewal,
 						insuranceCompany,
 						producer,
 						expiration,

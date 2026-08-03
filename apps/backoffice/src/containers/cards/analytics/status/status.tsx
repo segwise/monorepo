@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useAnalyticsStatus } from '@/libraries/hooks/analytics/use-status-analytics';
+import { useSearchParams as useSearchParamsNuqs } from '@/libraries/search-params/safes';
 import { CardHeaderHome } from '../../header-home';
 
 type Type = 'quotes' | 'proposals' | 'policies';
@@ -40,8 +41,10 @@ function CardAnalyticsStatus({
 	type,
 }: CardAnalyticsStatusProps) {
 	const searchParams = useSearchParams();
+	const [searchParamsNuqs] = useSearchParamsNuqs();
 
 	const { data, isPending } = useAnalyticsStatus(type, {
+		effectivedAt: searchParamsNuqs.effectivedAt,
 		// biome-ignore lint/suspicious/noExplicitAny: any
 		...(Object.fromEntries(searchParams.entries()) as any),
 		status: typeof status === 'string' ? [status] : status,

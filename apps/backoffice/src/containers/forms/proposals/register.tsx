@@ -127,6 +127,10 @@ import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicle
 import { useVehiclesPlate } from '@/libraries/hooks/vehicles/use-vehicles-plate';
 import { cn } from '@/libraries/utils';
 
+const ENTER_NAVIGATION_MAP: Record<string, string> = {
+	'vehicle-plate': 'vehicle-usage',
+};
+
 function FormProposalRegister() {
 	const { push } = useRouter();
 
@@ -146,9 +150,10 @@ function FormProposalRegister() {
 		setValue,
 		clearErrors,
 		getValues,
+		setFocus,
 		reset,
 		watch,
-		formState: { isDirty },
+		formState: { isDirty, isValid: isValidForm },
 	} = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
@@ -347,6 +352,65 @@ function FormProposalRegister() {
 		!theInsuredPartyIsTheDriver ? cpfOrCnpjDriver : '',
 	);
 
+	function handleFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
+		if (e.key !== 'Enter') {
+			return;
+		}
+
+		const target = e.target as HTMLElement;
+
+		if (target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON') {
+			return;
+		}
+
+		const form = e.currentTarget;
+
+		const targetId = target.id;
+		const overrideId = ENTER_NAVIGATION_MAP[targetId];
+
+		if (overrideId) {
+			e.preventDefault();
+
+			const overrideEl = form.querySelector<HTMLElement>(`#${overrideId}`);
+
+			overrideEl?.focus();
+
+			requestAnimationFrame(() => {
+				overrideEl?.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: 'Enter',
+						code: 'Enter',
+						bubbles: true,
+					}),
+				);
+			});
+
+			return;
+		}
+
+		const focusable = Array.from(
+			form.querySelectorAll<HTMLElement>(
+				'input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])',
+			),
+		).filter((el) => {
+			return el.offsetParent !== null;
+		});
+
+		const currentIndex = focusable.indexOf(target);
+
+		const isLastField = currentIndex === focusable.length - 1;
+
+		if (isLastField && isValidForm) {
+			return;
+		}
+
+		e.preventDefault();
+
+		if (currentIndex !== -1 && currentIndex < focusable.length - 1) {
+			focusable[currentIndex + 1]?.focus();
+		}
+	}
+
 	useEffect(() => {
 		if (cpfOrCnpjSearch) {
 			const name = capitalizeFirstLetters(cpfOrCnpjSearch.name);
@@ -504,7 +568,11 @@ function FormProposalRegister() {
 			</div>
 			<Card>
 				<CardContent>
-					<form id='form-proposal-register' onSubmit={handleSubmit(onSubmit)}>
+					<form
+						id='form-proposal-register'
+						onSubmit={handleSubmit(onSubmit)}
+						onKeyDown={handleFormKeyDown}
+					>
 						<FieldGroup>
 							<FieldGroup>
 								<FieldSet>
@@ -643,7 +711,13 @@ function FormProposalRegister() {
 													value={
 														field.value instanceof Date ? field.value : null
 													}
-													onChange={field.onChange}
+													onChange={(value) => {
+														field.onChange(value);
+
+														if (!getValues('insured.cpf')) {
+															setFocus('insured.cpf');
+														}
+													}}
 													disabled={field.disabled}
 													invalid={fieldState.invalid}
 												/>
@@ -1141,7 +1215,18 @@ function FormProposalRegister() {
 												<FieldLabel htmlFor='vehicle-usage'>
 													Uso do Veículo:
 												</FieldLabel>
-												<Select {...field} onValueChange={field.onChange}>
+												<Select
+													{...field}
+													onValueChange={(value) => {
+														field.onChange(value);
+
+														if (!getValues('vehicle.overnightPostalCode')) {
+															setTimeout(() => {
+																setFocus('vehicle.overnightPostalCode');
+															}, 500);
+														}
+													}}
+												>
 													<SelectTrigger
 														id='vehicle-usage'
 														aria-invalid={fieldState.invalid}
@@ -1250,6 +1335,13 @@ function FormProposalRegister() {
 													onChange={({ target: { value } }) =>
 														field.onChange(maskPostalCode(value))
 													}
+													onBlur={() => {
+														field.onBlur();
+
+														if (!getValues('driver.cpf')) {
+															setFocus('driver.cpf');
+														}
+													}}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -1261,7 +1353,7 @@ function FormProposalRegister() {
 							</FieldGroup>
 							<Separator />
 							<FieldGroup>
-								<FieldSet>
+								<FieldSet tabIndex={-1}>
 									<FieldContent>
 										<FieldTitle className='text-base'>
 											<div className='size-8 bg-muted/50 border rounded-full flex items-center justify-center [&>svg]:size-4.5'>
@@ -1290,6 +1382,7 @@ function FormProposalRegister() {
 												<Label
 													htmlFor='the-same-driver'
 													className='font-normal text-xs'
+													tabIndex={-1}
 												>
 													O segurado é o condutor
 												</Label>
@@ -1526,14 +1619,12 @@ function FormProposalRegister() {
 												<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
 												<Input
 													{...field}
+													ref={withMask('decimal')}
 													id='commission'
-													value={field.value ? Number(field.value) : ''}
-													placeholder='% 0'
-													type='number'
 													aria-invalid={fieldState.invalid}
-													onChange={({ target: { value } }) =>
-														field.onChange(maskNumber(value))
-													}
+													value={String(field.value || '')}
+													placeholder='0,00'
+													className='text-left!'
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -1583,13 +1674,6 @@ function FormProposalRegister() {
 																		.by_the_brokerage_commission,
 																)}
 															</SelectItem>
-															{/* {SchemaSafeCommission.shape.type.options.map(
-																(item) => (
-																	<SelectItem key={item} value={item}>
-																		{translateSafeCommissionType(item)}
-																	</SelectItem>
-																),
-															)} */}
 														</SelectContent>
 													</Select>
 													{fieldState.invalid && (
@@ -1608,14 +1692,12 @@ function FormProposalRegister() {
 													</FieldLabel>
 													<Input
 														{...field}
-														id='receivables-commission'
-														value={field.value ? Number(field.value) : ''}
-														placeholder='% 0'
-														type='number'
+														ref={withMask('decimal')}
+														id='commission'
 														aria-invalid={fieldState.invalid}
-														onChange={({ target: { value } }) =>
-															field.onChange(maskNumber(value))
-														}
+														value={String(field.value || '')}
+														placeholder='0,00'
+														className='text-left!'
 													/>
 													{fieldState.invalid && (
 														<FieldError errors={[fieldState.error]} />
@@ -1896,7 +1978,7 @@ function DialogGetPlate({
 						Informe a placa do veículo a ser consultado
 					</DialogDescription>
 				</DialogHeader>
-				<form onSubmit={handleSubmit(onSubmit)}>
+				<form onSubmit={handleSubmit(onSubmit)} noValidate>
 					<Controller
 						control={control}
 						name='plate'

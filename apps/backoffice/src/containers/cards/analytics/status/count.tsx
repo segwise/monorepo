@@ -3,6 +3,7 @@
 import { FileTextIcon } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useAnalyticsStatusCount } from '@/libraries/hooks/analytics/use-status-analytics';
+import { useSearchParams as useSearchParamsNuqs } from '@/libraries/search-params/safes';
 import { CardHeaderHome } from '../../header-home';
 
 type Type = 'quotes' | 'proposals' | 'policies';
@@ -17,12 +18,13 @@ function CardAnalyticsStatusCount({
 	title,
 }: CardAnalyticsStatusCountProps) {
 	const searchParams = useSearchParams();
+	const [searchParamsNuqs] = useSearchParamsNuqs();
 
-	const { data, isPending } = useAnalyticsStatusCount(
-		type,
+	const { data, isPending } = useAnalyticsStatusCount(type, {
+		effectivedAt: searchParamsNuqs.effectivedAt,
 		// biome-ignore lint/suspicious/noExplicitAny: any
-		Object.fromEntries(searchParams.entries()) as any,
-	);
+		...(Object.fromEntries(searchParams.entries()) as any),
+	});
 
 	const current = data?.current || 0;
 	const before = data?.before || 0;
