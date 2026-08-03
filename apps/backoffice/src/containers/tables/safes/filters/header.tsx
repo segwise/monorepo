@@ -16,9 +16,16 @@ import {
 	startOfToday,
 } from 'date-fns';
 import {
+	BikeIcon,
+	BuildingIcon,
 	CarIcon,
 	ChevronsUpDownIcon,
+	HeartIcon,
+	HomeIcon,
+	PlaneIcon,
 	SaveIcon,
+	TruckIcon,
+	UserIcon,
 	XCircleIcon,
 	XIcon,
 } from 'lucide-react';
@@ -663,12 +670,38 @@ function FilterModality() {
 			</span>
 			<div className='flex flex-row items-center justify-start gap-x-2'>
 				{items.slice(0, 2).map((props) => {
-					const Icon = props === 'vehicle' ? CarIcon : CarIcon;
+					const Icon =
+						props === 'vehicle'
+							? CarIcon
+							: props === 'motorcycle'
+								? BikeIcon
+								: props === 'truck'
+									? TruckIcon
+									: props === 'health'
+										? HeartIcon
+										: props === 'residence'
+											? HomeIcon
+											: props === 'business'
+												? BuildingIcon
+												: props === 'condominium'
+													? BuildingIcon
+													: props === 'travel'
+														? PlaneIcon
+														: props === 'professional'
+															? UserIcon
+															: props === 'construction'
+																? BuildingIcon
+																: HomeIcon;
 
 					return (
 						<Badge key={props} className='font-medium'>
 							<Icon className='size-4 stroke-[1.4]' />
-							{translateModality(props)}
+							{capitalizeFirstLetters(
+								translateModality(props)
+									.toLowerCase()
+									.replace('seguro', '')
+									.trim(),
+							)}
 							<XIcon
 								className='size-3! hover:text-destructive cursor-pointer'
 								onClick={() => removeItem(props)}

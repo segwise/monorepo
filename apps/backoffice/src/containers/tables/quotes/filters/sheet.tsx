@@ -582,7 +582,7 @@ function FilterModality({
 	return (
 		<Field>
 			<FieldLabel>Modalidade</FieldLabel>
-			<div>
+			<div className='space-x-1'>
 				{SchemaModality.options.map((modality) => (
 					<Badge
 						key={modality}
