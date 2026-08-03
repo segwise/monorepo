@@ -176,8 +176,8 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 
 			return ctx.json(
 				{
-					current,
-					after,
+					current: after,
+					after: current,
 				},
 				200,
 			);
