@@ -67,7 +67,6 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 							},
 						},
 					}),
-
 				expiration: {
 					gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
 					lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
@@ -136,7 +135,7 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 				});
 			}
 
-			const [current, before] = await ctx.database.$transaction([
+			const [current, after] = await ctx.database.$transaction([
 				ctx.database.safe.count({
 					where,
 					orderBy: [
@@ -154,14 +153,22 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 					where: {
 						...where,
 						expiration: {
-							gte:
-								basisOfAnalysis === 'year'
-									? getNextDueDateYearly(effectivedAt.start)
-									: getNextDueDate(effectivedAt.start),
-							lte:
-								basisOfAnalysis === 'year'
-									? getNextDueDateYearly(effectivedAt.end)
-									: getNextDueDate(effectivedAt.end),
+							gte: startOfDay(
+								toZonedTime(
+									basisOfAnalysis === 'year'
+										? getNextDueDateYearly(effectivedAt.start)
+										: getNextDueDate(effectivedAt.start),
+									'UTC',
+								),
+							),
+							lte: endOfDay(
+								toZonedTime(
+									basisOfAnalysis === 'year'
+										? getNextDueDateYearly(effectivedAt.end)
+										: getNextDueDate(effectivedAt.end),
+									'UTC',
+								),
+							),
 						},
 					},
 				}),
@@ -169,8 +176,8 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 
 			return ctx.json(
 				{
-					current: before,
-					before: current,
+					current,
+					after,
 				},
 				200,
 			);
