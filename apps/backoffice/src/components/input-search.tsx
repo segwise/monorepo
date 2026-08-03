@@ -33,6 +33,7 @@ function InputSearch({ className }: { className?: string }) {
 				search: null,
 			}),
 			cursor: null,
+			requestedAt: null,
 		});
 	}
 

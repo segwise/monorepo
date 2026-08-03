@@ -10,11 +10,28 @@ import {
 	isAfter,
 } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { CarIcon, InfoIcon, Trash2Icon } from 'lucide-react';
+import {
+	CarIcon,
+	FileCogIcon,
+	FileEditIcon,
+	InfoIcon,
+	MoreVerticalIcon,
+	PaperclipIcon,
+	ShieldPlusIcon,
+	Trash2Icon,
+} from 'lucide-react';
+import Link from 'next/link';
 import { Fragment } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
 	Empty,
 	EmptyDescription,
@@ -357,24 +374,46 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									{modality === 'vehicle' && (
 										<Fragment>
 											<CarIcon className='size-4' />{' '}
-											{translateModality(modality)}
+											{capitalizeFirstLetters(
+												translateModality(modality)
+													.toLowerCase()
+													.replace('seguro', '')
+													.trim(),
+											)}
 										</Fragment>
 									)}
 								</Badge>
 							</TableCell>
 							<TableCell className='flex flex-row justify-end gap-x-2 w-30'>
-								{/* <Button variant='outline' size='icon-sm' asChild>
-									<Link
-										href={`/${effectivedAt ? 'policies' : 'proposals'}/${id}`}
-									>
-										<EyeIcon />
-									</Link>
-								</Button> */}
-								<DialogSafeDeleteById id={id}>
-									<Button variant='destructive' size='icon-sm'>
-										<Trash2Icon />
-									</Button>
-								</DialogSafeDeleteById>
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button variant='outline' size='icon-sm'>
+											<MoreVerticalIcon />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent side='bottom' align='end'>
+										<DropdownMenuItem asChild>
+											<Link href={`/proposals/${id}`}>
+												<ShieldPlusIcon className='size-4!' /> Renovar Seguro
+											</Link>
+										</DropdownMenuItem>
+										<DropdownMenuItem>
+											<PaperclipIcon className='size-4!' /> Apólice ( PDF )
+										</DropdownMenuItem>
+										<DropdownMenuItem>
+											<FileEditIcon className='size-4!' /> Endosso
+										</DropdownMenuItem>
+										<DropdownMenuItem>
+											<FileCogIcon className='size-4!' /> Ajuste Geral
+										</DropdownMenuItem>
+										<DropdownMenuSeparator />
+										<DialogSafeDeleteById id={id}>
+											<DropdownMenuItem variant='destructive'>
+												<Trash2Icon className='size-4!' /> Excluir Seguro
+											</DropdownMenuItem>
+										</DialogSafeDeleteById>
+									</DropdownMenuContent>
+								</DropdownMenu>
 							</TableCell>
 						</TableRow>
 					),

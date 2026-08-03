@@ -165,15 +165,7 @@ function FilterEffectivedAt() {
 	const defaultDate = useMemo(
 		() =>
 			!searchParams.effectivedAt
-				? isSameDay(startOfToday(), endOfMonth(endOfToday()))
-					? {
-							from: startOfMonth(startOfToday()),
-							to: endOfMonth(startOfToday()),
-						}
-					: {
-							from: startOfToday(),
-							to: endOfMonth(endOfToday()),
-						}
+				? null
 				: typeof searchParams.effectivedAt === 'string'
 					? {
 							from: parseISO(searchParams.effectivedAt),
@@ -197,7 +189,7 @@ function FilterEffectivedAt() {
 		[searchParams],
 	);
 
-	const [date, setDate] = useState<DateRange>(defaultDate);
+	const [date, setDate] = useState<DateRange | null>(defaultDate);
 
 	const isDateDefault = !searchParams.effectivedAt
 		? true
@@ -222,26 +214,28 @@ function FilterEffectivedAt() {
 
 	function onChange() {
 		setSearchParams({
-			...(!!date.from && !!date.to && isSameDay(date.from, date.to)
-				? {
-						effectivedAt: {
-							start: date.from,
-							end: endOfDay(date.from),
-						},
-					}
-				: {
-						...(!!date?.from &&
-							!!date.to && {
-								effectivedAt: {
-									start: date.from,
-									end: date.to,
-								},
-							}),
-						...(!!date?.from &&
-							!date.to && {
-								effectivedAt: date.from,
-							}),
-					}),
+			...(date === null
+				? null
+				: !!date.from && !!date.to && isSameDay(date.from, date.to)
+					? {
+							effectivedAt: {
+								start: date.from,
+								end: endOfDay(date.from),
+							},
+						}
+					: {
+							...(!!date?.from &&
+								!!date.to && {
+									effectivedAt: {
+										start: date.from,
+										end: date.to,
+									},
+								}),
+							...(!!date?.from &&
+								!date.to && {
+									effectivedAt: date.from,
+								}),
+						}),
 		});
 
 		setOpen(false);
@@ -260,6 +254,10 @@ function FilterEffectivedAt() {
 	useEffect(() => {
 		setDate(defaultDate);
 	}, [defaultDate]);
+
+	if (searchParams.search) {
+		return;
+	}
 
 	return (
 		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
@@ -350,6 +348,7 @@ function FilterEffectivedAt() {
 									? parseISO(searchParams.effectivedAt.start)
 									: searchParams.effectivedAt?.start
 						}
+						// @ts-expect-error
 						selected={date}
 						onSelect={(data) =>
 							setDate({
