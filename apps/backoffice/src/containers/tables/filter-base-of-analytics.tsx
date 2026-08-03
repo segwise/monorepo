@@ -18,7 +18,7 @@ function FilterBasisOfAnalysis({ className }: { className?: string }) {
 	return (
 		<span
 			className={cn(
-				'text-xs text-muted-foreground font-normal -mt-2 mb-2 flex flex-row items-center justify-start gap-x-0.5',
+				'text-xs text-muted-foreground font-normal flex flex-row items-center justify-start gap-x-0.5',
 				className,
 			)}
 		>

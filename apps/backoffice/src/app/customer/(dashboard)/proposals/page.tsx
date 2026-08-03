@@ -17,8 +17,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CardAnalyticsStatusCount } from '@/containers/cards/analytics/status/count';
-import { CardAnalyticsStatus } from '@/containers/cards/analytics/status/status';
+import { CardAnalyticsStatusCountList } from '@/containers/cards/analytics/status/count';
 import { FilterBasisOfAnalysis } from '@/containers/tables/filter-base-of-analytics';
 import { TablePagination } from '@/containers/tables/pagination';
 import {
@@ -72,20 +71,9 @@ function ProposalsPage() {
 				</div>
 			</div>
 			<Separator />
-			<div className='grid grid-cols-4 gap-x-3'>
-				<FilterBasisOfAnalysis className='col-span-full' />
-				<CardAnalyticsStatusCount title='Total Geral' type='proposals' />
-				<CardAnalyticsStatus
-					type='proposals'
-					status='canceled'
-					title='Cancelados'
-				/>
-				<CardAnalyticsStatus
-					type='proposals'
-					status='suspended'
-					title='Suspensos'
-				/>
-				<CardAnalyticsStatus type='proposals' status='active' title='Ativos' />
+			<div className='flex flex-row items-center justify-between gap-x-3'>
+				<FilterBasisOfAnalysis />
+				<CardAnalyticsStatusCountList title='Total Geral' type='proposals' />
 			</div>
 			<div className='space-y-3'>
 				<Card className='p-0 overflow-hidden'>
