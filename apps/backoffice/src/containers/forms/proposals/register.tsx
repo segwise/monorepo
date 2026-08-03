@@ -657,8 +657,8 @@ function FormProposalRegister() {
 													onChange={(value) => {
 														field.onChange(value);
 
-														if (!getValues('insured.cpf')) {
-															setFocus('insured.cpf');
+														if (!getValues('insured.phone')) {
+															setFocus('insured.phone');
 														}
 													}}
 													disabled={field.disabled}
