@@ -19,7 +19,6 @@ import {
 import {
 	translateModality,
 	translateSafeCommissionType,
-	translateVehicleExchange,
 	translateVehicleUsage,
 } from '@segwise/core/translate';
 import type {
@@ -126,7 +125,10 @@ import { cn } from '@/libraries/utils';
 
 const ENTER_NAVIGATION_MAP: Record<string, string> = {
 	'vehicle-plate': 'vehicle-usage',
+	'insured-cpf': 'vehicle-plate',
 };
+
+const OPEN_ON_FOCUS_IDS = new Set(['vehicle-usage']);
 
 function FormProposalRegister() {
 	const { push } = useRouter();
@@ -367,20 +369,23 @@ function FormProposalRegister() {
 
 		if (overrideId) {
 			e.preventDefault();
+			e.stopPropagation();
 
 			const overrideEl = form.querySelector<HTMLElement>(`#${overrideId}`);
 
 			overrideEl?.focus();
 
-			requestAnimationFrame(() => {
-				overrideEl?.dispatchEvent(
-					new KeyboardEvent('keydown', {
-						key: 'Enter',
-						code: 'Enter',
-						bubbles: true,
-					}),
-				);
-			});
+			if (OPEN_ON_FOCUS_IDS.has(overrideId)) {
+				requestAnimationFrame(() => {
+					overrideEl?.dispatchEvent(
+						new KeyboardEvent('keydown', {
+							key: 'Enter',
+							code: 'Enter',
+							bubbles: true,
+						}),
+					);
+				});
+			}
 
 			return;
 		}
@@ -480,82 +485,6 @@ function FormProposalRegister() {
 					</Button>
 				</DialogGetPlate>
 				<div className='flex flex-row items-center justify-end'>
-					<Controller
-						control={control}
-						name='producer'
-						render={({ field, fieldState }) => (
-							<Field
-								data-invalid={fieldState.invalid}
-								orientation='horizontal'
-								className='relative'
-							>
-								<FieldLabel>Produtor:</FieldLabel>
-								<Select
-									{...field}
-									value={!field.value ? '' : field.value || ''}
-									onValueChange={(value) => {
-										field.onChange(value === 'clear' ? null : value);
-
-										if (!getValues('commissions.type')) {
-											setValue(
-												'commissions.type',
-												'by_the_brokerage_commission',
-											);
-										}
-
-										if (value === 'clear') {
-											setValue('commissions', null);
-										}
-									}}
-								>
-									<SelectTrigger aria-invalid={fieldState.invalid}>
-										<SelectValue placeholder='Nenhum produtor' />
-									</SelectTrigger>
-									<SelectContent align='end' side='bottom' className='max-h-72'>
-										{producers?.map(({ id, avatar, name, contact }) => (
-											<SelectItem key={id} value={id}>
-												<div className='flex flex-row items-center justify-start gap-x-2'>
-													<Avatar className='size-6 rounded-full border'>
-														<AvatarImage
-															src={avatar || placeholder.user}
-															width={128}
-															height={128}
-															alt={`Produtor - ${capitalizeFirstLetters(name)}`}
-														/>
-														<AvatarFallback>{name.slice(0, 2)}</AvatarFallback>
-													</Avatar>
-													<div className='leading-none'>
-														<span className='text-xs/tight font-medium block text-left'>
-															{capitalizeFirstLetters(name)}
-														</span>
-														{contact.phone && (
-															<span className='text-xs/tight text-muted-foreground block text-left'>
-																{maskPhone(contact.phone)}
-															</span>
-														)}
-													</div>
-												</div>
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-								{fieldState.invalid && (
-									<FieldError errors={[fieldState.error]} />
-								)}
-								{existsProducer && !fieldState.invalid && (
-									<FieldError
-										className='text-destructive flex flex-row items-center justify-end absolute right-0 -bottom-4.5 cursor-pointer'
-										onClick={() => field.onChange(null)}
-									>
-										<span className='truncate line-clamp-1 -mr-1'>
-											Remover Produtor
-										</span>{' '}
-										<XCircleIcon className='size-3' />
-									</FieldError>
-								)}
-							</Field>
-						)}
-					/>
 					<ButtonBack>
 						<Button>
 							<ChevronLeftIcon /> Voltar
@@ -645,6 +574,7 @@ function FormProposalRegister() {
 													Seguradora:
 												</FieldLabel>
 												<Combobox
+													id='insurance-company'
 													value={
 														value
 															? {
@@ -662,7 +592,10 @@ function FormProposalRegister() {
 													// @ts-expect-error
 													onValueChange={(value) => onChange(value.value)}
 												>
-													<ComboboxInput placeholder='Selecionar' />
+													<ComboboxInput
+														id='insurance-company'
+														placeholder='Selecionar'
+													/>
 													<ComboboxContent>
 														<ComboboxEmpty>
 															Nenhum registro encontrado!
@@ -790,6 +723,29 @@ function FormProposalRegister() {
 									</FieldContent>
 								</FieldSet>
 								<FieldGroup className='grid grid-cols-4'>
+									<Controller
+										control={control}
+										name='insured.phone'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='insured-phone'>
+													Celular:
+												</FieldLabel>
+												<Input
+													{...field}
+													id='insured-phone'
+													aria-invalid={fieldState.invalid}
+													placeholder='(00) 00000-0000'
+													onChange={({ target: { value } }) =>
+														field.onChange(maskPhone(value))
+													}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
 									<Controller
 										control={control}
 										name='insured.cpf'
@@ -942,29 +898,6 @@ function FormProposalRegister() {
 															</InputGroupAddon>
 														)}
 												</InputGroup>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
-												)}
-											</Field>
-										)}
-									/>
-									<Controller
-										control={control}
-										name='insured.phone'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='insured-phone'>
-													Celular:
-												</FieldLabel>
-												<Input
-													{...field}
-													id='insured-phone'
-													aria-invalid={fieldState.invalid}
-													placeholder='(00) 00000-0000'
-													onChange={({ target: { value } }) =>
-														field.onChange(maskPhone(value))
-													}
-												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}
@@ -1179,46 +1112,6 @@ function FormProposalRegister() {
 									/>
 									<Controller
 										control={control}
-										name='vehicle.chassi'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel
-													htmlFor='vehicle-chassi'
-													className={cn(
-														'',
-														!!plate?.length && 'pointer-events-none',
-													)}
-												>
-													Chassi:
-													<sup className='text-muted-foreground ml-2'>
-														( Opcional )
-													</sup>
-												</FieldLabel>
-												<Input
-													{...field}
-													id='vehicle-chassi'
-													value={field.value || ''}
-													aria-invalid={fieldState.invalid}
-													placeholder='Chassi'
-													onChange={({ target: { value } }) =>
-														field.onChange(!value ? null : value)
-													}
-													className={cn(
-														'',
-														(!!plate?.length ||
-															(isPlate(plate || '') &&
-																!isPendingVehicleSearch)) &&
-															'pointer-events-none',
-													)}
-												/>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
-												)}
-											</Field>
-										)}
-									/>
-									<Controller
-										control={control}
 										name='vehicle.usage'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
@@ -1267,59 +1160,6 @@ function FormProposalRegister() {
 														</SelectItem>
 														<SelectItem value='tourism'>
 															{translateVehicleUsage('tourism')}
-														</SelectItem>
-													</SelectContent>
-												</Select>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
-												)}
-											</Field>
-										)}
-									/>
-									<Controller
-										control={control}
-										name='vehicle.exchange'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel
-													htmlFor='vehicle-exchange'
-													className={cn(
-														'',
-														!!plate?.length &&
-															!!vehicleSearch?.exchange &&
-															'pointer-events-none',
-													)}
-												>
-													Câmbio:
-													<sup className='text-muted-foreground ml-2'>
-														( Opcional )
-													</sup>
-												</FieldLabel>
-												<Select
-													{...field}
-													value={field.value || ''}
-													onValueChange={field.onChange}
-												>
-													<SelectTrigger
-														id='vehicle-exchange'
-														aria-invalid={fieldState.invalid}
-														className={cn(
-															'',
-															((!!plate?.length && !!vehicleSearch?.exchange) ||
-																(!!vehicleSearch?.exchange &&
-																	isPlate(plate || '') &&
-																	!isPendingVehicleSearch)) &&
-																'pointer-events-none',
-														)}
-													>
-														<SelectValue placeholder='Selecionar' />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value='manual'>
-															{translateVehicleExchange('manual')}
-														</SelectItem>
-														<SelectItem value='automatic'>
-															{translateVehicleExchange('automatic')}
 														</SelectItem>
 													</SelectContent>
 												</Select>
@@ -1553,7 +1393,88 @@ function FormProposalRegister() {
 										</FieldTitle>
 									</FieldContent>
 								</FieldSet>
-								<FieldGroup className='grid grid-cols-4'>
+								<FieldGroup className='grid grid-cols-5'>
+									<Controller
+										control={control}
+										name='producer'
+										render={({ field, fieldState }) => (
+											<Field
+												data-invalid={fieldState.invalid}
+												className='relative'
+											>
+												<FieldLabel>Produtor:</FieldLabel>
+												<Select
+													{...field}
+													value={!field.value ? '' : field.value || ''}
+													onValueChange={(value) => {
+														field.onChange(value === 'clear' ? null : value);
+
+														if (!getValues('commissions.type')) {
+															setValue(
+																'commissions.type',
+																'by_the_brokerage_commission',
+															);
+														}
+
+														if (value === 'clear') {
+															setValue('commissions', null);
+														}
+													}}
+												>
+													<SelectTrigger aria-invalid={fieldState.invalid}>
+														<SelectValue placeholder='Nenhum produtor' />
+													</SelectTrigger>
+													<SelectContent
+														align='start'
+														side='bottom'
+														className='max-h-72'
+													>
+														{producers?.map(({ id, avatar, name, contact }) => (
+															<SelectItem key={id} value={id}>
+																<div className='flex flex-row items-center justify-start gap-x-2'>
+																	<Avatar className='size-6 rounded-full border'>
+																		<AvatarImage
+																			src={avatar || placeholder.user}
+																			width={128}
+																			height={128}
+																			alt={`Produtor - ${capitalizeFirstLetters(name)}`}
+																		/>
+																		<AvatarFallback>
+																			{name.slice(0, 2)}
+																		</AvatarFallback>
+																	</Avatar>
+																	<div className='leading-none'>
+																		<span className='text-xs/tight font-medium block text-left'>
+																			{capitalizeFirstLetters(name)}
+																		</span>
+																		{contact.phone && (
+																			<span className='text-xs/tight text-muted-foreground block text-left'>
+																				{maskPhone(contact.phone)}
+																			</span>
+																		)}
+																	</div>
+																</div>
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+												{existsProducer && !fieldState.invalid && (
+													<FieldError
+														className='text-destructive flex flex-row items-center justify-end absolute right-0 -bottom-4.5 cursor-pointer'
+														onClick={() => field.onChange(null)}
+													>
+														<span className='truncate line-clamp-1 -mr-1'>
+															Remover Produtor
+														</span>{' '}
+														<XCircleIcon className='size-3' />
+													</FieldError>
+												)}
+											</Field>
+										)}
+									/>
 									<Controller
 										control={control}
 										name='receivables.installments'
