@@ -3,7 +3,11 @@ import type { Modality } from '../../types/utils';
 function translateModality(modality: Modality) {
 	switch (modality) {
 		case 'vehicle':
-			return 'Seguro Veicular';
+			return 'Seguro Automóvel';
+		case 'motorcycle':
+			return 'Seguro Motocicleta';
+		case 'truck':
+			return 'Seguro Caminhão';
 		case 'health':
 			return 'Plano de Saúde';
 		case 'residence':
