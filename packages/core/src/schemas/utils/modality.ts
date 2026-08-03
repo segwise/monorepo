@@ -3,6 +3,8 @@ import z from 'zod';
 const SchemaModality = z.enum(
 	[
 		'vehicle',
+		'motorcycle',
+		'truck',
 		'health',
 		'residence',
 		'business',
