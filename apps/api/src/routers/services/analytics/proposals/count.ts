@@ -3,7 +3,8 @@ import {
 	SchemaBasisOfAnalysis,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core';
-import { subMonths, subYears } from 'date-fns';
+import { endOfDay, startOfDay, subMonths, subYears } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { type Prisma, Role } from '@/generated/prisma/client';
@@ -54,7 +55,7 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 				...(!!brokerId && {
 					brokerId,
 				}),
-				...(ctx.session.role !== Role.customer &&
+				...(ctx?.session?.role !== Role.customer &&
 					!!brokers?.length && {
 						broker: {
 							id: {
@@ -62,51 +63,18 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 							},
 						},
 					}),
-				OR: [
-					{
-						isExternal: false,
-					},
-					{
-						isExternal: null,
-					},
-				],
+
+				expiration: {
+					gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+					lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+				},
 				...(!!renewal && {
 					renewal,
-				}),
-				...(!!search && {
-					OR: [
-						{
-							insured: {
-								name: {
-									search: search.replaceAll(' ', '&'),
-								},
-							},
-						},
-						{
-							temporaryInsured: {
-								name: {
-									search: search.replaceAll(' ', '&'),
-								},
-							},
-						},
-					],
 				}),
 				...(!!producers?.length && {
 					producerId: {
 						in: producers,
 					},
-				}),
-				...(!producers?.length && {
-					OR: [
-						{
-							producerId: {
-								not: '019f249d-8880-7000-b962-aace743e68e2',
-							},
-						},
-						{
-							producerId: null,
-						},
-					],
 				}),
 				...(!!insuranceCompanies?.length && {
 					insuranceCompanyId: {
@@ -123,23 +91,65 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 						in: status,
 					},
 				}),
-				// effectivedAt: null,
 			};
+
+			where.AND = where.AND ?? [];
+
+			// @ts-expect-error
+			where.AND.push({
+				OR: [{ isExternal: false }, { isExternal: null }],
+			});
+
+			if (search) {
+				where.AND = where.AND ?? [];
+
+				// @ts-expect-error
+				where.AND.push({
+					OR: [
+						{
+							insured: {
+								name: { search: search.replaceAll(' ', '&') },
+							},
+						},
+						{
+							temporaryInsured: {
+								name: { search: search.replaceAll(' ', '&') },
+							},
+						},
+					],
+				});
+			}
+
+			if (!producers?.length) {
+				where.AND = where.AND ?? [];
+
+				// @ts-expect-error
+				where.AND.push({
+					OR: [
+						{ producerId: { not: '019f249d-8880-7000-b962-aace743e68e2' } },
+						{ producerId: null },
+					],
+				});
+			}
 
 			const [current, before] = await ctx.database.$transaction([
 				ctx.database.safe.count({
-					where: {
-						...where,
-						requestedAt: {
-							gte: effectivedAt.start,
-							lte: effectivedAt.end,
+					where,
+					orderBy: [
+						{
+							expiration: 'asc',
 						},
-					},
+						{
+							insured: {
+								name: 'asc',
+							},
+						},
+					],
 				}),
 				ctx.database.safe.count({
 					where: {
 						...where,
-						requestedAt: {
+						expiration: {
 							gte:
 								basisOfAnalysis === 'year'
 									? subYears(effectivedAt.start, 1)

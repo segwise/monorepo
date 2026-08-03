@@ -4,6 +4,7 @@ import {
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core';
 import { endOfDay, startOfDay, subMonths, subYears } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { type Prisma, Role } from '@/generated/prisma/client';
@@ -63,7 +64,7 @@ function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 				...(!!brokerId && {
 					brokerId,
 				}),
-				...(ctx.session.role !== Role.customer &&
+				...(ctx?.session?.role !== Role.customer &&
 					!!brokers?.length && {
 						broker: {
 							id: {
@@ -71,51 +72,17 @@ function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 							},
 						},
 					}),
-				OR: [
-					{
-						isExternal: false,
-					},
-					{
-						isExternal: null,
-					},
-				],
+				expiration: {
+					gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+					lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+				},
 				...(!!renewal && {
 					renewal,
-				}),
-				...(!!search && {
-					OR: [
-						{
-							insured: {
-								name: {
-									search: search.replaceAll(' ', '&'),
-								},
-							},
-						},
-						{
-							temporaryInsured: {
-								name: {
-									search: search.replaceAll(' ', '&'),
-								},
-							},
-						},
-					],
 				}),
 				...(!!producers?.length && {
 					producerId: {
 						in: producers,
 					},
-				}),
-				...(!producers?.length && {
-					OR: [
-						{
-							producerId: {
-								not: '019f249d-8880-7000-b962-aace743e68e2',
-							},
-						},
-						{
-							producerId: null,
-						},
-					],
 				}),
 				...(!!insuranceCompanies?.length && {
 					insuranceCompanyId: {
@@ -132,60 +99,74 @@ function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 						in: status,
 					},
 				}),
-				// effectivedAt: null,
 			};
+
+			where.AND = where.AND ?? [];
+
+			// @ts-expect-error
+			where.AND.push({
+				OR: [{ isExternal: false }, { isExternal: null }],
+			});
+
+			if (search) {
+				where.AND = where.AND ?? [];
+
+				// @ts-expect-error
+				where.AND.push({
+					OR: [
+						{
+							insured: {
+								name: { search: search.replaceAll(' ', '&') },
+							},
+						},
+						{
+							temporaryInsured: {
+								name: { search: search.replaceAll(' ', '&') },
+							},
+						},
+					],
+				});
+			}
+
+			if (!producers?.length) {
+				where.AND = where.AND ?? [];
+
+				// @ts-expect-error
+				where.AND.push({
+					OR: [
+						{ producerId: { not: '019f249d-8880-7000-b962-aace743e68e2' } },
+						{ producerId: null },
+					],
+				});
+			}
 
 			const [current, before] = await ctx.database.$transaction([
 				ctx.database.safe.count({
-					where: {
-						...where,
-						status: {
-							in: status,
+					where,
+					orderBy: [
+						{
+							expiration: 'asc',
 						},
-						...(!!effectivedAt && {
-							requestedAt: {
-								...(typeof effectivedAt === 'string' && {
-									gte: startOfDay(effectivedAt),
-									lte: endOfDay(effectivedAt),
-								}),
-								...(typeof effectivedAt === 'object' && {
-									gte: startOfDay(effectivedAt.start),
-									lte: endOfDay(effectivedAt.end),
-								}),
+						{
+							insured: {
+								name: 'asc',
 							},
-						}),
-					},
+						},
+					],
 				}),
 				ctx.database.safe.count({
 					where: {
 						...where,
-						status: {
-							in: status,
+						expiration: {
+							gte:
+								basisOfAnalysis === 'year'
+									? subYears(effectivedAt.start, 1)
+									: subMonths(effectivedAt.start, 1),
+							lte:
+								basisOfAnalysis === 'year'
+									? subYears(effectivedAt.end, 1)
+									: subMonths(effectivedAt.end, 1),
 						},
-						...(!!effectivedAt && {
-							requestedAt: {
-								...(typeof effectivedAt === 'string' && {
-									gte:
-										basisOfAnalysis === 'year'
-											? subYears(startOfDay(effectivedAt), 1)
-											: subMonths(startOfDay(effectivedAt), 1),
-									lte:
-										basisOfAnalysis === 'year'
-											? subYears(endOfDay(effectivedAt), 1)
-											: subMonths(endOfDay(effectivedAt), 1),
-								}),
-								...(typeof effectivedAt === 'object' && {
-									gte:
-										basisOfAnalysis === 'year'
-											? subYears(startOfDay(effectivedAt.start), 1)
-											: subMonths(startOfDay(effectivedAt.start), 1),
-									lte:
-										basisOfAnalysis === 'year'
-											? subYears(endOfDay(effectivedAt.end), 1)
-											: subMonths(endOfDay(effectivedAt.end), 1),
-								}),
-							},
-						}),
 					},
 				}),
 			]);
