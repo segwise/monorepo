@@ -762,6 +762,8 @@ enum Role {
 
 enum ModalityInsurance {
   vehicle
+  motorcycle
+  truck
   health
   residence
   business
