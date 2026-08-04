@@ -5,4 +5,5 @@ export * from './cookies-relevant';
 export * from './default-filter-date';
 export * from './generate-referral';
 export * from './get-numeric-value-money';
+export * from './professions';
 export * from './transform-array';
