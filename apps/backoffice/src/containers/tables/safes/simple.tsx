@@ -92,12 +92,12 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 			<TableHeader>
 				<TableRow>
 					<TableHead className='text-left w-50'>Segurado</TableHead>
-					<TableHead className='text-left flex-1'>Dados</TableHead>
+					<TableHead className='text-left w-50'>Dados</TableHead>
 					<TableHead className='text-left w-50'>Seguradora</TableHead>
 					<TableHead className='text-center w-30' />
 					<TableHead className='text-center w-40'>Tipo</TableHead>
 					<TableHead className='text-right w-50'>Comissão</TableHead>
-					<TableHead className='text-right w-30'>Ações</TableHead>
+					<TableHead className='text-right flex-1'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -110,7 +110,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									<Skeleton className='w-26 h-3' />
 								</div>
 							</TableCell>
-							<TableCell className='flex-1'>
+							<TableCell className='w-50'>
 								<div className='flex flex-row items-center justify-start gap-x-3'>
 									<Skeleton className='size-8 rounded-full' />
 									<div>
@@ -144,7 +144,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									</div>
 								</div>
 							</TableCell>
-							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+							<TableCell className='justify-end flex flex-row gap-x-2 flex-1'>
 								<Skeleton className='size-9 rounded-sm' />
 							</TableCell>
 						</TableRow>
@@ -196,7 +196,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									</span>
 								</div>
 							</TableCell>
-							<TableCell className='text-left flex-1'>
+							<TableCell className='text-left w-50'>
 								<div className='flex flex-row items-center justify-start'>
 									{!!vehicle && (
 										<div className='flex flex-row items-center justify-start gap-x-3'>
@@ -430,7 +430,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									</div>
 								)}
 							</TableCell>
-							<TableCell className='flex flex-row justify-end gap-x-2 w-30'>
+							<TableCell className='flex flex-row justify-end gap-x-2 flex-1'>
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
 										<Button variant='outline' size='icon-sm'>
