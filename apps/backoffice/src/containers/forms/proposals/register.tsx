@@ -47,6 +47,7 @@ import {
 	CircleDollarSignIcon,
 	ClipboardIcon,
 	FileTextIcon,
+	Loader2Icon,
 	SaveIcon,
 	SearchIcon,
 	TruckIcon,
@@ -140,7 +141,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
 		useState<boolean>(false);
 
-	const { data: safe, isPending } = useSafesById(id);
+	const { data: safe } = useSafesById(id);
 
 	console.log(safe);
 
@@ -982,43 +983,50 @@ function FormProposalRegister({ id }: { id?: string }) {
 														( Opcional )
 													</sup>
 												</FieldLabel>
-												<Input
-													{...field}
-													id='vehicle-plate'
-													placeholder='AAA-0000 / AAA0A00'
-													aria-invalid={fieldState.invalid}
-													value={field.value || ''}
-													onChange={({ target: { value } }) => {
-														field.onChange(!value ? null : maskPlate(value));
+												<div className='flex flex-row items-center justify-between'>
+													<Input
+														{...field}
+														id='vehicle-plate'
+														placeholder='AAA-0000 / AAA0A00'
+														aria-invalid={fieldState.invalid}
+														value={field.value || ''}
+														onChange={({ target: { value } }) => {
+															field.onChange(!value ? null : maskPlate(value));
 
-														if (!isPlate(value)) {
-															if (getValues('vehicle.manufacturer')) {
-																setValue('vehicle.manufacturer', null);
+															if (!isPlate(value)) {
+																if (getValues('vehicle.manufacturer')) {
+																	setValue('vehicle.manufacturer', null);
+																}
+
+																if (getValues('vehicle.model')) {
+																	// @ts-expect-error
+																	setValue('vehicle.model', null);
+																}
+
+																if (getValues('vehicle.modelYear')) {
+																	setValue('vehicle.modelYear', null);
+																}
+
+																if (getValues('vehicle.chassi')) {
+																	setValue('vehicle.chassi', null);
+																}
+
+																if (getValues('vehicle.exchange')) {
+																	setValue('vehicle.exchange', null);
+
+																	setTimeout(() => {
+																		clearErrors('vehicle.exchange');
+																	}, 100);
+																}
 															}
-
-															if (getValues('vehicle.model')) {
-																// @ts-expect-error
-																setValue('vehicle.model', null);
-															}
-
-															if (getValues('vehicle.modelYear')) {
-																setValue('vehicle.modelYear', null);
-															}
-
-															if (getValues('vehicle.chassi')) {
-																setValue('vehicle.chassi', null);
-															}
-
-															if (getValues('vehicle.exchange')) {
-																setValue('vehicle.exchange', null);
-
-																setTimeout(() => {
-																	clearErrors('vehicle.exchange');
-																}, 100);
-															}
-														}
-													}}
-												/>
+														}}
+													/>
+													{field.value &&
+														isPlate(field.value) &&
+														isPendingVehicleSearch && (
+															<Loader2Icon className='animate-spin size-4 text-muted-foreground ml-3' />
+														)}
+												</div>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}
