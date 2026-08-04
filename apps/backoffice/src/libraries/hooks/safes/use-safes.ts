@@ -24,4 +24,16 @@ const useSafesSimple = ({
 			).data,
 	});
 
-export { useSafesSimple };
+const useSafesById = (id?: string) =>
+	useQuery({
+		queryKey: ['safe', id],
+		queryFn: async ({ signal }) =>
+			(
+				await api.get(`/safes/${id}`, {
+					signal,
+				})
+			).data,
+		enabled: !!id,
+	});
+
+export { useSafesSimple, useSafesById };

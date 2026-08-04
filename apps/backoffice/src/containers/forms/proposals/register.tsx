@@ -117,6 +117,7 @@ import { placeholder } from '@/config/placeholder';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useQuotesByPlate } from '@/libraries/hooks/quotes/use-quotes-by-plate';
+import { useSafesById } from '@/libraries/hooks/safes/use-safes';
 import { useSafesRegister } from '@/libraries/hooks/safes/use-safes-register';
 import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
@@ -130,7 +131,7 @@ const ENTER_NAVIGATION_MAP: Record<string, string> = {
 
 const OPEN_ON_FOCUS_IDS = new Set(['vehicle-usage']);
 
-function FormProposalRegister() {
+function FormProposalRegister({ id }: { id?: string }) {
 	const { push } = useRouter();
 
 	const { data: producers } = useProducersSimpleFull();
@@ -141,7 +142,11 @@ function FormProposalRegister() {
 	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
 		useState<boolean>(false);
 
-	const { mutate, isPending } = useSafesRegister();
+	const { data: safe, isPending } = useSafesById(id);
+
+	console.log(safe);
+
+	const { mutate, isPending: isMutation } = useSafesRegister();
 
 	const {
 		control,
@@ -152,7 +157,7 @@ function FormProposalRegister() {
 		setFocus,
 		reset,
 		watch,
-		formState: { isDirty, isValid: isValidForm },
+		formState: { isDirty, isValid: isValidForm, errors },
 	} = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
@@ -184,6 +189,9 @@ function FormProposalRegister() {
 			},
 		},
 	});
+
+	console.log(SchemaSafeRegister.safeParse(watch()));
+	console.log(errors);
 
 	const plate = watch('vehicle.plate');
 
@@ -1852,7 +1860,7 @@ function FormProposalRegister() {
 				type='submit'
 				form='form-proposal-register'
 				className='w-full'
-				disabled={isPending || !isDirty}
+				disabled={isMutation || !isDirty}
 				textPending='Salvando'
 			>
 				<SaveIcon /> Salvar Registro
