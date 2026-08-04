@@ -58,10 +58,14 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		[
 			'expo-splash-screen',
 			{
-				image: './src/assets/images/splash-screen/splash-icon.png',
+				image: !process.env.EXPO_PUBLIC_COMPANY_ID
+					? './src/assets/images/splash-screen/splash-icon.png'
+					: './src/assets/images/splash-screen/splash-icon-xcar.png',
 				imageWidth: 200,
 				sizeMode: 'contain',
-				backgroundColor: '#232323',
+				backgroundColor: !process.env.EXPO_PUBLIC_COMPANY_ID
+					? '#232323'
+					: '#C5302B',
 			},
 		],
 		'expo-font',
