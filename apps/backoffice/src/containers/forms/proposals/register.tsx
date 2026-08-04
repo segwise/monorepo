@@ -18,18 +18,16 @@ import {
 } from '@segwise/core/schemas';
 import {
 	translateModality,
+	translateProfession,
 	translateSafeCommissionType,
 	translateVehicleUsage,
 } from '@segwise/core/translate';
-import type {
-	QuoteRegister,
-	SafeRegister,
-	VehicleManufacturer,
-} from '@segwise/core/types';
+import type { QuoteRegister, SafeRegister } from '@segwise/core/types';
 import {
 	calculatePercentageOfValue,
 	capitalizeFirstLetters,
 	getNumericValueMoney,
+	professions,
 } from '@segwise/core/utils';
 import { isCPF, isDateString, isPlate } from '@segwise/core/valids';
 import {
@@ -109,6 +107,7 @@ import {
 	Select,
 	SelectContent,
 	SelectItem,
+	SelectSeparator,
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
@@ -122,7 +121,6 @@ import { useSafesRegister } from '@/libraries/hooks/safes/use-safes-register';
 import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 import { useVehiclesPlate } from '@/libraries/hooks/vehicles/use-vehicles-plate';
-import { cn } from '@/libraries/utils';
 
 const ENTER_NAVIGATION_MAP: Record<string, string> = {
 	'vehicle-plate': 'vehicle-usage',
@@ -175,10 +173,12 @@ function FormProposalRegister({ id }: { id?: string }) {
 				name: '',
 				birth: '',
 				phone: '',
+				profession: null,
 			},
 			vehicle: {
 				plate: null,
 				model: '',
+				manufacturer: null,
 				modelYear: '',
 				overnightPostalCode: '',
 			},
@@ -912,6 +912,50 @@ function FormProposalRegister({ id }: { id?: string }) {
 											</Field>
 										)}
 									/>
+									<Controller
+										control={control}
+										name='insured.profession'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='insured-profession'>
+													Profissão:
+													<sup className='text-muted-foreground ml-2'>
+														( Opcional )
+													</sup>
+												</FieldLabel>
+												<Select
+													{...field}
+													value={field.value ?? ''}
+													onValueChange={(value) =>
+														field.onChange(value === 'null' ? null : value)
+													}
+												>
+													<SelectTrigger
+														id='insured-profession'
+														aria-invalid={fieldState.invalid}
+													>
+														<SelectValue placeholder='Selecionar' />
+													</SelectTrigger>
+													<SelectContent>
+														{field.value && (
+															<Fragment>
+																<SelectItem value='null'>Nenhuma</SelectItem>
+																<SelectSeparator />
+															</Fragment>
+														)}
+														{professions.map((item) => (
+															<SelectItem key={item} value={item}>
+																{translateProfession(item)}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
 								</FieldGroup>
 							</FieldGroup>
 							<Separator />
@@ -949,7 +993,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 														if (!isPlate(value)) {
 															if (getValues('vehicle.manufacturer')) {
-																// @ts-expect-error
 																setValue('vehicle.manufacturer', null);
 															}
 
@@ -982,7 +1025,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 											</Field>
 										)}
 									/>
-									<Controller
+									{/* <Controller
 										control={control}
 										name='vehicle.manufacturer'
 										render={({ field, fieldState }) => (
@@ -1043,21 +1086,13 @@ function FormProposalRegister({ id }: { id?: string }) {
 												)}
 											</Field>
 										)}
-									/>
+									/> */}
 									<Controller
 										control={control}
 										name='vehicle.model'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel
-													htmlFor='vehicle-model'
-													className={cn(
-														'',
-														!!plate?.length && 'pointer-events-none',
-													)}
-												>
-													Modelo:
-												</FieldLabel>
+												<FieldLabel htmlFor='vehicle-model'>Modelo:</FieldLabel>
 												<Input
 													{...field}
 													id='vehicle-model'
@@ -1067,13 +1102,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 													onChange={({ target: { value } }) =>
 														field.onChange(capitalizeFirstLetters(value))
 													}
-													className={cn(
-														'',
-														(!!plate?.length ||
-															(isPlate(plate || '') &&
-																!isPendingVehicleSearch)) &&
-															'pointer-events-none',
-													)}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -1085,13 +1113,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 										control={control}
 										name='vehicle.modelYear'
 										render={({ field, fieldState }) => (
-											<Field
-												data-invalid={fieldState.invalid}
-												className={cn(
-													'',
-													!!plate?.length && 'pointer-events-none',
-												)}
-											>
+											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='vehicle-model-year'>
 													Ano do Modelo:
 												</FieldLabel>
@@ -1104,13 +1126,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 													onChange={({ target: { value } }) =>
 														field.onChange(maskNumber(value).slice(0, 4))
 													}
-													className={cn(
-														'',
-														(!!plate?.length ||
-															(isPlate(plate || '') &&
-																!isPendingVehicleSearch)) &&
-															'pointer-events-none',
-													)}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />

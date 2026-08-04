@@ -1,4 +1,8 @@
-import type { ResponseDataCursor, SafeSimple } from '@segwise/core/types';
+import type {
+	ResponseDataCursor,
+	SafeDetails,
+	SafeSimple,
+} from '@segwise/core/types';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/libraries/api';
 import type { SearchParamsProps } from '@/libraries/search-params/safes';
@@ -29,7 +33,7 @@ const useSafesById = (id?: string) =>
 		queryKey: ['safe', id],
 		queryFn: async ({ signal }) =>
 			(
-				await api.get(`/safes/${id}`, {
+				await api.get<SafeDetails>(`/safes/${id}`, {
 					signal,
 				})
 			).data,
