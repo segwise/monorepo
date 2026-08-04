@@ -140,6 +140,7 @@ model TemporaryInsured {
   age               Int?           @db.SmallInt
   maritalStatus     MaritalStatus? @map("marital_status")
   qualificationTime Int?           @map("qualification_time") @db.SmallInt
+  profession        String?
 
   brokerId String @map("broker_id") @db.Uuid
   broker   Broker @relation("broker_to_temporary_insured", fields: [brokerId], references: [id], onDelete: Cascade)
@@ -170,6 +171,7 @@ model Insured {
   birth         DateTime?      @db.Date
   age           Int?           @db.SmallInt
   maritalStatus MaritalStatus? @map("marital_status")
+  profession    String?
 
   qualificationTime Int? @map("qualification_time") @db.SmallInt
 

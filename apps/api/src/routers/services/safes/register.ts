@@ -97,6 +97,9 @@ function registerRoutersServicesSafesRegister(server: Server) {
 							birth: insured.birth,
 							age: differenceInYears(new Date(), insured.birth),
 							phone: insured.phone,
+							...(insured.profession && {
+								profession: insured.profession,
+							}),
 						},
 						select: {
 							id: true,
@@ -113,6 +116,9 @@ function registerRoutersServicesSafesRegister(server: Server) {
 						birth: insured.birth,
 						age: differenceInYears(new Date(), insured.birth),
 						phone: insured.phone,
+						...(insured.profession && {
+							profession: insured.profession,
+						}),
 					},
 					select: {
 						id: true,
@@ -169,7 +175,9 @@ function registerRoutersServicesSafesRegister(server: Server) {
 						.then((response) => response?.id)
 				: null;
 
+			// @ts-expect-error
 			const { id: safeId, safeVehicle } = await transaction.safe.create({
+				// @ts-expect-error
 				data: {
 					broker: {
 						connect: {
@@ -198,7 +206,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 							id: insuredConfirmId as string,
 						},
 					},
-					...(vehicle && {
+					...(!!vehicle && {
 						safeVehicle: {
 							create: {
 								plate: vehicle.plate,
