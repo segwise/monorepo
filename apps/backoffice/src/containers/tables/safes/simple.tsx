@@ -128,9 +128,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									</div>
 								</div>
 							</TableCell>
-							<TableCell className='w-30'>
-								<Skeleton className='size-8 rounded-full mx-auto' />
-							</TableCell>
+							<TableCell className='w-30' />
 							<TableCell className='w-40'>
 								<Skeleton className='w-24 h-4.5 rounded-full mx-auto' />
 							</TableCell>
