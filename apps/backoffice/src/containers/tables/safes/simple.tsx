@@ -18,6 +18,7 @@ import {
 	MoreVerticalIcon,
 	PaperclipIcon,
 	ShieldPlusIcon,
+	TagIcon,
 	Trash2Icon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -103,15 +104,21 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 					Array.from({ length: 10 }).map((_, index) => (
 						<TableRow key={index.toString()} className='hover:bg-transparent'>
 							<TableCell className='w-50'>
-								<div className='flex flex-row items-center justify-start gap-x-2'>
-									<Skeleton className='size-8 rounded-full' />
-									<div>
-										<Skeleton className='w-46 h-3.5 mb-1' />
-										<Skeleton className='w-26 h-3' />
-									</div>
+								<div>
+									<Skeleton className='w-42 h-3.5 mb-1' />
+									<Skeleton className='w-26 h-3' />
 								</div>
 							</TableCell>
 							<TableCell className='flex-1'>
+								<div className='flex flex-row items-center justify-start gap-x-3'>
+									<Skeleton className='size-8 rounded-full' />
+									<div>
+										<Skeleton className='w-34 h-3.5 mb-1' />
+										<Skeleton className='w-18 h-3' />
+									</div>
+								</div>
+							</TableCell>
+							<TableCell className='w-50'>
 								<div className='flex flex-row items-center justify-start gap-x-3'>
 									<Skeleton className='size-8 rounded-full' />
 									<div>
@@ -120,18 +127,13 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									</div>
 								</div>
 							</TableCell>
-							<TableCell className='w-50' />
 							<TableCell className='w-30'>
-								<div className='flex flex-row items-center justify-center gap-x-2'>
-									<Skeleton className='size-8 rounded-full' />
-								</div>
+								<Skeleton className='size-8 rounded-full mx-auto' />
 							</TableCell>
 							<TableCell className='w-40'>
-								<Skeleton className='w-20 h-4 rounded-full mx-auto' />
+								<Skeleton className='w-24 h-4.5 rounded-full mx-auto' />
 							</TableCell>
 							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
-								<Skeleton className='size-9 rounded-sm' />
-								<Skeleton className='size-9 rounded-sm' />
 								<Skeleton className='size-9 rounded-sm' />
 							</TableCell>
 						</TableRow>
@@ -166,33 +168,20 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 						modality,
 						insured,
 						vehicle,
+						renewal,
 						insuranceCompany,
 						producer,
 						expiration,
 					}) => (
 						<TableRow key={id}>
 							<TableCell className='text-left w-50'>
-								<div className='flex flex-row items-center justify-start gap-x-2'>
-									<Avatar className='size-8 border bg-background'>
-										<AvatarImage
-											src={insured.image || placeholder.user}
-											width={52}
-											height={52}
-											alt={capitalizeFirstLetters(insured.name)}
-											priority
-										/>
-										<AvatarFallback>
-											{insured.name.slice(0, 2).toUpperCase()}
-										</AvatarFallback>
-									</Avatar>
-									<div>
-										<span className='block text-sm font-medium truncate line-clamp-1 max-w-40'>
-											{capitalizeFirstLetters(insured.name)}
-										</span>
-										<span className='block text-xs text-muted-foreground font-normal leading-none'>
-											{maskPhone(insured.contact.phone)}
-										</span>
-									</div>
+								<div>
+									<span className='block text-sm font-medium line-clamp-1!'>
+										{capitalizeFirstLetters(insured.name)}
+									</span>
+									<span className='block text-xs text-muted-foreground font-normal leading-none'>
+										{maskPhone(insured.contact.phone)}
+									</span>
 								</div>
 							</TableCell>
 							<TableCell className='text-left flex-1'>
@@ -242,9 +231,18 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 													}
 												</TooltipContent>
 											</Tooltip>
-											<div>
-												<span className='block text-sm font-medium truncate line-clamp-1 capitalize'>
-													{vehicle.plate ? vehicle.model : 'Sem Placa'}
+											<div className='relative'>
+												<span className='block text-sm font-medium capitalize line-clamp-1!'>
+													{vehicle.plate
+														? capitalizeFirstLetters(
+																vehicle.model
+																	.replace('/', ' / ')
+																	.split('/')[1] ??
+																	vehicle.model
+																		.replace('/', ' / ')
+																		.split('/')[0],
+															)
+														: 'Sem Placa'}
 												</span>
 												{vehicle.plate && (
 													<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
@@ -255,6 +253,14 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 													<span className='block text-xs text-muted-foreground font-normal leading-none'>
 														Verificar veículo
 													</span>
+												)}
+												{renewal && (
+													<div className='absolute top-0 -right-1 translate-x-full flex flex-row items-center justify-start gap-x-1 scale-90'>
+														<TagIcon className='size-3 text-active' />
+														<span className='text-active text-xs'>
+															Renovação
+														</span>
+													</div>
 												)}
 											</div>
 										</div>
@@ -393,7 +399,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 									</DropdownMenuTrigger>
 									<DropdownMenuContent side='bottom' align='end'>
 										<DropdownMenuItem asChild>
-											<Link href={`/proposals/${id}`}>
+											<Link href={`/proposals/${id}?renewal=true`}>
 												<ShieldPlusIcon className='size-4!' /> Renovar Seguro
 											</Link>
 										</DropdownMenuItem>
@@ -409,7 +415,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 										<DropdownMenuSeparator />
 										<DialogSafeDeleteById id={id}>
 											<DropdownMenuItem variant='destructive'>
-												<Trash2Icon className='size-4!' /> Excluir Seguro
+												<Trash2Icon className='size-4!' /> Excluir
 											</DropdownMenuItem>
 										</DialogSafeDeleteById>
 									</DropdownMenuContent>

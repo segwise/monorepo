@@ -167,7 +167,12 @@ function TableSafesSheetFilters({ children }: React.PropsWithChildren) {
 				</SheetHeader>
 				<Separator />
 				<div className='px-4 space-y-3'>
-					<FilterEffectivedAt value={effectivedAt} onChange={setEffectivedAt} />
+					{!searchParams.search && (
+						<FilterEffectivedAt
+							value={effectivedAt}
+							onChange={setEffectivedAt}
+						/>
+					)}
 					<FilterInsuranceCompanies
 						value={insuranceCompanies}
 						onChange={setInsuranceCompanies}

@@ -2,7 +2,7 @@
 
 import { SchemaName } from '@segwise/core/schemas';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
-import { SearchIcon } from 'lucide-react';
+import { SearchIcon, XCircleIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 import { cn } from '@/libraries/utils';
@@ -49,6 +49,19 @@ function InputSearch({ className }: { className?: string }) {
 				}}
 				onChange={({ target: { value } }) => setSearch(value || '')}
 			/>
+			{!!searchParams.search && (
+				<XCircleIcon
+					className='text-destructive size-3.5 mr-3 z-10 cursor-pointer'
+					onClick={() => [
+						setSearchParams({
+							search: null,
+							cursor: null,
+							requestedAt: null,
+						}),
+						setSearch(''),
+					]}
+				/>
+			)}
 			<InputGroupAddon align='inline-end'>
 				<InputGroupButton
 					disabled={!isValid}

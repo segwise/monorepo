@@ -89,9 +89,11 @@ function TableSafesHeaderFilters() {
 
 	return (
 		<Fragment>
-			<Separator orientation='vertical' className='h-7 mx-2' />
+			{!searchParams.search && (
+				<Separator orientation='vertical' className='h-7 mx-2' />
+			)}
 			<div className='flex flex-row items-center justify-start gap-x-4 divide-x divide-border/50 *:pr-4'>
-				<FilterEffectivedAt />
+				{!searchParams.search && <FilterEffectivedAt />}
 				<FilterProducers />
 				<FilterInsuranceCompanies />
 				<FilterModality />
@@ -254,10 +256,6 @@ function FilterEffectivedAt() {
 	useEffect(() => {
 		setDate(defaultDate);
 	}, [defaultDate]);
-
-	if (searchParams.search) {
-		return;
-	}
 
 	return (
 		<div className='text-xs flex flex-col items-start justify-start gap-x-1'>
