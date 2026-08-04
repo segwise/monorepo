@@ -7,7 +7,7 @@ const API_URL = Constants.expoConfig?.extra?.apiUrl;
 const EXPO_PUBLIC_COMPANY_ID = Constants.expoConfig?.extra?.company.id;
 
 const HOT_UPDATER_URL = Constants.expoConfig?.extra?.hotUpdater.apiUrl;
-const HOT_UPDATER_AUTH_TOKEN = Constants.expoConfig?.extra?.hotUpdater.apiUrl;
+const HOT_UPDATER_AUTH_TOKEN = Constants.expoConfig?.extra?.hotUpdater.token;
 
 const environment = SchemaEnvironment.parse({
 	API_URL,
