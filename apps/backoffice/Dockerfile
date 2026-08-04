@@ -1,40 +1,30 @@
-
-FROM node:22.14-alpine AS base
-
+FROM oven/bun:1.3.2-alpine AS base
 WORKDIR /app
 
-RUN npm install -g bun@1.3.2
+FROM base AS deps
+COPY package.json bun.lock* .npmrc ./
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
 
 FROM base AS builder
-
 WORKDIR /app
-
-COPY package.json bun.lock* .npmrc ./
-
-RUN bun install --frozen-lockfile
-
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
 RUN bun run build
 
-FROM base AS pruner
+FROM base AS prod-deps
+COPY package.json bun.lock* .npmrc ./
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile --production
 
+FROM oven/bun:1.3.2-alpine AS runner
 WORKDIR /app
 
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/bun.lock* ./
-COPY --from=builder /app/.npmrc ./
+ENV NODE_ENV=production
 
-RUN bun install --production --frozen-lockfile
-
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-FROM node:22.14.0-alpine AS runner
-
-WORKDIR /app
-
-COPY --from=pruner /app ./
-
-CMD ["node", "server.js"]
+CMD ["bun", "server.js"]
