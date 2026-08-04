@@ -1,6 +1,7 @@
-import Constants from 'expo-constants';
+import { environment } from '@/libraries/environment';
 
-const isCompany = !!Constants.expoConfig?.extra?.company?.id;
-const companyId = Constants.expoConfig?.extra?.company?.id;
+const companyId = environment.EXPO_PUBLIC_COMPANY_ID;
+
+const isCompany = !!companyId;
 
 export { companyId, isCompany };

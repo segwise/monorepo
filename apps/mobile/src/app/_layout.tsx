@@ -4,6 +4,7 @@ import 'react-native-reanimated';
 
 import { Toasts } from '@/components/ui/toast';
 import { Providers } from '@/contexts/providers';
+import { environment } from '@/libraries/environment';
 import { NAV_THEME } from '@/libraries/theme';
 import { HotUpdater } from '@hot-updater/react-native';
 import { ThemeProvider } from '@react-navigation/native';
@@ -65,6 +66,9 @@ function RootLayout() {
 }
 
 export default HotUpdater.wrap({
-	baseURL: 'https://services.segwise.com.br/hot-updater',
+	baseURL: environment.HOT_UPDATER_URL,
 	updateStrategy: 'appVersion',
+	requestHeaders: {
+		Authorization: `Bearer ${environment.HOT_UPDATER_AUTH_TOKEN}`,
+	},
 })(RootLayout);

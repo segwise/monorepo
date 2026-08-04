@@ -79,6 +79,7 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 		typedRoutes: true,
 	},
 	extra: {
+		apiUrl: process.env.EXPO_PUBLIC_API_URL,
 		eas: {
 			projectId: EAS_PROJECT_ID,
 		},
@@ -87,6 +88,10 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
 				id: process.env.EXPO_PUBLIC_COMPANY_ID,
 			},
 		}),
+		hotUpdater: {
+			apiUrl: process.env.HOT_UPDATER_URL,
+			token: process.env.HOT_UPDATER_AUTH_TOKEN,
+		},
 	},
 });
 
