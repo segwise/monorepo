@@ -96,6 +96,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 					<TableHead className='text-left w-50'>Seguradora</TableHead>
 					<TableHead className='text-center w-30' />
 					<TableHead className='text-center w-40'>Tipo</TableHead>
+					<TableHead className='text-right w-50'>Comissão</TableHead>
 					<TableHead className='text-right w-30'>Ações</TableHead>
 				</TableRow>
 			</TableHeader>
@@ -132,6 +133,18 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 							</TableCell>
 							<TableCell className='w-40'>
 								<Skeleton className='w-24 h-4.5 rounded-full mx-auto' />
+							</TableCell>
+							<TableCell className='w-50'>
+								<div className='flex flex-row items-center justify-end gap-x-3'>
+									<div>
+										<Skeleton className='w-26 h-3.5 mb-1' />
+										<Skeleton className='w-18 h-3 ml-auto' />
+									</div>
+									<div className='w-px h-8 bg-border' />
+									<div>
+										<Skeleton className='size-6' />
+									</div>
+								</div>
 							</TableCell>
 							<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
 								<Skeleton className='size-9 rounded-sm' />
@@ -172,6 +185,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 						insuranceCompany,
 						producer,
 						expiration,
+						commission,
 					}) => (
 						<TableRow key={id}>
 							<TableCell className='text-left w-50'>
@@ -389,6 +403,34 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 										</Fragment>
 									)}
 								</Badge>
+							</TableCell>
+							<TableCell className='text-right w-50'>
+								{!!commission && (
+									<div className='flex flex-row items-center justify-end'>
+										<div className='flex flex-row items-center justify-start gap-x-2'>
+											<div className='flex flex-col items-start justify-end'>
+												<span className='ml-auto block text-xs font-medium truncate line-clamp-1 mb-0.5'>
+													{new Intl.NumberFormat('pt-BR', {
+														style: 'currency',
+														currency: 'BRL',
+													}).format(commission.award)}{' '}
+													| {commission.percentage}%
+												</span>
+												<span className='ml-auto text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
+													comissão:{' '}
+													{new Intl.NumberFormat('pt-BR', {
+														style: 'currency',
+														currency: 'BRL',
+													}).format(commission.commission)}
+												</span>
+											</div>
+											<div className='w-px h-8 bg-border' />
+											<div className='text-sm text-foreground font-medium'>
+												{commission.installments}X
+											</div>
+										</div>
+									</div>
+								)}
 							</TableCell>
 							<TableCell className='flex flex-row justify-end gap-x-2 w-30'>
 								<DropdownMenu>
