@@ -58,6 +58,14 @@ const SchemaSafeSimple = z.object({
 		.date('Data de efetivação inválida')
 		.or(z.iso.datetime('Data de efetivação inválida'))
 		.nullish(),
+	commission: z
+		.object({
+			award: z.number('Prêmio líquido inválido'),
+			percentage: z.number('Percentual inválido'),
+			commission: z.number('Comissão inválida'),
+			installments: z.number('Parcelas inválida'),
+		})
+		.nullish(),
 });
 
 export { SchemaSafeSimple };
