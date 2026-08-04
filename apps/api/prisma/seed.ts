@@ -1,9 +1,7 @@
-import xior from 'xior';
 import { Role } from '@/generated/prisma/enums';
 import { environment } from '@/libraries/environment';
 import { auth } from '@/services/auth';
 import { database } from '@/services/database';
-import { storage } from '@/services/storage/images';
 
 type AuthProfile = {
 	name: string;
@@ -1900,15 +1898,15 @@ async function seed() {
 
 			const pathInsurance: string = `/insurance-companies/${idInsurance}`;
 
-			const { data } = await xior
-				.get(insurance.image, {
-					responseType: 'blob',
-				})
-				.catch(() => ({
-					data: 'error',
-				}));
+			// const { data } = await xior
+			// 	.get(insurance.image, {
+			// 		responseType: 'blob',
+			// 	})
+			// 	.catch(() => ({
+			// 		data: 'error',
+			// 	}));
 
-			await storage.write(pathInsurance as string, data);
+			// await storage.write(pathInsurance as string, data);
 
 			const company = await database.insuranceCompany.create({
 				data: {

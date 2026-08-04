@@ -3,15 +3,11 @@ import {
 	SchemaBasisOfAnalysis,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core';
-import { endOfDay, startOfDay } from 'date-fns';
+import { addMonths, addYears, endOfDay, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { type Prisma, Role } from '@/generated/prisma/client';
-import {
-	getNextDueDate,
-	getNextDueDateYearly,
-} from '@/libraries/get-next-due-date';
 
 function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 	const base = server.basePath('/count');
@@ -137,30 +133,8 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 						...where,
 						...(effectivedAt && {
 							expiration: {
-								gte: startOfDay(
-									toZonedTime(
-										basisOfAnalysis === 'year'
-											? getNextDueDateYearly(
-													startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-												)
-											: getNextDueDate(
-													startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-												),
-										'UTC',
-									),
-								),
-								lte: endOfDay(
-									toZonedTime(
-										basisOfAnalysis === 'year'
-											? getNextDueDateYearly(
-													endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-												)
-											: getNextDueDate(
-													endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-												),
-										'UTC',
-									),
-								),
+								gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+								lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
 							},
 						}),
 					},
@@ -170,8 +144,26 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 						...where,
 						...(effectivedAt && {
 							expiration: {
-								gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-								lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+								gte:
+									basisOfAnalysis === 'year'
+										? addYears(
+												startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+												1,
+											)
+										: addMonths(
+												startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+												1,
+											),
+								lt:
+									basisOfAnalysis === 'year'
+										? addYears(
+												endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+												1,
+											)
+										: addMonths(
+												endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+												1,
+											),
 							},
 						}),
 					},
