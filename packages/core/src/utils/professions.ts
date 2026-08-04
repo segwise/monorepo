@@ -1,10 +1,10 @@
 const professions = [
+	'lawyer',
 	'clt',
 	'doctor',
 	'dentist',
 	'engineer',
 	'public-employee',
-	'lawyer',
 	'other',
 ] as const;
 
