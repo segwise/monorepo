@@ -59,7 +59,7 @@ async function documentByCPF(value: string): Promise<Document> {
 					}),
 				]);
 
-			const exists = existsTemporaryInsured || existsInsured;
+			const exists = existsInsured ?? existsTemporaryInsured;
 
 			if (exists) {
 				const response = exists;
