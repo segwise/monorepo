@@ -56,16 +56,14 @@ function serializer(
 		modality: props.modality,
 		status: props.status,
 		franchise: props.franchise?.toNumber(),
-		...(props.commission && {
-			commission: {
-				award: props.award?.toDecimalPlaces(2).toNumber() as number,
-				commission: props.commissionAmount
-					?.toDecimalPlaces(2)
-					.toNumber() as number,
-				installments: props.installments as number,
-				percentage: props.commissionPercentage as number,
-			},
-		}),
+		commission: {
+			award: props.award?.toDecimalPlaces(2).toNumber() as number,
+			commission: props.commissionAmount
+				?.toDecimalPlaces(2)
+				.toNumber() as number,
+			installments: props.installments as number,
+			percentage: props.commissionPercentage as number,
+		},
 	} satisfies SafeSimple;
 }
 
