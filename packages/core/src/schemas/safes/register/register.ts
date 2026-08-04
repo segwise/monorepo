@@ -105,6 +105,7 @@ const SchemaSafeRegister = z
 				cpf: SchemaCPF,
 				birth: SchemaBirth,
 				phone: SchemaPhone,
+				profession: z.string('Profissão inválida').nullish(),
 			},
 			'Segurado inválido',
 		),
@@ -112,7 +113,7 @@ const SchemaSafeRegister = z
 			.object(
 				{
 					plate: SchemaPlate.nullish(),
-					manufacturer: z.uuidv7('ID do fabricante inválido'),
+					manufacturer: z.uuidv7('ID do fabricante inválido').nullish(),
 					model: z
 						.string('Modelo inválido')
 						.min(1, 'Modelo inválido')
