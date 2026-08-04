@@ -47,6 +47,11 @@ const selectPrisma = {
 	requestedAt: true,
 	franchise: true,
 	effectivedAt: true,
+	installments: true,
+	commissionAmount: true,
+	commissionPercentage: true,
+	award: true,
+	commission: true,
 } as const satisfies Prisma.SafeSelect;
 
 export { selectPrisma };
