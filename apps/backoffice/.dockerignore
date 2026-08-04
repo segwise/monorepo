@@ -4,24 +4,17 @@ node_modules
 bun.lockb.backup
 bun.lockb.backup.*
 
-# Next.js
-.next
-!.next/cache
+# Next.js build cache
+.next/cache
 
 # Pastas de build locais
 dist
 build
-out
-
-# Git
-.git
-.gitignore
 
 # Config e arquivos locais
-.env
-!.env.*
+!.env
+.env.*
 *.local
-!.env.example
 
 # Logs
 *.log
@@ -39,14 +32,3 @@ pnpm-debug.log
 Thumbs.db
 *.bak
 *.tmp
-
-# Testes e docs (se não precisar no build)
-coverage
-*.test.ts
-*.test.tsx
-__tests__
-README.md
-
-# Docker
-Dockerfile*
-.dockerignore
