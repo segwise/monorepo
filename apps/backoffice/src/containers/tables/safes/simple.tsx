@@ -449,8 +449,10 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 										<DropdownMenuItem>
 											<FileEditIcon className='size-4!' /> Endosso
 										</DropdownMenuItem>
-										<DropdownMenuItem>
-											<FileCogIcon className='size-4!' /> Ajuste Geral
+										<DropdownMenuItem asChild>
+											<Link href={`/proposals/${id}`}>
+												<FileCogIcon className='size-4!' /> Ajuste Geral
+											</Link>
 										</DropdownMenuItem>
 										<DropdownMenuSeparator />
 										<DialogSafeDeleteById id={id}>
