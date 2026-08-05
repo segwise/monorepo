@@ -169,7 +169,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 			producer: safe?.producer ?? null,
 			modality: safe?.modality || SchemaModality.enum.vehicle,
 			renewal: searchParams.get('renewal') === 'true',
-			requestedAt: safe ? startOfToday() : null,
+			requestedAt: safe ? safe.requestedAt : null,
 			insured: {
 				registration: safe?.insured.registration
 					? isCPF(safe.insured.registration)
@@ -194,8 +194,10 @@ function FormProposalRegister({ id }: { id?: string }) {
 			},
 			driver: {
 				registration:
-					(safe?.vehicle.driver.cpf ?? safe?.insured.registration)
-						? maskCPF(safe.vehicle.driver.cpf ?? safe?.insured.registration)
+					(safe?.vehicle.driver.registration ?? safe?.insured.registration)
+						? maskCPF(
+								safe.vehicle.driver.registration ?? safe?.insured.registration,
+							)
 						: '',
 				name: capitalizeFirstLetters(
 					safe?.vehicle.driver.name ?? safe?.insured.name ?? '',
@@ -216,7 +218,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				producer: safe.producer,
 				modality: safe.modality,
 				renewal: searchParams.get('renewal') === 'true',
-				requestedAt: startOfToday(),
+				requestedAt: safe.requestedAt,
 				insured: {
 					registration: isCPF(safe.insured.registration)
 						? maskCPF(safe.insured.registration)
@@ -236,10 +238,14 @@ function FormProposalRegister({ id }: { id?: string }) {
 				},
 				driver: {
 					registration: isCNPJ(
-						safe.vehicle.driver.cpf ?? safe.insured.registration,
+						safe.vehicle.driver.registration ?? safe.insured.registration,
 					)
-						? maskCNPJ(safe.vehicle.driver.cpf ?? safe.insured.registration)
-						: maskCPF(safe.vehicle.driver.cpf ?? safe.insured.registration),
+						? maskCNPJ(
+								safe.vehicle.driver.registration ?? safe.insured.registration,
+							)
+						: maskCPF(
+								safe.vehicle.driver.registration ?? safe.insured.registration,
+							),
 					name: capitalizeFirstLetters(
 						safe?.vehicle.driver.name ?? safe.insured.name,
 					),
@@ -549,8 +555,16 @@ function FormProposalRegister({ id }: { id?: string }) {
 	}, [vehicleSearch, setValue, clearErrors, refetchManufacturers]);
 
 	useEffect(() => {
-		if (safe && safe.insured.registration === safe.vehicle.driver.cpf) {
-			setTheInsuredPartyIsTheDriver(true);
+		if (safe) {
+			if (
+				safe.vehicle.driver.registration &&
+				maskNumber(safe.vehicle.driver.registration) ===
+					maskNumber(safe.insured.registration)
+			) {
+				setTheInsuredPartyIsTheDriver(true);
+			} else if (!safe.vehicle.driver.registration) {
+				setTheInsuredPartyIsTheDriver(true);
+			}
 		}
 	}, [safe]);
 

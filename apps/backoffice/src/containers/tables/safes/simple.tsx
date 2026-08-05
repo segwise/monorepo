@@ -295,14 +295,16 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 														Verificar veículo
 													</span>
 												)}
-												<div className='absolute top-0 -right-1 translate-x-full flex flex-row items-center justify-start gap-x-1 scale-90'>
-													<Tooltip>
-														<TooltipTrigger>
-															<TagIcon className='size-3 text-active' />
-														</TooltipTrigger>
-														<TooltipContent>Renovação</TooltipContent>
-													</Tooltip>
-												</div>
+												{renewal && (
+													<div className='absolute top-0 -right-1 translate-x-full flex flex-row items-center justify-start gap-x-1 scale-90'>
+														<Tooltip>
+															<TooltipTrigger>
+																<TagIcon className='size-3 text-active' />
+															</TooltipTrigger>
+															<TooltipContent>Renovação</TooltipContent>
+														</Tooltip>
+													</div>
+												)}
 											</div>
 										</div>
 									)}
