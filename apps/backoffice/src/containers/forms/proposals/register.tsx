@@ -36,6 +36,8 @@ import {
 	format,
 	isValid,
 	parse,
+	parseISO,
+	startOfDay,
 	startOfToday,
 } from 'date-fns';
 import {
@@ -169,7 +171,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 			producer: safe?.producer ?? null,
 			modality: safe?.modality || SchemaModality.enum.vehicle,
 			renewal: searchParams.get('renewal') === 'true',
-			requestedAt: safe ? safe.requestedAt : null,
+			requestedAt: safe
+				? startOfDay(parseISO(safe.expirationAt as string))
+				: null,
 			insured: {
 				registration: safe?.insured.registration
 					? isCPF(safe.insured.registration)
@@ -220,7 +224,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				producer: safe.producer,
 				modality: safe.modality,
 				renewal: searchParams.get('renewal') === 'true',
-				requestedAt: safe.requestedAt,
+				requestedAt: startOfDay(parseISO(safe.expirationAt as string)),
 				insured: {
 					registration: isCPF(safe.insured.registration)
 						? maskCPF(safe.insured.registration)
@@ -676,10 +680,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 															? {
 																	value: value,
 																	label: capitalizeFirstLetters(
-																		// @ts-expect-error
 																		insuranceCompanies?.find(
 																			(e) => e.id === value,
-																		)?.name,
+																		)?.name ?? '',
 																	).replace('S/a', 'S/A'),
 																}
 															: null
@@ -770,6 +773,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 												</FieldLabel>
 												<DatePickerInput
 													{...field}
+													key={safe ? field.value?.toString() : undefined}
 													id='start-validity'
 													value={
 														field.value instanceof Date ? field.value : null
