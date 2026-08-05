@@ -194,6 +194,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 					? (safe?.vehicle.manufacturer ?? null)
 					: null,
 				modelYear: safe?.vehicle.modelYear ?? '',
+				usage: safe?.vehicle.usage ?? undefined,
 				overnightPostalCode: safe?.vehicle.overnightPostalCode
 					? maskPostalCode(safe.vehicle.overnightPostalCode)
 					: '',
