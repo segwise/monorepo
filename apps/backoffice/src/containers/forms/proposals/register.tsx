@@ -157,7 +157,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 		setFocus,
 		reset,
 		watch,
-		formState: { isDirty, isValid: isValidForm },
+		formState: { isDirty, isValid: isValidForm, errors },
 	} = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
@@ -260,6 +260,8 @@ function FormProposalRegister({ id }: { id?: string }) {
 			},
 		}),
 	});
+
+	console.log(SchemaSafeRegister.safeParse(watch()), errors);
 
 	const plate = watch('vehicle.plate');
 
