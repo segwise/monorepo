@@ -1,6 +1,7 @@
 import z from 'zod';
 
 import { getNumericValueMoney } from '../../../utils/get-numeric-value-money';
+import { SchemaCPFOrCNPJ } from '../../utils';
 import { SchemaBirth } from '../../utils/birth';
 import { SchemaCPF } from '../../utils/cpf';
 import { SchemaModality } from '../../utils/modality';
@@ -102,7 +103,7 @@ const SchemaSafeRegister = z
 		insured: z.object(
 			{
 				name: SchemaName,
-				cpf: SchemaCPF,
+				cpf: SchemaCPFOrCNPJ,
 				birth: SchemaBirth,
 				phone: SchemaPhone,
 				profession: z.string('Profissão inválida').nullish(),
