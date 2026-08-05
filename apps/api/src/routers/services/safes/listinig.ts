@@ -384,6 +384,14 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 			const [safes, count] = await ctx.database.$transaction([
 				ctx.database.safe.findMany({
 					where: {
+						OR: [
+							{
+								isExternal: false,
+							},
+							{
+								isExternal: null,
+							},
+						],
 						insured: {
 							OR: [
 								{
@@ -395,7 +403,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 							],
 							birth: birthUtc,
 						},
-						isExternal: false,
+
 						status: StatusSafe.active,
 						expiration: {
 							gte: new Date(),
