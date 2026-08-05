@@ -190,17 +190,19 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 								<div>
 									<Tooltip>
 										<TooltipTrigger asChild>
-											<span className='block text-sm font-medium line-clamp-1!'>
-												{capitalizeFirstLetters(insured.name)}
-											</span>
+											<div>
+												<span className='block text-sm font-medium line-clamp-1!'>
+													{capitalizeFirstLetters(insured.name)}
+												</span>
+												<span className='block text-xs text-muted-foreground font-normal leading-none'>
+													{maskPhone(insured.contact.phone)}
+												</span>
+											</div>
 										</TooltipTrigger>
 										<TooltipContent align='start'>
 											{capitalizeFirstLetters(insured.name)}
 										</TooltipContent>
 									</Tooltip>
-									<span className='block text-xs text-muted-foreground font-normal leading-none'>
-										{maskPhone(insured.contact.phone)}
-									</span>
 								</div>
 							</TableCell>
 							<TableCell className='text-left w-50'>
@@ -286,9 +288,16 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 													</TooltipContent>
 												</Tooltip>
 												{vehicle.plate && (
-													<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
-														{maskPlate(vehicle.plate)}
-													</span>
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
+																{maskPlate(vehicle.plate)}
+															</span>
+														</TooltipTrigger>
+														<TooltipContent>
+															{maskPlate(vehicle.plate)}
+														</TooltipContent>
+													</Tooltip>
 												)}
 												{!vehicle.plate && (
 													<span className='block text-xs text-muted-foreground font-normal leading-none'>
@@ -352,11 +361,37 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 												</TooltipContent>
 											</Tooltip>
 											{!!expiration && (
-												<div className='flex flex-col items-start justify-start'>
-													<span className='block text-xs font-medium truncate line-clamp-1'>
-														Final da Vigência
-													</span>
-													<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<div className='flex flex-col items-start justify-start'>
+															<span className='block text-xs font-medium truncate line-clamp-1'>
+																Final da Vigência
+															</span>
+															<span className='text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
+																{format(
+																	toZonedTime(expiration, 'UTC'),
+																	'dd/MM/yyyy',
+																)}{' '}
+																{isAfter(
+																	toZonedTime(expiration, 'UTC'),
+																	toZonedTime(new Date(), 'America/Sao_Paulo'),
+																) &&
+																	differenceInDays(
+																		toZonedTime(expiration, 'UTC'),
+																		toZonedTime(
+																			new Date(),
+																			'America/Sao_Paulo',
+																		),
+																	) <= 7 &&
+																	`- ${formatDistanceToNow(
+																		toZonedTime(expiration, 'UTC'),
+																	)
+																		.replace('cerca de ', '')
+																		.replace('mais de ', '')}`}
+															</span>
+														</div>
+													</TooltipTrigger>
+													<TooltipContent>
 														{format(
 															toZonedTime(expiration, 'UTC'),
 															'dd/MM/yyyy',
@@ -374,8 +409,8 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 															)
 																.replace('cerca de ', '')
 																.replace('mais de ', '')}`}
-													</span>
-												</div>
+													</TooltipContent>
+												</Tooltip>
 											)}
 										</div>
 									)}
