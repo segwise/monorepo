@@ -84,20 +84,19 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					},
 				}),
 				...(!search &&
-					!ids?.length &&
-					effectivedAt && {
-						expiration: {
-							gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-							lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-						},
-					}),
-				...(!search &&
-					!ids?.length &&
-					!effectivedAt && {
-						expiration: {
-							gte: startOfDay(toZonedTime(new Date(), 'UTC')),
-							lt: endOfDay(toZonedTime(endOfMonth(new Date()), 'UTC')),
-						},
+					!ids?.length && {
+						...(!!effectivedAt && {
+							expiration: {
+								gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+								lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+							},
+						}),
+						...(!effectivedAt && {
+							expiration: {
+								gte: startOfDay(toZonedTime(new Date(), 'UTC')),
+								lt: endOfDay(toZonedTime(endOfMonth(new Date()), 'UTC')),
+							},
+						}),
 					}),
 				...(!!renewal && {
 					renewal,
