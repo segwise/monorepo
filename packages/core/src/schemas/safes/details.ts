@@ -30,12 +30,13 @@ const SchemaSafeDetails = z
 					phone: SchemaPhone,
 					email: SchemaEmail.nullish(),
 				},
+				profession: z.string('Profissão inválida').nullish(),
 			},
 			'Segurado inválido',
 		),
 		vehicle: z.object({
 			plate: SchemaPlate.nullish(),
-			manufacturer: z.uuidv7('ID do fabricante inválido'),
+			manufacturer: z.uuidv7('ID do fabricante inválido').nullish(),
 			model: z
 				.string('Modelo inválido')
 				.min(1, 'Modelo inválido')
@@ -55,15 +56,16 @@ const SchemaSafeDetails = z
 			},
 			'Condutor inválido',
 		),
-		effectivedAt: z.coerce
-			.date('Data de efetivação inválida')
-			.or(z.iso.datetime('Data de efetivação inválida')),
-		expirationAt: z.coerce
-			.date('Data da vigência inválida')
-			.or(z.iso.datetime('Data da vigência inválida')),
 		requestedAt: z.coerce
 			.date('Data de solicitação inválida')
 			.or(z.iso.datetime('Data de solicitação inválida')),
+		effectivedAt: z.coerce
+			.date('Data de efetivação inválida')
+			.or(z.iso.datetime('Data de efetivação inválida'))
+			.nullish(),
+		expirationAt: z.coerce
+			.date('Data da vigência inválida')
+			.or(z.iso.datetime('Data da vigência inválida')),
 		commission: z
 			.object({
 				franchise: z.number('Frânquia inválida'),
