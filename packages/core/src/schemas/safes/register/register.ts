@@ -3,7 +3,6 @@ import z from 'zod';
 import { getNumericValueMoney } from '../../../utils/get-numeric-value-money';
 import { SchemaCPFOrCNPJ } from '../../utils';
 import { SchemaBirth } from '../../utils/birth';
-import { SchemaCPF } from '../../utils/cpf';
 import { SchemaModality } from '../../utils/modality';
 import { SchemaName } from '../../utils/name';
 import { SchemaPhone } from '../../utils/phone';
@@ -134,7 +133,7 @@ const SchemaSafeRegister = z
 		driver: z.object(
 			{
 				name: SchemaName,
-				cpf: SchemaCPF,
+				registration: SchemaCPFOrCNPJ,
 				birth: SchemaBirth,
 			},
 			'Condutor inválido',
