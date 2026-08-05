@@ -245,7 +245,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 					}),
 					installments,
 					award,
-					franchise: receivables.franchise,
+					franchise: receivables.franchise ?? null,
 					commission: commissionPercentage,
 					commissionAmount,
 					commissionGross,
