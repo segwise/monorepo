@@ -414,7 +414,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 													}).format(commission.award)}{' '}
 													| {commission.percentage}%
 												</span>
-												<span className='ml-auto text-xs text-muted-foreground font-normal leading-none flex flex-wrap'>
+												<span className='ml-auto text-xs text-muted-foreground font-normal leading-none flex flex-wrap truncate line-clamp-1'>
 													comissão:{' '}
 													{new Intl.NumberFormat('pt-BR', {
 														style: 'currency',
