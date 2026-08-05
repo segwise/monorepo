@@ -47,15 +47,15 @@ const SchemaSafeDetails = z
 				.positive('Ano do modelo inválido'),
 			usage: SchemaVehicleUsage,
 			overnightPostalCode: SchemaPostalCode,
+			driver: z.object(
+				{
+					cpf: SchemaCPF,
+					name: SchemaName,
+					birth: SchemaBirth,
+				},
+				'Condutor inválido',
+			),
 		}),
-		driver: z.object(
-			{
-				cpf: SchemaCPF,
-				name: SchemaName,
-				birth: SchemaBirth,
-			},
-			'Condutor inválido',
-		),
 		requestedAt: z.coerce
 			.date('Data de solicitação inválida')
 			.or(z.iso.datetime('Data de solicitação inválida')),
