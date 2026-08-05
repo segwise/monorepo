@@ -1,7 +1,7 @@
 import { differenceInYears } from 'date-fns';
 import z from 'zod';
 import { getNumericValueMoney } from '../../../utils/get-numeric-value-money';
-import { isCNPJ } from '../../../valids';
+import { isCPF } from '../../../valids';
 import { SchemaBirthNoValidation, SchemaCPFOrCNPJ } from '../../utils';
 import { SchemaModality } from '../../utils/modality';
 import { SchemaName } from '../../utils/name';
@@ -112,7 +112,7 @@ const SchemaSafeRegister = z
 			)
 			.refine(
 				({ registration, birth }) =>
-					isCNPJ(registration) && differenceInYears(new Date(), birth) >= 18,
+					isCPF(registration) && differenceInYears(new Date(), birth) >= 18,
 				'Não pode ser menor de 18 anos',
 			),
 		vehicle: z
@@ -147,7 +147,7 @@ const SchemaSafeRegister = z
 			)
 			.refine(
 				({ registration, birth }) =>
-					isCNPJ(registration) && differenceInYears(new Date(), birth) >= 18,
+					isCPF(registration) && differenceInYears(new Date(), birth) >= 18,
 				'Não pode ser menor de 18 anos',
 			),
 		receivables: z.object({
