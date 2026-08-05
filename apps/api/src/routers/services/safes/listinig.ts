@@ -80,21 +80,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				}),
 				...(!!search && {
 					expiration: {
-						gte: subYears(
-							startOfDay(
-								toZonedTime(
-									effectivedAt ? effectivedAt.start : new Date(),
-									'UTC',
-								),
-							),
-							1,
-						),
-						lte: startOfDay(
-							toZonedTime(
-								effectivedAt ? effectivedAt.start : new Date(),
-								'UTC',
-							),
-						),
+						gte: subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
 					},
 				}),
 				...(!search &&

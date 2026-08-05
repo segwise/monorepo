@@ -3,7 +3,7 @@ import {
 	SchemaBasisOfAnalysis,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core';
-import { addMonths, addYears, endOfDay, startOfDay } from 'date-fns';
+import { addMonths, addYears, endOfDay, startOfDay, subYears } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import z from 'zod';
 import type { Server } from '@/@types/server';
@@ -131,41 +131,72 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 				ctx.database.safe.count({
 					where: {
 						...where,
-						...(effectivedAt && {
+						...(!!search && {
 							expiration: {
-								gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-								lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+								gte: subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
 							},
 						}),
+						...(!search &&
+							effectivedAt && {
+								expiration: {
+									gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+									lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+								},
+							}),
 					},
 				}),
 				ctx.database.safe.count({
 					where: {
 						...where,
-						...(effectivedAt && {
+						...(!!search && {
 							expiration: {
 								gte:
 									basisOfAnalysis === 'year'
 										? addYears(
-												startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+												subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
 												1,
 											)
 										: addMonths(
-												startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+												subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
 												1,
 											),
-								lt:
+								lte:
 									basisOfAnalysis === 'year'
 										? addYears(
-												endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-												1,
+												subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
+												2,
 											)
 										: addMonths(
-												endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-												1,
+												subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
+												2,
 											),
 							},
 						}),
+						...(!search &&
+							effectivedAt && {
+								expiration: {
+									gte:
+										basisOfAnalysis === 'year'
+											? addYears(
+													startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+													1,
+												)
+											: addMonths(
+													startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
+													1,
+												),
+									lt:
+										basisOfAnalysis === 'year'
+											? addYears(
+													endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+													1,
+												)
+											: addMonths(
+													endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+													1,
+												),
+								},
+							}),
 					},
 				}),
 			]);

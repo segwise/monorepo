@@ -62,7 +62,7 @@ function serializer(
 				?.toDecimalPlaces(2)
 				.toNumber() as number,
 			installments: props.installments as number,
-			percentage: props.commissionPercentage as number,
+			percentage: props.commission?.toNumber() as number,
 		},
 	} satisfies SafeSimple;
 }

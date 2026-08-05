@@ -34,15 +34,6 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesPayments(base);
 
 	registerRoutersServicesWebhooks(base);
-
-	base.post('/', async (ctx) => {
-		return ctx.json(
-			{
-				ok: true,
-			},
-			200,
-		);
-	});
 }
 
 export { registerRoutersServices };

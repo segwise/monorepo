@@ -17,14 +17,6 @@ async function documentByCNPJ(value: string): Promise<Document> {
 		return await database.$transaction(async (transaction) => {
 			const cnpj = SchemaCNPJ.parse(value);
 
-			const existsCache = await cache.get(`document:cnpj:${cnpj}`);
-
-			if (existsCache) {
-				const response = JSON.parse(existsCache);
-
-				return response;
-			}
-
 			const [existsTemporaryInsured, existsInsured] =
 				await transaction.$transaction([
 					transaction.temporaryInsured.findFirst({
@@ -63,6 +55,14 @@ async function documentByCNPJ(value: string): Promise<Document> {
 				await cache.set(`document:cnpj:${cnpj}`, JSON.stringify(data));
 
 				return data;
+			}
+
+			const existsCache = await cache.get(`document:cnpj:${cnpj}`);
+
+			if (existsCache) {
+				const response = JSON.parse(existsCache);
+
+				return response;
 			}
 
 			const { data } = await xior.get<CNPJResponse>(

@@ -21,14 +21,6 @@ async function documentByCPF(value: string): Promise<Document> {
 		return await database.$transaction(async (transaction) => {
 			const cpf = SchemaCPF.parse(value);
 
-			const existsCache = await cache.get(`document:cpf:${cpf}`);
-
-			if (existsCache) {
-				const response = JSON.parse(existsCache);
-
-				return response;
-			}
-
 			const [existsTemporaryInsured, existsInsured] =
 				await transaction.$transaction([
 					transaction.temporaryInsured.findFirst({
@@ -73,6 +65,14 @@ async function documentByCPF(value: string): Promise<Document> {
 				await cache.set(`document:cpf:${cpf}`, JSON.stringify(data));
 
 				return data;
+			}
+
+			const existsCache = await cache.get(`document:cpf:${cpf}`);
+
+			if (existsCache) {
+				const response = JSON.parse(existsCache);
+
+				return response;
 			}
 
 			const { data } = await xior.get<CPFResponse>(

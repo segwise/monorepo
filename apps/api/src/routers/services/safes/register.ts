@@ -175,9 +175,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 						.then((response) => response?.id)
 				: null;
 
-			// @ts-expect-error
 			const { id: safeId, safeVehicle } = await transaction.safe.create({
-				// @ts-expect-error
 				data: {
 					broker: {
 						connect: {
@@ -221,11 +219,13 @@ function registerRoutersServicesSafesRegister(server: Server) {
 								...(!vehicle.plate && {
 									vehicleWithoutPlate: {
 										create: {
-											manufacturer: {
-												connect: {
-													id: vehicle.manufacturer,
+											...(vehicle.manufacturer && {
+												manufacturer: {
+													connect: {
+														id: vehicle.manufacturer,
+													},
 												},
-											},
+											}),
 											model: vehicle.model,
 											modelYear: vehicle.modelYear,
 											...(vehicle.exchange && {
@@ -248,6 +248,8 @@ function registerRoutersServicesSafesRegister(server: Server) {
 					franchise: receivables.franchise,
 					commission: commissionPercentage,
 					commissionAmount,
+					commissionGross,
+					commissionNet,
 					...(commissions && {
 						commissionAmountProducer,
 						commissionOfType: commissions.type,
@@ -264,8 +266,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 						commissionTypeOfInterest: commissions.typeOfInterest,
 						commissionPaymentDate: commissions.paymentDate,
 					}),
-					commissionGross,
-					commissionNet,
 				},
 				select: {
 					id: true,
