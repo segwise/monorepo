@@ -200,7 +200,9 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 											</div>
 										</TooltipTrigger>
 										<TooltipContent align='start'>
-											{capitalizeFirstLetters(insured.name)}
+											<b>{capitalizeFirstLetters(insured.name)}</b>
+											<br />
+											{maskPhone(insured.contact.phone)}
 										</TooltipContent>
 									</Tooltip>
 								</div>
@@ -261,7 +263,33 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 															!vehicle.model && 'pointer-events-none',
 														)}
 													>
-														<span className='block text-sm font-medium capitalize line-clamp-1!'>
+														<div>
+															<span className='block text-sm font-medium capitalize line-clamp-1!'>
+																{vehicle.plate
+																	? capitalizeFirstLetters(
+																			vehicle.model
+																				.replace('/', ' / ')
+																				.split('/')[1] ??
+																				vehicle.model
+																					.replace('/', ' / ')
+																					.split('/')[0],
+																		)
+																	: 'Sem Placa'}
+															</span>
+															{vehicle.plate && (
+																<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
+																	{maskPlate(vehicle.plate)}
+																</span>
+															)}
+															{!vehicle.plate && (
+																<span className='block text-xs text-muted-foreground font-normal leading-none'>
+																	Verificar veículo
+																</span>
+															)}
+														</div>
+													</TooltipTrigger>
+													<TooltipContent>
+														<b>
 															{vehicle.plate
 																? capitalizeFirstLetters(
 																		vehicle.model
@@ -272,38 +300,15 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 																				.split('/')[0],
 																	)
 																: 'Sem Placa'}
-														</span>
-													</TooltipTrigger>
-													<TooltipContent>
-														{vehicle.plate
-															? capitalizeFirstLetters(
-																	vehicle.model
-																		.replace('/', ' / ')
-																		.split('/')[1] ??
-																		vehicle.model
-																			.replace('/', ' / ')
-																			.split('/')[0],
-																)
-															: 'Sem Placa'}
+														</b>
+														{vehicle.plate ? (
+															<Fragment>
+																<br />
+																{maskPlate(vehicle.plate)}
+															</Fragment>
+														) : undefined}
 													</TooltipContent>
 												</Tooltip>
-												{vehicle.plate && (
-													<Tooltip>
-														<TooltipTrigger asChild>
-															<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
-																{maskPlate(vehicle.plate)}
-															</span>
-														</TooltipTrigger>
-														<TooltipContent>
-															{maskPlate(vehicle.plate)}
-														</TooltipContent>
-													</Tooltip>
-												)}
-												{!vehicle.plate && (
-													<span className='block text-xs text-muted-foreground font-normal leading-none'>
-														Verificar veículo
-													</span>
-												)}
 												{!renewal && (
 													<div className='absolute top-0 -right-1 translate-x-full flex flex-row items-center justify-start gap-x-1 scale-90'>
 														<Tooltip>
@@ -392,6 +397,8 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 														</div>
 													</TooltipTrigger>
 													<TooltipContent>
+														<b>Final da Vigência</b>
+														<br />
 														{format(
 															toZonedTime(expiration, 'UTC'),
 															'dd/MM/yyyy',
