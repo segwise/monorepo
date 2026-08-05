@@ -3,7 +3,7 @@ import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
-import { endOfDay, set, startOfDay, subYears } from 'date-fns';
+import { endOfDay, endOfMonth, set, startOfDay, subYears } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
@@ -89,6 +89,14 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						expiration: {
 							gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
 							lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+						},
+					}),
+				...(!search &&
+					!ids?.length &&
+					!effectivedAt && {
+						expiration: {
+							gte: startOfDay(toZonedTime(new Date(), 'UTC')),
+							lt: endOfDay(toZonedTime(endOfMonth(new Date()), 'UTC')),
 						},
 					}),
 				...(!!renewal && {
