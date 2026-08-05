@@ -188,7 +188,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 				model: capitalizeFirstLetters(safe?.vehicle.model ?? ''),
 				manufacturer: safe?.vehicle.manufacturer ?? null,
 				modelYear: safe?.vehicle.modelYear ?? '',
-				overnightPostalCode: safe?.vehicle.overnightPostalCode ?? '',
+				overnightPostalCode: safe?.vehicle.overnightPostalCode
+					? maskPostalCode(safe.vehicle.overnightPostalCode)
+					: '',
 			},
 			driver: {
 				cpf: safe?.vehicle.driver.cpf ? maskCPF(safe.vehicle.driver.cpf) : '',
@@ -197,7 +199,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 			},
 			...(safe?.commission && {
 				award: safe.commission.award,
-				commission: safe.commission.commission,
+				commission: safe.commission.percentage,
 				franchise: safe.commission.franchise,
 				installments: safe.commission.installments,
 			}),
@@ -225,7 +227,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 					model: capitalizeFirstLetters(safe.vehicle.model),
 					modelYear: safe.vehicle.modelYear,
 					usage: safe.vehicle.usage,
-					overnightPostalCode: safe.vehicle.overnightPostalCode,
+					overnightPostalCode: maskPostalCode(safe.vehicle.overnightPostalCode),
 				},
 				driver: {
 					cpf: maskCPF(safe.vehicle.driver.cpf),
@@ -234,7 +236,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				},
 				receivables: {
 					award: safe.commission.award,
-					commission: safe.commission.commission,
+					commission: safe.commission.percentage,
 					franchise: safe.commission.franchise,
 					installments: safe.commission.installments,
 				},
@@ -534,6 +536,12 @@ function FormProposalRegister({ id }: { id?: string }) {
 			}, 100);
 		}
 	}, [vehicleSearch, setValue, clearErrors, refetchManufacturers]);
+
+	useEffect(() => {
+		if (safe && safe.insured.registration === safe.vehicle.driver.cpf) {
+			setTheInsuredPartyIsTheDriver(true);
+		}
+	}, [safe]);
 
 	return (
 		<Fragment>
