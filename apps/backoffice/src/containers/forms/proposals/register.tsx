@@ -169,7 +169,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 			producer: safe?.producer ?? null,
 			modality: safe?.modality || SchemaModality.enum.vehicle,
 			renewal: searchParams.get('renewal') === 'true',
-			requestedAt: safe?.requestedAt || null,
+			requestedAt: safe ? startOfToday() : null,
 			insured: {
 				cpf: safe?.insured.registration
 					? isCPF(safe.insured.registration)
@@ -211,7 +211,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				producer: safe.producer,
 				modality: safe.modality,
 				renewal: searchParams.get('renewal') === 'true',
-				requestedAt: safe.requestedAt,
+				requestedAt: startOfToday(),
 				insured: {
 					cpf: isCPF(safe.insured.registration)
 						? maskCPF(safe.insured.registration)
@@ -740,6 +740,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 													Início da Vigência:
 												</FieldLabel>
 												<DatePickerInput
+													{...field}
 													id='start-validity'
 													value={
 														field.value instanceof Date ? field.value : null

@@ -42,6 +42,7 @@ function DatePickerInput({
 	className,
 	invalid,
 	readonly,
+	...props
 }: DatePickerInputProps) {
 	const [inputValue, setInputValue] = useState(
 		value ? format(value, 'dd/MM/yyyy') : '',
@@ -94,6 +95,7 @@ function DatePickerInput({
 			)}
 		>
 			<Input
+				{...props}
 				id={id}
 				value={inputValue}
 				onChange={handleInputChange}
