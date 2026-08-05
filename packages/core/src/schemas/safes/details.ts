@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import {
 	SchemaBirth,
-	SchemaCPF,
 	SchemaCPFOrCNPJ,
 	SchemaEmail,
 	SchemaModality,
@@ -49,7 +48,7 @@ const SchemaSafeDetails = z
 			overnightPostalCode: SchemaPostalCode,
 			driver: z.object(
 				{
-					cpf: SchemaCPF,
+					registration: SchemaCPFOrCNPJ,
 					name: SchemaName,
 					birth: SchemaBirth,
 				},
