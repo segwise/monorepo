@@ -102,7 +102,7 @@ const SchemaSafeRegister = z
 		insured: z.object(
 			{
 				name: SchemaName,
-				cpf: SchemaCPFOrCNPJ,
+				registration: SchemaCPFOrCNPJ,
 				birth: SchemaBirth,
 				phone: SchemaPhone,
 				profession: z.string('Profissão inválida').nullish(),
