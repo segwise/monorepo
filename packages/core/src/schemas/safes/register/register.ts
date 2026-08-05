@@ -155,8 +155,8 @@ const SchemaSafeRegister = z
 			franchise: z
 				.string('Frânquia inválido')
 				.transform(getNumericValueMoney)
-				.or(z.coerce.number('Frânquia inválido').min(1, 'Frânquia inválido'))
-				.refine((value) => value > 0, 'Frânquia inválido'),
+				.or(z.coerce.number('Frânquia inválido').min(1, 'Frânquia inválido')),
+			// .refine((value) => value > 0, 'Frânquia inválido'),
 			commission: z.coerce
 				.number('Percentual de comissão inválidas')
 				.min(1, 'Percentual de comissão inválidas')
