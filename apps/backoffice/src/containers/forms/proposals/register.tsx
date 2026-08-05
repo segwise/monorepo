@@ -1297,6 +1297,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 											</Field>
 										)}
 									/>
+									<div />
 									<Controller
 										control={control}
 										name='vehicle.usage'
