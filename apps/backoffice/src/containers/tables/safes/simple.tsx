@@ -310,7 +310,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 															<TooltipTrigger>
 																<TagIcon className='size-3 text-active' />
 															</TooltipTrigger>
-															<TooltipContent>Renovação</TooltipContent>
+															<TooltipContent>Seguro Novo</TooltipContent>
 														</Tooltip>
 													</div>
 												)}
