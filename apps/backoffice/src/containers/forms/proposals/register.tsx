@@ -29,7 +29,7 @@ import {
 	getNumericValueMoney,
 	professions,
 } from '@segwise/core/utils';
-import { isCPF, isDateString, isPlate } from '@segwise/core/valids';
+import { isCNPJ, isCPF, isDateString, isPlate } from '@segwise/core/valids';
 import {
 	addYears,
 	differenceInYears,
@@ -171,7 +171,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 			renewal: searchParams.get('renewal') === 'true',
 			requestedAt: safe ? startOfToday() : null,
 			insured: {
-				cpf: safe?.insured.registration
+				registration: safe?.insured.registration
 					? isCPF(safe.insured.registration)
 						? maskCPF(safe.insured.registration)
 						: maskCNPJ(safe.insured.registration)
@@ -193,9 +193,14 @@ function FormProposalRegister({ id }: { id?: string }) {
 					: '',
 			},
 			driver: {
-				cpf: safe?.vehicle.driver.cpf ? maskCPF(safe.vehicle.driver.cpf) : '',
-				name: capitalizeFirstLetters(safe?.vehicle.driver.name ?? ''),
-				birth: safe?.vehicle.driver.birth ?? '',
+				registration:
+					(safe?.vehicle.driver.cpf ?? safe?.insured.registration)
+						? maskCPF(safe.vehicle.driver.cpf ?? safe?.insured.registration)
+						: '',
+				name: capitalizeFirstLetters(
+					safe?.vehicle.driver.name ?? safe?.insured.name ?? '',
+				),
+				birth: safe?.vehicle.driver.birth ?? safe?.insured.birth ?? '',
 			},
 			...(safe?.commission && {
 				award: 0,
@@ -213,7 +218,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				renewal: searchParams.get('renewal') === 'true',
 				requestedAt: startOfToday(),
 				insured: {
-					cpf: isCPF(safe.insured.registration)
+					registration: isCPF(safe.insured.registration)
 						? maskCPF(safe.insured.registration)
 						: maskCNPJ(safe.insured.registration),
 					name: capitalizeFirstLetters(safe.insured.name),
@@ -230,9 +235,15 @@ function FormProposalRegister({ id }: { id?: string }) {
 					overnightPostalCode: maskPostalCode(safe.vehicle.overnightPostalCode),
 				},
 				driver: {
-					cpf: maskCPF(safe.vehicle.driver.cpf),
-					name: capitalizeFirstLetters(safe.vehicle.driver.name),
-					birth: safe.vehicle.driver.birth,
+					registration: isCNPJ(
+						safe.vehicle.driver.cpf ?? safe.insured.registration,
+					)
+						? maskCNPJ(safe.vehicle.driver.cpf ?? safe.insured.registration)
+						: maskCPF(safe.vehicle.driver.cpf ?? safe.insured.registration),
+					name: capitalizeFirstLetters(
+						safe?.vehicle.driver.name ?? safe.insured.name,
+					),
+					birth: safe?.vehicle.driver.birth ?? safe.insured.birth,
 				},
 				receivables: {
 					award: 0,
@@ -288,7 +299,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 		if (props.insured.cpf) {
 			setValue(
-				'insured.cpf',
+				'insured.registration',
 				isCPF(props.insured.cpf)
 					? maskCPF(props.insured.cpf)
 					: maskCNPJ(props.insured.cpf),
@@ -326,7 +337,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 		if (props.driver.cpf) {
 			setValue(
-				'driver.cpf',
+				'driver.registration',
 				isCPF(props.driver.cpf)
 					? maskCPF(props.driver.cpf)
 					: maskCNPJ(props.driver.cpf),
@@ -402,8 +413,8 @@ function FormProposalRegister({ id }: { id?: string }) {
 		});
 	}
 
-	const cpfOrCnpj = watch('insured.cpf');
-	const cpfOrCnpjDriver = watch('driver.cpf');
+	const cpfOrCnpj = watch('insured.registration');
+	const cpfOrCnpjDriver = watch('driver.registration');
 
 	const { data: cpfOrCnpjSearch, isPending: isPendingCpfOrCnpjSearch } =
 		useCpfOrCnpj(cpfOrCnpj);
@@ -840,7 +851,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 									/>
 									<Controller
 										control={control}
-										name='insured.cpf'
+										name='insured.registration'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='insured-cpf'>CPF/CNPJ:</FieldLabel>
@@ -861,7 +872,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 															field.onChange(valueMask);
 
 															if (theInsuredPartyIsTheDriver) {
-																setValue('driver.cpf', valueMask);
+																setValue('driver.registration', valueMask);
 															}
 
 															if (value.length === 0) {
@@ -922,7 +933,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='insured-birth'>
-													Nascimento:
+													{isCNPJ(watch('insured.registration'))
+														? 'Data de Abertura'
+														: 'Nascimento:'}
 												</FieldLabel>
 												<InputGroup>
 													<InputGroupInput
@@ -1309,8 +1322,8 @@ function FormProposalRegister({ id }: { id?: string }) {
 													onBlur={() => {
 														field.onBlur();
 
-														if (!getValues('driver.cpf')) {
-															setFocus('driver.cpf');
+														if (!getValues('driver.registration')) {
+															setFocus('driver.registration');
 														}
 													}}
 												/>
@@ -1341,7 +1354,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 														Boolean(value) === true
 															? [
 																	setValue('driver', {
-																		cpf: getValues('insured.cpf'),
+																		registration: getValues(
+																			'insured.registration',
+																		),
 																		name: getValues('insured.name'),
 																		birth: getValues('insured.birth'),
 																	}),
@@ -1365,7 +1380,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 								<FieldGroup className='grid grid-cols-4'>
 									<Controller
 										control={control}
-										name='driver.cpf'
+										name='driver.registration'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='driver-cpf'>CPF:</FieldLabel>

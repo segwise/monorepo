@@ -188,9 +188,16 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 						<TableRow key={id}>
 							<TableCell className='text-left w-50'>
 								<div>
-									<span className='block text-sm font-medium line-clamp-1!'>
-										{capitalizeFirstLetters(insured.name)}
-									</span>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<span className='block text-sm font-medium line-clamp-1!'>
+												{capitalizeFirstLetters(insured.name)}
+											</span>
+										</TooltipTrigger>
+										<TooltipContent align='start'>
+											{capitalizeFirstLetters(insured.name)}
+										</TooltipContent>
+									</Tooltip>
 									<span className='block text-xs text-muted-foreground font-normal leading-none'>
 										{maskPhone(insured.contact.phone)}
 									</span>
@@ -236,26 +243,48 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 													</Avatar>
 												</TooltipTrigger>
 												<TooltipContent>
-													{
-														manufacturers?.find(
+													{capitalizeFirstLetters(
+														(manufacturers?.find(
 															(props) => props.id === vehicle.manufacturer,
-														)?.name as string
-													}
+														)?.name as string) ?? '',
+													)}
 												</TooltipContent>
 											</Tooltip>
 											<div className='relative'>
-												<span className='block text-sm font-medium capitalize line-clamp-1!'>
-													{vehicle.plate
-														? capitalizeFirstLetters(
-																vehicle.model
-																	.replace('/', ' / ')
-																	.split('/')[1] ??
+												<Tooltip>
+													<TooltipTrigger
+														asChild
+														className={cn(
+															'',
+															!vehicle.model && 'pointer-events-none',
+														)}
+													>
+														<span className='block text-sm font-medium capitalize line-clamp-1!'>
+															{vehicle.plate
+																? capitalizeFirstLetters(
+																		vehicle.model
+																			.replace('/', ' / ')
+																			.split('/')[1] ??
+																			vehicle.model
+																				.replace('/', ' / ')
+																				.split('/')[0],
+																	)
+																: 'Sem Placa'}
+														</span>
+													</TooltipTrigger>
+													<TooltipContent>
+														{vehicle.plate
+															? capitalizeFirstLetters(
 																	vehicle.model
 																		.replace('/', ' / ')
-																		.split('/')[0],
-															)
-														: 'Sem Placa'}
-												</span>
+																		.split('/')[1] ??
+																		vehicle.model
+																			.replace('/', ' / ')
+																			.split('/')[0],
+																)
+															: 'Sem Placa'}
+													</TooltipContent>
+												</Tooltip>
 												{vehicle.plate && (
 													<span className='block text-xs text-muted-foreground font-normal leading-none uppercase'>
 														{maskPlate(vehicle.plate)}
@@ -266,14 +295,14 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 														Verificar veículo
 													</span>
 												)}
-												{renewal && (
-													<div className='absolute top-0 -right-1 translate-x-full flex flex-row items-center justify-start gap-x-1 scale-90'>
-														<TagIcon className='size-3 text-active' />
-														<span className='text-active text-xs'>
-															Renovação
-														</span>
-													</div>
-												)}
+												<div className='absolute top-0 -right-1 translate-x-full flex flex-row items-center justify-start gap-x-1 scale-90'>
+													<Tooltip>
+														<TooltipTrigger>
+															<TagIcon className='size-3 text-active' />
+														</TooltipTrigger>
+														<TooltipContent>Renovação</TooltipContent>
+													</Tooltip>
+												</div>
 											</div>
 										</div>
 									)}
