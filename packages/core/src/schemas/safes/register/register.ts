@@ -1,8 +1,8 @@
+import { differenceInYears } from 'date-fns';
 import z from 'zod';
-
 import { getNumericValueMoney } from '../../../utils/get-numeric-value-money';
-import { SchemaCPFOrCNPJ } from '../../utils';
-import { SchemaBirth } from '../../utils/birth';
+import { isCNPJ } from '../../../valids';
+import { SchemaBirthNoValidation, SchemaCPFOrCNPJ } from '../../utils';
 import { SchemaModality } from '../../utils/modality';
 import { SchemaName } from '../../utils/name';
 import { SchemaPhone } from '../../utils/phone';
@@ -99,16 +99,22 @@ const SchemaSafeRegister = z
 			.or(z.iso.datetime('Data de efetivação inválida'))
 			.nullish(),
 		insuranceCompany: z.uuidv7('Seguradora inválida'),
-		insured: z.object(
-			{
-				name: SchemaName,
-				registration: SchemaCPFOrCNPJ,
-				birth: SchemaBirth,
-				phone: SchemaPhone,
-				profession: z.string('Profissão inválida').nullish(),
-			},
-			'Segurado inválido',
-		),
+		insured: z
+			.object(
+				{
+					name: SchemaName,
+					registration: SchemaCPFOrCNPJ,
+					birth: SchemaBirthNoValidation,
+					phone: SchemaPhone,
+					profession: z.string('Profissão inválida').nullish(),
+				},
+				'Segurado inválido',
+			)
+			.refine(
+				({ registration, birth }) =>
+					isCNPJ(registration) && differenceInYears(new Date(), birth) >= 18,
+				'Não pode ser menor de 18 anos',
+			),
 		vehicle: z
 			.object(
 				{
@@ -130,14 +136,20 @@ const SchemaSafeRegister = z
 				'Veículo inválido',
 			)
 			.nullish(),
-		driver: z.object(
-			{
-				name: SchemaName,
-				registration: SchemaCPFOrCNPJ,
-				birth: SchemaBirth,
-			},
-			'Condutor inválido',
-		),
+		driver: z
+			.object(
+				{
+					name: SchemaName,
+					registration: SchemaCPFOrCNPJ,
+					birth: SchemaBirthNoValidation,
+				},
+				'Condutor inválido',
+			)
+			.refine(
+				({ registration, birth }) =>
+					isCNPJ(registration) && differenceInYears(new Date(), birth) >= 18,
+				'Não pode ser menor de 18 anos',
+			),
 		receivables: z.object({
 			installments: z.coerce
 				.number('Parcelas inválidas')
