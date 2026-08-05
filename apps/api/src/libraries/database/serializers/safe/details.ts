@@ -42,7 +42,7 @@ function serializer(
 			overnightPostalCode: props.safeVehicle?.overnightPostalCode as string,
 			driver: {
 				name: props.safeVehicle?.driverName as string,
-				cpf: props.safeVehicle?.driverCPF as string,
+				registration: props.safeVehicle?.driverCPF as string,
 				birth: props.safeVehicle?.driverBirth as Date,
 			},
 		},

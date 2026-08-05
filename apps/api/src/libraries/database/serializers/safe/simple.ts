@@ -14,6 +14,7 @@ function serializer(
 	return {
 		id: props.id,
 		producer: props.producerId,
+		renewal: props.renewal,
 		insured: {
 			name: props?.temporaryInsured?.name || props.insured?.name || '',
 			contact: {

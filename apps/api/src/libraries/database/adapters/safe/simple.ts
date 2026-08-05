@@ -4,6 +4,7 @@ const selectPrisma = {
 	id: true,
 	producerId: true,
 	modality: true,
+	renewal: true,
 	status: true,
 	temporaryInsured: {
 		select: {
