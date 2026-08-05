@@ -36,10 +36,10 @@ import {
 	format,
 	isValid,
 	parse,
-	parseISO,
 	startOfDay,
 	startOfToday,
 } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import {
 	BikeIcon,
 	Building2Icon,
@@ -172,7 +172,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 			modality: safe?.modality || SchemaModality.enum.vehicle,
 			renewal: searchParams.get('renewal') === 'true',
 			requestedAt: safe
-				? startOfDay(parseISO(safe.expirationAt as string))
+				? startOfDay(toZonedTime(safe.expirationAt as string, 'UTC'))
 				: null,
 			insured: {
 				registration: safe?.insured.registration
@@ -225,7 +225,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 				producer: safe.producer,
 				modality: safe.modality,
 				renewal: searchParams.get('renewal') === 'true',
-				requestedAt: startOfDay(parseISO(safe.expirationAt as string)),
+				requestedAt: startOfDay(
+					toZonedTime(safe.expirationAt as string, 'UTC'),
+				),
 				insured: {
 					registration: isCPF(safe.insured.registration)
 						? maskCPF(safe.insured.registration)
