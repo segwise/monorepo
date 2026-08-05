@@ -186,7 +186,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 			vehicle: {
 				plate: safe?.vehicle.plate ? maskPlate(safe.vehicle.plate) : null,
 				model: capitalizeFirstLetters(safe?.vehicle.model ?? ''),
-				manufacturer: safe?.vehicle.manufacturer ?? null,
+				manufacturer: safe?.vehicle.plate
+					? (safe?.vehicle.manufacturer ?? null)
+					: null,
 				modelYear: safe?.vehicle.modelYear ?? '',
 				overnightPostalCode: safe?.vehicle.overnightPostalCode
 					? maskPostalCode(safe.vehicle.overnightPostalCode)
@@ -230,7 +232,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 				},
 				vehicle: {
 					plate: safe.vehicle.plate ? maskPlate(safe.vehicle.plate) : null,
-					manufacturer: safe.vehicle.manufacturer ?? null,
+					manufacturer: safe.vehicle.plate
+						? (safe.vehicle.manufacturer ?? null)
+						: null,
 					model: capitalizeFirstLetters(safe.vehicle.model),
 					modelYear: safe.vehicle.modelYear,
 					usage: safe.vehicle.usage,
