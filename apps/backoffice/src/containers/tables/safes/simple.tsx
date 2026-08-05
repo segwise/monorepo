@@ -242,7 +242,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 																	(props) => props.id === vehicle.manufacturer,
 																)
 																?.name.slice(0, 2)
-																.toUpperCase() || 'SP'}
+																.toUpperCase() ?? ''}
 														</AvatarFallback>
 													</Avatar>
 												</TooltipTrigger>
