@@ -16,6 +16,8 @@ function translateProfession(profession: Profession): string {
 			return 'Dentista';
 		case 'engineer':
 			return 'Engenheiro';
+		case 'businessperson':
+			return 'Empresário';
 		case 'public-employee':
 			return 'Funcionário Público';
 		case 'lawyer':

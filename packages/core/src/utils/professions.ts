@@ -3,6 +3,7 @@ const professions = [
 	'clt',
 	'dentist',
 	'engineer',
+	'businessperson',
 	'public-employee',
 	'doctor',
 	'other',
