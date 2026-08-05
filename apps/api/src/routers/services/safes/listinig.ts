@@ -445,7 +445,14 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 			const plateFormatter = plate.replace('-', '').toLowerCase();
 
 			const where: Prisma.SafeWhereInput = {
-				isExternal: false,
+				OR: [
+					{
+						isExternal: false,
+					},
+					{
+						isExternal: null,
+					},
+				],
 				safeVehicle: {
 					OR: [
 						{
@@ -462,6 +469,9 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				where,
 				select: selectPrisma,
 				relationLoadStrategy: 'join',
+				orderBy: {
+					requestedAt: 'desc',
+				},
 			});
 
 			if (!safe) {
