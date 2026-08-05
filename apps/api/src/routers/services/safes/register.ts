@@ -82,6 +82,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 					...(isCNPJ(insured.registration) && {
 						cnpj: insured.registration,
 					}),
+					brokerId,
 				},
 				select: {
 					id: true,
