@@ -38,6 +38,7 @@ import {
 	parse,
 	startOfDay,
 	startOfToday,
+	subYears,
 } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import {
@@ -121,6 +122,7 @@ import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producer
 import { useQuotesByPlate } from '@/libraries/hooks/quotes/use-quotes-by-plate';
 import { useSafesById } from '@/libraries/hooks/safes/use-safes';
 import { useSafesRegister } from '@/libraries/hooks/safes/use-safes-register';
+import { useSafesUpdate } from '@/libraries/hooks/safes/use-safes-update';
 import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 import { useVehiclesPlate } from '@/libraries/hooks/vehicles/use-vehicles-plate';
@@ -149,6 +151,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 	const { data: safe } = useSafesById(id);
 
 	const { mutate, isPending: isMutation } = useSafesRegister();
+	const { mutate: update, isPending: isUpdation } = useSafesUpdate(id);
 
 	const {
 		control,
@@ -172,7 +175,14 @@ function FormProposalRegister({ id }: { id?: string }) {
 			modality: safe?.modality || SchemaModality.enum.vehicle,
 			renewal: searchParams.get('renewal') === 'true',
 			requestedAt: safe
-				? startOfDay(toZonedTime(safe.expirationAt as string, 'UTC'))
+				? startOfDay(
+						toZonedTime(
+							searchParams.get('renewal') === 'true'
+								? (safe.expirationAt as string)
+								: subYears(safe.expirationAt, 1),
+							'UTC',
+						),
+					)
 				: null,
 			insured: {
 				registration: safe?.insured.registration
@@ -211,12 +221,13 @@ function FormProposalRegister({ id }: { id?: string }) {
 				),
 				birth: safe?.vehicle.driver.birth ?? safe?.insured.birth ?? '',
 			},
-			...(safe?.commission && {
-				award: 0,
-				commission: 0,
-				franchise: 0,
-				installments: 0,
-			}),
+			...(safe?.commission &&
+				!searchParams.get('renewal') && {
+					award: safe.commission.award.toString().replace('.', ','),
+					commission: safe.commission.percentage,
+					franchise: safe.commission.franchise.toString().replace('.', ','),
+					installments: safe.commission.installments,
+				}),
 		},
 		...(safe && {
 			values: {
@@ -226,7 +237,12 @@ function FormProposalRegister({ id }: { id?: string }) {
 				modality: safe.modality,
 				renewal: searchParams.get('renewal') === 'true',
 				requestedAt: startOfDay(
-					toZonedTime(safe.expirationAt as string, 'UTC'),
+					toZonedTime(
+						searchParams.get('renewal') === 'true'
+							? (safe.expirationAt as string)
+							: subYears(safe.expirationAt, 1),
+						'UTC',
+					),
 				),
 				insured: {
 					registration: isCPF(safe.insured.registration)
@@ -263,10 +279,18 @@ function FormProposalRegister({ id }: { id?: string }) {
 					birth: safe?.vehicle.driver.birth ?? safe.insured.birth,
 				},
 				receivables: {
-					award: 0,
-					commission: 0,
-					franchise: 0,
-					installments: 0,
+					award: !searchParams.get('renewal')
+						? safe.commission.award.toString().replace('.', ',')
+						: 0,
+					commission: !searchParams.get('renewal')
+						? safe.commission.percentage
+						: 0,
+					franchise: !searchParams.get('renewal')
+						? safe.commission.franchise.toString().replace('.', ',')
+						: 0,
+					installments: !searchParams.get('renewal')
+						? safe.commission.installments
+						: 0,
 				},
 			},
 		}),
@@ -370,9 +394,13 @@ function FormProposalRegister({ id }: { id?: string }) {
 	}
 
 	function onSubmit(props: SafeRegister) {
-		mutate(props, {
+		(!safe ? mutate : update)(props, {
 			onSuccess(data) {
-				toast.success((data.message || 'Cadastrado com sucesso').toUpperCase());
+				toast.success(
+					(
+						data.message || `${safe ? 'Atualizado' : 'Cadastrado'} com sucesso`
+					).toUpperCase(),
+				);
 
 				setTheInsuredPartyIsTheDriver(false);
 				// @ts-expect-error
@@ -2022,10 +2050,10 @@ function FormProposalRegister({ id }: { id?: string }) {
 				type='submit'
 				form='form-proposal-register'
 				className='w-full'
-				disabled={isMutation || !isDirty}
-				textPending='Salvando'
+				disabled={isMutation || isUpdation || !isDirty}
+				textPending={!safe ? 'Salvando' : 'Atualizando'}
 			>
-				<SaveIcon /> Salvar Registro
+				<SaveIcon /> {!safe ? 'Salvar' : 'Atualizar'} Registro
 			</Button>
 		</Fragment>
 	);
