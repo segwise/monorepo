@@ -74,7 +74,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 		await ctx.database.$transaction(async (transaction) => {
 			const isInsured = await transaction.insured.findFirst({
 				where: {
-					cpf: insured.cpf,
+					cpf: insured.registration,
 				},
 				select: {
 					id: true,
@@ -92,7 +92,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 									id: brokerId,
 								},
 							},
-							cpf: insured.cpf,
+							cpf: insured.registration,
 							name: insured.name,
 							birth: insured.birth,
 							age: differenceInYears(new Date(), insured.birth),
@@ -236,7 +236,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 								}),
 								usage: vehicle.usage,
 								overnightPostalCode: vehicle.overnightPostalCode,
-								driverCPF: driver.cpf,
+								driverCPF: driver.registration,
 								driverName: driver.name,
 								driverBirth: driver.birth,
 								driverAge: differenceInYears(new Date(), driver.birth),
