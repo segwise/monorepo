@@ -26,10 +26,10 @@ const SchemaSafeDetails = z
 				registration: SchemaCPFOrCNPJ,
 				name: SchemaName,
 				birth: SchemaBirth,
-				contact: {
+				contact: z.object({
 					phone: SchemaPhone,
 					email: SchemaEmail.nullish(),
-				},
+				}),
 				profession: z.string('Profissão inválida').nullish(),
 			},
 			'Segurado inválido',
