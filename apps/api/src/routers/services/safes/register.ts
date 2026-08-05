@@ -2,6 +2,8 @@ import { zValidator } from '@hono/zod-validator';
 import {
 	calculateInstallmentAmount,
 	calculatePercentageOfValue,
+	isCNPJ,
+	isCPF,
 	SchemaSafeRegister,
 } from '@segwise/core';
 import {
@@ -74,7 +76,12 @@ function registerRoutersServicesSafesRegister(server: Server) {
 		await ctx.database.$transaction(async (transaction) => {
 			const isInsured = await transaction.insured.findFirst({
 				where: {
-					cpf: insured.registration,
+					...(isCPF(insured.registration) && {
+						cpf: insured.registration,
+					}),
+					...(isCNPJ(insured.registration) && {
+						cnpj: insured.registration,
+					}),
 				},
 				select: {
 					id: true,
@@ -92,7 +99,12 @@ function registerRoutersServicesSafesRegister(server: Server) {
 									id: brokerId,
 								},
 							},
-							cpf: insured.registration,
+							...(isCPF(insured.registration) && {
+								cpf: insured.registration,
+							}),
+							...(isCNPJ(insured.registration) && {
+								cnpj: insured.registration,
+							}),
 							name: insured.name,
 							birth: insured.birth,
 							age: differenceInYears(new Date(), insured.birth),
@@ -236,10 +248,12 @@ function registerRoutersServicesSafesRegister(server: Server) {
 								}),
 								usage: vehicle.usage,
 								overnightPostalCode: vehicle.overnightPostalCode,
-								driverCPF: driver.registration,
-								driverName: driver.name,
-								driverBirth: driver.birth,
-								driverAge: differenceInYears(new Date(), driver.birth),
+								...(insured.registration !== driver.registration && {
+									driverCPF: driver.registration,
+									driverName: driver.name,
+									driverBirth: driver.birth,
+									driverAge: differenceInYears(new Date(), driver.birth),
+								}),
 							},
 						},
 					}),
