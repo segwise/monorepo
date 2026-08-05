@@ -112,7 +112,7 @@ const SchemaSafeRegister = z
 			)
 			.refine(
 				({ registration, birth }) =>
-					isCPF(registration) && differenceInYears(new Date(), birth) >= 18,
+					!isCPF(registration) || differenceInYears(new Date(), birth) >= 18,
 				'Não pode ser menor de 18 anos',
 			),
 		vehicle: z
@@ -147,7 +147,7 @@ const SchemaSafeRegister = z
 			)
 			.refine(
 				({ registration, birth }) =>
-					isCPF(registration) && differenceInYears(new Date(), birth) >= 18,
+					!isCPF(registration) || differenceInYears(new Date(), birth) >= 18,
 				'Não pode ser menor de 18 anos',
 			),
 		receivables: z.object({
