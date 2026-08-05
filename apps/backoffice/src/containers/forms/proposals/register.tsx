@@ -55,7 +55,7 @@ import {
 	UserCircle2Icon,
 	XCircleIcon,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { Fragment, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -126,12 +126,15 @@ import { useVehiclesPlate } from '@/libraries/hooks/vehicles/use-vehicles-plate'
 const ENTER_NAVIGATION_MAP: Record<string, string> = {
 	'vehicle-plate': 'vehicle-usage',
 	'insured-cpf': 'vehicle-plate',
+	'insured-birth': 'vehicle-plate',
 };
 
 const OPEN_ON_FOCUS_IDS = new Set(['vehicle-usage']);
 
 function FormProposalRegister({ id }: { id?: string }) {
 	const { push } = useRouter();
+
+	const searchParams = useSearchParams();
 
 	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
@@ -142,8 +145,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 		useState<boolean>(false);
 
 	const { data: safe } = useSafesById(id);
-
-	console.log(safe);
 
 	const { mutate, isPending: isMutation } = useSafesRegister();
 
@@ -156,43 +157,90 @@ function FormProposalRegister({ id }: { id?: string }) {
 		setFocus,
 		reset,
 		watch,
-		formState: { isDirty, isValid: isValidForm, errors },
+		formState: { isDirty, isValid: isValidForm },
 	} = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaSafeRegister),
 		defaultValues: {
-			insuranceCompany: '',
-			status: 'active',
-			producer: null,
-			modality: SchemaModality.enum.vehicle,
-			renewal: false,
-			requestedAt: null,
+			insuranceCompany: safe?.insuranceCompany ?? '',
+			status: safe?.status || 'active',
+			producer: safe?.producer ?? null,
+			modality: safe?.modality || SchemaModality.enum.vehicle,
+			renewal: searchParams.get('renewal') === 'true',
+			requestedAt: safe?.requestedAt || null,
 			insured: {
-				cpf: '',
-				name: '',
-				birth: '',
-				phone: '',
-				profession: null,
+				cpf: safe?.insured.registration
+					? isCPF(safe.insured.registration)
+						? maskCPF(safe.insured.registration)
+						: maskCNPJ(safe.insured.registration)
+					: '',
+				name: capitalizeFirstLetters(safe?.insured.name ?? ''),
+				birth: safe?.insured.birth || '',
+				phone: safe?.insured.contact.phone
+					? maskPhone(safe.insured.contact.phone)
+					: '',
+				profession: safe?.insured.profession ?? null,
 			},
 			vehicle: {
-				plate: null,
-				model: '',
-				manufacturer: null,
-				modelYear: '',
-				overnightPostalCode: '',
+				plate: safe?.vehicle.plate ? maskPlate(safe.vehicle.plate) : null,
+				model: capitalizeFirstLetters(safe?.vehicle.model ?? ''),
+				manufacturer: safe?.vehicle.manufacturer ?? null,
+				modelYear: safe?.vehicle.modelYear ?? '',
+				overnightPostalCode: safe?.vehicle.overnightPostalCode ?? '',
 			},
 			driver: {
-				cpf: '',
-				name: '',
-				birth: '',
+				cpf: safe?.vehicle.driver.cpf ? maskCPF(safe.vehicle.driver.cpf) : '',
+				name: capitalizeFirstLetters(safe?.vehicle.driver.name ?? ''),
+				birth: safe?.vehicle.driver.birth ?? '',
 			},
+			...(safe?.commission && {
+				award: safe.commission.award,
+				commission: safe.commission.commission,
+				franchise: safe.commission.franchise,
+				installments: safe.commission.installments,
+			}),
 		},
+		...(safe && {
+			values: {
+				insuranceCompany: safe.insuranceCompany,
+				status: safe.status,
+				producer: safe.producer,
+				modality: safe.modality,
+				renewal: searchParams.get('renewal') === 'true',
+				requestedAt: safe.requestedAt,
+				insured: {
+					cpf: isCPF(safe.insured.registration)
+						? maskCPF(safe.insured.registration)
+						: maskCNPJ(safe.insured.registration),
+					name: capitalizeFirstLetters(safe.insured.name),
+					birth: safe.insured.birth,
+					phone: maskPhone(safe.insured.contact.phone),
+					profession: safe.insured.profession,
+				},
+				vehicle: {
+					plate: safe.vehicle.plate ? maskPlate(safe.vehicle.plate) : null,
+					manufacturer: safe.vehicle.manufacturer ?? null,
+					model: capitalizeFirstLetters(safe.vehicle.model),
+					modelYear: safe.vehicle.modelYear,
+					usage: safe.vehicle.usage,
+					overnightPostalCode: safe.vehicle.overnightPostalCode,
+				},
+				driver: {
+					cpf: maskCPF(safe.vehicle.driver.cpf),
+					name: capitalizeFirstLetters(safe.vehicle.driver.name),
+					birth: safe.vehicle.driver.birth,
+				},
+				receivables: {
+					award: safe.commission.award,
+					commission: safe.commission.commission,
+					franchise: safe.commission.franchise,
+					installments: safe.commission.installments,
+				},
+			},
+		}),
 	});
-
-	console.log(SchemaSafeRegister.safeParse(watch()));
-	console.log(errors);
 
 	const plate = watch('vehicle.plate');
 
@@ -355,10 +403,12 @@ function FormProposalRegister({ id }: { id?: string }) {
 	const cpfOrCnpj = watch('insured.cpf');
 	const cpfOrCnpjDriver = watch('driver.cpf');
 
-	const { data: cpfOrCnpjSearch } = useCpfOrCnpj(cpfOrCnpj);
-	const { data: cpfOrCnpjSearchDriver } = useCpfOrCnpj(
-		!theInsuredPartyIsTheDriver ? cpfOrCnpjDriver : '',
-	);
+	const { data: cpfOrCnpjSearch, isPending: isPendingCpfOrCnpjSearch } =
+		useCpfOrCnpj(cpfOrCnpj);
+	const {
+		data: cpfOrCnpjSearchDriver,
+		isPending: isPendingCpfOrCnpjSearchDriver,
+	} = useCpfOrCnpj(!theInsuredPartyIsTheDriver ? cpfOrCnpjDriver : '');
 
 	function handleFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
 		if (e.key !== 'Enter') {
@@ -598,8 +648,31 @@ function FormProposalRegister({ id }: { id?: string }) {
 															: null
 													}
 													items={insuranceCompanies || []}
-													// @ts-expect-error
-													onValueChange={(value) => onChange(value.value)}
+													onValueChange={(value) => {
+														// @ts-expect-error
+														onChange(value.value);
+
+														if (!getValues('requestedAt')) {
+															const overrideEl =
+																document.querySelector<HTMLElement>(
+																	'#start-validity',
+																);
+
+															requestAnimationFrame(() => {
+																overrideEl?.dispatchEvent(
+																	new KeyboardEvent('keydown', {
+																		key: 'Enter',
+																		code: 'Enter',
+																		bubbles: true,
+																	}),
+																);
+															});
+
+															setTimeout(() => {
+																overrideEl?.focus();
+															}, 100);
+														}
+													}}
 												>
 													<ComboboxInput
 														id='insurance-company'
@@ -690,6 +763,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 												<InputGroup>
 													<InputGroupInput
 														{...field}
+														id='end-validity'
 														readOnly
 														placeholder='00/00/0000'
 														value={
@@ -761,36 +835,43 @@ function FormProposalRegister({ id }: { id?: string }) {
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='insured-cpf'>CPF/CNPJ:</FieldLabel>
-												<Input
-													{...field}
-													id='insured-cpf'
-													aria-invalid={fieldState.invalid}
-													placeholder='000.000.000-00'
-													onChange={({ target: { value } }) => {
-														const valueMask =
-															value.length >= 11
-																? isCPF(value)
-																	? maskCPF(value)
-																	: maskCNPJ(value)
-																: value;
+												<div className='flex flex-row items-center justify-between'>
+													<Input
+														{...field}
+														id='insured-cpf'
+														aria-invalid={fieldState.invalid}
+														placeholder='000.000.000-00'
+														onChange={({ target: { value } }) => {
+															const valueMask =
+																value.length >= 11
+																	? isCPF(value)
+																		? maskCPF(value)
+																		: maskCNPJ(value)
+																	: value;
 
-														field.onChange(valueMask);
-
-														if (theInsuredPartyIsTheDriver) {
-															setValue('driver.cpf', valueMask);
-														}
-
-														if (value.length === 0) {
-															setValue('insured.name', '');
-															setValue('insured.birth', '');
+															field.onChange(valueMask);
 
 															if (theInsuredPartyIsTheDriver) {
-																setValue('driver.name', '');
-																setValue('driver.birth', '');
+																setValue('driver.cpf', valueMask);
 															}
-														}
-													}}
-												/>
+
+															if (value.length === 0) {
+																setValue('insured.name', '');
+																setValue('insured.birth', '');
+
+																if (theInsuredPartyIsTheDriver) {
+																	setValue('driver.name', '');
+																	setValue('driver.birth', '');
+																}
+															}
+														}}
+													/>
+													{field.value &&
+														isPlate(field.value) &&
+														isPendingCpfOrCnpjSearch && (
+															<Loader2Icon className='animate-spin size-4 text-muted-foreground ml-3' />
+														)}
+												</div>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}
@@ -1256,6 +1337,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 																		birth: getValues('insured.birth'),
 																	}),
 																	clearErrors('driver'),
+																	setFocus('receivables.installments'),
 																]
 															: undefined,
 													]}
@@ -1278,28 +1360,36 @@ function FormProposalRegister({ id }: { id?: string }) {
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='driver-cpf'>CPF:</FieldLabel>
-												<Input
-													{...field}
-													id='driver-cpf'
-													aria-invalid={fieldState.invalid}
-													disabled={theInsuredPartyIsTheDriver}
-													placeholder='000.000.000-00'
-													onChange={({ target: { value } }) => {
-														const valueMask =
-															value.length >= 11
-																? isCPF(value)
-																	? maskCPF(value)
-																	: maskCNPJ(value)
-																: value;
+												<div className='flex flex-row items-center justify-between'>
+													<Input
+														{...field}
+														id='driver-cpf'
+														aria-invalid={fieldState.invalid}
+														disabled={theInsuredPartyIsTheDriver}
+														placeholder='000.000.000-00'
+														onChange={({ target: { value } }) => {
+															const valueMask =
+																value.length >= 11
+																	? isCPF(value)
+																		? maskCPF(value)
+																		: maskCNPJ(value)
+																	: value;
 
-														field.onChange(valueMask);
+															field.onChange(valueMask);
 
-														if (value.length === 0) {
-															setValue('driver.name', '');
-															setValue('driver.birth', '');
-														}
-													}}
-												/>
+															if (value.length === 0) {
+																setValue('driver.name', '');
+																setValue('driver.birth', '');
+															}
+														}}
+													/>
+													{field.value &&
+														isPlate(field.value) &&
+														isPendingCpfOrCnpjSearchDriver && (
+															<Loader2Icon className='animate-spin size-4 text-muted-foreground ml-3' />
+														)}
+												</div>
+
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}

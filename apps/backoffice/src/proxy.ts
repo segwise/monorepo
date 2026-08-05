@@ -61,9 +61,7 @@ async function proxy(request: NextRequest) {
 
 	const isPublicRoute = PUBLIC_ROUTES.some((route) =>
 		route.endsWith(':path*')
-			? pathname.startsWith(
-					`/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}${route.replace('/:path*', '')}`,
-				)
+			? pathname.startsWith(`/${ACCESS}${route.replace('/:path*', '')}`)
 			: pathname === route,
 	);
 
@@ -73,7 +71,7 @@ async function proxy(request: NextRequest) {
 
 	if (!session && isPublicRoute) {
 		const redirectTo = new URL(
-			`/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}${pathname}`,
+			ACCESS ? `/${ACCESS}${pathname}` : `/${pathname}`,
 			request.url,
 		);
 
@@ -81,7 +79,7 @@ async function proxy(request: NextRequest) {
 	}
 
 	if (!session && !isPublicRoute) {
-		if (pathname === `/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}/sign-in`) {
+		if (pathname === `/${ACCESS}/sign-in`) {
 			return NextResponse.next();
 		}
 
@@ -95,7 +93,7 @@ async function proxy(request: NextRequest) {
 	}
 
 	const redirectTo = new URL(
-		`/${process.env.NEXT_PUBLIC_ROLE_SYSTEM}${pathname}`,
+		ACCESS ? `/${ACCESS}${pathname}` : `/${pathname}`,
 		request.url,
 	);
 
