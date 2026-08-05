@@ -66,15 +66,13 @@ const SchemaSafeDetails = z
 		expirationAt: z.coerce
 			.date('Data da vigência inválida')
 			.or(z.iso.datetime('Data da vigência inválida')),
-		commission: z
-			.object({
-				franchise: z.number('Frânquia inválida'),
-				award: z.number('Prêmio líquido inválido'),
-				percentage: z.number('Percentual inválido'),
-				commission: z.number('Comissão inválida'),
-				installments: z.number('Parcelas inválida'),
-			})
-			.nullish(),
+		commission: z.object({
+			franchise: z.number('Frânquia inválida'),
+			award: z.number('Prêmio líquido inválido'),
+			percentage: z.number('Percentual inválido'),
+			commission: z.number('Comissão inválida'),
+			installments: z.number('Parcelas inválida'),
+		}),
 	})
 	.strict();
 
