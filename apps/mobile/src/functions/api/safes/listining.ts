@@ -40,21 +40,19 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 		data: data.data
 			.map((response) => ({
 				...response,
-				requestedAt: toZonedTime(
-					parseISO(response.requestedAt as string),
-					'UTC',
+				requestedAt: endOfDay(
+					toZonedTime(parseISO(response.requestedAt as string), 'UTC'),
 				),
-				effectivedAt: toZonedTime(
-					parseISO(response.effectivedAt as string),
-					'UTC',
+				effectivedAt: endOfDay(
+					toZonedTime(parseISO(response.effectivedAt as string), 'UTC'),
 				),
-				expiration: toZonedTime(parseISO(response.expiration as string), 'UTC'),
+				expiration: endOfDay(
+					toZonedTime(parseISO(response.expiration as string), 'UTC'),
+				),
 			}))
-			.sort((a, b) =>
-				compareAsc(endOfDay(a.expiration), endOfDay(b.expiration)),
-			)
+			.sort((a, b) => compareAsc(a.expiration, b.expiration))
 			.filter((e) => e.status === 'active')
-			.filter((e) => endOfDay(e.expiration) >= new Date()),
+			.filter((e) => e.expiration >= new Date()),
 	};
 }
 

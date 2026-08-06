@@ -19,7 +19,7 @@ import { maskPlate, maskPostalCode } from '@segwise/core/masks';
 import { translateVehicleUsage } from '@segwise/core/translate';
 import type { SafeSimple } from '@segwise/core/types';
 import { useQueryClient } from '@tanstack/react-query';
-import { endOfDay, format } from 'date-fns';
+import { format } from 'date-fns';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { replace } from 'expo-router/build/global-state/routing';
@@ -146,7 +146,7 @@ function Item(props: SafeSimple) {
 				<List
 					label='FINAL DA VIGÊNCIA'
 					value={format(
-						endOfDay(props.expiration),
+						props.expiration,
 						"dd/MM/yyyy 'ás' HH:mm'h'",
 					).toUpperCase()}
 				/>
