@@ -5,7 +5,7 @@ import type {
 	SafeRegistration,
 	SafeSimple,
 } from '@segwise/core/types';
-import { compareAsc, endOfDay, format, parseISO } from 'date-fns';
+import { compareAsc, endOfDay, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { XiorError } from 'xior';
 
@@ -41,14 +41,12 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 			.map((response) => ({
 				...response,
 				requestedAt: endOfDay(
-					toZonedTime(parseISO(response.requestedAt as string), 'UTC'),
+					toZonedTime(response.requestedAt as string, 'UTC'),
 				),
 				effectivedAt: endOfDay(
-					toZonedTime(parseISO(response.effectivedAt as string), 'UTC'),
+					toZonedTime(response.effectivedAt as string, 'UTC'),
 				),
-				expiration: endOfDay(
-					toZonedTime(parseISO(response.expiration as string), 'UTC'),
-				),
+				expiration: endOfDay(toZonedTime(response.expiration as string, 'UTC')),
 			}))
 			.sort((a, b) => compareAsc(a.expiration, b.expiration))
 			.filter((e) => e.status === 'active')
