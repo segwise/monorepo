@@ -40,7 +40,10 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { useEndorsements } from '@/libraries/hooks/use-endorsement';
+import {
+	useEndorsementCancel,
+	useEndorsements,
+} from '@/libraries/hooks/use-endorsement';
 
 interface DialogSafeEndorsementByIdProps {
 	id: string;
@@ -120,6 +123,8 @@ function DialogSafeEndorsementDetails({
 	const [type, setType] = useState<
 		'vehicle_conductor' | 'address' | 'franchise' | 'cancellation' | null
 	>(null);
+
+	const { mutate: cancel, isPending: isCanceling } = useEndorsementCancel();
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>

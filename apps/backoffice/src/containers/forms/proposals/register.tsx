@@ -58,7 +58,7 @@ import {
 	UserCircle2Icon,
 	XCircleIcon,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { Fragment, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -135,14 +135,12 @@ const ENTER_NAVIGATION_MAP: Record<string, string> = {
 
 const OPEN_ON_FOCUS_IDS = new Set(['vehicle-usage']);
 
-function FormProposalRegister({
-	id,
-	renewal = false,
-}: {
-	id?: string;
-	renewal?: boolean;
-}) {
+function FormProposalRegister({ id }: { id?: string }) {
 	const { push } = useRouter();
+
+	const searchParams = useSearchParams();
+
+	const renewal = searchParams.get('renewal') === 'true';
 
 	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();

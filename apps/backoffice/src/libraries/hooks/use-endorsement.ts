@@ -1,5 +1,5 @@
 import type { Endorsement } from '@segwise/core';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 
 const useEndorsements = (id: string, enabled?: boolean) =>
@@ -18,4 +18,22 @@ const useEndorsements = (id: string, enabled?: boolean) =>
 		enabled,
 	});
 
-export { useEndorsements };
+const useEndorsementCancel = () =>
+	useMutation<
+		{
+			message: string;
+		},
+		Error,
+		{
+			id: string;
+		}
+	>({
+		mutationKey: ['endorsements', 'cancel'],
+		mutationFn: async ({ id }) => {
+			const { data } = await api.post(`/endorsements/${id}/cancel`);
+
+			return data;
+		},
+	});
+
+export { useEndorsements, useEndorsementCancel };

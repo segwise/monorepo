@@ -13,19 +13,16 @@ export async function generateMetadata(
 	};
 }
 
-async function ProposalsRegisterPage(
+async function ProposalsDetailsPage(
 	props: PageProps<'/customer/proposals/[id]'>,
 ) {
-	const [{ id }, { renewal }] = await Promise.all([
-		props.params,
-		props.searchParams,
-	]);
+	const { id } = await props.params;
 
 	return (
 		<main className='grid grid-cols-1 gap-6 mt-1 mb-10'>
-			<FormProposalRegister id={id} renewal={renewal === 'true'} />
+			<FormProposalRegister id={id} />
 		</main>
 	);
 }
 
-export default ProposalsRegisterPage;
+export default ProposalsDetailsPage;
