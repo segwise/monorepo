@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const SchemaEndorsementCancel = z.object({
-	cancelledAt: z.coerce.date('Data do cancelamento inválida'),
+	effectivedAt: z.coerce.date('Data do endosso inválida'),
 });
 
 export { SchemaEndorsementCancel };
