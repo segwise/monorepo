@@ -20,7 +20,6 @@ import { translateVehicleUsage } from '@segwise/core/translate';
 import type { SafeSimple } from '@segwise/core/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { endOfDay, format } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { replace } from 'expo-router/build/global-state/routing';
@@ -147,7 +146,7 @@ function Item(props: SafeSimple) {
 				<List
 					label='FINAL DA VIGÊNCIA'
 					value={format(
-						endOfDay(toZonedTime(props.expiration as string, 'UTC')),
+						endOfDay(props.expiration),
 						"dd/MM/yyyy 'ás' HH:mm'h'",
 					).toUpperCase()}
 				/>

@@ -9,10 +9,6 @@ import { compareAsc, endOfDay, format, parseISO } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { XiorError } from 'xior';
 
-function toDate(date: Date | string) {
-	return date instanceof Date ? date : parseISO(date);
-}
-
 async function safesListining({ signal }: { signal: AbortSignal }) {
 	const myFiltersIds = JSON.parse(
 		storage.getString('filters:insurances:ids') || '[]',
@@ -44,16 +40,21 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 		data: data.data
 			.map((response) => ({
 				...response,
+				requestedAt: toZonedTime(
+					parseISO(response.requestedAt as string),
+					'UTC',
+				),
+				effectivedAt: toZonedTime(
+					parseISO(response.effectivedAt as string),
+					'UTC',
+				),
 				expiration: toZonedTime(parseISO(response.expiration as string), 'UTC'),
 			}))
 			.sort((a, b) =>
-				compareAsc(
-					endOfDay(toDate(a.expiration)),
-					endOfDay(toDate(b.expiration)),
-				),
+				compareAsc(endOfDay(a.expiration), endOfDay(b.expiration)),
 			)
 			.filter((e) => e.status === 'active')
-			.filter((e) => endOfDay(toDate(e.expiration)) >= new Date()),
+			.filter((e) => endOfDay(e.expiration) >= new Date()),
 	};
 }
 
