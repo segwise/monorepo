@@ -58,7 +58,7 @@ import {
 	UserCircle2Icon,
 	XCircleIcon,
 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { Fragment, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -135,10 +135,14 @@ const ENTER_NAVIGATION_MAP: Record<string, string> = {
 
 const OPEN_ON_FOCUS_IDS = new Set(['vehicle-usage']);
 
-function FormProposalRegister({ id }: { id?: string }) {
+function FormProposalRegister({
+	id,
+	renewal = false,
+}: {
+	id?: string;
+	renewal?: boolean;
+}) {
 	const { push } = useRouter();
-
-	const searchParams = useSearchParams();
 
 	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
@@ -173,11 +177,11 @@ function FormProposalRegister({ id }: { id?: string }) {
 			status: safe?.status || 'active',
 			producer: safe?.producer ?? null,
 			modality: safe?.modality || SchemaModality.enum.vehicle,
-			renewal: searchParams.get('renewal') === 'true',
+			renewal: renewal,
 			requestedAt: safe
 				? startOfDay(
 						toZonedTime(
-							searchParams.get('renewal') === 'true'
+							renewal
 								? (safe.expirationAt as string)
 								: subYears(safe.expirationAt, 1),
 							'UTC',
@@ -222,7 +226,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				birth: safe?.vehicle.driver.birth ?? safe?.insured.birth ?? '',
 			},
 			...(safe?.commission &&
-				!searchParams.get('renewal') && {
+				!renewal && {
 					award: safe.commission.award.toString().replace('.', ','),
 					commission: safe.commission.percentage,
 					franchise: safe.commission.franchise.toString().replace('.', ','),
@@ -235,10 +239,10 @@ function FormProposalRegister({ id }: { id?: string }) {
 				status: safe.status,
 				producer: safe.producer,
 				modality: safe.modality,
-				renewal: searchParams.get('renewal') === 'true',
+				renewal: renewal,
 				requestedAt: startOfDay(
 					toZonedTime(
-						searchParams.get('renewal') === 'true'
+						renewal
 							? (safe.expirationAt as string)
 							: subYears(safe.expirationAt, 1),
 						'UTC',
@@ -279,18 +283,14 @@ function FormProposalRegister({ id }: { id?: string }) {
 					birth: safe?.vehicle.driver.birth ?? safe.insured.birth,
 				},
 				receivables: {
-					award: !searchParams.get('renewal')
+					award: !renewal
 						? safe.commission.award.toString().replace('.', ',')
 						: 0,
-					commission: !searchParams.get('renewal')
-						? safe.commission.percentage
-						: 0,
-					franchise: !searchParams.get('renewal')
+					commission: !renewal ? safe.commission.percentage : 0,
+					franchise: !renewal
 						? safe.commission.franchise.toString().replace('.', ',')
 						: 0,
-					installments: !searchParams.get('renewal')
-						? safe.commission.installments
-						: 0,
+					installments: !renewal ? safe.commission.installments : 0,
 				},
 			},
 		}),
@@ -394,7 +394,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 	}
 
 	function onSubmit(props: SafeRegister) {
-		(!safe ? mutate : update)(props, {
+		(!id || (id && renewal) ? mutate : update)(props, {
 			onSuccess(data) {
 				toast.success(
 					(
