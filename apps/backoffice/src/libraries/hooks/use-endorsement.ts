@@ -1,19 +1,25 @@
-import type { Endorsement } from '@segwise/core';
+import type {
+	EndorsementCancel,
+	EndorsementFranchise,
+	EndorsementSimple,
+} from '@segwise/core';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { compareAsc } from 'date-fns';
+import { XiorError } from 'xior';
 import { api } from '../api';
 
 const useEndorsements = (id: string, enabled?: boolean) =>
 	useQuery({
 		queryKey: ['endorsements', id],
 		queryFn: async ({ signal }) => {
-			const { data } = await api.get<Array<Endorsement>>(
+			const { data } = await api.get<Array<EndorsementSimple>>(
 				`/endorsements/${id}`,
 				{
 					signal,
 				},
 			);
 
-			return data;
+			return data?.sort((a, b) => compareAsc(a.createdAt, b.createdAt));
 		},
 		enabled,
 	});
@@ -24,16 +30,71 @@ const useEndorsementCancel = () =>
 			message: string;
 		},
 		Error,
-		{
+		EndorsementCancel & {
 			id: string;
 		}
 	>({
 		mutationKey: ['endorsements', 'cancel'],
-		mutationFn: async ({ id }) => {
-			const { data } = await api.post(`/endorsements/${id}/cancel`);
+		mutationFn: async ({ id, effectivedAt }) => {
+			try {
+				const { data } = await api.post(`/endorsements/${id}/cancel`, {
+					effectivedAt,
+				});
 
-			return data;
+				return data;
+			} catch (error) {
+				if (error instanceof XiorError) {
+					throw new Error(error.response?.data.message);
+				}
+
+				throw error;
+			}
+		},
+		onSuccess(_, variables, ___, { client }) {
+			const { id } = variables;
+
+			client.resetQueries({
+				queryKey: ['endorsements', id],
+			});
 		},
 	});
 
-export { useEndorsements, useEndorsementCancel };
+const useEndorsementFranchise = () =>
+	useMutation<
+		{
+			message: string;
+		},
+		Error,
+		EndorsementFranchise & {
+			id: string;
+		}
+	>({
+		mutationKey: ['endorsements', 'franchise'],
+		mutationFn: async ({ id, franchise, amount, percentage, commission }) => {
+			try {
+				const { data } = await api.post(`/endorsements/${id}/franchise`, {
+					franchise,
+					amount,
+					percentage,
+					commission,
+				});
+
+				return data;
+			} catch (error) {
+				if (error instanceof XiorError) {
+					throw new Error(error.response?.data.message);
+				}
+
+				throw error;
+			}
+		},
+		onSuccess(_, variables, ___, { client }) {
+			const { id } = variables;
+
+			client.resetQueries({
+				queryKey: ['endorsements', id],
+			});
+		},
+	});
+
+export { useEndorsements, useEndorsementCancel, useEndorsementFranchise };

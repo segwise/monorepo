@@ -1,4 +1,6 @@
-import { format } from 'date-fns';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { type EndorsementCancel, SchemaEndorsementCancel } from '@segwise/core';
+import { format, startOfToday } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import {
 	CarIcon,
@@ -10,6 +12,8 @@ import {
 } from 'lucide-react';
 import type React from 'react';
 import { cloneElement, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { withMask } from 'use-mask-input';
 import { Button } from '@/components/ui/button';
 import { DatePickerInput } from '@/components/ui/date-picker-input';
@@ -26,6 +30,7 @@ import {
 import {
 	Field,
 	FieldDescription,
+	FieldError,
 	FieldGroup,
 	FieldLabel,
 } from '@/components/ui/field';
@@ -87,15 +92,27 @@ function DialogSafeEndorsementById({
 						data?.map(({ id, type, effectivedAt }) => (
 							<div
 								key={id}
-								className='border border-border bg-muted rounded-lg px-2 py-4'
+								className='border border-border bg-muted rounded-md p-4'
 							>
-								Tipo: {type}
-								Data de efetivação:{' '}
-								{format(toZonedTime(effectivedAt, 'UTC'), 'dd/MM/yyyy')}
+								<div className='text-sm'>
+									<b>
+										Endosso de{' '}
+										{type === 'cancellation'
+											? 'Cancelamento'
+											: type === 'address'
+												? 'Endereço'
+												: type === 'franchise'
+													? 'Frânquia'
+													: 'Veicular | Condutor'}
+									</b>
+								</div>
+								<div className='text-sm'>
+									<b>Data:</b>{' '}
+									{format(toZonedTime(effectivedAt, 'UTC'), 'dd/MM/yyyy')}
+								</div>
 							</div>
 						))}
 				</div>
-
 				<Separator />
 				<DialogFooter>
 					<DialogClose asChild>
@@ -125,6 +142,39 @@ function DialogSafeEndorsementDetails({
 	>(null);
 
 	const { mutate: cancel, isPending: isCanceling } = useEndorsementCancel();
+
+	const formCancel = useForm({
+		mode: 'all',
+		criteriaMode: 'all',
+		reValidateMode: 'onChange',
+		resolver: zodResolver(SchemaEndorsementCancel),
+		defaultValues: {
+			effectivedAt: startOfToday(),
+		},
+	});
+
+	function onSubmitCancel(props: EndorsementCancel) {
+		toast.dismiss();
+
+		cancel(
+			{
+				id,
+				effectivedAt: props.effectivedAt,
+			},
+			{
+				onSuccess(_, __, ___) {
+					toast.success('Endosso registrado!'.toUpperCase());
+
+					setOpen(false);
+				},
+				onError(error) {
+					toast.error(
+						(error.message ?? 'Falha ao registrar endosso').toUpperCase(),
+					);
+				},
+			},
+		);
+	}
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
@@ -167,7 +217,7 @@ function DialogSafeEndorsementDetails({
 								</SelectValue>
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value='vehicle-conductor'>
+								<SelectItem value='vehicle_conductor'>
 									<div className='flex flex-row items-center justify-start gap-x-2'>
 										<CarIcon /> Veicular | Condutor
 									</div>
@@ -191,7 +241,7 @@ function DialogSafeEndorsementDetails({
 						</Select>
 					</Field>
 					{type === 'vehicle_conductor' && (
-						<form noValidate className='space-y-2 mt-4'>
+						<form id='vehicle_conductor' noValidate className='space-y-2 mt-4'>
 							<FieldGroup className='grid grid-cols-2 gap-2'>
 								<Field>
 									<div className='flex flex-row items-center justify-between'>
@@ -240,7 +290,7 @@ function DialogSafeEndorsementDetails({
 						</form>
 					)}
 					{type === 'address' && (
-						<form noValidate className='space-y-2 mt-4'>
+						<form id='address' noValidate className='space-y-2 mt-4'>
 							<Field>
 								<FieldLabel>CEP:</FieldLabel>
 								<Input placeholder='00000-000' />
@@ -268,7 +318,7 @@ function DialogSafeEndorsementDetails({
 						</form>
 					)}
 					{type === 'franchise' && (
-						<form noValidate className='space-y-2 mt-4'>
+						<form id='franchise' noValidate className='space-y-2 mt-4'>
 							<Field>
 								<FieldLabel>Frânquia:</FieldLabel>
 								<Input ref={withMask('brl-currency')} placeholder='R$ 0,00' />
@@ -297,10 +347,21 @@ function DialogSafeEndorsementDetails({
 					)}
 					{type === 'cancellation' && (
 						<form noValidate className='mt-4'>
-							<Field>
-								<FieldLabel>Data de cancelamento:</FieldLabel>
-								<DatePickerInput />
-							</Field>
+							<Controller
+								control={formCancel.control}
+								name='effectivedAt'
+								render={({ field, fieldState }) => (
+									<Field aria-invalid={fieldState.invalid}>
+										<FieldLabel aria-invalid={fieldState.invalid}>
+											Data de cancelamento:
+										</FieldLabel>
+										<DatePickerInput {...field} invalid={fieldState.invalid} />
+										{fieldState.invalid && (
+											<FieldError errors={[fieldState.error]} />
+										)}
+									</Field>
+								)}
+							/>
 						</form>
 					)}
 				</div>
@@ -311,8 +372,18 @@ function DialogSafeEndorsementDetails({
 							Fechar <XCircleIcon />
 						</Button>
 					</DialogClose>
-					<Button>
-						Cadastrar <SaveIcon />
+					<Button
+						type='button'
+						isPending={isCanceling}
+						disabled={!type}
+						onClick={() => {
+							if (type === 'cancellation') {
+								formCancel.handleSubmit(onSubmitCancel)();
+							}
+						}}
+					>
+						Cadastrar
+						<SaveIcon />
 					</Button>
 				</DialogFooter>
 			</DialogContent>
