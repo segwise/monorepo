@@ -8,6 +8,7 @@ import { registerRoutersServicesQuotes } from '@/routers/services/quotes';
 import { registerRoutersServicesSafes } from '@/routers/services/safes';
 import { registerRoutersServicesUtils } from '@/routers/services/utils';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
+import { registerRoutersServicesEndorsements } from './endorsements';
 import { registerRoutersServicesMarketplace } from './marketplace';
 import { registerRoutersServicesPIX } from './pix';
 import { registerRoutersServicesQuoteFinancing } from './quote-financing';
@@ -32,6 +33,8 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesQuotes(base);
 	registerRoutersServicesAnalytics(base);
 	registerRoutersServicesPayments(base);
+
+	registerRoutersServicesEndorsements(base);
 
 	registerRoutersServicesWebhooks(base);
 }

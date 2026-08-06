@@ -300,6 +300,8 @@ model Safe {
   effectivedAt DateTime? @map("effectived_at") @db.Date
   expiration   DateTime  @db.Date
 
+  endorsements Endorsement[] @relation("endorsement_to_safe")
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -405,6 +407,8 @@ model Vehicle {
   quoteVehicles QuoteVehicle[] @relation("quote_vehicle_to_vehicle", map: "quote_vehicles")
   safeVehicles  SafeVehicle[]  @relation("safe_vehicle_to_vehicle", map: "safe_vehicles")
 
+  endorsements Endorsement[] @relation("endorsement_to_vehicle")
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -427,6 +431,8 @@ model VehicleWithoutPlate {
 
   quoteVehicles QuoteVehicle[] @relation("quote_vehicle_to_vehicle_without_plate", map: "quote_vehicles")
   safeVehicles  SafeVehicle[]  @relation("safe_vehicle_to_vehicle_without_plate", map: "safe_vehicles")
+
+  endorsements Endorsement[] @relation("endorsement_to_vehicle")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
@@ -751,6 +757,33 @@ model MarketplaceVehicle {
   @@map("marketplace_vehicles")
 }
 
+model Endorsement {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  type EndorsementType
+
+  safeId String @map("safe_id") @db.Uuid
+  safe   Safe   @relation("endorsement_to_safe", fields: [id], references: [id], onDelete: Cascade)
+
+  effectivedAt DateTime? @map("effectived_at") @db.Date
+
+  driverCPF   String?   @map("driver_cpf") @db.VarChar(11)
+  driverName  String?   @map("driver_name")
+  driverBirth DateTime? @map("driver_birth") @db.Date
+  driverAge   Int?      @map("driver_age") @db.SmallInt
+
+  vehicleId String?  @map("vehicle_id") @db.Uuid
+  vehicle   Vehicle? @relation("endorsement_to_vehicle", fields: [vehicleId], references: [id], onDelete: Restrict)
+
+  vehicleWithoutPlateId String?              @map("vehicle_without_plate_id") @db.Uuid
+  vehicleWithoutPlate   VehicleWithoutPlate? @relation("endorsement_to_vehicle", fields: [vehicleWithoutPlateId], references: [id], map: "vehicle_without_plate", onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("endorsements")
+}
+
 enum Role {
   owner
   admin
@@ -964,4 +997,11 @@ enum MarketplaceVehicleConservation {
   extra_key
   reviewed
   with_guarantee
+}
+
+enum EndorsementType {
+  vehicle_driver
+  address
+  franchise
+  cancellation
 }
