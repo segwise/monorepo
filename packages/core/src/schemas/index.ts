@@ -1,3 +1,4 @@
+export * from './endorsement';
 export * from './financing';
 export * from './marketplace';
 export * from './payments';
