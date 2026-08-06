@@ -56,6 +56,7 @@ import {
 } from '@/components/ui/tooltip';
 import { placeholder } from '@/config/placeholder';
 import { DialogSafeDeleteById } from '@/containers/dialogs/safes/delete';
+import { DialogSafeEndorsementById } from '@/containers/dialogs/safes/endorsement';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useSafesSimple } from '@/libraries/hooks/safes/use-safes';
@@ -519,9 +520,11 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 										<DropdownMenuItem>
 											<PaperclipIcon className='size-4!' /> Apólice ( PDF )
 										</DropdownMenuItem>
-										<DropdownMenuItem>
-											<FileEditIcon className='size-4!' /> Endosso
-										</DropdownMenuItem>
+										<DialogSafeEndorsementById id={id}>
+											<DropdownMenuItem>
+												<FileEditIcon className='size-4!' /> Endossos
+											</DropdownMenuItem>
+										</DialogSafeEndorsementById>
 										<DropdownMenuItem asChild>
 											<Link href={`/proposals/${id}`}>
 												<FileCogIcon className='size-4!' /> Ajuste Geral
