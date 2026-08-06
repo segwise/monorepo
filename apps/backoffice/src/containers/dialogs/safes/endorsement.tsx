@@ -50,11 +50,25 @@ function DialogSafeEndorsementById({
 							Fechar <XCircleIcon />
 						</Button>
 					</DialogClose>
-					<Button>
-						Novo Endosso <FilePlusIcon />
-					</Button>
+					<DialogSafeEndorsementDetails id={id}>
+						<Button>
+							Novo Endosso <FilePlusIcon />
+						</Button>
+					</DialogSafeEndorsementDetails>
 				</DialogFooter>
 			</DialogContent>
+		</Dialog>
+	);
+}
+
+function DialogSafeEndorsementDetails({
+	id,
+	children,
+}: React.PropsWithChildren<DialogSafeEndorsementByIdProps>) {
+	return (
+		<Dialog>
+			<DialogTrigger asChild>{children}</DialogTrigger>
+			<DialogContent removeOverlay></DialogContent>
 		</Dialog>
 	);
 }
