@@ -355,6 +355,7 @@ function DialogSafeEndorsementDetails({
 										<FieldLabel aria-invalid={fieldState.invalid}>
 											Data de cancelamento:
 										</FieldLabel>
+										{/* @ts-ignore */}
 										<DatePickerInput {...field} invalid={fieldState.invalid} />
 										{fieldState.invalid && (
 											<FieldError errors={[fieldState.error]} />
