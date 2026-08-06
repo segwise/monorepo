@@ -6,6 +6,7 @@ import type {
 	SafeSimple,
 } from '@segwise/core/types';
 import { compareAsc, endOfDay, format, parseISO } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { XiorError } from 'xior';
 
 function toDate(date: Date | string) {
@@ -41,6 +42,10 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 	return {
 		...data,
 		data: data.data
+			.map((response) => ({
+				...response,
+				expiration: toZonedTime(parseISO(response.expiration as string), 'UTC'),
+			}))
 			.sort((a, b) =>
 				compareAsc(
 					endOfDay(toDate(a.expiration)),
