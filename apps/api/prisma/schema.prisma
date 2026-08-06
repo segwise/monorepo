@@ -765,7 +765,7 @@ model Endorsement {
   safeId String @map("safe_id") @db.Uuid
   safe   Safe   @relation("endorsement_to_safe", fields: [id], references: [id], onDelete: Cascade)
 
-  effectivedAt DateTime? @map("effectived_at") @db.Date
+  cancelledAt DateTime? @map("cancelled_at") @db.Date
 
   driverCPF   String?   @map("driver_cpf") @db.VarChar(11)
   driverName  String?   @map("driver_name")
