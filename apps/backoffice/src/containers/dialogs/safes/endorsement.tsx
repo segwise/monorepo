@@ -1,4 +1,11 @@
-import { FilePlusIcon, XCircleIcon } from 'lucide-react';
+import {
+	CarIcon,
+	DollarSignIcon,
+	FilePlusIcon,
+	MapPinIcon,
+	SaveIcon,
+	XCircleIcon,
+} from 'lucide-react';
 import type React from 'react';
 import { cloneElement, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +19,14 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@/components/ui/dialog';
+import { Field, FieldLabel } from '@/components/ui/field';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 
 interface DialogSafeEndorsementByIdProps {
@@ -65,10 +80,73 @@ function DialogSafeEndorsementDetails({
 	id,
 	children,
 }: React.PropsWithChildren<DialogSafeEndorsementByIdProps>) {
+	const [open, setOpen] = useState<boolean>(false);
+
+	const [type, setType] = useState<
+		'vehicle-conductor' | 'address' | 'franchise' | 'cancellation' | null
+	>(null);
+
 	return (
-		<Dialog>
+		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent removeOverlay></DialogContent>
+			<DialogContent removeOverlay>
+				<DialogHeader>
+					<DialogTitle>Novo Endosso</DialogTitle>
+					<DialogDescription>
+						Adicione um novo registro de endosso para a apólice
+					</DialogDescription>
+				</DialogHeader>
+				<Separator />
+				<div>
+					<Field className='col-span-full'>
+						<FieldLabel htmlFor='message'>Tipo de endosso:</FieldLabel>
+						<Select
+							value={type as keyof typeof type}
+							onValueChange={(value: keyof typeof type) => setType(value)}
+						>
+							<SelectTrigger>
+								<SelectValue>
+									{type ? undefined : 'Selecionar tipo'}
+								</SelectValue>
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value='vehicle-conductor'>
+									<div className='flex flex-row items-center justify-start gap-x-2'>
+										<CarIcon /> Veicular | Condutor
+									</div>
+								</SelectItem>
+								<SelectItem value='address'>
+									<div className='flex flex-row items-center justify-start gap-x-2'>
+										<MapPinIcon /> Endereço
+									</div>
+								</SelectItem>
+								<SelectItem value='franchise'>
+									<div className='flex flex-row items-center justify-start gap-x-2'>
+										<DollarSignIcon /> Frânquia
+									</div>
+								</SelectItem>
+								<SelectItem value='cancellation'>
+									<div className='flex flex-row items-center justify-start gap-x-2'>
+										<XCircleIcon /> Cancelamento
+									</div>
+								</SelectItem>
+							</SelectContent>
+						</Select>
+					</Field>
+					{/* <form noValidate /> */}
+				</div>
+				<Separator />
+				<DialogFooter>
+					<DialogClose asChild>
+						<Button variant='destructive' tabIndex={-1}>
+							Fechar <XCircleIcon />
+						</Button>
+					</DialogClose>
+					<Button>
+						Cadastrar <SaveIcon />
+					</Button>
+				</DialogFooter>
+			</DialogContent>
 		</Dialog>
 	);
 }
