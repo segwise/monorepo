@@ -6,4 +6,4 @@ const SchemaEndorsementCancel = z.object({
 	effectivedAt: z.coerce.date('Data do endosso inválida'),
 });
 
-export type { SchemaEndorsementCancel };
+export { SchemaEndorsementCancel };
