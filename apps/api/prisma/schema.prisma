@@ -765,8 +765,6 @@ model Endorsement {
   safeId String @map("safe_id") @db.Uuid
   safe   Safe   @relation("endorsement_to_safe", fields: [id], references: [id], onDelete: Cascade)
 
-  cancelledAt DateTime? @map("cancelled_at") @db.Date
-
   driverCPF   String?   @map("driver_cpf") @db.VarChar(11)
   driverName  String?   @map("driver_name")
   driverBirth DateTime? @map("driver_birth") @db.Date
@@ -777,6 +775,8 @@ model Endorsement {
 
   vehicleWithoutPlateId String?              @map("vehicle_without_plate_id") @db.Uuid
   vehicleWithoutPlate   VehicleWithoutPlate? @relation("endorsement_to_vehicle", fields: [vehicleWithoutPlateId], references: [id], map: "vehicle_without_plate", onDelete: Restrict)
+
+  effectivedAt DateTime? @map("effectived_at") @db.Date
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
