@@ -1,5 +1,6 @@
 export * from './auth';
 export * from './brokers';
+export * from './endorsement';
 export * from './financing';
 export * from './insurance-companies';
 export * from './marketplace';
