@@ -22,6 +22,26 @@ function registerRoutersServicesEndorsementsCancel(server: Server) {
 				);
 			}
 
+			const isCancel = await ctx.database.safe
+				.findUnique({
+					where: {
+						id,
+					},
+					select: {
+						status: true,
+					},
+				})
+				.then((response) => response?.status === StatusSafe.canceled);
+
+			if (isCancel) {
+				return ctx.json(
+					{
+						message: 'Seguro já está cancelado',
+					},
+					409,
+				);
+			}
+
 			await ctx.database.safe.update({
 				where: {
 					id,
