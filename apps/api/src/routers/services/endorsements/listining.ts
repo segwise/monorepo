@@ -12,6 +12,7 @@ function registerRoutersServicesEndorsementsListining(server: Server) {
 				id: true,
 				type: true,
 				effectivedAt: true,
+				createdAt: true,
 			},
 		});
 
