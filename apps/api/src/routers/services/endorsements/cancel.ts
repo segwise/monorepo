@@ -9,6 +9,7 @@ function registerRoutersServicesEndorsementsCancel(server: Server) {
 		zValidator('json', SchemaEndorsementCancel),
 		async (ctx) => {
 			const id = ctx.req.param('id');
+			const type = EndorsementType.cancellation;
 
 			const { effectivedAt } = ctx.req.valid('json');
 
@@ -30,7 +31,7 @@ function registerRoutersServicesEndorsementsCancel(server: Server) {
 					endorsements: {
 						create: {
 							safeId: id,
-							type: EndorsementType.cancellation,
+							type,
 							effectivedAt,
 						},
 					},
