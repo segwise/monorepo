@@ -10,6 +10,7 @@ function getNumericValueMoney(value: string | number) {
 	return Number(
 		value
 			.replace(/R\$\s*/g, '')
+			.replace(/%/g, '')
 			.replace(/\./g, '')
 			.replace(',', '.'),
 	);
