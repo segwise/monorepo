@@ -1,3 +1,5 @@
+'use client';
+
 import {
 	CheckboxItem,
 	Content,
@@ -101,6 +103,7 @@ const DropdownMenuItem = forwardRef<
 				'bg-destructive/5! text-destructive! focus:bg-destructive/10! dark:focus:bg-destructive/20! focus:text-destructive! *:[svg]:text-destructive!',
 			className,
 		)}
+		onSelect={(e) => e.preventDefault()}
 		{...props}
 	/>
 ));

@@ -1,3 +1,5 @@
+'use client';
+
 import { maskDateString } from '@segwise/core/masks';
 import { format, isValid, parse } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';

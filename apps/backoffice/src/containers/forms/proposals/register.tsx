@@ -30,9 +30,11 @@ import {
 	professions,
 } from '@segwise/core/utils';
 import { isCNPJ, isCPF, isDateString, isPlate } from '@segwise/core/valids';
+import { useMutation } from '@tanstack/react-query';
 import {
 	addYears,
 	differenceInYears,
+	endOfToday,
 	format,
 	isValid,
 	parse,
@@ -43,14 +45,18 @@ import {
 import { toZonedTime } from 'date-fns-tz';
 import {
 	BikeIcon,
+	BotIcon,
+	BrainIcon,
 	Building2Icon,
 	CalendarIcon,
 	CarIcon,
 	ChevronLeftIcon,
 	CircleDollarSignIcon,
 	ClipboardIcon,
+	FileCogIcon,
 	FileTextIcon,
 	Loader2Icon,
+	MoreVerticalIcon,
 	SaveIcon,
 	SearchIcon,
 	TruckIcon,
@@ -60,7 +66,7 @@ import {
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type React from 'react';
-import { Fragment, useEffect, useState } from 'react';
+import { cloneElement, Fragment, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { withMask } from 'use-mask-input';
@@ -90,6 +96,12 @@ import {
 	DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
 	Field,
 	FieldContent,
 	FieldError,
@@ -117,6 +129,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { placeholder } from '@/config/placeholder';
+import { api } from '@/libraries/api';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useQuotesByPlate } from '@/libraries/hooks/quotes/use-quotes-by-plate';
@@ -140,7 +153,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	const searchParams = useSearchParams();
 
-	const renewal = searchParams.get('renewal') === 'true';
+	const renewal = searchParams.get('renewal') === 'true' || false;
 
 	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
@@ -149,6 +162,8 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
 		useState<boolean>(false);
+
+	const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
 
 	const { data: safe } = useSafesById(id);
 
@@ -175,7 +190,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 			status: safe?.status || 'active',
 			producer: safe?.producer ?? null,
 			modality: safe?.modality || SchemaModality.enum.vehicle,
-			renewal: renewal,
+			renewal,
 			requestedAt: safe
 				? startOfDay(
 						toZonedTime(
@@ -230,6 +245,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 					franchise: safe.commission.franchise.toString().replace('.', ','),
 					installments: safe.commission.installments,
 				}),
+			commissions: null,
 		},
 		...(safe && {
 			values: {
@@ -237,7 +253,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				status: safe.status,
 				producer: safe.producer,
 				modality: safe.modality,
-				renewal: renewal,
+				renewal,
 				requestedAt: startOfDay(
 					toZonedTime(
 						renewal
@@ -290,11 +306,10 @@ function FormProposalRegister({ id }: { id?: string }) {
 						: 0,
 					installments: !renewal ? safe.commission.installments : 0,
 				},
+				commissions: null,
 			},
 		}),
 	});
-
-	console.log(errors, SchemaSafeRegister.safeParse(watch()));
 
 	const plate = watch('vehicle.plate');
 
@@ -609,12 +624,30 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	return (
 		<Fragment>
+			<DialogGetDocument
+				open={openDocumentDialog}
+				onOpenChange={setOpenDocumentDialog}
+				onChange={onChangeResponseQuotesSearch}
+			/>
 			<div className='flex flex-row items-center justify-between **:gap-x-2'>
-				<DialogGetPlate onChange={onChangeResponseQuotesSearch}>
-					<Button>
-						<FileTextIcon /> Preencher via cotação
-					</Button>
-				</DialogGetPlate>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button>
+							<MoreVerticalIcon />
+							Preenchimento Automático
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align='start' side='bottom'>
+						<DialogGetPlate onChange={onChangeResponseQuotesSearch}>
+							<DropdownMenuItem>
+								<BotIcon /> Via Cotação
+							</DropdownMenuItem>
+						</DialogGetPlate>
+						<DropdownMenuItem onSelect={() => setOpenDocumentDialog(true)}>
+							<FileCogIcon /> Via Proposta ( PDF )
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 				<div className='flex flex-row items-center justify-end'>
 					<ButtonBack>
 						<Button>
@@ -2066,6 +2099,11 @@ function DialogGetPlate({
 }: React.PropsWithChildren<{
 	onChange: (props: QuoteRegister) => void;
 }>) {
+	// @ts-expect-error
+	const Comp = cloneElement(children, {
+		onSelect: (e) => e.preventDefault(),
+	});
+
 	const Schema = z.object({
 		plate: SchemaPlate,
 	});
@@ -2100,7 +2138,7 @@ function DialogGetPlate({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>{children}</DialogTrigger>
+			<DialogTrigger asChild>{Comp}</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Pesquisar Cotação</DialogTitle>
@@ -2220,6 +2258,409 @@ function DialogGetPlate({
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
+	);
+}
+
+type ExtractDocument = {
+	modality:
+		| 'vehicle'
+		| 'motorcycle'
+		| 'truck'
+		| 'health'
+		| 'residence'
+		| 'business'
+		| 'condominium'
+		| 'travel'
+		| 'professional'
+		| 'construction';
+	insuranceCompany: {
+		name: string;
+		cnpj: string;
+	};
+	insured: {
+		name: string;
+		registration: string;
+		phone: string;
+		birth: string;
+		profession: string | null;
+	};
+	vehicle: {
+		plate: string;
+		model: string;
+		year: number;
+		usage:
+			| 'leisure_and_work'
+			| 'leisure'
+			| 'client_supplier_visits'
+			| 'app_based_transport'
+			| 'taxi'
+			| 'public_transportation'
+			| 'delivieries'
+			| 'tourism';
+		overnightStayPostalCode: string;
+		driver: {
+			name: string;
+			cpf: string;
+			birth: string;
+		} | null;
+	} | null;
+	effectivedAt: string;
+	requestedAt: string;
+	expirationAt: string;
+	award: number;
+	installments: number;
+	franchise: number;
+};
+
+function DialogGetDocument({
+	open,
+	onOpenChange,
+	onChange,
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onChange: (props: QuoteRegister) => void;
+}) {
+	const Schema = z.object({
+		file: z.file('Documento inválido'),
+	});
+
+	const { data, mutate, isPending, isSuccess } = useMutation<
+		ExtractDocument,
+		Error,
+		z.infer<typeof Schema.shape.file>
+	>({
+		mutationKey: ['safe', 'extract', 'pdf'],
+		mutationFn: async (file) => {
+			const formData = new FormData();
+
+			formData.append('file', file);
+
+			const response = await fetch(
+				`${api.config?.baseURL as string}/safes/extract-pdf`,
+				{
+					method: 'POST',
+					body: formData,
+				},
+			);
+
+			if (!response.ok) {
+				throw new Error((await response.json()).message);
+			}
+
+			const data = await response.json();
+
+			return data;
+		},
+	});
+
+	const {
+		control,
+		handleSubmit,
+		formState: { isValid },
+	} = useForm({
+		mode: 'all',
+		criteriaMode: 'all',
+		reValidateMode: 'onChange',
+		resolver: zodResolver(Schema),
+	});
+
+	function onSubmit({ file }: z.infer<typeof Schema>) {
+		toast.dismiss();
+
+		mutate(file, {
+			onError(error) {
+				toast.error(error.message);
+			},
+		});
+	}
+
+	function sendData(data: ExtractDocument) {
+		onChange({
+			driver: {
+				birth: parse(
+					data.vehicle?.driver?.birth ?? data.insured.birth,
+					'dd/MM/yyyy',
+					startOfToday(),
+				),
+				cpf: data.vehicle?.driver?.cpf ?? data.insured.registration,
+				name: data.vehicle?.driver?.name ?? data.insured.name,
+			},
+			expiration: parse(data.expirationAt, 'dd/MM/yyyy', endOfToday()),
+			insuranceCompany: '',
+			// @ts-expect-error
+			insured: {
+				birth: parse(data.insured.birth, 'dd/MM/yyyy', startOfToday()),
+				cpf: data.insured.registration,
+				name: data.insured.name,
+				phone: data.insured.phone,
+			},
+			modality: data.modality,
+			requestedAt: parse(data.requestedAt, 'dd/MM/yyyy', startOfToday()),
+			vehicle: {
+				plate: data.vehicle?.plate,
+				model: data.vehicle?.model ?? '',
+				modelYear: data.vehicle?.year ?? 0,
+				overnightPostalCode: data.vehicle?.overnightStayPostalCode ?? '',
+				// @ts-expect-error
+				usage: data.vehicle?.usage,
+			},
+		});
+	}
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle className='flex flex-row items-center justify-start gap-x-1'>
+						<BrainIcon className='size-5' /> Preenchimento via PDF
+					</DialogTitle>
+					<DialogDescription>
+						Informe o documento para a IA extrair os dados
+					</DialogDescription>
+				</DialogHeader>
+				<Separator />
+				{(!isPending || (isSuccess && !data)) && (
+					<form onSubmit={handleSubmit(onSubmit)} noValidate>
+						<Controller
+							control={control}
+							name='file'
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel htmlFor='document'>Documento:</FieldLabel>
+									<Input
+										{...field}
+										value={undefined}
+										type='file'
+										id='document'
+										placeholder='Insira o documento'
+										aria-invalid={fieldState.invalid}
+										onChange={(e) => {
+											const file = e.target.files?.[0];
+
+											if (file) {
+												field.onChange(file);
+											}
+										}}
+									/>
+									{fieldState.invalid && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+						{!!data && (
+							<InsuranceDataPreview
+								data={data}
+								onConfirm={(parsed) => {
+									sendData(parsed);
+
+									onOpenChange(false);
+								}}
+								onCancel={() => onOpenChange(false)}
+							/>
+						)}
+					</form>
+				)}
+				{isPending && <DocumentProcessingLoader />}
+				<Separator />
+				<DialogFooter>
+					<DialogClose asChild>
+						<Button variant='destructive' tabIndex={-1}>
+							Fechar <XCircleIcon />
+						</Button>
+					</DialogClose>
+					<Button
+						disabled={!isValid || isPending}
+						onClick={handleSubmit(onSubmit)}
+						isPending={isPending}
+						textPending='Extraindo'
+					>
+						Extrair <FileCogIcon />
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+function DocumentProcessingLoader({
+	label = 'Processando documento',
+	sublabel = 'Extraindo dados',
+}: {
+	label?: string;
+	sublabel?: string;
+}) {
+	return (
+		<div className='flex flex-row items-center gap-4 rounded-lg border border-border bg-card px-10 py-8 w-full'>
+			<div className='relative flex h-14 w-14 items-center justify-center'>
+				<div className='absolute inset-0 animate-spin rounded-full border-[2.5px] border-muted border-t-primary' />
+				<BrainIcon className='h-5 w-5 text-primary' />
+			</div>
+			<div className='text-left'>
+				<p className='text-sm font-medium text-foreground'>{label}</p>
+				<p className='text-xs text-muted-foreground'>
+					{sublabel}
+					<span className='inline-flex'>
+						<span className='animate-blink'>.</span>
+						<span className='animate-blink' style={{ animationDelay: '0.2s' }}>
+							.
+						</span>
+						<span className='animate-blink' style={{ animationDelay: '0.4s' }}>
+							.
+						</span>
+					</span>
+				</p>
+			</div>
+			<div className='flex-1'>
+				<div className='bg-muted rounded-full size-10 ml-auto flex flex-row items-center justify-center'>
+					<FileTextIcon className='text-muted-foreground size-5' />
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function InsuranceDataPreview({
+	data,
+	onConfirm,
+	onCancel,
+}: {
+	data: ExtractDocument;
+	onConfirm: (data: ExtractDocument) => void;
+	onCancel: () => void;
+}) {
+	return (
+		<div className='mt-2 bg-border rounded-md p-3'>
+			<div className='text-sm'>
+				Modalidade: <b>{translateModality(data.modality)}</b>
+			</div>
+			<div className='text-sm'>
+				Seguradora:{' '}
+				<b>
+					{capitalizeFirstLetters(data.insuranceCompany.name)
+						.replace('s.a', 'S.A')
+						.replace('S.a', 'S.A')
+						.replace('Ltda', 'LTDA')}{' '}
+					- {maskCNPJ(data.insuranceCompany.cnpj)}
+				</b>
+			</div>
+			<Separator className='bg-primary/20 my-2' />
+			<div className='text-sm mb-2'>
+				Segurado: <b>{capitalizeFirstLetters(data.insured.name)}</b>
+			</div>
+			<div className='flex flex-row items-center justify-between'>
+				<div className='text-sm'>
+					CPF/CNPJ:{' '}
+					<b>
+						{isCNPJ(data.insured.registration)
+							? maskCNPJ(data.insured.registration)
+							: maskCPF(data.insured.registration)}
+					</b>
+				</div>
+				<div className='text-sm'>
+					Nascimento: <b>{data.insured.birth}</b>
+				</div>
+			</div>
+			<div className='flex flex-row items-center justify-between'>
+				<div className='text-sm'>
+					Celular: <b>{maskPhone(data.insured.phone)}</b>
+				</div>
+				{data.insured.profession && (
+					<div className='text-sm'>
+						Profissão: <b>{capitalizeFirstLetters(data.insured.profession)}</b>
+					</div>
+				)}
+			</div>
+			{data.vehicle && (
+				<>
+					<Separator className='bg-primary/20 my-2' />
+					<div className='flex flex-row items-center justify-between gap-x-2'>
+						<div className='text-sm'>
+							Placa: <b>{maskPlate(data.vehicle.plate)}</b>
+						</div>
+						<div className='text-sm'>
+							Modelo: <b>{capitalizeFirstLetters(data.vehicle.model)}</b>
+						</div>
+					</div>
+					<div className='text-sm'>
+						Ano: <b>{data.vehicle.year}</b>
+					</div>
+					<div className='flex flex-row items-center justify-between'>
+						<div className='text-sm'>
+							CEP de Pernoite:{' '}
+							<b>{maskPostalCode(data.vehicle.overnightStayPostalCode)}</b>
+						</div>
+						<div className='text-sm'>
+							Uso: <b>{translateVehicleUsage(data.vehicle.usage)}</b>
+						</div>
+					</div>
+					{data.vehicle.driver && (
+						<>
+							<Separator className='bg-primary/20 my-2' />
+							<div className='text-sm mb-2'>
+								Condutor:{' '}
+								<b>{capitalizeFirstLetters(data.vehicle.driver.name)}</b>
+							</div>
+							<div className='flex flex-row items-center justify-between'>
+								<div className='text-sm'>
+									CPF: <b>{maskCPF(data.vehicle.driver.cpf)}</b>
+								</div>
+								<div className='text-sm'>
+									Nascimento: <b>{data.vehicle.driver.birth}</b>
+								</div>
+							</div>
+						</>
+					)}
+				</>
+			)}
+			<Separator className='bg-primary/20 my-2' />
+			{/* <div className='text-sm'>
+				Vigência: <b>{data.effectivedAt}</b>
+			</div> */}
+			<div className='text-sm'>
+				Vigência:{' '}
+				<b>
+					{data.requestedAt} - {data.expirationAt}
+				</b>
+			</div>
+			<div className='flex flex-row items-center justify-start gap-x-2 mt-1'>
+				<div className='text-sm'>
+					Prêmio:{' '}
+					<b>
+						{new Intl.NumberFormat('pt-BR', {
+							style: 'currency',
+							currency: 'BRL',
+						}).format(data.award)}
+					</b>
+				</div>
+				<div className='text-sm'>
+					Parcelas: <b>{data.installments}x</b>
+				</div>
+				<div className='text-sm'>
+					Franquia:{' '}
+					<b>
+						{new Intl.NumberFormat('pt-BR', {
+							style: 'currency',
+							currency: 'BRL',
+						}).format(data.franchise)}
+					</b>
+				</div>
+			</div>
+			<div className='flex gap-2 mt-3'>
+				<Button
+					variant='outline'
+					size='sm'
+					className='w-full'
+					onClick={onCancel}
+				>
+					Descartar
+				</Button>
+				<Button size='sm' className='w-full' onClick={() => onConfirm(data)}>
+					Preencher Dados
+				</Button>
+			</div>
+		</div>
 	);
 }
 
