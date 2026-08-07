@@ -16,16 +16,16 @@ import { PDFParse } from 'pdf-parse';
 import { z } from 'zod';
 import type { Server } from '@/@types/server';
 
-const IA_BASE_URL = process.env.IA_BASE_URL as string;
-const IA_MODEL = process.env.IA_MODEL as string;
-const IA_API_KEY = process.env.IA_API_KEY as string;
+const AI_BASE_URL = process.env.AI_BASE_URL as string;
+const AI_MODEL = process.env.AI_MODEL as string;
+const AI_API_KEY = process.env.AI_API_KEY as string;
 
 const MAX_RETRIES = 3;
 const REQUEST_TIMEOUT_MS = 30_000;
 
 const cilentAnthropic = new Anthropic({
-	baseURL: IA_BASE_URL,
-	apiKey: IA_API_KEY,
+	baseURL: AI_BASE_URL,
+	apiKey: AI_API_KEY,
 	timeout: REQUEST_TIMEOUT_MS,
 });
 
@@ -152,7 +152,7 @@ async function extractToAI(text: string): Promise<DataExtract> {
 	for (let retry = 1; retry <= MAX_RETRIES; retry++) {
 		try {
 			const response = await cilentAnthropic.messages.create({
-				model: IA_MODEL,
+				model: AI_MODEL,
 				messages: [
 					{
 						role: 'system',
