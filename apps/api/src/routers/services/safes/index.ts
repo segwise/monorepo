@@ -3,6 +3,7 @@ import type { Server } from '@/@types/server.d';
 import { registerRoutersServicesSafesById } from '@/routers/services/safes/[id]';
 import { registerRoutersServicesSafesSimpleListining } from '@/routers/services/safes/listinig';
 import { registerRoutersServicesSafesRegister } from '@/routers/services/safes/register';
+import { registerRoutersServicesSafesExtractPDF } from './extract-pdf';
 
 function registerRoutersServicesSafes(server: Server) {
 	const base = server.basePath('/safes');
@@ -10,6 +11,7 @@ function registerRoutersServicesSafes(server: Server) {
 	registerRoutersServicesSafesById(base);
 	registerRoutersServicesSafesRegister(base);
 	registerRoutersServicesSafesSimpleListining(base);
+	registerRoutersServicesSafesExtractPDF(base);
 }
 
 export { registerRoutersServicesSafes };

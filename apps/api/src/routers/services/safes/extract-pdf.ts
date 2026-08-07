@@ -1,0 +1,257 @@
+import Anthropic from '@anthropic-ai/sdk';
+import { zValidator } from '@hono/zod-validator';
+import {
+	SchemaCNPJ,
+	SchemaCPF,
+	SchemaCPFOrCNPJ,
+	SchemaDateString,
+	SchemaModality,
+	SchemaName,
+	SchemaPhone,
+	SchemaPlate,
+	SchemaPostalCode,
+	SchemaVehicleUsage,
+} from '@segwise/core';
+import { PDFParse } from 'pdf-parse';
+import { z } from 'zod';
+import type { Server } from '@/@types/server';
+
+const IA_BASE_URL = process.env.IA_BASE_URL as string;
+const IA_MODEL = process.env.IA_MODEL as string;
+const IA_API_KEY = process.env.IA_API_KEY as string;
+
+const MAX_RETRIES = 3;
+const REQUEST_TIMEOUT_MS = 30_000;
+
+const cilentAnthropic = new Anthropic({
+	baseURL: IA_BASE_URL,
+	apiKey: IA_API_KEY,
+	timeout: REQUEST_TIMEOUT_MS,
+});
+
+const SchemaDataExtract = z.object({
+	modality: SchemaModality,
+	insuranceCompany: z.object({
+		name: SchemaName,
+		cnpj: SchemaCNPJ,
+	}),
+	insured: z.object({
+		name: SchemaName,
+		registration: SchemaCPFOrCNPJ,
+		phone: SchemaPhone,
+		birth: SchemaDateString,
+		profession: z.string().nullish(),
+	}),
+	vehicle: z.object({
+		plate: SchemaPlate,
+		model: z.string(),
+		year: z.number(),
+		usage: SchemaVehicleUsage,
+		overnightStayPostalCode: SchemaPostalCode,
+		driver: z.object({
+			name: SchemaName,
+			cpf: SchemaCPF,
+			birth: SchemaDateString,
+		}),
+	}),
+	effectivedAt: SchemaDateString.nullish(),
+	requestedAt: SchemaDateString,
+	expirationAt: SchemaDateString,
+	award: z.number(),
+	installments: z.number(),
+	franchise: z.number(),
+});
+
+type DataExtract = z.infer<typeof SchemaDataExtract>;
+
+async function extractTextToPDF(buffer: ArrayBuffer): Promise<string> {
+	const parser = new PDFParse({ data: Buffer.from(buffer) });
+
+	const result = await parser.getText();
+
+	const text = result.text;
+
+	if (text.length === 0) {
+		throw new Error(
+			'PDF não retornou texto extraível — pode ser um scan/imagem. Necessário OCR.',
+		);
+	}
+
+	return text;
+}
+
+function chunkText(text: string, maxChars = 24_000): string {
+	if (text.length <= maxChars) {
+		return text;
+	}
+
+	return text.slice(0, maxChars);
+}
+
+function mountPrompt(text: string): string {
+	return `Extraia os seguintes dados do texto abaixo, extraído de um PDF.
+
+		Responda APENAS com um objeto JSON no formato exato abaixo, sem texto adicional, sem markdown, sem \`\`\`:
+
+		{
+			"modality": "string, tipo de seguro, enum (vehicle, motorcycle, truck, health, residence, business, condominium, travel, professional, construction)",
+			"insuranceCompany": {
+				"name": "string, nome da seguradora",
+				"cnpj": "string, cnpj da seguradora"
+			},
+			"insured": {
+				"name": "string, nome do (proponente / segurado) cuidado para não ser o do condutor, pois podem ser diferentes",
+				"registration": "string, cpf ou cnpj do (proponente / segurado) cuidado para não ser o do condutor, pois podem ser diferentes",
+				"phone": "string, celular do (proponente / segurado), cuidado para não ser o telefone fixo",
+				"birth": "string no formato DD/MM/AAAA ou null, data de nascimento do (proponente / segurado) cuidado para não ser o do condutor, pois podem ser diferentes",
+				"profession": "string ou null"
+			},
+			"vehicle": {
+				"plate": "string, placa do veículo",
+				"model": "string, modelo do veículo",
+				"year": "number, ano do modelo do veículo",
+				"usage": "string, uso do veículo, enum (leisure_and_work, leisure, client_supplier_visits, app_based_transport, taxi, public_transportation, delivieries, tourism)",
+				"overnightStayPostalCode": "string, cep de pernoite do veículo",
+				"driver": {
+					"name": "string, nome do principal condutor",
+					"cpf": "string, cpf do principal condutor",
+					"birth": "string no formato DD/MM/AAAA ou null, data de nascimento do principal condutor",
+				} | null
+			} | null | somente se for seguro veícular ou seguto automóvel de carro, moto ou caminhão,
+			"effectivedAt": "string no formato DD/MM/AAAA, data da efetivação da apólice, esse campo pode retornar null quando é proposta, somente retornar a data quando for apólice",
+			"requestedAt": "string no formato DD/MM/AAAA, data de início da vigência da proposta ou apólice",
+			"expirationAt": "string no formato DD/MM/AAAA, data do final da vigência da proposta ou apólice",
+			"award": "number, valor da proposta ou apólice, pode estar como (prêmio líquido, valor líquido ou líquido) mas sempre "líquido", veja que em alguns casos existe o prêmio total ou prêmio líquido total, mas não é esse, é exatamente o prêmio líquido, não o total. Normalmente é o valor do prêmio sem impostos ou juro",
+			"installments": "number, número de parcelas que será paga a apólice ou proposta",
+			"franchise": "number, valor da frânquia da apólice ou proposta"
+		}
+
+		Regras:
+		- Se algum campo não for encontrado, use null.
+		- Todo resultado que é especificado como tipo "number" deve ser um número puro (ex: 1500.50), nunca string.
+		- Não invente dados que não estão no texto.
+		- Nenhum campo pode ter mais de um dado, é sempre um único dado, nunca dois dados no mesmo campo separado por "ou", ",", ou algum outro tipo de separador
+		- Na utilização do veículo que for particular, considerar como lazer e ida e volta ao trabalho
+
+		Informações adicionais:
+		- Existe algumas seguradoras que são do mesmo grupo, a onde é referenciado o CNPJ do grupo, mas a proposta pode ser de outras segurada, então veja realmente qual é a segurada quando for nesses casos não pelo rodapé, mas sim pelo cabeçalho ou conteúdo interno como site ou nome do tipo de seguro, pode conseguir achar como em algum lugar "NOME DA SEGURADO seguro (auto, residencial, residencia, etc...)"
+		- Quando identificar como seguradora yellum, verifica se tem em algum lugar como aliro seguro, pois pode ser que seja da aliro e não da yellum pois são do mesmo grupo, mas marcas diferentes que respondem pelo mesmo grupo, então informe seguradora como aliro
+
+		Texto do documento:
+		"""
+		${text}
+		"""
+	`;
+}
+
+async function extractToAI(text: string): Promise<DataExtract> {
+	const textChunk = chunkText(text);
+
+	let lastError: unknown;
+
+	for (let retry = 1; retry <= MAX_RETRIES; retry++) {
+		try {
+			const response = await cilentAnthropic.messages.create({
+				model: IA_MODEL,
+				messages: [
+					{
+						role: 'system',
+						content:
+							'Você é um extrator de dados cirúrgico e preciso. Responda APENAS com um objeto JSON válido que segue exatamente o schema pedido, sem markdown, sem texto fora do JSON.',
+					},
+					{
+						role: 'user',
+						content: mountPrompt(textChunk),
+					},
+				],
+				max_tokens: 0,
+			});
+
+			// @ts-expect-error
+			const textResult = response.choices[0].message.content;
+
+			if (!textResult) {
+				throw new Error('Modelo retornou resposta vazia.');
+			}
+
+			const jsonClear = textResult
+				.trim()
+				.replace(/^```json\s*/i, '')
+				.replace(/^```\s*/i, '')
+				.replace(/```\s*$/i, '');
+
+			const parsed = JSON.parse(jsonClear);
+
+			const valid = SchemaDataExtract.parse(parsed);
+
+			console.log(valid);
+
+			return valid;
+		} catch (error) {
+			lastError = error;
+
+			const reason =
+				error instanceof z.ZodError
+					? JSON.stringify(error.issues)
+					: String(error);
+			console.warn(`⚠️  Tentativa ${retry} falhou: ${reason}`);
+
+			if (retry < MAX_RETRIES) {
+				await new Promise((r) => setTimeout(r, 1000 * retry));
+			}
+		}
+	}
+
+	throw new Error(
+		`Falha ao extrair dados válidos após ${MAX_RETRIES} tentativas. Último erro: ${lastError}`,
+	);
+}
+
+async function extractData(path: ArrayBuffer) {
+	try {
+		const textToPDF = await extractTextToPDF(path);
+
+		const data = await extractToAI(textToPDF);
+
+		return data;
+	} catch (error) {
+		console.error(
+			'❌ Erro durante o processo:',
+			error instanceof Error ? error.message : error,
+		);
+
+		throw error;
+	}
+}
+
+function registerRoutersServicesSafesExtractPDF(server: Server) {
+	server.post(
+		'/extract-pdf',
+		zValidator(
+			'form',
+			z.object({
+				file: z.file('Arquivo inválido'),
+			}),
+		),
+		async (ctx) => {
+			try {
+				const { file } = ctx.req.valid('form');
+
+				const buffer = await file.arrayBuffer();
+
+				const data = await extractData(buffer);
+
+				return ctx.json(data, 200);
+			} catch {
+				return ctx.json(
+					{
+						message: 'Falha ao extrair dados do documento',
+					},
+					409,
+				);
+			}
+		},
+	);
+}
+
+export { registerRoutersServicesSafesExtractPDF };
