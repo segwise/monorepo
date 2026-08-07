@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zValidator } from '@hono/zod-validator';
 import {
+	isCPF,
 	SchemaCNPJ,
 	SchemaCPF,
 	SchemaCPFOrCNPJ,
@@ -12,9 +13,12 @@ import {
 	SchemaPostalCode,
 	SchemaVehicleUsage,
 } from '@segwise/core';
+import { format } from 'date-fns';
 import { PDFParse } from 'pdf-parse';
 import { z } from 'zod';
 import type { Server } from '@/@types/server';
+import { documentByCNPJ } from '@/functions/document/by-cnpj';
+import { documentByCPF } from '@/functions/document/by-cpf';
 
 const AI_BASE_URL = process.env.AI_BASE_URL as string;
 const AI_MODEL = process.env.AI_MODEL as string;
@@ -39,7 +43,7 @@ const SchemaDataExtract = z.object({
 		name: SchemaName,
 		registration: SchemaCPFOrCNPJ,
 		phone: SchemaPhone,
-		birth: SchemaDateString,
+		birth: SchemaDateString.nullish(),
 		profession: z.string().nullish(),
 	}),
 	vehicle: z.object({
@@ -48,11 +52,13 @@ const SchemaDataExtract = z.object({
 		year: z.number(),
 		usage: SchemaVehicleUsage,
 		overnightStayPostalCode: SchemaPostalCode,
-		driver: z.object({
-			name: SchemaName,
-			cpf: SchemaCPF,
-			birth: SchemaDateString,
-		}),
+		driver: z
+			.object({
+				name: SchemaName,
+				cpf: SchemaCPF,
+				birth: SchemaDateString.nullish(),
+			})
+			.nullish(),
 	}),
 	effectivedAt: SchemaDateString.nullish(),
 	requestedAt: SchemaDateString,
@@ -132,6 +138,7 @@ function mountPrompt(text: string): string {
 		- Não invente dados que não estão no texto.
 		- Nenhum campo pode ter mais de um dado, é sempre um único dado, nunca dois dados no mesmo campo separado por "ou", ",", ou algum outro tipo de separador
 		- Na utilização do veículo que for particular, considerar como lazer e ida e volta ao trabalho
+		- O valor da frânquia nunca pode somar de outros serviços, o valor deve ser sempre somente da frânquia base do seguro, e nunca somar nada
 
 		Informações adicionais:
 		- Existe algumas seguradoras que são do mesmo grupo, a onde é referenciado o CNPJ do grupo, mas a proposta pode ser de outras segurada, então veja realmente qual é a segurada quando for nesses casos não pelo rodapé, mas sim pelo cabeçalho ou conteúdo interno como site ou nome do tipo de seguro, pode conseguir achar como em algum lugar "NOME DA SEGURADO seguro (auto, residencial, residencia, etc...)"
@@ -184,9 +191,51 @@ async function extractToAI(text: string): Promise<DataExtract> {
 
 			const valid = SchemaDataExtract.parse(parsed);
 
-			console.log(valid);
+			const [isBirthInsured, isBirthDriver, insuredIsTheDriver] = [
+				!!valid.insured.birth,
+				!!valid.vehicle.driver?.birth,
+				valid.insured.registration === valid.vehicle.driver?.cpf,
+			];
 
-			return valid;
+			const responseValid = valid;
+
+			if (!isBirthInsured || !isBirthDriver) {
+				if (!isBirthInsured) {
+					let document = null;
+
+					if (isCPF(valid.insured.registration)) {
+						document = await documentByCPF(valid.insured.registration);
+					} else {
+						document = await documentByCNPJ(valid.insured.registration);
+					}
+
+					const birth = document.birth;
+
+					responseValid.insured.birth = format(birth, 'dd/MM/yyyy');
+				}
+
+				if (!isBirthInsured && !insuredIsTheDriver) {
+					let document = null;
+
+					if (isCPF(valid.vehicle.driver?.cpf ?? '')) {
+						document = await documentByCPF(valid.vehicle.driver?.cpf ?? '');
+					} else {
+						document = await documentByCNPJ(valid.vehicle.driver?.cpf ?? '');
+					}
+
+					const birth = document.birth;
+
+					if (responseValid.vehicle.driver) {
+						responseValid.vehicle.driver.birth = format(birth, 'dd/MM/yyyy');
+					}
+				} else {
+					if (responseValid.vehicle.driver) {
+						responseValid.vehicle.driver.birth = responseValid.insured.birth;
+					}
+				}
+			}
+
+			return responseValid;
 		} catch (error) {
 			lastError = error;
 
