@@ -2640,7 +2640,7 @@ function InsuranceDataPreview({
 					Parcelas: <b>{data.installments}x</b>
 				</div>
 				<div className='text-sm'>
-					Franquia:{' '}
+					Frânquia:{' '}
 					<b>
 						{new Intl.NumberFormat('pt-BR', {
 							style: 'currency',

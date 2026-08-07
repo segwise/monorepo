@@ -159,7 +159,6 @@ function DialogSafeEndorsementDetails({
 			franchise: 0,
 			amount: 0,
 			percentage: 0,
-			commission: 0,
 		},
 	});
 
