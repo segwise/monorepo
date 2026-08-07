@@ -1,4 +1,4 @@
-function getNumericValueMoney(value: string | number) {
+function getNumericValue(value: string | number) {
 	if (!value) {
 		return 0;
 	}
@@ -7,13 +7,17 @@ function getNumericValueMoney(value: string | number) {
 		return value;
 	}
 
+	if (value.includes('%')) {
+		return Number(value.replace(/%/g, '').replace(/\s/g, '').replace(',', '.'));
+	}
+
 	return Number(
 		value
 			.replace(/R\$\s*/g, '')
-			.replace(/%/g, '')
+
 			.replace(/\./g, '')
 			.replace(',', '.'),
 	);
 }
 
-export { getNumericValueMoney };
+export { getNumericValue };

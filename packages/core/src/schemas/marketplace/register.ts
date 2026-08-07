@@ -1,5 +1,5 @@
 import z from 'zod';
-import { getNumericValueMoney } from '../../utils/get-numeric-value-money';
+import { getNumericValue } from '../../utils/get-numeric-value-money';
 import {
 	SchemaPhone,
 	SchemaPlate,
@@ -76,7 +76,7 @@ const SchemaMarketplaceRegister = z.object({
 	price: z.coerce
 		.number('Preço inválido')
 		.min(1, 'Preço inválido')
-		.or(z.string('Preço inválido').transform(getNumericValueMoney))
+		.or(z.string('Preço inválido').transform(getNumericValue))
 		.refine((value) => value > 0, 'Preço inválido'),
 	acceptExchange: z
 		.literal(['true', 'false'])

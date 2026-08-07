@@ -1,6 +1,6 @@
 import { differenceInYears } from 'date-fns';
 import z from 'zod';
-import { getNumericValueMoney } from '../../../utils/get-numeric-value-money';
+import { getNumericValue } from '../../../utils/get-numeric-value-money';
 import { isCPF } from '../../../valids';
 import { SchemaBirthNoValidation, SchemaCPFOrCNPJ } from '../../utils';
 import { SchemaModality } from '../../utils/modality';
@@ -30,7 +30,7 @@ const SchemaSafeCommission = z
 				.nullish(),
 			discountFixed: z
 				.string('Disconto de comissão inválido')
-				.transform(getNumericValueMoney)
+				.transform(getNumericValue)
 				.or(
 					z.coerce
 						.number('Disconto de comissão inválido')
@@ -157,7 +157,7 @@ const SchemaSafeRegister = z
 				.max(12, 'Máximo 12 parcelas'),
 			award: z
 				.string('Prêmio líquido inválido')
-				.transform(getNumericValueMoney)
+				.transform(getNumericValue)
 				.or(
 					z.coerce
 						.number('Prêmio líquido inválido')
@@ -166,7 +166,7 @@ const SchemaSafeRegister = z
 				.refine((value) => value > 0, 'Prêmio líquido inválido'),
 			franchise: z
 				.string('Frânquia inválido')
-				.transform(getNumericValueMoney)
+				.transform(getNumericValue)
 				.or(z.coerce.number('Frânquia inválido').min(0, 'Frânquia inválido'))
 				.nullish(),
 			// .or(z.coerce.number('Frânquia inválido').min(1, 'Frânquia inválido')),
