@@ -435,27 +435,15 @@ function DialogSafeEndorsementDetails({
 										</Field>
 									)}
 								/>
-								<Controller
-									control={formFranchise.control}
-									name='commission'
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
-											<Input
-												{...field}
-												ref={withMask('brl-currency')}
-												id='commission'
-												aria-invalid={fieldState.invalid}
-												value={String(field.value || '')}
-												placeholder='R$ 000,00'
-												className='text-left!'
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
+								<Field>
+									<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
+									<Input
+										ref={withMask('brl-currency')}
+										id='commission'
+										placeholder='R$ 000,00'
+										className='text-left!'
+									/>
+								</Field>
 							</FieldGroup>
 						</form>
 					)}
