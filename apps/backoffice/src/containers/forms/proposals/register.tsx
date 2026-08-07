@@ -153,7 +153,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	const searchParams = useSearchParams();
 
-	const renewal = searchParams.get('renewal') === 'true' || false;
+	const renewal =
+		(searchParams.get('renewal') && searchParams.get('renewal') === 'true') ||
+		false;
 
 	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
@@ -179,7 +181,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 		setFocus,
 		reset,
 		watch,
-		formState: { isDirty, isValid: isValidForm, errors },
+		formState: { isDirty, isValid: isValidForm },
 	} = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
