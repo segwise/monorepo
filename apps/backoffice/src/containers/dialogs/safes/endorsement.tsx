@@ -1,5 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type EndorsementCancel, SchemaEndorsementCancel } from '@segwise/core';
+import {
+	type EndorsementCancel,
+	SchemaEndorsementCancel,
+	SchemaEndorsementFranchise,
+} from '@segwise/core';
 import { format, startOfToday } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import {
@@ -47,6 +51,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
 	useEndorsementCancel,
+	useEndorsementFranchise,
 	useEndorsements,
 } from '@/libraries/hooks/use-endorsement';
 
@@ -141,7 +146,22 @@ function DialogSafeEndorsementDetails({
 		'vehicle_conductor' | 'address' | 'franchise' | 'cancellation' | null
 	>(null);
 
+	const { mutate: franchise, isPending: isPendingFranchise } =
+		useEndorsementFranchise();
 	const { mutate: cancel, isPending: isCanceling } = useEndorsementCancel();
+
+	const formFranchise = useForm({
+		mode: 'all',
+		criteriaMode: 'all',
+		reValidateMode: 'onChange',
+		resolver: zodResolver(SchemaEndorsementFranchise),
+		defaultValues: {
+			franchise: 0,
+			amount: 0,
+			percentage: 0,
+			commission: 0,
+		},
+	});
 
 	const formCancel = useForm({
 		mode: 'all',
@@ -176,6 +196,42 @@ function DialogSafeEndorsementDetails({
 		);
 	}
 
+	function handleFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
+		if (e.key !== 'Enter') {
+			return;
+		}
+
+		const target = e.target as HTMLElement;
+
+		if (target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON') {
+			return;
+		}
+
+		const form = e.currentTarget;
+
+		const focusable = Array.from(
+			form.querySelectorAll<HTMLElement>(
+				'input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])',
+			),
+		).filter((el) => {
+			return el.offsetParent !== null;
+		});
+
+		const currentIndex = focusable.indexOf(target);
+
+		const isLastField = currentIndex === focusable.length - 1;
+
+		if (isLastField) {
+			return;
+		}
+
+		e.preventDefault();
+
+		if (currentIndex !== -1 && currentIndex < focusable.length - 1) {
+			focusable[currentIndex + 1]?.focus();
+		}
+	}
+
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
@@ -193,23 +249,7 @@ function DialogSafeEndorsementDetails({
 						<Select
 							value={type as keyof typeof type}
 							// @ts-expect-error
-							onValueChange={(value: typeof type) => {
-								const props: typeof type = value;
-
-								setType(props);
-
-								if (props === 'vehicle_conductor') {
-								}
-
-								if (props === 'address') {
-								}
-
-								if (props === 'franchise') {
-								}
-
-								if (props === 'cancellation') {
-								}
-							}}
+							onValueChange={setType}
 						>
 							<SelectTrigger>
 								<SelectValue>
@@ -241,7 +281,11 @@ function DialogSafeEndorsementDetails({
 						</Select>
 					</Field>
 					{type === 'vehicle_conductor' && (
-						<form id='vehicle_conductor' noValidate className='space-y-2 mt-4'>
+						<form
+							noValidate
+							className='space-y-2 mt-4'
+							onKeyDown={handleFormKeyDown}
+						>
 							<FieldGroup className='grid grid-cols-2 gap-2'>
 								<Field>
 									<div className='flex flex-row items-center justify-between'>
@@ -276,8 +320,8 @@ function DialogSafeEndorsementDetails({
 								<Field>
 									<FieldLabel>Percentual:</FieldLabel>
 									<Input
-										ref={withMask('percentage')}
-										placeholder='0%'
+										ref={withMask('decimal')}
+										placeholder='0 %'
 										min={0}
 										max={100}
 									/>
@@ -290,7 +334,11 @@ function DialogSafeEndorsementDetails({
 						</form>
 					)}
 					{type === 'address' && (
-						<form id='address' noValidate className='space-y-2 mt-4'>
+						<form
+							noValidate
+							className='space-y-2 mt-4'
+							onKeyDown={handleFormKeyDown}
+						>
 							<Field>
 								<FieldLabel>CEP:</FieldLabel>
 								<Input placeholder='00000-000' />
@@ -304,8 +352,8 @@ function DialogSafeEndorsementDetails({
 								<Field>
 									<FieldLabel>Percentual:</FieldLabel>
 									<Input
-										ref={withMask('percentage')}
-										placeholder='0%'
+										ref={withMask('decimal')}
+										placeholder='0 %'
 										min={0}
 										max={100}
 									/>
@@ -318,43 +366,108 @@ function DialogSafeEndorsementDetails({
 						</form>
 					)}
 					{type === 'franchise' && (
-						<form id='franchise' noValidate className='space-y-2 mt-4'>
-							<Field>
-								<FieldLabel>Frânquia:</FieldLabel>
-								<Input ref={withMask('brl-currency')} placeholder='R$ 0,00' />
-							</Field>
+						<form
+							noValidate
+							className='space-y-2 mt-4'
+							onKeyDown={handleFormKeyDown}
+						>
+							<Controller
+								control={formFranchise.control}
+								name='franchise'
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel htmlFor='franchise'>Frânquia:</FieldLabel>
+										<Input
+											{...field}
+											ref={withMask('brl-currency')}
+											id='franchise'
+											aria-invalid={fieldState.invalid}
+											value={String(field.value || '')}
+											placeholder='R$ 000,00'
+											className='text-left!'
+										/>
+										{fieldState.invalid && (
+											<FieldError errors={[fieldState.error]} />
+										)}
+									</Field>
+								)}
+							/>
 							<Separator className='opacity-100 my-4' />
 							<FieldGroup className='grid grid-cols-3 gap-2'>
-								<Field>
-									<FieldLabel>Valor:</FieldLabel>
-									<Input ref={withMask('brl-currency')} placeholder='R$ 0,00' />
-								</Field>
-								<Field>
-									<FieldLabel>Percentual:</FieldLabel>
-									<Input
-										ref={withMask('percentage')}
-										placeholder='0%'
-										min={0}
-										max={100}
-									/>
-								</Field>
-								<Field>
-									<FieldLabel>Comissão:</FieldLabel>
-									<Input ref={withMask('brl-currency')} placeholder='R$ 0,00' />
-								</Field>
+								<Controller
+									control={formFranchise.control}
+									name='amount'
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='amount'>Valor:</FieldLabel>
+											<Input
+												{...field}
+												ref={withMask('brl-currency')}
+												id='amount'
+												aria-invalid={fieldState.invalid}
+												value={String(field.value || '')}
+												placeholder='R$ 000,00'
+												className='text-left!'
+											/>
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
+								<Controller
+									control={formFranchise.control}
+									name='percentage'
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='percentage'>Percentual:</FieldLabel>
+											<Input
+												{...field}
+												id='percentage'
+												ref={withMask('percentage')}
+												aria-invalid={fieldState.invalid}
+												value={String(field.value || '')}
+												placeholder='0 %'
+												className='text-left!'
+											/>
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
+								<Controller
+									control={formFranchise.control}
+									name='commission'
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
+											<Input
+												{...field}
+												ref={withMask('brl-currency')}
+												id='commission'
+												aria-invalid={fieldState.invalid}
+												value={String(field.value || '')}
+												placeholder='R$ 000,00'
+												className='text-left!'
+											/>
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
 							</FieldGroup>
 						</form>
 					)}
 					{type === 'cancellation' && (
-						<form noValidate className='mt-4'>
+						<form noValidate className='mt-4' onKeyDown={handleFormKeyDown}>
 							<Controller
 								control={formCancel.control}
 								name='effectivedAt'
 								render={({ field, fieldState }) => (
-									<Field aria-invalid={fieldState.invalid}>
-										<FieldLabel aria-invalid={fieldState.invalid}>
-											Data de cancelamento:
-										</FieldLabel>
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel>Data de cancelamento:</FieldLabel>
 										{/* @ts-ignore */}
 										<DatePickerInput {...field} invalid={fieldState.invalid} />
 										{fieldState.invalid && (

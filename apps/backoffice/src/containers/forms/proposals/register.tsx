@@ -26,7 +26,7 @@ import type { QuoteRegister, SafeRegister } from '@segwise/core/types';
 import {
 	calculatePercentageOfValue,
 	capitalizeFirstLetters,
-	getNumericValueMoney,
+	getNumericValue,
 	professions,
 } from '@segwise/core/utils';
 import { isCNPJ, isCPF, isDateString, isPlate } from '@segwise/core/valids';
@@ -164,7 +164,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 		setFocus,
 		reset,
 		watch,
-		formState: { isDirty, isValid: isValidForm },
+		formState: { isDirty, isValid: isValidForm, errors },
 	} = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
@@ -294,6 +294,8 @@ function FormProposalRegister({ id }: { id?: string }) {
 		}),
 	});
 
+	console.log(errors, SchemaSafeRegister.safeParse(watch()));
+
 	const plate = watch('vehicle.plate');
 
 	const { data: vehicleSearch, isPending: isPendingVehicleSearch } =
@@ -303,7 +305,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	const installments = Number(watch('receivables.installments') || 0);
 	const award =
-		getNumericValueMoney(
+		getNumericValue(
 			// @ts-expect-error
 			watch('receivables.award'),
 		) || 0;
