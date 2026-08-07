@@ -1,6 +1,6 @@
 import { differenceInYears } from 'date-fns';
 import z from 'zod';
-import { getNumericValue } from '../../../utils/get-numeric-value-money';
+import { getNumericValue } from '../../../utils/get-numeric-value';
 import { isCPF } from '../../../valids';
 import { SchemaBirthNoValidation, SchemaCPFOrCNPJ } from '../../utils';
 import { SchemaModality } from '../../utils/modality';

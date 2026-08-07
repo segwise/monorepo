@@ -1,5 +1,5 @@
 import z from 'zod';
-import { getNumericValue } from '../../utils/get-numeric-value-money';
+import { getNumericValue } from '../../utils/get-numeric-value';
 import {
 	SchemaPhone,
 	SchemaPlate,
