@@ -2584,7 +2584,6 @@ function DialogGetDocument({
 								}}
 								onCancel={() => {
 									reset();
-									onOpenChange(false);
 								}}
 							/>
 						)}
