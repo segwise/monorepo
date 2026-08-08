@@ -11,6 +11,8 @@ function registerRoutersServicesEndorsementsFranchise(server: Server) {
 			const id = ctx.req.param('id');
 			const type = EndorsementType.franchise;
 
+			console.log(id);
+
 			const { franchise, amount, percentage } = ctx.req.valid('json');
 
 			const commission = amount * (percentage / 100);
@@ -23,6 +25,23 @@ function registerRoutersServicesEndorsementsFranchise(server: Server) {
 					409,
 				);
 			}
+
+			console.log(
+				await ctx.database.safe.findUnique({
+					where: {
+						id,
+					},
+				}),
+			);
+
+			console.log({
+				safeId: id,
+				type,
+				franchise,
+				amount,
+				percentage,
+				commission: commission || null,
+			});
 
 			await ctx.database.endorsement.create({
 				data: {

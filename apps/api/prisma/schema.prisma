@@ -763,7 +763,7 @@ model Endorsement {
   type EndorsementType
 
   safeId String @map("safe_id") @db.Uuid
-  safe   Safe   @relation("endorsement_to_safe", fields: [id], references: [id], onDelete: Cascade)
+  safe   Safe   @relation("endorsement_to_safe", fields: [safeId], references: [id], onDelete: Cascade)
 
   driverCPF   String?   @map("driver_cpf") @db.VarChar(11)
   driverName  String?   @map("driver_name")
