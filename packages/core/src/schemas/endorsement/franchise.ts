@@ -14,13 +14,13 @@ const SchemaEndorsementFranchise = z.object({
 	percentage: z
 		.string('Percentual inválido')
 		.transform(getNumericValue)
-		.refine((val) => val >= 1 && val <= 100, {
+		.refine((val) => val >= 0 && val <= 100, {
 			message: 'Percentual inválido',
 		})
 		.or(
 			z.coerce
-				.number('Percentual inválidas')
-				.min(1, 'Percentual inválido')
+				.number('Percentual inválido')
+				.min(0, 'Percentual inválido')
 				.max(100, 'Percentual inválido'),
 		),
 });
