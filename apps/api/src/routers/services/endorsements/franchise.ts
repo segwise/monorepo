@@ -26,26 +26,13 @@ function registerRoutersServicesEndorsementsFranchise(server: Server) {
 				);
 			}
 
-			console.log(
-				await ctx.database.safe.findUnique({
-					where: {
-						id,
-					},
-				}),
-			);
-
-			console.log({
-				safeId: id,
-				type,
-				franchise,
-				amount,
-				percentage,
-				commission: commission || null,
-			});
-
 			await ctx.database.endorsement.create({
 				data: {
-					safeId: id,
+					safe: {
+						connect: {
+							id,
+						},
+					},
 					type,
 					franchise,
 					amount,
