@@ -1,4 +1,5 @@
 import type {
+	EndorsementAddress,
 	EndorsementCancel,
 	EndorsementFranchise,
 	EndorsementSimple,
@@ -29,21 +30,23 @@ const useEndorsements = (id: string, enabled?: boolean) =>
 		enabled,
 	});
 
-const useEndorsementCancel = () =>
+const useEndorsementAddress = () =>
 	useMutation<
 		{
 			message: string;
 		},
 		Error,
-		EndorsementCancel & {
+		EndorsementAddress & {
 			id: string;
 		}
 	>({
-		mutationKey: ['endorsements', 'cancel'],
-		mutationFn: async ({ id, effectivedAt }) => {
+		mutationKey: ['endorsements', 'address'],
+		mutationFn: async ({ id, postalCode, amount, percentage }) => {
 			try {
-				const { data } = await api.post(`/endorsements/${id}/cancel`, {
-					effectivedAt,
+				const { data } = await api.post(`/endorsements/${id}/address`, {
+					postalCode,
+					amount,
+					percentage,
 				});
 
 				return data;
@@ -101,4 +104,44 @@ const useEndorsementFranchise = () =>
 		},
 	});
 
-export { useEndorsements, useEndorsementCancel, useEndorsementFranchise };
+const useEndorsementCancel = () =>
+	useMutation<
+		{
+			message: string;
+		},
+		Error,
+		EndorsementCancel & {
+			id: string;
+		}
+	>({
+		mutationKey: ['endorsements', 'cancel'],
+		mutationFn: async ({ id, effectivedAt }) => {
+			try {
+				const { data } = await api.post(`/endorsements/${id}/cancel`, {
+					effectivedAt,
+				});
+
+				return data;
+			} catch (error) {
+				if (error instanceof XiorError) {
+					throw new Error(error.response?.data.message);
+				}
+
+				throw error;
+			}
+		},
+		onSuccess(_, variables, ___, { client }) {
+			const { id } = variables;
+
+			client.resetQueries({
+				queryKey: ['endorsements', id],
+			});
+		},
+	});
+
+export {
+	useEndorsements,
+	useEndorsementAddress,
+	useEndorsementFranchise,
+	useEndorsementCancel,
+};

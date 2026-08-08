@@ -1,8 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+	type EndorsementAddress,
 	type EndorsementCancel,
 	type EndorsementFranchise,
 	getNumericValue,
+	maskPostalCode,
+	SchemaEndorsementAddress,
 	SchemaEndorsementCancel,
 	SchemaEndorsementFranchise,
 } from '@segwise/core';
@@ -52,6 +55,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
+	useEndorsementAddress,
 	useEndorsementCancel,
 	useEndorsementFranchise,
 	useEndorsements,
@@ -151,9 +155,23 @@ function DialogSafeEndorsementDetails({
 		'vehicle_conductor' | 'address' | 'franchise' | 'cancellation' | null
 	>(null);
 
+	const { mutate: address, isPending: isPendingAddress } =
+		useEndorsementAddress();
 	const { mutate: franchise, isPending: isPendingFranchise } =
 		useEndorsementFranchise();
 	const { mutate: cancel, isPending: isCanceling } = useEndorsementCancel();
+
+	const formAddress = useForm({
+		mode: 'all',
+		criteriaMode: 'all',
+		reValidateMode: 'onChange',
+		resolver: zodResolver(SchemaEndorsementAddress),
+		defaultValues: {
+			postalCode: '',
+			amount: 0,
+			percentage: 0,
+		},
+	});
 
 	const formFranchise = useForm({
 		mode: 'all',
@@ -176,6 +194,29 @@ function DialogSafeEndorsementDetails({
 			effectivedAt: startOfToday(),
 		},
 	});
+
+	function onSubmitAddress(props: EndorsementAddress) {
+		toast.dismiss();
+
+		address(
+			{
+				id,
+				...props,
+			},
+			{
+				onSuccess(_, __, ___) {
+					toast.success('Endosso registrado!'.toUpperCase());
+
+					setOpen(false);
+				},
+				onError(error) {
+					toast.error(
+						(error.message ?? 'Falha ao registrar endosso').toUpperCase(),
+					);
+				},
+			},
+		);
+	}
 
 	function onSubmitFranchise(props: EndorsementFranchise) {
 		toast.dismiss();
@@ -366,28 +407,110 @@ function DialogSafeEndorsementDetails({
 							className='space-y-2 mt-4'
 							onKeyDown={handleFormKeyDown}
 						>
-							<Field>
-								<FieldLabel>CEP:</FieldLabel>
-								<Input placeholder='00000-000' />
-							</Field>
+							<Controller
+								control={formAddress.control}
+								name='postalCode'
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel htmlFor='postal-code'>Frânquia:</FieldLabel>
+										<Input
+											{...field}
+											id='postal-code'
+											aria-invalid={fieldState.invalid}
+											value={field.value ?? ''}
+											placeholder='00000-000'
+											className='text-left!'
+											onChange={({ target: { value } }) =>
+												field.onChange(maskPostalCode(value))
+											}
+										/>
+										{fieldState.invalid && (
+											<FieldError errors={[fieldState.error]} />
+										)}
+									</Field>
+								)}
+							/>
 							<Separator className='opacity-100 my-4' />
 							<FieldGroup className='grid grid-cols-3 gap-2'>
+								<Controller
+									control={formAddress.control}
+									name='amount'
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='amount'>Valor:</FieldLabel>
+											<Input
+												{...field}
+												ref={withMask('brl-currency')}
+												id='amount'
+												aria-invalid={fieldState.invalid}
+												value={String(field.value || '')}
+												placeholder='R$ 0,00'
+												className='text-left!'
+											/>
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
+								<Controller
+									control={formAddress.control}
+									name='percentage'
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='percentage'>Percentual:</FieldLabel>
+											<Input
+												{...field}
+												id='percentage'
+												ref={withMask('percentage')}
+												aria-invalid={fieldState.invalid}
+												value={String(field.value || '')}
+												placeholder='0 %'
+												className='text-left!'
+												onKeyDown={(e) => {
+													if (
+														e.code === 'Enter' &&
+														formAddress.formState.isValid
+													) {
+														formAddress.handleSubmit(onSubmitAddress)();
+													}
+												}}
+											/>
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
 								<Field>
-									<FieldLabel>Valor:</FieldLabel>
-									<Input ref={withMask('brl-currency')} placeholder='R$ 0,00' />
-								</Field>
-								<Field>
-									<FieldLabel>Percentual:</FieldLabel>
+									<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
 									<Input
-										ref={withMask('decimal')}
-										placeholder='0 %'
-										min={0}
-										max={100}
+										readOnly
+										ref={withMask('brl-currency')}
+										id='commission'
+										value={
+											// @ts-expect-error
+											getNumericValue(formAddress.watch('amount') ?? 0) &&
+											// @ts-expect-error
+											getNumericValue(formAddress.watch('percentage') ?? 0)
+												? // @ts-expect-error
+													getNumericValue(formAddress.watch('amount') ?? 0) *
+													(getNumericValue(
+														// @ts-expect-error
+														formAddress.watch('percentage') ?? 0,
+													) /
+														100)
+												: undefined
+										}
+										placeholder='R$ 0,00'
+										className='text-left!'
+										tabIndex={-1}
+										onKeyDown={(e) => {
+											if (e.code === 'Enter' && formAddress.formState.isValid) {
+												formAddress.handleSubmit(onSubmitAddress)();
+											}
+										}}
 									/>
-								</Field>
-								<Field>
-									<FieldLabel>Comissão:</FieldLabel>
-									<Input ref={withMask('brl-currency')} placeholder='R$ 0,00' />
 								</Field>
 							</FieldGroup>
 						</form>
@@ -535,9 +658,13 @@ function DialogSafeEndorsementDetails({
 					</DialogClose>
 					<Button
 						type='button'
-						isPending={isPendingFranchise || isCanceling}
+						isPending={isPendingAddress || isPendingFranchise || isCanceling}
 						disabled={!type}
 						onClick={() => {
+							if (type === 'address') {
+								formAddress.handleSubmit(onSubmitAddress)();
+							}
+
 							if (type === 'franchise') {
 								formFranchise.handleSubmit(onSubmitFranchise)();
 							}
