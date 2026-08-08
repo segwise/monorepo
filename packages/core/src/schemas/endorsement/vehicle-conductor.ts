@@ -4,8 +4,14 @@ import { SchemaCPF, SchemaPlate } from '../utils';
 
 const SchemaEndorsementVehicleConductor = z.object({
 	plate: SchemaPlate.nullish(),
-	model: z.string('Modelo do veículo inválido'),
-	modelYear: z.string('Ano do modelo do veículo inválido'),
+	model: z
+		.string('Modelo inválido')
+		.min(1, 'Modelo inválido')
+		.trim()
+		.toLowerCase(),
+	modelYear: z.coerce
+		.number('Ano do modelo inválido')
+		.positive('Ano do modelo inválido'),
 	driver: SchemaCPF,
 	amount: z
 		.string('Valor inválido')
