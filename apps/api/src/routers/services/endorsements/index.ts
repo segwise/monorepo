@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { Server } from '@/@types/server';
 import { registerRoutersServicesEndorsementsCancel } from './cancel';
+import { registerRoutersServicesEndorsementsFranchise } from './franchise';
 import { registerRoutersServicesEndorsementsListining } from './listining';
 
 function registerRoutersServicesEndorsements(server: Server) {
@@ -9,6 +10,7 @@ function registerRoutersServicesEndorsements(server: Server) {
 	);
 
 	registerRoutersServicesEndorsementsListining(base);
+	registerRoutersServicesEndorsementsFranchise(base);
 	registerRoutersServicesEndorsementsCancel(base);
 }
 

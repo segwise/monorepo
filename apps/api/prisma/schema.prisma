@@ -778,6 +778,11 @@ model Endorsement {
 
   effectivedAt DateTime? @map("effectived_at") @db.Date
 
+  franchise  Decimal? @db.Decimal(10, 2)
+  amount     Decimal? @db.Decimal(10, 2)
+  percentage Int?     @db.SmallInt
+  commission Decimal? @db.Decimal(10, 2)
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
