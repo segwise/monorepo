@@ -4,7 +4,7 @@ import type {
 	EndorsementSimple,
 } from '@segwise/core';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { compareAsc } from 'date-fns';
+import { compareDesc } from 'date-fns';
 import { XiorError } from 'xior';
 import { api } from '../api';
 
@@ -19,7 +19,12 @@ const useEndorsements = (id: string, enabled?: boolean) =>
 				},
 			);
 
-			return data?.sort((a, b) => compareAsc(a.createdAt, b.createdAt));
+			return data?.sort((a, b) =>
+				compareDesc(
+					a.effectivedAt ?? a.createdAt,
+					b.effectivedAt ?? b.createdAt,
+				),
+			);
 		},
 		enabled,
 	});

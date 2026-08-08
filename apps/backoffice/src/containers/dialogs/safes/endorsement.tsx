@@ -96,7 +96,7 @@ function DialogSafeEndorsementById({
 						</div>
 					)}
 					{!isPending &&
-						data?.map(({ id, type, effectivedAt }) => (
+						data?.map(({ id, type, effectivedAt, createdAt }) => (
 							<div
 								key={id}
 								className='border border-border bg-muted rounded-md p-4'
@@ -115,7 +115,10 @@ function DialogSafeEndorsementById({
 								</div>
 								<div className='text-sm'>
 									<b>Data:</b>{' '}
-									{format(toZonedTime(effectivedAt, 'UTC'), 'dd/MM/yyyy')}
+									{format(
+										toZonedTime(effectivedAt ?? createdAt, 'UTC'),
+										'dd/MM/yyyy',
+									)}
 								</div>
 							</div>
 						))}

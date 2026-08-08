@@ -180,6 +180,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 						modality,
 						insured,
 						vehicle,
+						status,
 						renewal,
 						insuranceCompany,
 						producer,
@@ -521,7 +522,7 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 											<PaperclipIcon className='size-4!' /> Apólice ( PDF )
 										</DropdownMenuItem>
 										<DialogSafeEndorsementById id={id}>
-											<DropdownMenuItem>
+											<DropdownMenuItem disabled={status === 'canceled'}>
 												<FileEditIcon className='size-4!' /> Endossos
 											</DropdownMenuItem>
 										</DialogSafeEndorsementById>
