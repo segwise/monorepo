@@ -188,8 +188,6 @@ async function extractToAI(text: string): Promise<DataExtract> {
 				.replace(/^```\s*/i, '')
 				.replace(/```\s*$/i, '');
 
-			console.log(jsonClear);
-
 			const parsed = JSON.parse(jsonClear);
 
 			const valid = SchemaDataExtract.parse(parsed);

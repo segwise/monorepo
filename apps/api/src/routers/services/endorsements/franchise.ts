@@ -11,8 +11,6 @@ function registerRoutersServicesEndorsementsFranchise(server: Server) {
 			const id = ctx.req.param('id');
 			const type = EndorsementType.franchise;
 
-			console.log(id);
-
 			const { franchise, amount, percentage } = ctx.req.valid('json');
 
 			const commission = amount * (percentage / 100);
