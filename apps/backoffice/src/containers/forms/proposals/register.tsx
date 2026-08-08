@@ -153,6 +153,8 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	const searchParams = useSearchParams();
 
+	const [readerPDF, setReaderPDF] = useState<boolean>(false);
+
 	const renewal =
 		(searchParams.get('renewal') && searchParams.get('renewal') === 'true') ||
 		false;
@@ -353,6 +355,10 @@ function FormProposalRegister({ id }: { id?: string }) {
 			setValue('producer', props.producer);
 		}
 
+		if (props.insuranceCompany) {
+			setValue('insuranceCompany', props.insuranceCompany);
+		}
+
 		setValue('modality', props.modality);
 
 		if (props.insured.cpf) {
@@ -363,18 +369,27 @@ function FormProposalRegister({ id }: { id?: string }) {
 					: maskCNPJ(props.insured.cpf),
 			);
 		}
+
 		setValue('insured.name', capitalizeFirstLetters(props.insured.name));
 		setValue('insured.birth', props.insured.birth);
 		setValue('insured.phone', maskPhone(props.insured.phone.slice(2)));
+
+		if (props.requestedAt) {
+			setReaderPDF(true);
+			setValue('requestedAt', props.requestedAt);
+		}
 
 		setValue(
 			'vehicle.plate',
 			props.vehicle?.plate ? maskPlate(props.vehicle.plate) : null,
 		);
 
-		const manufacturer = manufacturers?.find(
-			(e) => e.name.toLowerCase() === props.vehicle?.manufacturer.toLowerCase(),
-		)?.id;
+		const manufacturer = props.vehicle?.manufacturer
+			? manufacturers?.find(
+					(e) =>
+						e.name.toLowerCase() === props.vehicle?.manufacturer.toLowerCase(),
+				)?.id
+			: null;
 
 		if (manufacturer) {
 			setValue('vehicle.manufacturer', manufacturer);
@@ -401,6 +416,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 					: maskCNPJ(props.driver.cpf),
 			);
 		}
+
 		if (props.driver.name) {
 			setValue('driver.name', capitalizeFirstLetters(props.driver.name));
 		}
@@ -408,14 +424,53 @@ function FormProposalRegister({ id }: { id?: string }) {
 		if (props.driver.cpf) {
 			setValue('driver.birth', props.driver.birth);
 		}
+
+		// @ts-expect-error
+		if (props.receivables) {
+			// @ts-expect-error
+			if (props.receivables.award) {
+				setValue(
+					'receivables.award',
+					// @ts-expect-error
+					props.receivables.award
+						.toString()
+						.replace('.', ','),
+				);
+			}
+
+			// @ts-expect-error
+			if (props.receivables.franchise) {
+				setValue(
+					'receivables.franchise',
+					// @ts-expect-error
+					props.receivables.franchise
+						.toString()
+						.replace('.', ','),
+				);
+			}
+
+			// @ts-expect-error
+			if (props.receivables.installments) {
+				// @ts-expect-error
+				setValue('receivables.installments', props.receivables.installments);
+			}
+		}
+
+		if (
+			props.driver &&
+			maskNumber(props.driver.cpf) === maskNumber(props.insured.cpf)
+		) {
+			setTheInsuredPartyIsTheDriver(true);
+		}
 	}
 
 	function onSubmit(props: SafeRegister) {
-		(!id || (id && renewal) ? mutate : update)(props, {
+		(!id ? mutate : !!id && renewal ? mutate : update)(props, {
 			onSuccess(data) {
 				toast.success(
 					(
-						data.message || `${safe ? 'Atualizado' : 'Cadastrado'} com sucesso`
+						data.message ||
+						`${!id ? 'Cadastrado' : !!id && renewal ? 'Cadastrado' : 'Atualizado'} com sucesso`
 					).toUpperCase(),
 				);
 
@@ -839,7 +894,11 @@ function FormProposalRegister({ id }: { id?: string }) {
 												</FieldLabel>
 												<DatePickerInput
 													{...field}
-													key={safe ? field.value?.toString() : undefined}
+													key={
+														safe || readerPDF
+															? field.value?.toString()
+															: undefined
+													}
 													id='start-validity'
 													value={
 														field.value instanceof Date ? field.value : null
@@ -2087,9 +2146,12 @@ function FormProposalRegister({ id }: { id?: string }) {
 				form='form-proposal-register'
 				className='w-full'
 				disabled={isMutation || isUpdation || !isDirty}
-				textPending={!safe ? 'Salvando' : 'Atualizando'}
+				textPending={
+					!id ? 'Salvando' : !!id && renewal ? 'Salvando' : 'Atualizando'
+				}
 			>
-				<SaveIcon /> {!safe ? 'Salvar' : 'Atualizar'} Registro
+				<SaveIcon /> {!id ? 'Salvar' : !!id && renewal ? 'Salvar' : 'Atualizar'}{' '}
+				Registro
 			</Button>
 		</Fragment>
 	);
@@ -2314,6 +2376,45 @@ type ExtractDocument = {
 	franchise: number;
 };
 
+function resolveInsuranceCompany(
+	matches: Array<{
+		id: string;
+		name: string;
+		cnpj: string;
+	}>,
+	targetName: string,
+): { id: string; name: string; cnpj: string } | undefined {
+	if (matches.length <= 1) {
+		return matches[0];
+	}
+
+	const normalizedTarget = normalizeName(targetName);
+
+	const exactNameMatch = matches.find(
+		(m) => normalizeName(m.name) === normalizedTarget,
+	);
+
+	if (exactNameMatch) {
+		return exactNameMatch;
+	}
+
+	const partialMatch = matches.find(
+		(m) =>
+			normalizedTarget.includes(normalizeName(m.name)) ||
+			normalizeName(m.name).includes(normalizedTarget),
+	);
+
+	return partialMatch ?? matches[0];
+}
+
+function normalizeName(name: string) {
+	return name
+		.toLowerCase()
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.trim();
+}
+
 function DialogGetDocument({
 	open,
 	onOpenChange,
@@ -2323,11 +2424,13 @@ function DialogGetDocument({
 	onOpenChange: (open: boolean) => void;
 	onChange: (props: QuoteRegister) => void;
 }) {
+	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
+
 	const Schema = z.object({
 		file: z.file('Documento inválido'),
 	});
 
-	const { data, mutate, isPending, isSuccess } = useMutation<
+	const { data, mutate, isPending, isSuccess, reset } = useMutation<
 		ExtractDocument,
 		Error,
 		z.infer<typeof Schema.shape.file>
@@ -2378,7 +2481,17 @@ function DialogGetDocument({
 	}
 
 	function sendData(data: ExtractDocument) {
-		onChange({
+		const matchesCompanies =
+			insuranceCompanies?.filter(
+				(e) => maskNumber(e.cnpj) === maskNumber(data.insuranceCompany.cnpj),
+			) ?? [];
+
+		const company = resolveInsuranceCompany(
+			matchesCompanies,
+			data.insuranceCompany.name,
+		);
+
+		const send: QuoteRegister = {
 			driver: {
 				birth: parse(
 					data.vehicle?.driver?.birth ?? data.insured.birth,
@@ -2389,7 +2502,7 @@ function DialogGetDocument({
 				name: data.vehicle?.driver?.name ?? data.insured.name,
 			},
 			expiration: parse(data.expirationAt, 'dd/MM/yyyy', endOfToday()),
-			insuranceCompany: '',
+			insuranceCompany: company?.id,
 			// @ts-expect-error
 			insured: {
 				birth: parse(data.insured.birth, 'dd/MM/yyyy', startOfToday()),
@@ -2407,7 +2520,14 @@ function DialogGetDocument({
 				// @ts-expect-error
 				usage: data.vehicle?.usage,
 			},
-		});
+			receivables: {
+				award: data.award,
+				franchise: data.franchise,
+				installments: data.installments,
+			},
+		};
+
+		onChange(send);
 	}
 
 	return (
@@ -2440,6 +2560,8 @@ function DialogGetDocument({
 										onChange={(e) => {
 											const file = e.target.files?.[0];
 
+											reset();
+
 											if (file) {
 												field.onChange(file);
 											}
@@ -2455,11 +2577,15 @@ function DialogGetDocument({
 							<InsuranceDataPreview
 								data={data}
 								onConfirm={(parsed) => {
-									sendData(parsed);
+									onOpenChange(false);
 
+									reset();
+									sendData(parsed);
+								}}
+								onCancel={() => {
+									reset();
 									onOpenChange(false);
 								}}
-								onCancel={() => onOpenChange(false)}
 							/>
 						)}
 					</form>

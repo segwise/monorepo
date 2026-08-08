@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
 	type EndorsementCancel,
+	type EndorsementFranchise,
+	getNumericValue,
 	SchemaEndorsementCancel,
 	SchemaEndorsementFranchise,
 } from '@segwise/core';
@@ -172,13 +174,36 @@ function DialogSafeEndorsementDetails({
 		},
 	});
 
+	function onSubmitFranchise(props: EndorsementFranchise) {
+		toast.dismiss();
+
+		franchise(
+			{
+				id,
+				...props,
+			},
+			{
+				onSuccess(_, __, ___) {
+					toast.success('Endosso registrado!'.toUpperCase());
+
+					setOpen(false);
+				},
+				onError(error) {
+					toast.error(
+						(error.message ?? 'Falha ao registrar endosso').toUpperCase(),
+					);
+				},
+			},
+		);
+	}
+
 	function onSubmitCancel(props: EndorsementCancel) {
 		toast.dismiss();
 
 		cancel(
 			{
 				id,
-				effectivedAt: props.effectivedAt,
+				...props,
 			},
 			{
 				onSuccess(_, __, ___) {
@@ -382,7 +407,7 @@ function DialogSafeEndorsementDetails({
 											id='franchise'
 											aria-invalid={fieldState.invalid}
 											value={String(field.value || '')}
-											placeholder='R$ 000,00'
+											placeholder='R$ 0,00'
 											className='text-left!'
 										/>
 										{fieldState.invalid && (
@@ -405,7 +430,7 @@ function DialogSafeEndorsementDetails({
 												id='amount'
 												aria-invalid={fieldState.invalid}
 												value={String(field.value || '')}
-												placeholder='R$ 000,00'
+												placeholder='R$ 0,00'
 												className='text-left!'
 											/>
 											{fieldState.invalid && (
@@ -428,6 +453,14 @@ function DialogSafeEndorsementDetails({
 												value={String(field.value || '')}
 												placeholder='0 %'
 												className='text-left!'
+												onKeyDown={(e) => {
+													if (
+														e.code === 'Enter' &&
+														formFranchise.formState.isValid
+													) {
+														formFranchise.handleSubmit(onSubmitFranchise)();
+													}
+												}}
 											/>
 											{fieldState.invalid && (
 												<FieldError errors={[fieldState.error]} />
@@ -438,10 +471,34 @@ function DialogSafeEndorsementDetails({
 								<Field>
 									<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
 									<Input
+										readOnly
 										ref={withMask('brl-currency')}
 										id='commission'
-										placeholder='R$ 000,00'
+										value={
+											// @ts-expect-error
+											getNumericValue(formFranchise.watch('amount') ?? 0) &&
+											// @ts-expect-error
+											getNumericValue(formFranchise.watch('percentage') ?? 0)
+												? // @ts-expect-error
+													getNumericValue(formFranchise.watch('amount') ?? 0) *
+													(getNumericValue(
+														// @ts-expect-error
+														formFranchise.watch('percentage') ?? 0,
+													) /
+														100)
+												: undefined
+										}
+										placeholder='R$ 0,00'
 										className='text-left!'
+										tabIndex={-1}
+										onKeyDown={(e) => {
+											if (
+												e.code === 'Enter' &&
+												formFranchise.formState.isValid
+											) {
+												formFranchise.handleSubmit(onSubmitFranchise)();
+											}
+										}}
 									/>
 								</Field>
 							</FieldGroup>
@@ -475,9 +532,13 @@ function DialogSafeEndorsementDetails({
 					</DialogClose>
 					<Button
 						type='button'
-						isPending={isCanceling}
+						isPending={isPendingFranchise || isCanceling}
 						disabled={!type}
 						onClick={() => {
+							if (type === 'franchise') {
+								formFranchise.handleSubmit(onSubmitFranchise)();
+							}
+
 							if (type === 'cancellation') {
 								formCancel.handleSubmit(onSubmitCancel)();
 							}

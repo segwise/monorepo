@@ -70,13 +70,12 @@ const useEndorsementFranchise = () =>
 		}
 	>({
 		mutationKey: ['endorsements', 'franchise'],
-		mutationFn: async ({ id, franchise, amount, percentage, commission }) => {
+		mutationFn: async ({ id, franchise, amount, percentage }) => {
 			try {
 				const { data } = await api.post(`/endorsements/${id}/franchise`, {
 					franchise,
 					amount,
 					percentage,
-					commission,
 				});
 
 				return data;
