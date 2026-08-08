@@ -24,21 +24,14 @@ function registerRoutersServicesEndorsementsFranchise(server: Server) {
 				);
 			}
 
-			await ctx.database.safe.update({
-				where: {
-					id,
-				},
+			await ctx.database.endorsement.create({
 				data: {
-					endorsements: {
-						create: {
-							safeId: id,
-							type,
-							franchise,
-							amount,
-							percentage,
-							commission: commission || null,
-						},
-					},
+					safeId: id,
+					type,
+					franchise,
+					amount,
+					percentage,
+					commission: commission || null,
 				},
 			});
 
