@@ -5,7 +5,7 @@ const SchemaEndorsementFranchise = z.object({
 	franchise: z
 		.string('Frânquia inválido')
 		.transform(getNumericValue)
-		.or(z.coerce.number('Frânquia inválido').min(0, 'Frânquia inválido')),
+		.or(z.coerce.number('Frânquia inválido').min(1, 'Frânquia inválido')),
 	amount: z
 		.string('Valor inválido')
 		.transform(getNumericValue)
