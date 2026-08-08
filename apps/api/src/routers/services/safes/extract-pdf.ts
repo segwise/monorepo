@@ -13,6 +13,7 @@ import {
 	SchemaPostalCode,
 	SchemaVehicleUsage,
 } from '@segwise/core';
+
 import { format } from 'date-fns';
 import { PDFParse } from 'pdf-parse';
 import { z } from 'zod';
@@ -288,7 +289,22 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 
 				const buffer = await file.arrayBuffer();
 
+				const hash = Bun.hash(buffer).toString(16);
+
+				const cached = await ctx.cache.get(`pdf-extract:${hash}`);
+
+				if (cached) {
+					return ctx.json(JSON.parse(cached), 200);
+				}
+
 				const data = await extractData(buffer);
+
+				await ctx.cache.set(
+					`pdf-extract:${hash}`,
+					JSON.stringify(data),
+					'EX',
+					60 * 60 * 24 * 1,
+				);
 
 				return ctx.json(data, 200);
 			} catch {
