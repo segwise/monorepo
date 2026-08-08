@@ -783,6 +783,8 @@ model Endorsement {
   percentage Int?     @db.SmallInt
   commission Decimal? @db.Decimal(10, 2)
 
+  overnightPostalCode String? @map("overnight_postal_code") @db.VarChar(8)
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
