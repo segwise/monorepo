@@ -13,6 +13,10 @@ const SchemaEndorsementVehicleConductor = z.object({
 		.number('Ano do modelo inválido')
 		.positive('Ano do modelo inválido'),
 	driver: SchemaCPF,
+	franchise: z
+		.string('Frânquia inválido')
+		.transform(getNumericValue)
+		.or(z.coerce.number('Frânquia inválido').min(1, 'Frânquia inválido')),
 	amount: z
 		.string('Valor inválido')
 		.transform(getNumericValue)
