@@ -237,25 +237,44 @@ function RequestQuoteVehicle() {
 				<DialogContent showClose={false}>
 					<DialogHeader>
 						<DialogTitle className='leading-snug text-center'>
-							TEM SEGURO AUTO, INCLUA AGORA
+							TEM SEGURO AUTO EM OUTRA CORRETORA OU BANCO
 						</DialogTitle>
 						<View className='mt-2'>
+							<Text className='text-base text-left font-medium mb-1'>
+								INCLUA AQUI, AGORA, SEU(s) SEGURO(s)
+							</Text>
 							<Text className='text-base text-left font-medium mb-1'>
 								Benefícios:
 							</Text>
 							<Text className='text-base text-left font-normal leading-tight mt-1'>
-								1 - Acesso rápido as assistências da sua seguradora;
+								1 – Acesso rápido as assistências da sua seguradora ( guincho,
+								abrir sinistro, vidros, e etc... )
 							</Text>
 							<Text className='text-base text-left font-normal leading-tight mt-1'>
-								2 - Orçamento grátis e sem compromisso com os melhores
-								descontos;
+								2 – Na hora do sinistro, como agir, para onde ligar, o que
+								fazer, e se houve vítimas ( Encontre orientações neste
+								aplicativo )
 							</Text>
 							<Text className='text-base text-left font-normal leading-tight mt-1'>
-								3 - Inclua todos os seguros da família e ganhe agilidade na
-								consulta das renovações e acesso às assistências.
+								3 – Gerencie seu seguro e de sua família em uma única platafora,
+								e nunca mais esqueça sua seguradora
 							</Text>
-							<Text className='mt-5 text-base font-medium leading-tight'>
-								Obs: Após incluir o(s) seguro(s){'\n'}Acesse: Meus Seguros
+							<Text className='text-base text-left font-normal leading-tight mt-1'>
+								4 – Orçamento - Grátis, sem compromisso, melhores descontos
+							</Text>
+							<Text className='text-base text-left font-normal leading-tight mt-1'>
+								5 – Comprar ou vender um veículo: Valor FIPE - Multas - Gravame
+								- Infrações - Débitos - IPVA - Sinistros e outras informações
+							</Text>
+							<Text className='mt-5 text-base font-normal leading-tight'>
+								Incluiu ? Acesse:{' '}
+								<Text className='font-semibold underline'>MEUS SEGUROS</Text>
+							</Text>
+							<Text className='mt-5 text-base font-normal leading-tight'>
+								COMPARTILHE COM AMIGOS
+							</Text>
+							<Text className='mt-5 text-base font-semibold leading-tight'>
+								SINTA-SE SEGURO A QUALQUER HORA OU LUGAR
 							</Text>
 						</View>
 						<DialogFooter className='flex-row items-center justify-between mt-2'>
