@@ -13,7 +13,7 @@ function registerRoutersServicesEndorsementsFranchise(server: Server) {
 
 			const { franchise, amount, percentage } = ctx.req.valid('json');
 
-			const commission = amount * (percentage / 100);
+			const commission = percentage ? amount * (percentage / 100) : null;
 
 			if (!id) {
 				return ctx.json(
@@ -36,7 +36,7 @@ function registerRoutersServicesEndorsementsFranchise(server: Server) {
 							franchise,
 							amount,
 							percentage,
-							commission: commission || null,
+							commission,
 						},
 					},
 				},

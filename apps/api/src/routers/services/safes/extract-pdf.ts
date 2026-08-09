@@ -34,40 +34,50 @@ const cilentAnthropic = new Anthropic({
 	timeout: REQUEST_TIMEOUT_MS,
 });
 
-const SchemaDataExtract = z.object({
-	modality: SchemaModality,
-	insuranceCompany: z.object({
-		name: SchemaName,
-		cnpj: SchemaCNPJ,
-	}),
-	insured: z.object({
-		name: SchemaName,
-		registration: SchemaCPFOrCNPJ,
-		phone: SchemaPhone,
-		birth: SchemaDateString.nullish(),
-		profession: z.string().nullish(),
-	}),
-	vehicle: z.object({
-		plate: SchemaPlate,
-		model: z.string(),
-		year: z.number(),
-		usage: SchemaVehicleUsage,
-		overnightStayPostalCode: SchemaPostalCode,
-		driver: z
+const SchemaDataExtract = z
+	.object({
+		modality: SchemaModality,
+		insuranceCompany: z
+			.object({
+				id: z.uuidv7('ID da seguradora inválida'),
+				name: SchemaName,
+				cnpj: SchemaCNPJ,
+			})
+			.strict(),
+		insured: z
 			.object({
 				name: SchemaName,
-				cpf: SchemaCPF,
+				registration: SchemaCPFOrCNPJ,
+				phone: SchemaPhone,
 				birth: SchemaDateString.nullish(),
+				profession: z.string().nullish(),
 			})
-			.nullish(),
-	}),
-	effectivedAt: SchemaDateString.nullish(),
-	requestedAt: SchemaDateString,
-	expirationAt: SchemaDateString,
-	award: z.number(),
-	installments: z.number(),
-	franchise: z.number(),
-});
+			.strict(),
+		vehicle: z
+			.object({
+				plate: SchemaPlate,
+				model: z.string(),
+				year: z.number(),
+				usage: SchemaVehicleUsage,
+				overnightStayPostalCode: SchemaPostalCode,
+				driver: z
+					.object({
+						name: SchemaName,
+						cpf: SchemaCPF,
+						birth: SchemaDateString.nullish(),
+					})
+					.strict()
+					.nullish(),
+			})
+			.strict(),
+		effectivedAt: SchemaDateString.nullish(),
+		requestedAt: SchemaDateString,
+		expirationAt: SchemaDateString,
+		award: z.number(),
+		installments: z.number(),
+		franchise: z.number(),
+	})
+	.strict();
 
 type DataExtract = z.infer<typeof SchemaDataExtract>;
 
@@ -95,7 +105,19 @@ function chunkText(text: string, maxChars = 24_000): string {
 	return text.slice(0, maxChars);
 }
 
-function mountPrompt(text: string): string {
+function mountPrompt(
+	text: string,
+	{
+		database: { insuranceCompanies },
+	}: {
+		database: {
+			insuranceCompanies: Array<{
+				id: string;
+				name: string;
+			}>;
+		};
+	},
+): string {
 	return `Extraia os seguintes dados do texto abaixo, extraído de um PDF.
 
 		Responda APENAS com um objeto JSON no formato exato abaixo, sem texto adicional, sem markdown, sem \`\`\`:
@@ -103,7 +125,8 @@ function mountPrompt(text: string): string {
 		{
 			"modality": "string, tipo de seguro, enum (vehicle, motorcycle, truck, health, residence, business, condominium, travel, professional, construction)",
 			"insuranceCompany": {
-				"name": "string, nome da seguradora",
+				"id": "string, uuid da seguradora no banco de dados informado em 'Dados do meu banco de dados / Seguradoras'"
+				"name": "string, nome da seguradora no banco de dados informado em 'Dados do meu banco de dados / Seguradoras'",
 				"cnpj": "string, cnpj da seguradora"
 			},
 			"insured": {
@@ -140,10 +163,15 @@ function mountPrompt(text: string): string {
 		- Nenhum campo pode ter mais de um dado, é sempre um único dado, nunca dois dados no mesmo campo separado por "ou", ",", ou algum outro tipo de separador
 		- Na utilização do veículo que for particular, considerar como lazer e ida e volta ao trabalho
 		- O valor da frânquia nunca pode somar de outros serviços, o valor deve ser sempre somente da frânquia base do seguro, e nunca somar nada
+		- O ID e o Nome da seguradora você vai ver os dados em 'Dados do meu banco de dados / Seguradoras' pra popular esses parâmetros do "insuranceCompany" baseado no meu banco de dados 
 
 		Informações adicionais:
 		- Existe algumas seguradoras que são do mesmo grupo, a onde é referenciado o CNPJ do grupo, mas a proposta pode ser de outras segurada, então veja realmente qual é a segurada quando for nesses casos não pelo rodapé, mas sim pelo cabeçalho ou conteúdo interno como site ou nome do tipo de seguro, pode conseguir achar como em algum lugar "NOME DA SEGURADO seguro (auto, residencial, residencia, etc...)"
 		- Quando identificar como seguradora yellum, verifica se tem em algum lugar como aliro seguro, pois pode ser que seja da aliro e não da yellum pois são do mesmo grupo, mas marcas diferentes que respondem pelo mesmo grupo, então informe seguradora como aliro
+		
+		Dados do meu banco de dados:
+		- Seguradoras:
+			${JSON.stringify(insuranceCompanies)}
 
 		Texto do documento:
 		"""
@@ -152,13 +180,25 @@ function mountPrompt(text: string): string {
 	`;
 }
 
-async function extractToAI(text: string): Promise<DataExtract> {
+async function extractToAI(
+	text: string,
+	insuranceCompanies: Array<{
+		id: string;
+		name: string;
+	}>,
+): Promise<DataExtract> {
 	const textChunk = chunkText(text);
 
 	let lastError: unknown;
 
 	for (let retry = 1; retry <= MAX_RETRIES; retry++) {
 		try {
+			const content = mountPrompt(textChunk, {
+				database: {
+					insuranceCompanies,
+				},
+			});
+
 			const response = await cilentAnthropic.messages.create({
 				model: AI_MODEL,
 				messages: [
@@ -169,7 +209,7 @@ async function extractToAI(text: string): Promise<DataExtract> {
 					},
 					{
 						role: 'user',
-						content: mountPrompt(textChunk),
+						content,
 					},
 				],
 				max_tokens: 0,
@@ -257,11 +297,17 @@ async function extractToAI(text: string): Promise<DataExtract> {
 	);
 }
 
-async function extractData(path: ArrayBuffer) {
+async function extractData(
+	path: ArrayBuffer,
+	insuranceCompanies: Array<{
+		id: string;
+		name: string;
+	}>,
+) {
 	try {
 		const textToPDF = await extractTextToPDF(path);
 
-		const data = await extractToAI(textToPDF);
+		const data = await extractToAI(textToPDF, insuranceCompanies);
 
 		return data;
 	} catch (error) {
@@ -297,7 +343,15 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 					return ctx.json(JSON.parse(cached), 200);
 				}
 
-				const data = await extractData(buffer);
+				const data = await extractData(
+					buffer,
+					await ctx.database.insuranceCompany.findMany({
+						select: {
+							id: true,
+							name: true,
+						},
+					}),
+				);
 
 				await ctx.cache.set(
 					`pdf-extract:${hash}`,

@@ -4,6 +4,7 @@ import { registerRoutersServicesEndorsementsAddress } from './address';
 import { registerRoutersServicesEndorsementsCancel } from './cancel';
 import { registerRoutersServicesEndorsementsFranchise } from './franchise';
 import { registerRoutersServicesEndorsementsListining } from './listining';
+import { registerRoutersServicesEndorsementsVehicleConductor } from './vehicle-conductor';
 
 function registerRoutersServicesEndorsements(server: Server) {
 	const base = server.basePath(
@@ -11,6 +12,7 @@ function registerRoutersServicesEndorsements(server: Server) {
 	);
 
 	registerRoutersServicesEndorsementsListining(base);
+	registerRoutersServicesEndorsementsVehicleConductor(base);
 	registerRoutersServicesEndorsementsAddress(base);
 	registerRoutersServicesEndorsementsFranchise(base);
 	registerRoutersServicesEndorsementsCancel(base);

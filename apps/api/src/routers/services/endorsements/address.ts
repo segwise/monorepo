@@ -13,7 +13,7 @@ function registerRoutersServicesEndorsementsAddress(server: Server) {
 
 			const { postalCode, amount, percentage } = ctx.req.valid('json');
 
-			const commission = amount * (percentage / 100);
+			const commission = percentage ? amount * (percentage / 100) : null;
 
 			if (!id) {
 				return ctx.json(
@@ -40,7 +40,7 @@ function registerRoutersServicesEndorsementsAddress(server: Server) {
 							overnightPostalCode: postalCode,
 							amount,
 							percentage,
-							commission: commission || null,
+							commission,
 						},
 					},
 				},
