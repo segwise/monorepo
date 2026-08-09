@@ -1,13 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+	capitalizeFirstLetters,
 	type EndorsementAddress,
 	type EndorsementCancel,
 	type EndorsementFranchise,
+	type EndorsementVehicleConductor,
 	getNumericValue,
+	maskCPF,
+	maskPlate,
 	maskPostalCode,
 	SchemaEndorsementAddress,
 	SchemaEndorsementCancel,
 	SchemaEndorsementFranchise,
+	SchemaEndorsementVehicleConductor,
 } from '@segwise/core';
 import { format, startOfToday } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
@@ -54,12 +59,17 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 import {
 	useEndorsementAddress,
 	useEndorsementCancel,
 	useEndorsementFranchise,
 	useEndorsements,
+	useEndorsementVehicleConductor,
+	useEndorsementVehicleConductorQuery,
 } from '@/libraries/hooks/use-endorsement';
+import { useVehiclesPlate } from '@/libraries/hooks/vehicles/use-vehicles-plate';
+import { cn } from '@/libraries/utils';
 
 interface DialogSafeEndorsementByIdProps {
 	id: string;
@@ -155,11 +165,54 @@ function DialogSafeEndorsementDetails({
 		'vehicle_conductor' | 'address' | 'franchise' | 'cancellation' | null
 	>(null);
 
+	const [notPlate, setNotPlate] = useState<boolean>(false);
+
+	const { data: vehicleConductorQuery } = useEndorsementVehicleConductorQuery(
+		id,
+		type === 'vehicle_conductor',
+	);
+	const { mutate: vehicleConductor, isPending: isPendingVehicleCondutor } =
+		useEndorsementVehicleConductor();
 	const { mutate: address, isPending: isPendingAddress } =
 		useEndorsementAddress();
 	const { mutate: franchise, isPending: isPendingFranchise } =
 		useEndorsementFranchise();
 	const { mutate: cancel, isPending: isCanceling } = useEndorsementCancel();
+
+	const formVehicleConductor = useForm({
+		mode: 'all',
+		criteriaMode: 'all',
+		reValidateMode: 'onChange',
+		resolver: zodResolver(SchemaEndorsementVehicleConductor),
+		defaultValues: {
+			driver: vehicleConductorQuery?.driver.cpf
+				? maskCPF(vehicleConductorQuery.driver.cpf)
+				: '',
+			plate: vehicleConductorQuery?.vehicle.plate
+				? maskPlate(vehicleConductorQuery.vehicle.plate)
+				: '',
+			model: vehicleConductorQuery?.vehicle.model
+				? capitalizeFirstLetters(vehicleConductorQuery.vehicle.model)
+				: '',
+			modelYear: vehicleConductorQuery?.vehicle.modelYear ?? '',
+			franchise: 0,
+			amount: 0,
+			percentage: 0,
+		},
+		...(vehicleConductorQuery && {
+			values: {
+				driver: maskCPF(vehicleConductorQuery.driver.cpf),
+				plate: vehicleConductorQuery.vehicle.plate
+					? maskPlate(vehicleConductorQuery.vehicle.plate)
+					: null,
+				model: vehicleConductorQuery.vehicle.model,
+				modelYear: vehicleConductorQuery.vehicle.modelYear,
+				franchise: 0,
+				amount: 0,
+				percentage: 0,
+			},
+		}),
+	});
 
 	const formAddress = useForm({
 		mode: 'all',
@@ -194,6 +247,37 @@ function DialogSafeEndorsementDetails({
 			effectivedAt: startOfToday(),
 		},
 	});
+
+	const { data: plateResponse } = useVehiclesPlate(
+		formVehicleConductor.watch('plate') ?? '',
+	);
+
+	const { data: driverResponse } = useCpfOrCnpj(
+		formVehicleConductor.watch('driver'),
+	);
+
+	function onSubmitVehicleConductor(props: EndorsementVehicleConductor) {
+		toast.dismiss();
+
+		vehicleConductor(
+			{
+				id,
+				...props,
+			},
+			{
+				onSuccess(_, __, ___) {
+					toast.success('Endosso registrado!'.toUpperCase());
+
+					setOpen(false);
+				},
+				onError(error) {
+					toast.error(
+						(error.message ?? 'Falha ao registrar endosso').toUpperCase(),
+					);
+				},
+			},
+		);
+	}
 
 	function onSubmitAddress(props: EndorsementAddress) {
 		toast.dismiss();
@@ -303,7 +387,7 @@ function DialogSafeEndorsementDetails({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent removeOverlay>
+			<DialogContent overlayOpacityDivide>
 				<DialogHeader>
 					<DialogTitle>Novo Endosso</DialogTitle>
 					<DialogDescription>
@@ -355,48 +439,239 @@ function DialogSafeEndorsementDetails({
 							onKeyDown={handleFormKeyDown}
 						>
 							<FieldGroup className='grid grid-cols-2 gap-2'>
-								<Field>
-									<div className='flex flex-row items-center justify-between'>
-										<FieldLabel>Placa:</FieldLabel>
-										<FieldLabel
-											htmlFor='not-plate'
-											className='flex flex-row items-center justify-end gap-x-1 text-xs'
+								<Controller
+									control={formVehicleConductor.control}
+									name={notPlate ? 'model' : 'plate'}
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<div className='flex flex-row items-center justify-between'>
+												<FieldLabel>
+													{notPlate ? 'Modelo' : 'Placa'}:
+												</FieldLabel>
+												<FieldLabel
+													htmlFor='not-plate'
+													className='flex flex-row items-center justify-end gap-x-1 text-xs'
+												>
+													Sem placa?{' '}
+													<Switch
+														id='not-plate'
+														size='sm'
+														checked={notPlate}
+														onCheckedChange={(value) => {
+															setNotPlate(value);
+
+															formVehicleConductor.setValue('plate', null);
+															formVehicleConductor.setValue('model', '');
+															formVehicleConductor.setValue('modelYear', null);
+														}}
+													/>
+												</FieldLabel>
+											</div>
+											{!notPlate && (
+												<Input
+													{...field}
+													value={String(field.value ?? '')}
+													placeholder='AAA-0000 ou AAA0A00'
+													onChange={({ target: { value } }) =>
+														field.onChange(maskPlate(value))
+													}
+												/>
+											)}
+											{notPlate && (
+												<Input
+													{...field}
+													value={String(field.value ?? '')}
+													placeholder='Modelo do veículo'
+													onChange={({ target: { value } }) =>
+														field.onChange(capitalizeFirstLetters(value))
+													}
+												/>
+											)}
+											{plateResponse && (
+												<FieldDescription className='text-foreground text-xs -mt-2'>
+													{capitalizeFirstLetters(plateResponse.model)} /{' '}
+													{plateResponse.modelYear}
+												</FieldDescription>
+											)}
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
+								{notPlate && (
+									<Controller
+										control={formVehicleConductor.control}
+										name='modelYear'
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='model-year'>
+													Ano do Modelo:
+												</FieldLabel>
+												<Input
+													{...field}
+													id='model-year'
+													aria-invalid={fieldState.invalid}
+													value={String(field.value || '')}
+													placeholder='0000'
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+								)}
+								<Controller
+									control={formVehicleConductor.control}
+									name='franchise'
+									render={({ field, fieldState }) => (
+										<Field
+											data-invalid={fieldState.invalid}
+											className={cn('', notPlate && 'col-span-full')}
 										>
-											Sem placa? <Switch id='not-plate' size='sm' />
-										</FieldLabel>
-									</div>
-									<Input placeholder='AAA-0000 ou AAA0A00' />
-								</Field>
-								<Field>
-									<FieldLabel>Frânquia:</FieldLabel>
-									<Input ref={withMask('brl-currency')} placeholder='R$ 0,00' />
-								</Field>
-								<Field className='col-span-full'>
-									<FieldLabel>CPF do Condutor:</FieldLabel>
-									<Input placeholder='000.000.000-00' />
-									<FieldDescription className='text-foreground text-xs -mt-2'>
-										Nome do condutor
-									</FieldDescription>
-								</Field>
+											<FieldLabel htmlFor='franchise'>Frânquia:</FieldLabel>
+											<Input
+												{...field}
+												ref={withMask('brl-currency')}
+												id='franchise'
+												aria-invalid={fieldState.invalid}
+												value={String(field.value || '')}
+												placeholder='R$ 0,00'
+												className='text-left!'
+											/>
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
+								<Controller
+									control={formVehicleConductor.control}
+									name='driver'
+									render={({ field, fieldState }) => (
+										<Field
+											data-invalid={fieldState.invalid}
+											className='col-span-full'
+										>
+											<FieldLabel>CPF do Condutor:</FieldLabel>
+											<Input
+												{...field}
+												aria-invalid={fieldState.invalid}
+												placeholder='000.000.000-00'
+												onChange={({ target: { value } }) =>
+													field.onChange(maskCPF(value))
+												}
+											/>
+											{driverResponse?.name && (
+												<FieldDescription className='text-foreground text-xs -mt-2'>
+													{capitalizeFirstLetters(driverResponse.name)}
+												</FieldDescription>
+											)}
+										</Field>
+									)}
+								/>
 							</FieldGroup>
 							<Separator className='opacity-100 my-4' />
 							<FieldGroup className='grid grid-cols-3 gap-2'>
+								<Controller
+									control={formVehicleConductor.control}
+									name='amount'
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='amount'>Valor:</FieldLabel>
+											<Input
+												{...field}
+												ref={withMask('brl-currency')}
+												id='amount'
+												aria-invalid={fieldState.invalid}
+												value={String(field.value || '')}
+												placeholder='R$ 0,00'
+												className='text-left!'
+											/>
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
+								<Controller
+									control={formVehicleConductor.control}
+									name='percentage'
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='percentage'>Percentual:</FieldLabel>
+											<Input
+												{...field}
+												id='percentage'
+												ref={withMask('percentage')}
+												aria-invalid={fieldState.invalid}
+												value={String(field.value || '')}
+												placeholder='0 %'
+												className='text-left!'
+												onKeyDown={(e) => {
+													if (
+														e.code === 'Enter' &&
+														formVehicleConductor.formState.isValid
+													) {
+														formVehicleConductor.handleSubmit(
+															onSubmitVehicleConductor,
+														)();
+													}
+												}}
+											/>
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
 								<Field>
-									<FieldLabel>Valor:</FieldLabel>
-									<Input ref={withMask('brl-currency')} placeholder='R$ 0,00' />
-								</Field>
-								<Field>
-									<FieldLabel>Percentual:</FieldLabel>
+									<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
 									<Input
-										ref={withMask('decimal')}
-										placeholder='0 %'
-										min={0}
-										max={100}
+										readOnly
+										ref={withMask('brl-currency')}
+										id='commission'
+										value={
+											getNumericValue(
+												// @ts-expect-error
+												formVehicleConductor.watch('percentage') ?? 0,
+											) === 0
+												? ''
+												: getNumericValue(
+															// @ts-expect-error
+															formVehicleConductor.watch('amount') ?? 0,
+														) &&
+														getNumericValue(
+															// @ts-expect-error
+
+															formVehicleConductor.watch('percentage') ?? 0,
+														)
+													? getNumericValue(
+															// @ts-expect-error
+															formVehicleConductor.watch('amount') ?? 0,
+														) *
+														(getNumericValue(
+															// @ts-expect-error
+															formVehicleConductor.watch('percentage') ?? 0,
+														) /
+															100)
+													: ''
+										}
+										placeholder='R$ 0,00'
+										className='text-left!'
+										tabIndex={-1}
+										onKeyDown={(e) => {
+											if (
+												e.code === 'Enter' &&
+												formVehicleConductor.formState.isValid
+											) {
+												formVehicleConductor.handleSubmit(
+													onSubmitVehicleConductor,
+												)();
+											}
+										}}
 									/>
-								</Field>
-								<Field>
-									<FieldLabel>Comissão:</FieldLabel>
-									<Input ref={withMask('brl-currency')} placeholder='R$ 0,00' />
 								</Field>
 							</FieldGroup>
 						</form>
@@ -412,7 +687,9 @@ function DialogSafeEndorsementDetails({
 								name='postalCode'
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor='postal-code'>Frânquia:</FieldLabel>
+										<FieldLabel htmlFor='postal-code'>
+											CEP de Pernoite:
+										</FieldLabel>
 										<Input
 											{...field}
 											id='postal-code'
@@ -489,18 +766,28 @@ function DialogSafeEndorsementDetails({
 										ref={withMask('brl-currency')}
 										id='commission'
 										value={
-											// @ts-expect-error
-											getNumericValue(formAddress.watch('amount') ?? 0) &&
-											// @ts-expect-error
-											getNumericValue(formAddress.watch('percentage') ?? 0)
-												? // @ts-expect-error
-													getNumericValue(formAddress.watch('amount') ?? 0) *
-													(getNumericValue(
-														// @ts-expect-error
-														formAddress.watch('percentage') ?? 0,
-													) /
-														100)
-												: undefined
+											getNumericValue(
+												// @ts-expect-error
+												formAddress.watch('percentage') ?? 0,
+											) === 0
+												? ''
+												: // @ts-expect-error
+													getNumericValue(formAddress.watch('amount') ?? 0) &&
+														getNumericValue(
+															// @ts-expect-error
+
+															formAddress.watch('percentage') ?? 0,
+														)
+													? getNumericValue(
+															// @ts-expect-error
+															formAddress.watch('amount') ?? 0,
+														) *
+														(getNumericValue(
+															// @ts-expect-error
+															formAddress.watch('percentage') ?? 0,
+														) /
+															100)
+													: ''
 										}
 										placeholder='R$ 0,00'
 										className='text-left!'
@@ -601,18 +888,28 @@ function DialogSafeEndorsementDetails({
 										ref={withMask('brl-currency')}
 										id='commission'
 										value={
-											// @ts-expect-error
-											getNumericValue(formFranchise.watch('amount') ?? 0) &&
-											// @ts-expect-error
-											getNumericValue(formFranchise.watch('percentage') ?? 0)
-												? // @ts-expect-error
-													getNumericValue(formFranchise.watch('amount') ?? 0) *
-													(getNumericValue(
-														// @ts-expect-error
-														formFranchise.watch('percentage') ?? 0,
-													) /
-														100)
-												: undefined
+											getNumericValue(
+												// @ts-expect-error
+												formFranchise.watch('percentage') ?? 0,
+											) === 0
+												? ''
+												: // @ts-expect-error
+													getNumericValue(formFranchise.watch('amount') ?? 0) &&
+														getNumericValue(
+															// @ts-expect-error
+
+															formFranchise.watch('percentage') ?? 0,
+														)
+													? getNumericValue(
+															// @ts-expect-error
+															formFranchise.watch('amount') ?? 0,
+														) *
+														(getNumericValue(
+															// @ts-expect-error
+															formFranchise.watch('percentage') ?? 0,
+														) /
+															100)
+													: ''
 										}
 										placeholder='R$ 0,00'
 										className='text-left!'
@@ -658,9 +955,18 @@ function DialogSafeEndorsementDetails({
 					</DialogClose>
 					<Button
 						type='button'
-						isPending={isPendingAddress || isPendingFranchise || isCanceling}
+						isPending={
+							isPendingVehicleCondutor ||
+							isPendingAddress ||
+							isPendingFranchise ||
+							isCanceling
+						}
 						disabled={!type}
 						onClick={() => {
+							if (type === 'vehicle_conductor') {
+								formVehicleConductor.handleSubmit(onSubmitVehicleConductor)();
+							}
+
 							if (type === 'address') {
 								formAddress.handleSubmit(onSubmitAddress)();
 							}

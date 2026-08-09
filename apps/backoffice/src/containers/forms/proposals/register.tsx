@@ -375,7 +375,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 		setValue('insured.phone', maskPhone(props.insured.phone.slice(2)));
 
 		if (props.requestedAt) {
-			setReaderPDF(true);
 			setValue('requestedAt', props.requestedAt);
 		}
 
@@ -461,6 +460,11 @@ function FormProposalRegister({ id }: { id?: string }) {
 			maskNumber(props.driver.cpf) === maskNumber(props.insured.cpf)
 		) {
 			setTheInsuredPartyIsTheDriver(true);
+		}
+
+		// @ts-expect-error
+		if (props.readerPDF) {
+			setReaderPDF(true);
 		}
 	}
 
@@ -2338,6 +2342,7 @@ type ExtractDocument = {
 		| 'professional'
 		| 'construction';
 	insuranceCompany: {
+		id: string;
 		name: string;
 		cnpj: string;
 	};
@@ -2376,45 +2381,6 @@ type ExtractDocument = {
 	franchise: number;
 };
 
-function resolveInsuranceCompany(
-	matches: Array<{
-		id: string;
-		name: string;
-		cnpj: string;
-	}>,
-	targetName: string,
-): { id: string; name: string; cnpj: string } | undefined {
-	if (matches.length <= 1) {
-		return matches[0];
-	}
-
-	const normalizedTarget = normalizeName(targetName);
-
-	const exactNameMatch = matches.find(
-		(m) => normalizeName(m.name) === normalizedTarget,
-	);
-
-	if (exactNameMatch) {
-		return exactNameMatch;
-	}
-
-	const partialMatch = matches.find(
-		(m) =>
-			normalizedTarget.includes(normalizeName(m.name)) ||
-			normalizeName(m.name).includes(normalizedTarget),
-	);
-
-	return partialMatch ?? matches[0];
-}
-
-function normalizeName(name: string) {
-	return name
-		.toLowerCase()
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.trim();
-}
-
 function DialogGetDocument({
 	open,
 	onOpenChange,
@@ -2424,8 +2390,6 @@ function DialogGetDocument({
 	onOpenChange: (open: boolean) => void;
 	onChange: (props: QuoteRegister) => void;
 }) {
-	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
-
 	const Schema = z.object({
 		file: z.file('Documento inválido'),
 	});
@@ -2481,17 +2445,8 @@ function DialogGetDocument({
 	}
 
 	function sendData(data: ExtractDocument) {
-		const matchesCompanies =
-			insuranceCompanies?.filter(
-				(e) => maskNumber(e.cnpj) === maskNumber(data.insuranceCompany.cnpj),
-			) ?? [];
-
-		const company = resolveInsuranceCompany(
-			matchesCompanies,
-			data.insuranceCompany.name,
-		);
-
 		const send: QuoteRegister = {
+			readerPDF: true,
 			driver: {
 				birth: parse(
 					data.vehicle?.driver?.birth ?? data.insured.birth,
@@ -2502,7 +2457,7 @@ function DialogGetDocument({
 				name: data.vehicle?.driver?.name ?? data.insured.name,
 			},
 			expiration: parse(data.expirationAt, 'dd/MM/yyyy', endOfToday()),
-			insuranceCompany: company?.id,
+			insuranceCompany: data.insuranceCompany.id,
 			// @ts-expect-error
 			insured: {
 				birth: parse(data.insured.birth, 'dd/MM/yyyy', startOfToday()),
@@ -2668,6 +2623,7 @@ function InsuranceDataPreview({
 					{capitalizeFirstLetters(data.insuranceCompany.name)
 						.replace('s.a', 'S.A')
 						.replace('S.a', 'S.A')
+						.replace('S/a', 'S/A')
 						.replace('Ltda', 'LTDA')}{' '}
 					- {maskCNPJ(data.insuranceCompany.cnpj)}
 				</b>

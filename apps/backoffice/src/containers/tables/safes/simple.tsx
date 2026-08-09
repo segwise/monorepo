@@ -16,7 +16,6 @@ import {
 	FileEditIcon,
 	InfoIcon,
 	MoreVerticalIcon,
-	PaperclipIcon,
 	ShieldPlusIcon,
 	TagIcon,
 	Trash2Icon,
@@ -518,9 +517,9 @@ function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
 												<ShieldPlusIcon className='size-4!' /> Renovar Seguro
 											</Link>
 										</DropdownMenuItem>
-										<DropdownMenuItem>
+										{/* <DropdownMenuItem>
 											<PaperclipIcon className='size-4!' /> Apólice ( PDF )
-										</DropdownMenuItem>
+										</DropdownMenuItem> */}
 										<DialogSafeEndorsementById id={id}>
 											<DropdownMenuItem disabled={status === 'canceled'}>
 												<FileEditIcon className='size-4!' /> Endossos
