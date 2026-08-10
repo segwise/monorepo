@@ -198,6 +198,7 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 			: 'localhost';
 
 		const prefix = XClientApp ? clientAppToPrefix[XClientApp] : undefined;
+		console.log(domain, prefix);
 
 		if (prefix) {
 			const cookiesToClear = [
@@ -205,6 +206,8 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 				`${auxCookieName(ctx.environment.NODE_ENV, 'session_data')}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
 				`${auxCookieName(ctx.environment.NODE_ENV, 'dont_remember')}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
 			];
+
+			console.log(cookiesToClear);
 
 			cookiesToClear.forEach((cookieStr) => {
 				response.headers.append('set-cookie', cookieStr);
