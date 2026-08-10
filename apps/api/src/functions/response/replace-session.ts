@@ -193,11 +193,11 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 		response.headers.delete('set-cookie');
 
 		const isProd = ctx.environment.NODE_ENV === 'production';
-		const domain = isProd
-			? new URL(ctx.req.url).hostname.replace(/^www\./, '')
-			: 'localhost';
 
 		const prefix = XClientApp ? clientAppToPrefix[XClientApp] : undefined;
+
+		const domain = isProd ? `${prefix}.segwise.com.br` : 'localhost';
+
 		console.log(domain, prefix);
 
 		if (prefix) {
