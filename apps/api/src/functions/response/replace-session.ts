@@ -198,16 +198,12 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 
 		const domain = isProd ? '.segwise.com.br' : 'localhost';
 
-		console.log(domain, prefix);
-
 		if (prefix) {
 			const cookiesToClear = [
 				`${sessionCookieName(ctx.environment.NODE_ENV, prefix)}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
 				`${auxCookieName(ctx.environment.NODE_ENV, 'session_data')}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
 				`${auxCookieName(ctx.environment.NODE_ENV, 'dont_remember')}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
 			];
-
-			console.log(cookiesToClear);
 
 			cookiesToClear.forEach((cookieStr) => {
 				response.headers.append('set-cookie', cookieStr);
