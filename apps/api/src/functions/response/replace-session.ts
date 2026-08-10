@@ -196,7 +196,7 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 
 		const prefix = XClientApp ? clientAppToPrefix[XClientApp] : undefined;
 
-		const domain = isProd ? `${prefix}.segwise.com.br` : 'localhost';
+		const domain = isProd ? '.segwise.com.br' : 'localhost';
 
 		console.log(domain, prefix);
 
