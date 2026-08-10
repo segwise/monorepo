@@ -184,32 +184,32 @@ async function responseReplaceSession(response: Response, ctx: Context) {
 
 		response.headers.delete('set-cookie');
 
-		if (ctx.req.url?.includes('/auth/sign-out')) {
-			const isProd = ctx.environment.NODE_ENV === 'production';
-			const domain = isProd
-				? new URL(ctx.req.url).hostname.replace(/^www\./, '')
-				: 'localhost';
-
-			const prefix = XClientApp ? clientAppToPrefix[XClientApp] : undefined;
-
-			if (prefix) {
-				const cookiesToClear = [
-					`${sessionCookieName(ctx.environment.NODE_ENV, prefix)}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
-					`${auxCookieName(ctx.environment.NODE_ENV, 'session_data')}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
-					`${auxCookieName(ctx.environment.NODE_ENV, 'dont_remember')}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
-				];
-
-				cookiesToClear.forEach((cookieStr) => {
-					response.headers.append('set-cookie', cookieStr);
-				});
-			}
-
-			return response;
-		}
-
 		modifiedCookies.forEach((ctx) => {
 			response.headers.append('set-cookie', ctx);
 		});
+	}
+
+	if (ctx.req.url?.includes('/auth/sign-out')) {
+		response.headers.delete('set-cookie');
+
+		const isProd = ctx.environment.NODE_ENV === 'production';
+		const domain = isProd
+			? new URL(ctx.req.url).hostname.replace(/^www\./, '')
+			: 'localhost';
+
+		const prefix = XClientApp ? clientAppToPrefix[XClientApp] : undefined;
+
+		if (prefix) {
+			const cookiesToClear = [
+				`${sessionCookieName(ctx.environment.NODE_ENV, prefix)}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
+				`${auxCookieName(ctx.environment.NODE_ENV, 'session_data')}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
+				`${auxCookieName(ctx.environment.NODE_ENV, 'dont_remember')}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
+			];
+
+			cookiesToClear.forEach((cookieStr) => {
+				response.headers.append('set-cookie', cookieStr);
+			});
+		}
 	}
 
 	return response;
