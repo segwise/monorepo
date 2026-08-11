@@ -50,7 +50,12 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useProducersRegister } from '@/libraries/hooks/producers/use-producers-register';
 
-function DialogProducerRegister({ children }: React.PropsWithChildren) {
+function DialogProducerRegister({
+	id,
+	children,
+}: React.PropsWithChildren<{
+	id?: string;
+}>) {
 	const [open, setOpen] = useState<boolean>(false);
 
 	const { mutate, isPending } = useProducersRegister();
