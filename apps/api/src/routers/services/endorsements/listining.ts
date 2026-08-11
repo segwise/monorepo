@@ -18,6 +18,26 @@ function registerRoutersServicesEndorsementsListining(server: Server) {
 
 		return ctx.json(response, 200);
 	});
+
+	server.get('/percentage', async (ctx) => {
+		const id = ctx.req.param('id');
+
+		const response = await ctx.database.safe.findUnique({
+			where: {
+				id,
+			},
+			select: {
+				commissionPercentage: true,
+			},
+		});
+
+		return ctx.json(
+			{
+				percentage: response?.commissionPercentage || 0,
+			},
+			200,
+		);
+	});
 }
 
 export { registerRoutersServicesEndorsementsListining };
