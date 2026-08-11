@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+	calculatePercentageOfValue,
 	capitalizeFirstLetters,
 	type EndorsementAddress,
 	type EndorsementCancel,
@@ -64,6 +65,7 @@ import {
 	useEndorsementAddress,
 	useEndorsementCancel,
 	useEndorsementFranchise,
+	useEndorsementPercentage,
 	useEndorsements,
 	useEndorsementVehicleConductor,
 	useEndorsementVehicleConductorQuery,
@@ -167,6 +169,9 @@ function DialogSafeEndorsementDetails({
 
 	const [notPlate, setNotPlate] = useState<boolean>(false);
 
+	const { data: endorsementPercentage } = useEndorsementPercentage(id, {
+		enabled: open && !!type,
+	});
 	const { data: vehicleConductorQuery } = useEndorsementVehicleConductorQuery(
 		id,
 		type === 'vehicle_conductor',
@@ -197,7 +202,7 @@ function DialogSafeEndorsementDetails({
 			modelYear: vehicleConductorQuery?.vehicle.modelYear ?? '',
 			franchise: 0,
 			amount: 0,
-			percentage: 0,
+			percentage: endorsementPercentage?.percentage || 0,
 		},
 		...(vehicleConductorQuery && {
 			values: {
@@ -209,7 +214,7 @@ function DialogSafeEndorsementDetails({
 				modelYear: vehicleConductorQuery.vehicle.modelYear,
 				franchise: 0,
 				amount: 0,
-				percentage: 0,
+				percentage: endorsementPercentage?.percentage || 0,
 			},
 		}),
 	});
@@ -222,7 +227,11 @@ function DialogSafeEndorsementDetails({
 		defaultValues: {
 			postalCode: '',
 			amount: 0,
-			percentage: 0,
+			percentage: endorsementPercentage?.percentage || 0,
+		},
+		// @ts-expect-error
+		values: {
+			percentage: endorsementPercentage?.percentage || 0,
 		},
 	});
 
@@ -234,7 +243,11 @@ function DialogSafeEndorsementDetails({
 		defaultValues: {
 			franchise: 0,
 			amount: 0,
-			percentage: 0,
+			percentage: endorsementPercentage?.percentage || 0,
+		},
+		// @ts-expect-error
+		values: {
+			percentage: endorsementPercentage?.percentage || 0,
 		},
 	});
 
@@ -630,34 +643,19 @@ function DialogSafeEndorsementDetails({
 									<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
 									<Input
 										readOnly
-										ref={withMask('brl-currency')}
 										id='commission'
-										value={
-											getNumericValue(
-												// @ts-expect-error
-												formVehicleConductor.watch('percentage') ?? 0,
-											) === 0
-												? ''
-												: getNumericValue(
-															// @ts-expect-error
-															formVehicleConductor.watch('amount') ?? 0,
-														) &&
-														getNumericValue(
-															// @ts-expect-error
-
-															formVehicleConductor.watch('percentage') ?? 0,
-														)
-													? getNumericValue(
-															// @ts-expect-error
-															formVehicleConductor.watch('amount') ?? 0,
-														) *
-														(getNumericValue(
-															// @ts-expect-error
-															formVehicleConductor.watch('percentage') ?? 0,
-														) /
-															100)
-													: ''
-										}
+										value={new Intl.NumberFormat('pt-BR', {
+											style: 'currency',
+											currency: 'BRL',
+										}).format(
+											calculatePercentageOfValue(
+												getNumericValue(
+													(formVehicleConductor.watch('amount') as number) ?? 0,
+												),
+												(formVehicleConductor.watch('percentage') as number) ??
+													0,
+											) ?? 0,
+										)}
 										placeholder='R$ 0,00'
 										className='text-left!'
 										tabIndex={-1}
@@ -763,32 +761,18 @@ function DialogSafeEndorsementDetails({
 									<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
 									<Input
 										readOnly
-										ref={withMask('brl-currency')}
 										id='commission'
-										value={
-											getNumericValue(
-												// @ts-expect-error
-												formAddress.watch('percentage') ?? 0,
-											) === 0
-												? ''
-												: // @ts-expect-error
-													getNumericValue(formAddress.watch('amount') ?? 0) &&
-														getNumericValue(
-															// @ts-expect-error
-
-															formAddress.watch('percentage') ?? 0,
-														)
-													? getNumericValue(
-															// @ts-expect-error
-															formAddress.watch('amount') ?? 0,
-														) *
-														(getNumericValue(
-															// @ts-expect-error
-															formAddress.watch('percentage') ?? 0,
-														) /
-															100)
-													: ''
-										}
+										value={new Intl.NumberFormat('pt-BR', {
+											style: 'currency',
+											currency: 'BRL',
+										}).format(
+											calculatePercentageOfValue(
+												getNumericValue(
+													(formAddress.watch('amount') as number) ?? 0,
+												),
+												(formAddress.watch('percentage') as number) ?? 0,
+											) ?? 0,
+										)}
 										placeholder='R$ 0,00'
 										className='text-left!'
 										tabIndex={-1}
@@ -885,32 +869,18 @@ function DialogSafeEndorsementDetails({
 									<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
 									<Input
 										readOnly
-										ref={withMask('brl-currency')}
 										id='commission'
-										value={
-											getNumericValue(
-												// @ts-expect-error
-												formFranchise.watch('percentage') ?? 0,
-											) === 0
-												? ''
-												: // @ts-expect-error
-													getNumericValue(formFranchise.watch('amount') ?? 0) &&
-														getNumericValue(
-															// @ts-expect-error
-
-															formFranchise.watch('percentage') ?? 0,
-														)
-													? getNumericValue(
-															// @ts-expect-error
-															formFranchise.watch('amount') ?? 0,
-														) *
-														(getNumericValue(
-															// @ts-expect-error
-															formFranchise.watch('percentage') ?? 0,
-														) /
-															100)
-													: ''
-										}
+										value={new Intl.NumberFormat('pt-BR', {
+											style: 'currency',
+											currency: 'BRL',
+										}).format(
+											calculatePercentageOfValue(
+												getNumericValue(
+													(formFranchise.watch('amount') as number) ?? 0,
+												),
+												(formFranchise.watch('percentage') as number) ?? 0,
+											) ?? 0,
+										)}
 										placeholder='R$ 0,00'
 										className='text-left!'
 										tabIndex={-1}

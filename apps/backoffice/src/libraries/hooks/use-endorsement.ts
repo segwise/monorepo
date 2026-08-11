@@ -31,6 +31,36 @@ const useEndorsements = (id: string, enabled?: boolean) =>
 		enabled,
 	});
 
+const useEndorsementPercentage = (
+	id: string,
+	{
+		enabled = true,
+	}: {
+		enabled: boolean;
+	},
+) =>
+	useQuery({
+		queryKey: ['endorsement', id, 'percentage'],
+		queryFn: async ({ signal }) => {
+			try {
+				const { data } = await api.get<{
+					percentage: number;
+				}>(`/endorsements/${id}/percentage`, {
+					signal,
+				});
+
+				return data;
+			} catch (error) {
+				if (error instanceof XiorError) {
+					throw new Error(error.response?.data.message);
+				}
+
+				throw error;
+			}
+		},
+		enabled: enabled && !!id,
+	});
+
 const useEndorsementVehicleConductor = () =>
 	useMutation<
 		{
@@ -98,7 +128,7 @@ const useEndorsementVehicleConductorQuery = (
 ) =>
 	useQuery({
 		queryKey: ['endorsements', 'vehicle-conductor'],
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			try {
 				const { data } = await api.get<{
 					vehicle: {
@@ -110,7 +140,9 @@ const useEndorsementVehicleConductorQuery = (
 						cpf: string;
 						name: string;
 					};
-				}>(`/endorsements/${id}/vehicle-conductor`);
+				}>(`/endorsements/${id}/vehicle-conductor`, {
+					signal,
+				});
 
 				return data;
 			} catch (error) {
@@ -235,6 +267,7 @@ const useEndorsementCancel = () =>
 
 export {
 	useEndorsements,
+	useEndorsementPercentage,
 	useEndorsementVehicleConductorQuery,
 	useEndorsementVehicleConductor,
 	useEndorsementAddress,
