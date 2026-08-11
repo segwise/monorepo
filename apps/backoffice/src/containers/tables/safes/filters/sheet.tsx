@@ -166,7 +166,7 @@ function TableSafesSheetFilters({ children }: React.PropsWithChildren) {
 					<SheetDescription>Consulta avançada de registros</SheetDescription>
 				</SheetHeader>
 				<Separator />
-				<div className='px-4 space-y-3'>
+				<div className='px-4 space-y-3 overflow-auto'>
 					{!searchParams.search && (
 						<FilterEffectivedAt
 							value={effectivedAt}
