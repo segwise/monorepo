@@ -2,7 +2,7 @@ import z from 'zod';
 
 const SchemaReferral = z
 	.string('Código de indicação inválido')
-	.min(5, 'Código de indicação inválido')
+	.min(1, 'Código de indicação inválido')
 	.toLowerCase();
 
 const SchemaProducerReferral = z.object({
