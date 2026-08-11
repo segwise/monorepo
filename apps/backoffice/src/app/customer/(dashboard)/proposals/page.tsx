@@ -46,18 +46,17 @@ function ProposalsPage() {
 						</Button>
 					</TableSafesSheetFilters>
 					<ButtonGroup>
-						<Button asChild variant='outline' className='dark:bg-primary'>
-							<Link href='/proposals/register'>
+						<Button asChild>
+							<Link
+								href='/proposals/register'
+								className='border-r border-r-white/30'
+							>
 								<PlusIcon /> Cadastrar
 							</Link>
 						</Button>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button
-									variant='outline'
-									size='icon'
-									className='dark:bg-primary'
-								>
+								<Button size='icon'>
 									<MoreHorizontalIcon />
 								</Button>
 							</DropdownMenuTrigger>

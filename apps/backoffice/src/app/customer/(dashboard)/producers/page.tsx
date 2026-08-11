@@ -23,7 +23,7 @@ function ProducersPage() {
 						<FilterIcon /> Filtrar
 					</Button>
 					<DialogProducerRegister>
-						<Button variant='outline' className='dark:bg-primary max-sm:flex-1'>
+						<Button className='max-sm:flex-1'>
 							<PlusIcon /> Cadastrar
 						</Button>
 					</DialogProducerRegister>
