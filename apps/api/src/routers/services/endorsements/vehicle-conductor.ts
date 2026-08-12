@@ -160,6 +160,24 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 											},
 										},
 									}),
+								...(plate &&
+									!plateDb && {
+										vehicleWithoutPlate: {
+											upsert: {
+												create: {
+													model,
+													modelYear,
+												},
+												update: {
+													manufacturer: {
+														disconnect: true,
+													},
+													model,
+													modelYear,
+												},
+											},
+										},
+									}),
 								...(!plate && {
 									vehicleWithoutPlate: {
 										update: {

@@ -229,6 +229,25 @@ function registerRoutersServicesSafesRegister(server: Server) {
 											},
 										},
 									}),
+								...(vehicle.plate &&
+									!vehicleId && {
+										vehicleWithoutPlate: {
+											create: {
+												...(vehicle.manufacturer && {
+													manufacturer: {
+														connect: {
+															id: vehicle.manufacturer,
+														},
+													},
+												}),
+												model: vehicle.model,
+												modelYear: vehicle.modelYear,
+												...(vehicle.exchange && {
+													exchange: vehicle.exchange,
+												}),
+											},
+										},
+									}),
 								...(!vehicle.plate && {
 									vehicleWithoutPlate: {
 										create: {
