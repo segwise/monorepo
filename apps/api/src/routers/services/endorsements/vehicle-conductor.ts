@@ -162,6 +162,9 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 									}),
 								...(plate &&
 									!plateDb && {
+										vehicle: {
+											disconnect: true,
+										},
 										vehicleWithoutPlate: {
 											upsert: {
 												create: {
