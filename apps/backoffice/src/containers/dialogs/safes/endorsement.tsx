@@ -7,6 +7,7 @@ import {
 	type EndorsementFranchise,
 	type EndorsementVehicleConductor,
 	getNumericValue,
+	isPlate,
 	maskCPF,
 	maskPlate,
 	maskPostalCode,
@@ -21,12 +22,13 @@ import {
 	CarIcon,
 	DollarSignIcon,
 	FilePlusIcon,
+	Loader2Icon,
 	MapPinIcon,
 	SaveIcon,
 	XCircleIcon,
 } from 'lucide-react';
 import type React from 'react';
-import { cloneElement, useState } from 'react';
+import { cloneElement, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { withMask } from 'use-mask-input';
@@ -210,7 +212,7 @@ function DialogSafeEndorsementDetails({
 				plate: vehicleConductorQuery.vehicle.plate
 					? maskPlate(vehicleConductorQuery.vehicle.plate)
 					: null,
-				model: vehicleConductorQuery.vehicle.model,
+				model: capitalizeFirstLetters(vehicleConductorQuery.vehicle.model),
 				modelYear: vehicleConductorQuery.vehicle.modelYear,
 				franchise: 0,
 				amount: 0,
@@ -261,9 +263,11 @@ function DialogSafeEndorsementDetails({
 		},
 	});
 
-	const { data: plateResponse } = useVehiclesPlate(
-		formVehicleConductor.watch('plate') ?? '',
-	);
+	const {
+		data: plateResponse,
+		isPending: plateResponseIsPending,
+		isError: plateResponseIsError,
+	} = useVehiclesPlate(formVehicleConductor.watch('plate') ?? '');
 
 	const { data: driverResponse } = useCpfOrCnpj(
 		formVehicleConductor.watch('driver'),
@@ -397,6 +401,22 @@ function DialogSafeEndorsementDetails({
 		}
 	}
 
+	useEffect(() => {
+		if (plateResponse) {
+			formVehicleConductor.setValue(
+				'model',
+				capitalizeFirstLetters(plateResponse.model),
+			);
+			formVehicleConductor.setValue('modelYear', plateResponse.modelYear);
+		}
+	}, [formVehicleConductor, plateResponse]);
+
+	useEffect(() => {
+		if (plateResponseIsError) {
+			formVehicleConductor.setFocus('model');
+		}
+	}, [formVehicleConductor, plateResponseIsError]);
+
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
@@ -470,25 +490,31 @@ function DialogSafeEndorsementDetails({
 														id='not-plate'
 														size='sm'
 														checked={notPlate}
-														onCheckedChange={(value) => {
-															setNotPlate(value);
-
-															formVehicleConductor.setValue('plate', null);
-															formVehicleConductor.setValue('model', '');
-															formVehicleConductor.setValue('modelYear', null);
-														}}
+														onCheckedChange={setNotPlate}
 													/>
 												</FieldLabel>
 											</div>
 											{!notPlate && (
-												<Input
-													{...field}
-													value={String(field.value ?? '')}
-													placeholder='AAA-0000 ou AAA0A00'
-													onChange={({ target: { value } }) =>
-														field.onChange(maskPlate(value))
-													}
-												/>
+												<div className='flex flex-row items-center justify-between'>
+													<Input
+														{...field}
+														value={String(field.value ?? '')}
+														placeholder='AAA-0000 ou AAA0A00'
+														onChange={({ target: { value } }) => {
+															field.onChange(maskPlate(value));
+
+															if (!isPlate(value)) {
+																formVehicleConductor.setValue('model', '');
+																formVehicleConductor.setValue('modelYear', '');
+															}
+														}}
+													/>
+													{field.value &&
+														isPlate(field.value) &&
+														plateResponseIsPending && (
+															<Loader2Icon className='animate-spin size-4 text-muted-foreground ml-3' />
+														)}
+												</div>
 											)}
 											{notPlate && (
 												<Input
@@ -500,33 +526,26 @@ function DialogSafeEndorsementDetails({
 													}
 												/>
 											)}
-											{plateResponse && (
-												<FieldDescription className='text-foreground text-xs -mt-2'>
-													{capitalizeFirstLetters(plateResponse.model)} /{' '}
-													{plateResponse.modelYear}
-												</FieldDescription>
-											)}
 											{fieldState.invalid && (
 												<FieldError errors={[fieldState.error]} />
 											)}
 										</Field>
 									)}
 								/>
-								{notPlate && (
+								{!notPlate && (
 									<Controller
 										control={formVehicleConductor.control}
-										name='modelYear'
+										name='model'
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='model-year'>
-													Ano do Modelo:
-												</FieldLabel>
+												<FieldLabel htmlFor='model'>Modelo:</FieldLabel>
 												<Input
 													{...field}
-													id='model-year'
-													aria-invalid={fieldState.invalid}
-													value={String(field.value || '')}
-													placeholder='0000'
+													value={String(field.value ?? '')}
+													placeholder='Modelo do veículo'
+													onChange={({ target: { value } }) =>
+														field.onChange(capitalizeFirstLetters(value))
+													}
 												/>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
@@ -535,6 +554,27 @@ function DialogSafeEndorsementDetails({
 										)}
 									/>
 								)}
+								<Controller
+									control={formVehicleConductor.control}
+									name='modelYear'
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='model-year'>
+												Ano do Modelo:
+											</FieldLabel>
+											<Input
+												{...field}
+												id='model-year'
+												aria-invalid={fieldState.invalid}
+												value={String(field.value || '')}
+												placeholder='0000'
+											/>
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									)}
+								/>
 								<Controller
 									control={formVehicleConductor.control}
 									name='franchise'
