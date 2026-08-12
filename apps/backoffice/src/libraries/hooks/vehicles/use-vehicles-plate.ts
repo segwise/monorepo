@@ -16,6 +16,7 @@ const useVehiclesPlate = (plate?: string | '') =>
 				)
 			).data,
 		enabled: isPlate(plate || ''),
+		retry: 0,
 	});
 
 export { useVehiclesPlate };

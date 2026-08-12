@@ -1250,19 +1250,35 @@ function FormProposalRegister({ id }: { id?: string }) {
 															if (!isPlate(value)) {
 																if (getValues('vehicle.manufacturer')) {
 																	setValue('vehicle.manufacturer', null);
+
+																	setTimeout(() => {
+																		clearErrors('vehicle.manufacturer');
+																	}, 100);
 																}
 
 																if (getValues('vehicle.model')) {
 																	// @ts-expect-error
 																	setValue('vehicle.model', null);
+
+																	setTimeout(() => {
+																		clearErrors('vehicle.model');
+																	}, 100);
 																}
 
 																if (getValues('vehicle.modelYear')) {
 																	setValue('vehicle.modelYear', null);
+
+																	setTimeout(() => {
+																		clearErrors('vehicle.modelYear');
+																	}, 100);
 																}
 
 																if (getValues('vehicle.chassi')) {
 																	setValue('vehicle.chassi', null);
+
+																	setTimeout(() => {
+																		clearErrors('vehicle.chassi');
+																	}, 100);
 																}
 
 																if (getValues('vehicle.exchange')) {
