@@ -153,8 +153,14 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 				`https://wdapi2.com.br/consulta/${plate}/${environment.APIPLACAS_TOKEN}`,
 			);
 
-			if (data.situacao === null) {
-				throw new Error('Veículo não existe');
+			if (
+				data?.situacao === null ||
+				// @ts-expect-error
+				data?.detail
+					.toLowerCase()
+					.includes('erro')
+			) {
+				throw new Error('Veículo não encontrado');
 			}
 
 			let manufacturer = await transaction.manufacturerVehicle.findFirst({
