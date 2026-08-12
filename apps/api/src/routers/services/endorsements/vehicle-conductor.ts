@@ -182,6 +182,9 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 										},
 									}),
 								...(!plate && {
+									vehicle: {
+										disconnect: true,
+									},
 									vehicleWithoutPlate: {
 										update: {
 											manufacturer: {
