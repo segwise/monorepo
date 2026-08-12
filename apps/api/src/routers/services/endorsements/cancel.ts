@@ -50,7 +50,6 @@ function registerRoutersServicesEndorsementsCancel(server: Server) {
 					status: StatusSafe.canceled,
 					endorsements: {
 						create: {
-							safeId: id,
 							type,
 							effectivedAt,
 						},
