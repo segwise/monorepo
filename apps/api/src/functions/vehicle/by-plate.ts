@@ -157,7 +157,7 @@ async function vehicleByPlate(value: string): Promise<Vehicle> {
 				data?.situacao === null ||
 				// @ts-expect-error
 				data?.detail
-					.toLowerCase()
+					?.toLowerCase()
 					.includes('erro')
 			) {
 				throw new Error('Veículo não encontrado');
