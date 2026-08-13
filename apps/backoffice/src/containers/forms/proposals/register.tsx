@@ -137,7 +137,6 @@ import { useSafesById } from '@/libraries/hooks/safes/use-safes';
 import { useSafesRegister } from '@/libraries/hooks/safes/use-safes-register';
 import { useSafesUpdate } from '@/libraries/hooks/safes/use-safes-update';
 import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
-import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicles-manufacturers';
 import { useVehiclesPlate } from '@/libraries/hooks/vehicles/use-vehicles-plate';
 
 const ENTER_NAVIGATION_MAP: Record<string, string> = {
@@ -161,8 +160,8 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
-	const { data: manufacturers, refetch: refetchManufacturers } =
-		useVehiclesManufacturers();
+	// const { data: manufacturers, refetch: refetchManufacturers } =
+	// 	useVehiclesManufacturers();
 
 	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
 		useState<boolean>(false);
@@ -183,7 +182,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 		setFocus,
 		reset,
 		watch,
-		formState: { isDirty, isValid: isValidForm, errors },
+		formState: { isDirty, isValid: isValidForm },
 	} = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
@@ -221,9 +220,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 			vehicle: {
 				plate: safe?.vehicle.plate ? maskPlate(safe.vehicle.plate) : null,
 				model: capitalizeFirstLetters(safe?.vehicle.model ?? ''),
-				manufacturer: safe?.vehicle.plate
-					? (safe?.vehicle.manufacturer ?? null)
-					: null,
+				// manufacturer: safe?.vehicle.plate
+				// 	? (safe?.vehicle.manufacturer ?? null)
+				// 	: null,
 				modelYear: safe?.vehicle.modelYear ?? '',
 				usage: safe?.vehicle.usage ?? undefined,
 				overnightPostalCode: safe?.vehicle.overnightPostalCode
@@ -277,9 +276,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 				},
 				vehicle: {
 					plate: safe.vehicle.plate ? maskPlate(safe.vehicle.plate) : null,
-					manufacturer: safe.vehicle.plate
-						? (safe.vehicle.manufacturer ?? null)
-						: null,
+					// manufacturer: safe.vehicle.plate
+					// 	? (safe.vehicle.manufacturer ?? null)
+					// 	: null,
 					model: capitalizeFirstLetters(safe.vehicle.model),
 					modelYear: safe.vehicle.modelYear,
 					usage: safe.vehicle.usage,
@@ -314,8 +313,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 			},
 		}),
 	});
-
-	console.log(SchemaSafeRegister.safeParse(watch()), errors);
 
 	const plate = watch('vehicle.plate');
 
@@ -385,16 +382,16 @@ function FormProposalRegister({ id }: { id?: string }) {
 			props.vehicle?.plate ? maskPlate(props.vehicle.plate) : null,
 		);
 
-		const manufacturer = props.vehicle?.manufacturer
-			? manufacturers?.find(
-					(e) =>
-						e.name.toLowerCase() === props.vehicle?.manufacturer.toLowerCase(),
-				)?.id
-			: null;
+		// const manufacturer = props.vehicle?.manufacturer
+		// 	? manufacturers?.find(
+		// 			(e) =>
+		// 				e.name.toLowerCase() === props.vehicle?.manufacturer.toLowerCase(),
+		// 		)?.id
+		// 	: null;
 
-		if (manufacturer) {
-			setValue('vehicle.manufacturer', manufacturer);
-		}
+		// if (manufacturer) {
+		// 	setValue('vehicle.manufacturer', manufacturer);
+		// }
 
 		setValue(
 			'vehicle.model',
@@ -499,7 +496,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 						plate: null,
 						model: '',
 						modelYear: '',
-						manufacturer: null,
+						// manufacturer: null,
 						overnightPostalCode: '',
 						usage: '',
 						exchange: '',
@@ -649,10 +646,10 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	useEffect(() => {
 		if (vehicleSearch) {
-			refetchManufacturers();
+			// refetchManufacturers();
 
-			setValue('vehicle.manufacturer', vehicleSearch.manufacturer.id);
-			clearErrors('vehicle.manufacturer');
+			// setValue('vehicle.manufacturer', vehicleSearch.manufacturer.id);
+			// clearErrors('vehicle.manufacturer');
 
 			setValue('vehicle.model', capitalizeFirstLetters(vehicleSearch.model));
 			clearErrors('vehicle.model');
@@ -669,7 +666,8 @@ function FormProposalRegister({ id }: { id?: string }) {
 				clearErrors('vehicle.exchange');
 			}, 100);
 		}
-	}, [vehicleSearch, setValue, clearErrors, refetchManufacturers]);
+		// }, [vehicleSearch, setValue, clearErrors, refetchManufacturers]);
+	}, [vehicleSearch, setValue, clearErrors]);
 
 	useEffect(() => {
 		if (safe) {
@@ -1250,13 +1248,13 @@ function FormProposalRegister({ id }: { id?: string }) {
 															field.onChange(!value ? null : maskPlate(value));
 
 															if (!isPlate(value)) {
-																if (getValues('vehicle.manufacturer')) {
-																	setValue('vehicle.manufacturer', null);
+																// if (getValues('vehicle.manufacturer')) {
+																// 	setValue('vehicle.manufacturer', null);
 
-																	setTimeout(() => {
-																		clearErrors('vehicle.manufacturer');
-																	}, 100);
-																}
+																// 	setTimeout(() => {
+																// 		clearErrors('vehicle.manufacturer');
+																// 	}, 100);
+																// }
 
 																if (getValues('vehicle.model')) {
 																	// @ts-expect-error
@@ -2277,14 +2275,14 @@ function DialogGetPlate({
 											: 'Sem Placa'}
 									</b>
 								</div>
-								<div className='text-sm'>
+								{/* <div className='text-sm'>
 									Marca:{' '}
 									<b>
 										{capitalizeFirstLetters(
 											data.vehicle?.manufacturer as string,
 										)}
 									</b>
-								</div>
+								</div> */}
 								<div className='text-sm'>
 									Modelo:{' '}
 									<b>{capitalizeFirstLetters(data.vehicle?.model as string)}</b>
