@@ -67,7 +67,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { cloneElement, Fragment, useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { withMask } from 'use-mask-input';
 import z from 'zod';
@@ -160,8 +160,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
-	// const { data: manufacturers, refetch: refetchManufacturers } =
-	// 	useVehiclesManufacturers();
 
 	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
 		useState<boolean>(false);
@@ -181,7 +179,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 		getValues,
 		setFocus,
 		reset,
-		watch,
 		formState: { isDirty, isValid: isValidForm },
 	} = useForm({
 		mode: 'all',
@@ -220,9 +217,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 			vehicle: {
 				plate: safe?.vehicle.plate ? maskPlate(safe.vehicle.plate) : null,
 				model: capitalizeFirstLetters(safe?.vehicle.model ?? ''),
-				// manufacturer: safe?.vehicle.plate
-				// 	? (safe?.vehicle.manufacturer ?? null)
-				// 	: null,
 				modelYear: safe?.vehicle.modelYear ?? '',
 				usage: safe?.vehicle.usage ?? undefined,
 				overnightPostalCode: safe?.vehicle.overnightPostalCode
@@ -276,9 +270,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 				},
 				vehicle: {
 					plate: safe.vehicle.plate ? maskPlate(safe.vehicle.plate) : null,
-					// manufacturer: safe.vehicle.plate
-					// 	? (safe.vehicle.manufacturer ?? null)
-					// 	: null,
 					model: capitalizeFirstLetters(safe.vehicle.model),
 					modelYear: safe.vehicle.modelYear,
 					usage: safe.vehicle.usage,
@@ -314,33 +305,60 @@ function FormProposalRegister({ id }: { id?: string }) {
 		}),
 	});
 
-	const plate = watch('vehicle.plate');
+	console.log(SchemaSafeRegister.safeParse(useWatch({ control })));
+
+	const plate = useWatch({ control, name: 'vehicle.plate' });
 
 	const { data: vehicleSearch, isPending: isPendingVehicleSearch } =
 		useVehiclesPlate(plate || '');
 
-	const existsProducer = !!watch('producer');
+	const insuredRegistration = useWatch({
+		control,
+		name: 'insured.registration',
+	});
 
-	const installments = Number(watch('receivables.installments') || 0);
+	const producer = useWatch({ control, name: 'producer' });
+
+	const existsProducer = !!producer;
+
+	const receivablesInstallments = useWatch({
+		control,
+		name: 'receivables.installments',
+	});
+	const receivablesAward = useWatch({ control, name: 'receivables.award' });
+	const receivablesCommission = useWatch({
+		control,
+		name: 'receivables.commission',
+	});
+
+	const commissionInstallments = useWatch({
+		control,
+		name: 'commissions.installments',
+	});
+	const commissionPercentageWatch = useWatch({
+		control,
+		name: 'commissions.percentage',
+	});
+	const commissionType = useWatch({ control, name: 'commissions.type' });
+
+	const installments = Number(receivablesInstallments || 0);
 	const award =
 		getNumericValue(
 			// @ts-expect-error
-			watch('receivables.award'),
+			receivablesAward,
 		) || 0;
-	const commissionPercentage = Number(watch('receivables.commission') || 0);
+	const commissionPercentage = Number(receivablesCommission || 0);
 	const commissionAmount = calculatePercentageOfValue(
 		award,
 		commissionPercentage,
 	);
 
-	const installmentsProducer = Number(watch('commissions.installments') || 0);
-	const commissionPercentageProducer = Number(
-		watch('commissions.percentage') || 0,
-	);
+	const installmentsProducer = Number(commissionInstallments || 0);
+	const commissionPercentageProducer = Number(commissionPercentageWatch || 0);
 	const commissionAmountProducer = calculatePercentageOfValue(
-		watch('commissions.type') === 'by_the_brokerage_commission'
+		commissionType === 'by_the_brokerage_commission'
 			? commissionAmount
-			: watch('commissions.type') === 'by_the_net_premium'
+			: commissionType === 'by_the_net_premium'
 				? award
 				: 0,
 		commissionPercentageProducer,
@@ -381,17 +399,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 			'vehicle.plate',
 			props.vehicle?.plate ? maskPlate(props.vehicle.plate) : null,
 		);
-
-		// const manufacturer = props.vehicle?.manufacturer
-		// 	? manufacturers?.find(
-		// 			(e) =>
-		// 				e.name.toLowerCase() === props.vehicle?.manufacturer.toLowerCase(),
-		// 		)?.id
-		// 	: null;
-
-		// if (manufacturer) {
-		// 	setValue('vehicle.manufacturer', manufacturer);
-		// }
 
 		setValue(
 			'vehicle.model',
@@ -496,7 +503,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 						plate: null,
 						model: '',
 						modelYear: '',
-						// manufacturer: null,
 						overnightPostalCode: '',
 						usage: '',
 						exchange: '',
@@ -533,8 +539,8 @@ function FormProposalRegister({ id }: { id?: string }) {
 		});
 	}
 
-	const cpfOrCnpj = watch('insured.registration');
-	const cpfOrCnpjDriver = watch('driver.registration');
+	const cpfOrCnpj = useWatch({ control, name: 'insured.registration' });
+	const cpfOrCnpjDriver = useWatch({ control, name: 'driver.registration' });
 
 	const { data: cpfOrCnpjSearch, isPending: isPendingCpfOrCnpjSearch } =
 		useCpfOrCnpj(cpfOrCnpj);
@@ -646,11 +652,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	useEffect(() => {
 		if (vehicleSearch) {
-			// refetchManufacturers();
-
-			// setValue('vehicle.manufacturer', vehicleSearch.manufacturer.id);
-			// clearErrors('vehicle.manufacturer');
-
 			setValue('vehicle.model', capitalizeFirstLetters(vehicleSearch.model));
 			clearErrors('vehicle.model');
 
@@ -666,7 +667,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 				clearErrors('vehicle.exchange');
 			}, 100);
 		}
-		// }, [vehicleSearch, setValue, clearErrors, refetchManufacturers]);
 	}, [vehicleSearch, setValue, clearErrors]);
 
 	useEffect(() => {
@@ -766,13 +766,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 																		{item === 'vehicle' && <CarIcon />}
 																		{item === 'motorcycle' && <BikeIcon />}
 																		{item === 'truck' && <TruckIcon />}
-																		{/* {item === 'health' && <HeartIcon />}
-																	{item === 'residence' && <HomeIcon />}
-																	{item === 'business' && <BuildingIcon />}
-																	{item === 'condominium' && <BuildingIcon />}
-																	{item === 'travel' && <PlaneIcon />}
-																	{item === 'professional' && <UserIcon />}
-																	{item === 'construction' && <BuildingIcon />} */}
 																		{capitalizeFirstLetters(
 																			translateModality(item)
 																				.toLowerCase()
@@ -1084,7 +1077,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='insured-birth'>
-													{isCNPJ(watch('insured.registration'))
+													{isCNPJ(insuredRegistration)
 														? 'Data de Abertura'
 														: 'Nascimento:'}
 												</FieldLabel>
@@ -1248,14 +1241,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 															field.onChange(!value ? null : maskPlate(value));
 
 															if (!isPlate(value)) {
-																// if (getValues('vehicle.manufacturer')) {
-																// 	setValue('vehicle.manufacturer', null);
-
-																// 	setTimeout(() => {
-																// 		clearErrors('vehicle.manufacturer');
-																// 	}, 100);
-																// }
-
 																if (getValues('vehicle.model')) {
 																	// @ts-expect-error
 																	setValue('vehicle.model', null);
@@ -1303,68 +1288,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 											</Field>
 										)}
 									/>
-									{/* <Controller
-										control={control}
-										name='vehicle.manufacturer'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel
-													htmlFor='vehicle-manufacturer'
-													className={cn(
-														'',
-														!!plate?.length && 'pointer-events-none',
-													)}
-												>
-													Fabricante:
-												</FieldLabel>
-												<Combobox
-													{...field}
-													id='vehicle-manufacturer'
-													value={
-														manufacturers?.find((e) => e.id === field.value) ||
-														null
-													}
-													items={manufacturers}
-													onValueChange={field.onChange}
-													itemToStringLabel={(item) =>
-														item?.name
-															? capitalizeFirstLetters(item.name.toUpperCase())
-															: item.name
-													}
-													itemToStringValue={(item) => item.id}
-												>
-													<ComboboxInput
-														aria-invalid={fieldState.invalid}
-														placeholder='Selecionar'
-														className={cn(
-															'',
-															(!!plate?.length ||
-																(isPlate(plate || '') &&
-																	!isPendingVehicleSearch)) &&
-																'pointer-events-none',
-														)}
-													/>
-													<ComboboxContent>
-														<ComboboxEmpty>
-															Nenhum registro encontrado.
-														</ComboboxEmpty>
-														<ComboboxList>
-															{(item: VehicleManufacturer) => (
-																<ComboboxItem key={item.id} value={item.id}>
-																	{capitalizeFirstLetters(
-																		item.name.toUpperCase(),
-																	)}
-																</ComboboxItem>
-															)}
-														</ComboboxList>
-													</ComboboxContent>
-												</Combobox>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
-												)}
-											</Field>
-										)}
-									/> */}
 									<Controller
 										control={control}
 										name='vehicle.model'
@@ -2275,14 +2198,6 @@ function DialogGetPlate({
 											: 'Sem Placa'}
 									</b>
 								</div>
-								{/* <div className='text-sm'>
-									Marca:{' '}
-									<b>
-										{capitalizeFirstLetters(
-											data.vehicle?.manufacturer as string,
-										)}
-									</b>
-								</div> */}
 								<div className='text-sm'>
 									Modelo:{' '}
 									<b>{capitalizeFirstLetters(data.vehicle?.model as string)}</b>
@@ -2714,9 +2629,6 @@ function InsuranceDataPreview({
 				</>
 			)}
 			<Separator className='bg-primary/20 my-2' />
-			{/* <div className='text-sm'>
-				Vigência: <b>{data.effectivedAt}</b>
-			</div> */}
 			<div className='text-sm'>
 				Vigência:{' '}
 				<b>
