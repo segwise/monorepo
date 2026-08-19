@@ -305,41 +305,48 @@ function FormProposalRegister({ id }: { id?: string }) {
 		}),
 	});
 
-	console.log(SchemaSafeRegister.safeParse(useWatch({ control })));
+	console.log(SchemaSafeRegister.safeParse(useWatch({ control }) ?? {}));
 
-	const plate = useWatch({ control, name: 'vehicle.plate' });
+	const plate = useWatch({ control, name: 'vehicle.plate' }) ?? null;
 
 	const { data: vehicleSearch, isPending: isPendingVehicleSearch } =
 		useVehiclesPlate(plate || '');
 
-	const insuredRegistration = useWatch({
-		control,
-		name: 'insured.registration',
-	});
+	const insuredRegistration =
+		useWatch({
+			control,
+			name: 'insured.registration',
+		}) ?? '';
 
-	const producer = useWatch({ control, name: 'producer' });
+	const producer = useWatch({ control, name: 'producer' }) ?? null;
 
 	const existsProducer = !!producer;
 
-	const receivablesInstallments = useWatch({
-		control,
-		name: 'receivables.installments',
-	});
-	const receivablesAward = useWatch({ control, name: 'receivables.award' });
-	const receivablesCommission = useWatch({
-		control,
-		name: 'receivables.commission',
-	});
+	const receivablesInstallments =
+		useWatch({
+			control,
+			name: 'receivables.installments',
+		}) ?? '';
+	const receivablesAward =
+		useWatch({ control, name: 'receivables.award' }) ?? '';
+	const receivablesCommission =
+		useWatch({
+			control,
+			name: 'receivables.commission',
+		}) ?? '';
 
-	const commissionInstallments = useWatch({
-		control,
-		name: 'commissions.installments',
-	});
-	const commissionPercentageWatch = useWatch({
-		control,
-		name: 'commissions.percentage',
-	});
-	const commissionType = useWatch({ control, name: 'commissions.type' });
+	const commissionInstallments =
+		useWatch({
+			control,
+			name: 'commissions.installments',
+		}) ?? null;
+	const commissionPercentageWatch =
+		useWatch({
+			control,
+			name: 'commissions.percentage',
+		}) ?? null;
+	const commissionType =
+		useWatch({ control, name: 'commissions.type' }) ?? null;
 
 	const installments = Number(receivablesInstallments || 0);
 	const award =
@@ -539,8 +546,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 		});
 	}
 
-	const cpfOrCnpj = useWatch({ control, name: 'insured.registration' });
-	const cpfOrCnpjDriver = useWatch({ control, name: 'driver.registration' });
+	const cpfOrCnpj = useWatch({ control, name: 'insured.registration' }) ?? '';
+	const cpfOrCnpjDriver =
+		useWatch({ control, name: 'driver.registration' }) ?? '';
 
 	const { data: cpfOrCnpjSearch, isPending: isPendingCpfOrCnpjSearch } =
 		useCpfOrCnpj(cpfOrCnpj);
