@@ -8,6 +8,7 @@ import { registerRoutersServicesQuotes } from '@/routers/services/quotes';
 import { registerRoutersServicesSafes } from '@/routers/services/safes';
 import { registerRoutersServicesUtils } from '@/routers/services/utils';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
+import { TemplatePartnershipInvite } from '../../templates/partnership-invite';
 import { registerRoutersServicesEndorsements } from './endorsements';
 import { registerRoutersServicesMarketplace } from './marketplace';
 import { registerRoutersServicesPIX } from './pix';
@@ -37,6 +38,25 @@ function registerRoutersServices(server: Server) {
 	registerRoutersServicesEndorsements(base);
 
 	registerRoutersServicesWebhooks(base);
+
+	base.post('/', async (ctx) => {
+		await ctx.email.emails.send({
+			subject: `Parceria comercial Escritório de Contabilidade e a SEGWISE/XCAR CORRETORA DE SEGUROS`,
+			from: 'XCAR Corretora <parceria@emails.segwise.com.br>',
+			to: 'fernando.sena_@hotmail.com',
+			react: TemplatePartnershipInvite({
+				scheduleMeetingUrl:
+					'https://wa.me/5581986961991?text=Quero conversar sobre a parceria',
+			}),
+		});
+
+		return ctx.json(
+			{
+				ok: true,
+			},
+			200,
+		);
+	});
 }
 
 export { registerRoutersServices };

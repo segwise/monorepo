@@ -17,6 +17,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.7",
+		"@react-email/ui": "^6.9.2",
 		"@types/bun": "latest",
 		"prisma": "^7.6.0"
 	},
@@ -40,6 +41,7 @@
 		"pdf-parse": "^2.4.5",
 		"playwright": "^1.58.2",
 		"quick-lru": "^7.3.0",
+		"react-email": "^6.9.2",
 		"resend": "^6.9.4",
 		"ua-parser-js": "^2.0.9",
 		"xior": "^0.8.3",
