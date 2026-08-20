@@ -131,7 +131,17 @@ function InsurerLogoGrid() {
 	);
 }
 
-function TemplatePartnershipInviteAccounting() {
+function TemplatePartnershipInviteAccounting({
+	leadId,
+}: {
+	leadId?: string;
+} = {}) {
+	const urlMessage = new URL('https://segwise.com.br/nova-parceria');
+
+	if (leadId) {
+		urlMessage.searchParams.set('leadId', leadId);
+	}
+
 	return (
 		<Html>
 			<Head>
@@ -297,7 +307,7 @@ function TemplatePartnershipInviteAccounting() {
 							</Section>
 							<Section className="bg-primary rounded-lg p-6 text-center">
 								<Link
-									href="https://segwise.com.br/nova-parceria"
+									href={urlMessage.toJSON()}
 									className="bg-white text-primary text-[14px] font-bold rounded-md px-6 py-3 no-underline inline-block"
 								>
 									Agendar conversa
@@ -314,7 +324,7 @@ function TemplatePartnershipInviteAccounting() {
 							<Row>
 								<Column>
 									<Link
-										href="https://wa.me/5581986961991"
+										href={urlMessage.toJSON()}
 										className="text-[#D1D5DB] text-[12px] no-underline mr-4"
 									>
 										WhatsApp: 81.98696.1991
