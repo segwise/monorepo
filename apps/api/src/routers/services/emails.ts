@@ -459,9 +459,9 @@ function registerRoutersEmails(server: Server) {
 					to: contact.email.toLowerCase(),
 					react: TemplatePartnershipInviteCondominium(),
 				},
-				// {
-				// 	idempotencyKey: `partnership:invite:condominium:${contact.email}`,
-				// },
+				{
+					idempotencyKey: `partnership:invite:condominium:${contact.email}`,
+				},
 			);
 		}
 
