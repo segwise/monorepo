@@ -414,7 +414,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 		setValue('vehicle.modelYear', props.vehicle?.modelYear);
 		setValue('vehicle.chassi', props.vehicle?.chassi);
 		setValue('vehicle.usage', props.vehicle?.usage);
-		setValue('vehicle.exchange', props.vehicle?.exchange);
 		setValue(
 			'vehicle.overnightPostalCode',
 			maskPostalCode(props.vehicle?.overnightPostalCode as string),
@@ -512,7 +511,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 						modelYear: '',
 						overnightPostalCode: '',
 						usage: '',
-						exchange: '',
 						additional: {
 							residence: {
 								type: null,
@@ -530,7 +528,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 					},
 					commissions: {
 						type: '',
-						typeOfInterest: '',
 					},
 				});
 
@@ -668,12 +665,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 			setValue('vehicle.chassi', vehicleSearch?.chassi || null);
 			clearErrors('vehicle.chassi');
-
-			setValue('vehicle.exchange', vehicleSearch.exchange || null);
-
-			setTimeout(() => {
-				clearErrors('vehicle.exchange');
-			}, 100);
 		}
 	}, [vehicleSearch, setValue, clearErrors]);
 
@@ -1273,14 +1264,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 																		clearErrors('vehicle.chassi');
 																	}, 100);
 																}
-
-																if (getValues('vehicle.exchange')) {
-																	setValue('vehicle.exchange', null);
-
-																	setTimeout(() => {
-																		clearErrors('vehicle.exchange');
-																	}, 100);
-																}
 															}
 														}}
 													/>
@@ -1660,7 +1643,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 															);
 														}
 
-														if (value === 'clear') {
+														if (!value || value === 'clear') {
 															setValue('commissions', null);
 														}
 													}}
