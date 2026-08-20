@@ -297,7 +297,7 @@ function TemplatePartnershipInviteAccounting() {
 							</Section>
 							<Section className="bg-primary rounded-lg p-6 text-center">
 								<Link
-									href="https://wa.me/5581986961991?text=Quero conversar sobre a parceria"
+									href="https://segwise.com.br/nova-parceria"
 									className="bg-white text-primary text-[14px] font-bold rounded-md px-6 py-3 no-underline inline-block"
 								>
 									Agendar conversa
