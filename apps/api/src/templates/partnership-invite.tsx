@@ -215,8 +215,8 @@ function TemplatePartnershipInvite({
 									· O cliente , mesmo que no primeiro momento não faça adesão ao
 									seguro, continuaremos com as ofertas de seguros com preços
 									promocionais, e a qualquer época que ele faça a adesão o
-									escritório continua com o direiro ao comissionamento vitalício
-									de 10% sobre o ganho trazido a corretora.
+									escritório continua com o direito ao comissionamento vitalício
+									de ( A DEFINIR ) sobre o ganho trazido a corretora.
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
 									· O escritório de contabilidade receberá todo apoio necessário
