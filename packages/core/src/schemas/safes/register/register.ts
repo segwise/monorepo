@@ -7,7 +7,6 @@ import { SchemaModality } from '../../utils/modality';
 import { SchemaName } from '../../utils/name';
 import { SchemaPhone } from '../../utils/phone';
 import { SchemaPostalCode } from '../../utils/postal-code';
-import { SchemaVehicleExchange } from '../../utils/vehicle';
 import { SchemaPlate } from '../../utils/vehicle/plate';
 import { SchemaVehicleUsage } from '../../utils/vehicle/usage';
 import { SchemaSafeStatus } from '../status';
@@ -88,7 +87,9 @@ const SchemaSafeRegister = z
 	.object({
 		producer: z.uuidv7('Produtor inválido').nullish(),
 		modality: SchemaModality,
-		renewal: z.boolean('Marcador de renovação inválido'),
+		renewal: z
+			.boolean('Marcador de renovação inválido')
+			.or(z.literal(['true', 'false']).transform((value) => value === 'true')),
 		previousSafe: z.uuidv7('Produtor inválido').nullish(),
 		status: SchemaSafeStatus,
 		requestedAt: z.coerce
@@ -130,7 +131,6 @@ const SchemaSafeRegister = z
 						.positive('Ano do modelo inválido'),
 					chassi: z.string('Chassi inválido').nullish(),
 					usage: SchemaVehicleUsage,
-					exchange: SchemaVehicleExchange.nullish(),
 					overnightPostalCode: SchemaPostalCode,
 				},
 				'Veículo inválido',
