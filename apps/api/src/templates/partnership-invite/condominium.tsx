@@ -189,8 +189,8 @@ function TemplatePartnershipInviteCondominium({
 								Somos da SEGWISE / XCAR CORRETORA DE SEGUROS, empresa com mais
 								de doze anos no mercado segurador, me chamo Fernando Sena, e
 								gostaria de convidar você para uma ação conjunta na proteção
-								financeira e tranquilidade dos condôminos diante de imprevistos
-								dos edifícios sob sua Gestão.
+								financeira e tranquilidade dos condôminos dos edifícios sob sua
+								Gestão.
 							</Text>
 							<Text className="text-[14px] leading-[22px] text-[#374151] m-0 mb-4">
 								Com o programa – Gestão + Proteção , você levará descontos,
