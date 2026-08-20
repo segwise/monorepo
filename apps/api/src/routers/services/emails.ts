@@ -456,7 +456,7 @@ function registerRoutersEmails(server: Server) {
 					subject:
 						'Parceria comercial - Administradora de condomínio e a SEGWISE / XCAR CORRETORA DE SEGUROS',
 					from: 'XCAR Corretora <parceria@emails.segwise.com.br>',
-					to: 'fernando.sena_@hotmail.com',
+					to: contact.email,
 					react: TemplatePartnershipInviteCondominium(),
 				},
 				{
