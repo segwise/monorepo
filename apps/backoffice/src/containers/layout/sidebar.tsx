@@ -50,7 +50,7 @@ function Sidebar() {
 							</Link>
 						</SidebarMenuButton>
 						<SidebarTrigger asChild>
-							<Button className='absolute top-0 right-0'>
+							<Button className='absolute top-0 right-0 md:hidden'>
 								<XCircleIcon />
 							</Button>
 						</SidebarTrigger>
