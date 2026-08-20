@@ -8,7 +8,8 @@ import { registerRoutersServicesQuotes } from '@/routers/services/quotes';
 import { registerRoutersServicesSafes } from '@/routers/services/safes';
 import { registerRoutersServicesUtils } from '@/routers/services/utils';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
-import { TemplatePartnershipInvite } from '../../templates/partnership-invite';
+import { TemplatePartnershipInviteAccounting } from '../../templates/partnership-invite/accounting';
+import { TemplatePartnershipInviteCondominium } from '../../templates/partnership-invite/condominium';
 import { registerRoutersServicesEndorsements } from './endorsements';
 import { registerRoutersServicesMarketplace } from './marketplace';
 import { registerRoutersServicesPIX } from './pix';
@@ -41,13 +42,19 @@ function registerRoutersServices(server: Server) {
 
 	base.post('/', async (ctx) => {
 		await ctx.email.emails.send({
-			subject: `Parceria comercial Escritório de Contabilidade e a SEGWISE/XCAR CORRETORA DE SEGUROS`,
+			subject:
+				'Parceria comercial - Escritório de Contabilidade e a SEGWISE / XCAR CORRETORA DE SEGUROS',
 			from: 'XCAR Corretora <parceria@emails.segwise.com.br>',
 			to: 'fernando.sena_@hotmail.com',
-			react: TemplatePartnershipInvite({
-				scheduleMeetingUrl:
-					'https://wa.me/5581986961991?text=Quero conversar sobre a parceria',
-			}),
+			react: TemplatePartnershipInviteAccounting(),
+		});
+
+		await ctx.email.emails.send({
+			subject:
+				'Parceria comercial - Administradora de condomínio e a SEGWISE / XCAR CORRETORA DE SEGUROS',
+			from: 'XCAR Corretora <parceria@emails.segwise.com.br>',
+			to: 'fernando.sena_@hotmail.com',
+			react: TemplatePartnershipInviteCondominium(),
 		});
 
 		return ctx.json(

@@ -131,16 +131,7 @@ function InsurerLogoGrid() {
 	);
 }
 
-interface TemplatePartnershipInviteProps {
-	scheduleMeetingUrl?: string;
-}
-
-function TemplatePartnershipInvite({
-	scheduleMeetingUrl,
-}: TemplatePartnershipInviteProps) {
-	const previewText =
-		'Parceria comercial - Escritório de Contabilidade e a XCAR Corretora de Seguros/Segwise';
-
+function TemplatePartnershipInviteAccounting() {
 	return (
 		<Html>
 			<Head>
@@ -155,7 +146,10 @@ function TemplatePartnershipInvite({
 					fontStyle="normal"
 				/>
 			</Head>
-			<Preview>{previewText}</Preview>
+			<Preview>
+				Parceria comercial - Escritório de Contabilidade e a SEGWISE / XCAR
+				CORRETORA DE SEGUROS
+			</Preview>
 			<Tailwind config={tailwindConfig}>
 				<Body className="bg-surface font-sans">
 					<Container className="mx-auto my-0 max-w-[600px]">
@@ -164,7 +158,7 @@ function TemplatePartnershipInvite({
 								<Column>
 									<Img
 										src={LOGO_WHITE}
-										alt="XCAR Corretora de Seguros/Segwise"
+										alt="SEGWISE / XCAR CORRETORA DE SEGUROS"
 										width={140}
 										height={32}
 									/>
@@ -179,11 +173,11 @@ function TemplatePartnershipInvite({
 								Escritório de Contabilidade e a
 							</Heading>
 							<Heading className="text-[16px] font-bold text-[#111827] m-0 mb-4 text-center">
-								XCAR CORRETORA DE SEGUROS/SEGWISE
+								SEGWISE / XCAR CORRETORA DE SEGUROS
 							</Heading>
 							<Text className="text-[14px] leading-[22px] text-[#374151] m-0 mb-4">
-								Somos da XCAR CORRETORA DE SEGUROS/SEGWISE , empresa com mais de
-								doze anos no mercado segurador, me chamo Fernando Sena, e
+								Somos da SEGWISE / XCAR CORRETORA DE SEGUROS, empresa com mais
+								de doze anos no mercado segurador, me chamo Fernando Sena, e
 								gostaria de convidar você para uma ação conjunta na proteção
 								financeira e na tranquilidade dos seus clientes diante de
 								imprevistos.
@@ -201,58 +195,58 @@ function TemplatePartnershipInvite({
 									BENEFÍCIOS PARA SUA EMPRESA
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									· Comissionamento de 10% sobre o ganho da corretora sobre os
+									Comissionamento de ___% sobre o ganho da corretora sobre os
 									produtos adquiridos através da indicação do escritório de
 									contabilidade
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									· Comissionamento vitalício, mesmo que o empresário deixe seu
+									Comissionamento vitalício, mesmo que o empresário deixe seu
 									escritório, por qualquer motivo, você continua sendo o
 									beneficiário do comissionamento enquanto este cliente estiver
-									segurado na XCAR CORRETORA DE SEGUROS/SEGWISE
+									segurado na segwise / xcar corretora de seguros
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									· O cliente , mesmo que no primeiro momento não faça adesão ao
+									O cliente, mesmo que no primeiro momento não faça adesão ao
 									seguro, continuaremos com as ofertas de seguros com preços
 									promocionais, e a qualquer época que ele faça a adesão o
 									escritório continua com o direito ao comissionamento vitalício
-									de ( A DEFINIR ) sobre o ganho trazido a corretora.
+									de ___% sobre o ganho trazido a corretora.
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									· O escritório de contabilidade receberá todo apoio necessário
-									a divulgação da parceria, não haverá custos para o escritório,
+									O escritório de contabilidade receberá todo apoio necessário à
+									divulgação da parceria, não haverá custos para o escritório,
 									apenas ganhos advindos dos seguros adquiridos pelos clientes
 									do escritório.
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									· Demonstrativo, em tempo real das adesões ao aplicativo
+									Demonstrativo, em tempo real das adesões ao aplicativo
 									disponibilizado aos clientes do escritório. Obs. Uma vez sendo
 									cadastrado em nome do escritório, este cadastro sempre será
 									lingado ao escritório que o originou, mesmo não havendo mais
-									vinculo com este escritório
+									vinculo
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0">
-									· Levar benefícios aos clientes com parcerias que gerem
-									diminuição de custos para a empresa.
+									Levar parcerias que gerem diminuição de custos para seus
+									clientes e aumento de receita para o escritório
 								</Text>
 							</Section>
 							<Section className="bg-surface rounded-lg p-6 mb-5">
 								<Text className="text-[14px] font-bold text-[#111827] m-0 mb-3">
 									BENEFÍCIOS PARA SEUS CLIENTES
 								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									· Desconto exclusivo na aquisição ou renovação de seguros
+								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-1">
+									Acesso ao aplicativo segwise
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									· Orçamentos grátis e sem compromisso
+									Um aplicativo verdadeiramente relevante, funcionando como um
+									assistente de bolso, centralizando serviços e informações
+									essenciais como os descritos abaixo:
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-1">
-									· Acesso ao aplicativo segwise
+									- Desconto exclusivo na aquisição ou renovação de seguros
 								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									Um aplicativo verdadeiramente relevante, funciona como um
-									assistente de bolso, centralizando serviços e informações
-									essenciais com suporte imediato para o motorista:
+								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-1">
+									- Orçamentos grátis e sem compromisso
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-1">
 									- Saber que ação tomar em cada tipo de sinistro
@@ -276,9 +270,8 @@ function TemplatePartnershipInvite({
 								</Text>
 								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0">
 									- Plataforma gratuita para compra e venda de veículos com
-									maior segurança, apenas clientes XCAR CORRETORA DE
-									SEGUROS/SEGWISE terão acesso a inclusão e visitação aos
-									anúncios
+									maior segurança, apenas clientes SEGWISE / XCAR terão acesso a
+									inclusão e visitação aos anúncios
 								</Text>
 							</Section>
 							<Text className="text-[14px] font-bold text-[#111827] m-0 mb-1 text-center">
@@ -291,24 +284,20 @@ function TemplatePartnershipInvite({
 								DEMONSTRAR A TRANSPARÊNCIA DO PROCESSO E DO PROGRAMA
 							</Text>
 							<Text className="text-[14px] leading-[21px] text-[#374151] m-0 mb-1">
-								UM ABRAÇO
-							</Text>
-							<Text className="text-[14px] leading-[21px] text-[#374151] m-0 mb-1">
-								FERNANDO LUIZ MALHEIROS DE SENA - XCAR CORRETORA DE
-								SEGUROS/SEGWISE
+								FERNANDO LUIZ MALHEIROS DE SENA / SEGWISE / XCAR CORRETORA
 							</Text>
 							<Text className="text-[14px] leading-[21px] text-[#374151] m-0 mb-1">
 								DIRETOR GERAL
 							</Text>
 							<Text className="text-[14px] leading-[21px] text-[#374151] m-0 mb-6">
-								FONES: (81) 98696-1991 | 3229-1728
+								FONES: 81.98696.1991 - 3229.1728
 							</Text>
-							<Section className="mb-6">
+							<Section className="mt-3 mb-6">
 								<InsurerLogoGrid />
 							</Section>
 							<Section className="bg-primary rounded-lg p-6 text-center">
 								<Link
-									href={scheduleMeetingUrl}
+									href="https://wa.me/5581986961991?text=Quero conversar sobre a parceria"
 									className="bg-white text-primary text-[14px] font-bold rounded-md px-6 py-3 no-underline inline-block"
 								>
 									Agendar conversa
@@ -320,7 +309,7 @@ function TemplatePartnershipInvite({
 								FERNANDO LUIZ MALHEIROS DE SENA
 							</Text>
 							<Text className="text-[#9CA3AF] text-[12px] m-0 mb-3">
-								XCAR CORRETORA DE SEGUROS/SEGWISE - DIRETOR GERAL
+								SEGWISE / XCAR CORRETORA DE SEGUROS - DIRETOR GERAL
 							</Text>
 							<Row>
 								<Column>
@@ -328,12 +317,12 @@ function TemplatePartnershipInvite({
 										href="https://wa.me/5581986961991"
 										className="text-[#D1D5DB] text-[12px] no-underline mr-4"
 									>
-										WhatsApp: (81) 98696-1991
+										WhatsApp: 81.98696.1991
 									</Link>
 								</Column>
 								<Column>
 									<Text className="text-[#D1D5DB] text-[12px] m-0">
-										Tel: 3229-1728
+										Tel: 3229.1728
 									</Text>
 								</Column>
 							</Row>
@@ -345,4 +334,4 @@ function TemplatePartnershipInvite({
 	);
 }
 
-export { TemplatePartnershipInvite };
+export { TemplatePartnershipInviteAccounting };
