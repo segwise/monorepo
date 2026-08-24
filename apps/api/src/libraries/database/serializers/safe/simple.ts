@@ -49,6 +49,13 @@ function serializer(
 						props.insured?.name ??
 						'',
 				},
+				// ...(!!props.safeVehicle.driverName &&
+				// 	props.safeVehicle.driverName.toLowerCase() !==
+				// 		props.insured?.name.toLowerCase() && {
+				// 		driver: {
+				// 			name: props.safeVehicle.driverName,
+				// 		},
+				// 	}),
 			},
 		}),
 		expiration: props.expiration,
