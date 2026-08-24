@@ -161,7 +161,7 @@ function registerRoutersServicesSafesByIdUpdate(server: Server) {
 					)
 				: startOfDay(requestedAt);
 
-			const vehicleId = vehicle?.plate
+			const vehicleDb = vehicle?.plate
 				? await transaction.vehicle
 						.findFirst({
 							where: {
@@ -181,7 +181,15 @@ function registerRoutersServicesSafesByIdUpdate(server: Server) {
 						.then((response) => response?.id)
 				: null;
 
-			const { safeVehicle } = await transaction.safe.update({
+			if (
+				vehicle?.plate &&
+				!vehicleDb &&
+				(!vehicle.model || !vehicle.modelYear)
+			) {
+				throw new Error('Dados do veículo inválido');
+			}
+
+			await transaction.safe.update({
 				where: {
 					id,
 				},
@@ -215,30 +223,53 @@ function registerRoutersServicesSafesByIdUpdate(server: Server) {
 					...(!!vehicle && {
 						safeVehicle: {
 							update: {
-								plate: vehicle.plate,
+								plate: vehicle.plate ?? null,
 								...(vehicle.plate &&
-									vehicleId && {
+									vehicleDb && {
 										vehicle: {
 											connect: {
-												id: vehicleId,
+												id: vehicleDb,
+											},
+										},
+									}),
+								...(vehicle.plate &&
+									!vehicleDb && {
+										vehicle: {
+											disconnect: true,
+										},
+										vehicleWithoutPlate: {
+											upsert: {
+												create: {
+													model: vehicle.model,
+													modelYear: vehicle.modelYear,
+												},
+												update: {
+													manufacturer: {
+														disconnect: true,
+													},
+													model: vehicle.model,
+													modelYear: vehicle.modelYear,
+												},
 											},
 										},
 									}),
 								...(!vehicle.plate && {
+									vehicle: {
+										disconnect: true,
+									},
 									vehicleWithoutPlate: {
-										update: {
-											...(vehicle.manufacturer && {
+										upsert: {
+											create: {
+												model: vehicle.model,
+												modelYear: vehicle.modelYear,
+											},
+											update: {
 												manufacturer: {
-													connect: {
-														id: vehicle.manufacturer,
-													},
+													disconnect: true,
 												},
-											}),
-											model: vehicle.model,
-											modelYear: vehicle.modelYear,
-											...(vehicle.exchange && {
-												exchange: vehicle.exchange,
-											}),
+												model: vehicle.model,
+												modelYear: vehicle.modelYear,
+											},
 										},
 									},
 								}),
@@ -288,28 +319,6 @@ function registerRoutersServicesSafesByIdUpdate(server: Server) {
 				},
 				relationLoadStrategy: 'join',
 			});
-
-			if (safeVehicle?.vehicleId && vehicle?.exchange) {
-				await transaction.vehicle.update({
-					where: {
-						id: safeVehicle.vehicleId,
-					},
-					data: {
-						exchange: vehicle.exchange,
-					},
-				});
-			}
-
-			if (safeVehicle?.vehicleWithoutPlateId && vehicle?.exchange) {
-				await transaction.vehicleWithoutPlate.update({
-					where: {
-						id: safeVehicle.vehicleWithoutPlateId,
-					},
-					data: {
-						exchange: vehicle.exchange,
-					},
-				});
-			}
 
 			// let dueDate = startOfDay(
 			// 	addDays(addMonths(startOfMonth(requestedAtUpdate), 1), 10),
