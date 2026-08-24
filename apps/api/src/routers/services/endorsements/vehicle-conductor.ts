@@ -139,6 +139,10 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 					});
 				}
 
+				if (plate && !plateDb && (!model || !modelYear)) {
+					throw new Error('Dados do veículo inválido');
+				}
+
 				await transaction.safe.update({
 					where: {
 						id,
@@ -147,7 +151,7 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 						franchise,
 						safeVehicle: {
 							update: {
-								plate,
+								plate: plate ?? null,
 								driverCPF: driverResponse.cpfOrCnpj,
 								driverName: driverResponse.name,
 								driverBirth: driverResponse.birth,
