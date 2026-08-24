@@ -42,13 +42,13 @@ function serializer(
 					0,
 				usage: props.safeVehicle.usage,
 				overnightPostalCode: props.safeVehicle.overnightPostalCode,
-				...(!!props.safeVehicle.driverName &&
-					props.safeVehicle.driverName.toLowerCase() !==
-						props.insured?.name.toLowerCase() && {
-						driver: {
-							name: props.safeVehicle.driverName,
-						},
-					}),
+				driver: {
+					name:
+						props.safeVehicle.driverName ??
+						props?.temporaryInsured?.name ??
+						props.insured?.name ??
+						'',
+				},
 			},
 		}),
 		expiration: props.expiration,
