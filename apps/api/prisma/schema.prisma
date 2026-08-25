@@ -93,7 +93,7 @@ model Account {
   scope    String?
   password String?
 
-  issuer String?
+  issuer String
 
   idToken      String? @map("id_token")
   accessToken  String? @map("access_token")
