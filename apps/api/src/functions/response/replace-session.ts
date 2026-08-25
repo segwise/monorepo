@@ -29,8 +29,8 @@ const clientAppToPrefix: Record<'admin' | 'producer' | 'customer', string> = {
 };
 
 async function responseReplaceSession(response: Response, ctx: Context) {
-	const XClientApp = (ctx.req.header('X-Client-App') ||
-		ctx.req.raw.headers.get('X-Client-App')) as
+	const XClientApp = (ctx.req.header('x-client-app') ||
+		ctx.req.raw.headers.get('x-client-app')) as
 		| 'admin'
 		| 'producer'
 		| 'customer';

@@ -1,34 +1,6 @@
-import {
-	Body,
-	Column,
-	Container,
-	Font,
-	Head,
-	Heading,
-	Html,
-	Img,
-	Link,
-	Preview,
-	Row,
-	Section,
-	Tailwind,
-	Text,
-} from 'react-email';
+import type { PropsWithChildren } from 'hono/jsx';
 
-const tailwindConfig = {
-	theme: {
-		extend: {
-			colors: {
-				primary: '#09090b',
-				primaryDark: '#FF6900',
-				surface: '#F4F6FB',
-				muted: '#6B7280',
-			},
-		},
-	},
-};
-
-const LOGO_WHITE = `https://cdn.segwise.com.br/images-public/Group%2077.svg`;
+const LOGO_WHITE = 'https://cdn.segwise.com.br/images-public/Group%2077.svg';
 
 const partnerInsurers = [
 	{
@@ -98,36 +70,44 @@ const partnerInsurers = [
 ];
 
 function InsurerLogoGrid() {
-	const rows: (typeof partnerInsurers)[number][][] = [];
-
-	for (let i = 0; i < partnerInsurers.length; i += 4) {
-		rows.push(partnerInsurers.slice(i, i + 4));
-	}
-
 	return (
-		<>
-			{rows.map((row, rowIndex) => (
-				<Row key={rowIndex.toString()} className="mb-3">
-					{row.map((insurer) => (
-						<Column key={insurer.name} align="center" className="px-1">
-							<div className="bg-white border border-solid border-[#E5E7EB] rounded-lg py-3 px-2 text-center">
-								<Img
-									src={insurer.logo}
-									alt={insurer.name}
-									width={72}
-									height={28}
-									className="mx-auto object-contain"
-								/>
-							</div>
-						</Column>
-					))}
-					{row.length < 4 &&
-						Array.from({ length: 4 - row.length }).map((_, idx) => (
-							<Column key={`empty-${idx.toString()}`} className="px-1" />
-						))}
-				</Row>
+		<div className="grid grid-cols-8 gap-1">
+			{partnerInsurers.map((insurer) => (
+				<div
+					key={insurer.name}
+					className="border border-solid border-[#E5E7EB] rounded py-1 px-1 flex items-center justify-center"
+				>
+					<img
+						src={insurer.logo}
+						alt={insurer.name}
+						width={40}
+						height={15}
+						className="object-contain"
+					/>
+				</div>
 			))}
-		</>
+		</div>
+	);
+}
+
+// Título de seção: linha divisória + texto, sem numeração decorativa nem cor de destaque
+function SectionTitle({ children }: PropsWithChildren) {
+	return (
+		<h2 className="text-[12px] font-bold text-primary tracking-wide uppercase m-0 mb-2 pb-1.5 border-b border-solid border-[#D1D5DB]">
+			{children}
+		</h2>
+	);
+}
+
+// Bullet neutro — traço cinza, sem marcador colorido
+function BulletItem({ children }: PropsWithChildren) {
+	return (
+		<div className="flex items-start gap-2 mb-0.5">
+			<span className="text-[11px] text-[#9CA3AF] leading-[15px]">–</span>
+			<p className="text-[11px] leading-[15px] text-[#374151] m-0">
+				{children}
+			</p>
+		</div>
 	);
 }
 
@@ -137,194 +117,179 @@ function TemplatePartnershipInviteCondominium({
 	leadId?: string;
 } = {}) {
 	const urlMessage = new URL('https://segwise.com.br/nova-parceria');
-
-	if (leadId) {
-		urlMessage.searchParams.set('leadId', leadId);
-	}
+	if (leadId) urlMessage.searchParams.set('leadId', leadId);
 
 	return (
-		<Html>
-			<Head>
-				<Font
-					fontFamily="Inter"
-					fallbackFontFamily="Arial"
-					webFont={{
-						url: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2',
-						format: 'woff2',
+		<html lang="pt-BR">
+			<head>
+				<meta charSet="utf-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<title>
+					Parceria comercial — Administradora de condomínio | SEGWISE / XCAR
+				</title>
+
+				<script src="https://cdn.tailwindcss.com"></script>
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `
+							tailwind.config = {
+								theme: {
+									extend: {
+										colors: {
+											primary: '#09090b',
+											primaryDark: '#FF6900',
+											surface: '#F4F6FB',
+											muted: '#6B7280',
+										},
+									},
+								},
+							};
+						`,
 					}}
-					fontWeight={400}
-					fontStyle="normal"
 				/>
-			</Head>
-			<Preview>
-				Parceria comercial - Administradora de condomínio e a SEGWISE / XCAR
-				CORRETORA DE SEGUROS
-			</Preview>
-			<Tailwind config={tailwindConfig}>
-				<Body className="bg-surface font-sans">
-					<Container className="mx-auto my-0 max-w-[600px]">
-						<Section className="bg-primary rounded-t-lg py-6 px-8">
-							<Row>
-								<Column>
-									<Img
-										src={LOGO_WHITE}
-										alt="SEGWISE / XCAR CORRETORA DE SEGUROS"
-										width={140}
-										height={32}
-									/>
-								</Column>
-							</Row>
-						</Section>
-						<Section className="bg-white px-8 py-8">
-							<Heading className="text-[18px] font-bold text-[#111827] m-0 mb-1 text-center">
-								Parceria comercial
-							</Heading>
-							<Heading className="text-[16px] font-bold text-[#111827] m-0 mb-1 text-center">
-								Administradora de condomínio
-							</Heading>
-							<Heading className="text-[16px] font-bold text-[#111827] m-0 mb-4 text-center">
-								SEGWISE / XCAR CORRETORA DE SEGUROS
-							</Heading>
-							<Text className="text-[14px] leading-[22px] text-[#374151] m-0 mb-4">
-								Somos da SEGWISE / XCAR CORRETORA DE SEGUROS, empresa com mais
-								de doze anos no mercado segurador, me chamo Fernando Sena, e
-								gostaria de convidar você para uma ação conjunta na proteção
-								financeira e tranquilidade dos condôminos dos edifícios sob sua
-								Gestão.
-							</Text>
-							<Text className="text-[14px] leading-[22px] text-[#374151] m-0 mb-4">
-								Com o programa – Gestão + Proteção , você levará descontos,
-								conhecimento e benefícios aos condôminos sem qualquer custo
-								nesta operação.
-							</Text>
-							<Text className="text-[14px] leading-[22px] text-[#374151] m-0 mb-4">
-								Abaixo nossa proposta:
-							</Text>
-							<Section className="bg-surface rounded-lg p-6 mb-5">
-								<Text className="text-[14px] font-bold text-[#111827] m-0 mb-3">
-									BENEFÍCIOS PARA SUA EMPRESA
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									Comissionamento de ____% do ganho da corretora decorrente da
-									indicação de condôminos que resulte na efetiva contratação de
-									seguros através da indicação
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									Comissionamento vitalício, mesmo que o CONDÔMINO deixe seu
-									escritório, por qualquer motivo, você continua sendo o
-									beneficiário do comissionamento enquanto este cliente estiver
-									segurado na segwise / xcar corretora de seguros
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									O cliente , mesmo que no primeiro momento não faça adesão ao
-									seguro, continuaremos com as ofertas de seguros com preços
-									promocionais, e a qualquer época que ele faça a adesão a
-									administradora continua com o direito ao comissionamento
-									vitalício de ___% sobre o ganho trazido a corretora.
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									A administradora do condomínio receberá todo apoio necessário
-									a divulgação da parceria, não haverá custos , apenas ganhos
-									advindos dos seguros adquiridos pelos clientes da
-									administradora.
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									Demonstrativo, em tempo real das adesões ao aplicativo
-									disponibilizado aos condôminos. Obs. Uma vez sendo cadastrado
-									em nome da administradora, este cadastro sempre será lingado a
-									administradora que o originou, mesmo não havendo mais vinculo.
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0">
-									Levar benefícios com parcerias que gerem diminuição de custos
-									para os condôminos e aumento de receita para a administradora.
-								</Text>
-							</Section>
-							<Section className="bg-surface rounded-lg p-6 mb-5">
-								<Text className="text-[14px] font-bold text-[#111827] m-0 mb-3">
-									BENEFÍCIOS PARA AOS CONDÔMINOS
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-1">
-									Acesso ao aplicativo segwise
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-3">
-									Um aplicativo verdadeiramente relevante, funcionando como um
-									assistente de bolso, centralizando serviços e informações
-									essenciais como os descritos abaixo:
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-1">
-									- Desconto exclusivo na aquisição ou renovação de seguros
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-1">
-									- Orçamentos grátis e sem compromisso
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0 mb-1">
-									- Saber que ação tomar em cada tipo de sinistro
-								</Text>
-								<Text className="text-[14px] leading-[21px] text-[#1F2937] m-0">
-									- Como agir, para onde ligar, o que fazer e se houver vítima ?
-								</Text>
-							</Section>
-							<Text className="text-[14px] font-bold text-[#111827] m-0 mb-1 text-center">
-								VOCÊS TERIAM 15 MINUTOS PARA:
-							</Text>
-							<Text className="text-[14px] leading-[21px] text-[#374151] m-0 mb-1 text-center">
-								BATERMOS UM PAPO RÁPIDO
-							</Text>
-							<Text className="text-[14px] leading-[21px] text-[#374151] m-0 mb-4 text-center">
-								DEMONSTRAR A TRANSPARÊNCIA DO PROCESSO E DO PROGRAMA
-							</Text>
-							<Text className="text-[14px] leading-[21px] text-[#374151] m-0 mb-1">
-								UM ABRAÇO
-							</Text>
-							<Text className="text-[14px] leading-[21px] text-[#374151] m-0 mb-1">
-								FERNANDO LUIZ MALHEIROS DE SENA - SEGWISE / XCAR CORRETORA DE
-								SEGUROS
-							</Text>
-							<Text className="text-[14px] leading-[21px] text-[#374151] m-0 mb-1">
-								DIRETOR GERAL
-							</Text>
-							<Text className="text-[14px] leading-[21px] text-[#374151] m-0 mb-6">
-								FONES: (81) 98696-1991 | 3229-1728
-							</Text>
-							<Section className="mt-3 mb-6">
-								<InsurerLogoGrid />
-							</Section>
-							<Section className="bg-primary rounded-lg p-6 text-center">
-								<Link
-									href={urlMessage.toJSON()}
-									className="bg-white text-primary text-[14px] font-bold rounded-md px-6 py-3 no-underline inline-block"
-								>
-									Agendar conversa
-								</Link>
-							</Section>
-						</Section>
-						<Section className="bg-primary rounded-b-lg px-8 py-6">
-							<Text className="text-white text-[13px] font-bold m-0 mb-1">
-								FERNANDO LUIZ MALHEIROS DE SENA
-							</Text>
-							<Text className="text-[#9CA3AF] text-[12px] m-0 mb-3">
-								SEGWISE / XCAR CORRETORA DE SEGUROS - DIRETOR GERAL
-							</Text>
-							<Row>
-								<Column>
-									<Link
-										href={urlMessage.toJSON()}
-										className="text-[#D1D5DB] text-[12px] no-underline mr-4"
-									>
-										WhatsApp: (81) 98696-1991
-									</Link>
-								</Column>
-								<Column>
-									<Text className="text-[#D1D5DB] text-[12px] m-0">
-										Telefone: 3229-1728
-									</Text>
-								</Column>
-							</Row>
-						</Section>
-					</Container>
-				</Body>
-			</Tailwind>
-		</Html>
+
+				<link rel="preconnect" href="https://fonts.googleapis.com" />
+				<link
+					rel="preconnect"
+					href="https://fonts.gstatic.com"
+					crossOrigin="anonymous"
+				/>
+				<link
+					href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+					rel="stylesheet"
+				/>
+
+				<style>{`
+					body { font-family: 'Inter', Arial, sans-serif; }
+					@media print {
+						* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+					}
+				`}</style>
+			</head>
+			<body className="bg-white m-0">
+				<div className="mx-auto max-w-[680px]">
+					{/* Cabeçalho — faixa preta compacta, só altura suficiente pro logo */}
+					<div className="flex items-center justify-between bg-primary px-10 py-4 break-inside-avoid">
+						<img
+							src={LOGO_WHITE}
+							alt="SEGWISE / XCAR CORRETORA DE SEGUROS"
+							width={120}
+							height={27}
+						/>
+						<span className="text-[10px] tracking-wide text-[#9CA3AF] uppercase">
+							Proposta de parceria comercial
+						</span>
+					</div>
+
+					<div className="px-10 pt-5 pb-5">
+						<h1 className="text-[18px] font-bold text-primary m-0 mb-0.5 leading-tight">
+							Parceria comercial
+						</h1>
+						<p className="text-[12px] font-semibold text-[#4B5563] m-0 mb-3">
+							Administradora de condomínio <br /> SEGWISE / XCAR Corretora de
+							Seguros
+						</p>
+
+						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
+							Somos da SEGWISE / XCAR CORRETORA DE SEGUROS, empresa com mais de
+							12 anos no mercado segurador, e gostaria de convidar você para uma
+							ação conjunta na proteção financeira e tranquilidade dos
+							condôminos dos edifícios sob sua gestão.
+						</p>
+						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
+							Com o programa – Gestão + Proteção, você levará descontos,
+							conhecimento e benefícios aos condôminos sem qualquer custo nesta
+							operação.
+						</p>
+						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
+							Abaixo, nossa proposta:
+						</p>
+
+						{/* Seção 1 — texto corrido, sem card */}
+						<div className="mb-3 break-inside-avoid">
+							<SectionTitle>Benefícios para sua empresa</SectionTitle>
+							<BulletItem>
+								Comissionamento de <b>____%</b> do ganho da corretora decorrente
+								da indicação de condôminos que resulte na efetiva contratação de
+								seguros através da indicação.
+							</BulletItem>
+							<BulletItem>
+								Comissionamento <b>vitalício</b>: mesmo que o condômino deixe
+								seu escritório, por qualquer motivo, você continua sendo o
+								beneficiário enquanto este cliente estiver segurado na SEGWISE /
+								XCAR.
+							</BulletItem>
+							<BulletItem>
+								O cliente, mesmo que no primeiro momento não faça adesão ao
+								seguro, continuará recebendo ofertas com preços promocionais — e
+								a qualquer época que faça a adesão, a administradora mantém o
+								direito ao comissionamento vitalício de <b>___%</b> sobre o
+								ganho trazido à corretora.
+							</BulletItem>
+							<BulletItem>
+								A administradora do condomínio receberá todo o apoio necessário
+								à divulgação da parceria, sem qualquer custo — apenas ganhos
+								advindos dos seguros adquiridos pelos clientes da
+								administradora.
+							</BulletItem>
+							<BulletItem>
+								Demonstrativo em tempo real das adesões ao aplicativo
+								disponibilizado aos condôminos. Uma vez cadastrado em nome da
+								administradora, o cadastro permanece vinculado a quem o
+								originou, mesmo sem vínculo posterior.
+							</BulletItem>
+							<BulletItem>
+								Benefícios com parcerias que geram diminuição de custos para os
+								condôminos e aumento de receita para a administradora.
+							</BulletItem>
+						</div>
+
+						{/* Seção 2 */}
+						<div className="mb-4 break-inside-avoid">
+							<SectionTitle>Benefícios para os condôminos</SectionTitle>
+							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
+								Acesso ao aplicativo SEGWISE: um assistente de bolso que
+								centraliza serviços e informações essenciais, como:
+							</p>
+							<BulletItem>
+								Desconto exclusivo na aquisição ou renovação de seguros.
+							</BulletItem>
+							<BulletItem>Orçamentos grátis e sem compromisso.</BulletItem>
+							<BulletItem>
+								Orientação sobre qual ação tomar em cada tipo de sinistro.
+							</BulletItem>
+							<BulletItem>
+								Como agir, para onde ligar e o que fazer em caso de vítima.
+							</BulletItem>
+						</div>
+
+						{/* Contato + CTA — discreto, texto corrido com botão inline, sem caixa preta */}
+						<div className="pt-20 border-t border-solid border-[#D1D5DB] break-inside-avoid">
+							<p className="text-[11px] leading-[15px] text-[#374151] m-0">
+								Fernando Luiz Malheiros de Sena — Diretor Geral
+							</p>
+							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
+								SEGWISE / XCAR Corretora de Seguros &nbsp;·&nbsp; (81)
+								98696-1991 &nbsp;·&nbsp; 3229-1728
+							</p>
+
+							<p className="text-[9px] tracking-wide text-muted uppercase m-0 mb-1.5">
+								Seguradoras parceiras
+							</p>
+							<InsurerLogoGrid />
+						</div>
+					</div>
+
+					{/* Rodapé — linha só, sem bloco colorido */}
+					<div className="px-10 py-4 border-t border-solid border-[#E5E7EB] flex items-center justify-between">
+						<span className="text-[10px] text-muted">
+							SEGWISE / XCAR CORRETORA DE SEGUROS
+						</span>
+						<span className="text-[10px] text-muted">segwise.com.br</span>
+					</div>
+				</div>
+			</body>
+		</html>
 	);
 }
 

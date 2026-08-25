@@ -47,7 +47,7 @@ const auth = betterAuth({
 		provider: 'postgresql',
 		transaction: true,
 		usePlural: false,
-		debugLogs: false,
+		debugLogs: true,
 	}),
 	emailAndPassword: {
 		enabled: true,
@@ -196,6 +196,7 @@ const auth = betterAuth({
 				: `${environment.NODE_ENV}.auth`,
 		database: {
 			generateId: () => Bun.randomUUIDv7(),
+			joins: true,
 		},
 	},
 	logger: {

@@ -143,6 +143,57 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 					throw new Error('Dados do veículo inválido');
 				}
 
+				console.log({
+					...(plate &&
+						plateDb && {
+							vehicle: {
+								connect: {
+									id: plateDb.id,
+								},
+							},
+						}),
+					...(plate &&
+						!plateDb && {
+							vehicle: {
+								disconnect: true,
+							},
+							vehicleWithoutPlate: {
+								upsert: {
+									create: {
+										model,
+										modelYear,
+									},
+									update: {
+										manufacturer: {
+											disconnect: true,
+										},
+										model,
+										modelYear,
+									},
+								},
+							},
+						}),
+					...(!plate && {
+						vehicle: {
+							disconnect: true,
+						},
+						vehicleWithoutPlate: {
+							upsert: {
+								create: {
+									model,
+									modelYear,
+								},
+								update: {
+									manufacturer: {
+										disconnect: true,
+									},
+									model,
+									modelYear,
+								},
+							},
+						},
+					}),
+				});
 				await transaction.safe.update({
 					where: {
 						id,

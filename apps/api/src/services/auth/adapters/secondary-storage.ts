@@ -17,6 +17,24 @@ const secondaryStorage: SecondaryStorage = {
 	delete: async (key: string): Promise<void> => {
 		await cache.del(key);
 	},
+	getAndDelete: async (key: string): Promise<string | null> => {
+		const value = await cache.get(key);
+
+		if (value !== null) {
+			await cache.del(key);
+		}
+
+		return value || null;
+	},
+	increment: async (key: string, ttl: number): Promise<number> => {
+		const count = await cache.incr(key);
+
+		if (count === 1) {
+			await cache.expire(key, ttl);
+		}
+
+		return count;
+	},
 };
 
 export { secondaryStorage };
