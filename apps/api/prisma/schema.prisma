@@ -93,6 +93,8 @@ model Account {
   scope    String?
   password String?
 
+  issuer String?
+
   idToken      String? @map("id_token")
   accessToken  String? @map("access_token")
   refreshToken String? @map("refresh_token")
@@ -110,6 +112,7 @@ model Account {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique(id)
+  @@unique([issuer, accountId])
   @@index([userId])
   @@map("accounts")
 }
