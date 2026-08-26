@@ -129,25 +129,29 @@ function registerRoutersServicesAnalyticsPoliciesCount(server: Server) {
 				ctx.database.safe.count({
 					where: {
 						...where,
-						effectivedAt: {
-							gte: effectivedAt.start,
-							lte: effectivedAt.end,
-						},
+						...(effectivedAt && {
+							effectivedAt: {
+								gte: effectivedAt.start,
+								lte: effectivedAt.end,
+							},
+						}),
 					},
 				}),
 				ctx.database.safe.count({
 					where: {
 						...where,
-						effectivedAt: {
-							gte:
-								basisOfAnalysis === 'year'
-									? subYears(effectivedAt.start, 1)
-									: subMonths(effectivedAt.start, 1),
-							lte:
-								basisOfAnalysis === 'year'
-									? subYears(effectivedAt.end, 1)
-									: subMonths(effectivedAt.end, 1),
-						},
+						...(effectivedAt && {
+							effectivedAt: {
+								gte:
+									basisOfAnalysis === 'year'
+										? subYears(effectivedAt.start, 1)
+										: subMonths(effectivedAt.start, 1),
+								lte:
+									basisOfAnalysis === 'year'
+										? subYears(effectivedAt.end, 1)
+										: subMonths(effectivedAt.end, 1),
+							},
+						}),
 					},
 				}),
 			]);
