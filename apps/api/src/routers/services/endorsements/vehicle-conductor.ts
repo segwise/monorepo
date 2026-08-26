@@ -146,17 +146,6 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 					throw new Error('Dados do veículo inválido');
 				}
 
-				console.log(
-					driver,
-					plate,
-					model,
-					modelYear,
-					franchise,
-					amount,
-					percentage,
-					plateDb,
-				);
-
 				await transaction.safe.update({
 					where: {
 						id,
