@@ -47,7 +47,7 @@ const auth = betterAuth({
 		provider: 'postgresql',
 		transaction: true,
 		usePlural: false,
-		debugLogs: true,
+		debugLogs: false,
 	}),
 	emailAndPassword: {
 		enabled: true,
