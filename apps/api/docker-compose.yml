@@ -50,5 +50,4 @@ networks:
     external: true
 
 volumes:
-  database-data:
   cache-data:
