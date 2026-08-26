@@ -1,9 +1,20 @@
 'use client';
 
+import {
+	isCNPJ,
+	isCPF,
+	isPhone,
+	isPlate,
+	maskCNPJ,
+	maskCPF,
+	maskPhone,
+	maskPlate,
+} from '@segwise/core';
 import { SchemaName } from '@segwise/core/schemas';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { SearchIcon, XCircleIcon } from 'lucide-react';
-import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from '@/libraries/search-params/quotes';
 import { cn } from '@/libraries/utils';
 import {
@@ -14,9 +25,11 @@ import {
 } from './ui/input-group';
 
 function InputSearch({ className }: { className?: string }) {
+	const routerName = usePathname();
+
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const [search, setSearch] = useState<string>(searchParams.search || '');
+	const [search, setSearch] = useState<string>(searchParams.search ?? '');
 
 	const isValid = search === '' ? true : SchemaName.safeParse(search).success;
 
@@ -37,6 +50,11 @@ function InputSearch({ className }: { className?: string }) {
 		});
 	}
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: useEffect
+	useEffect(() => {
+		setSearch(searchParams.search || '');
+	}, [routerName, searchParams.search]);
+
 	return (
 		<InputGroup className={cn('w-60', className)}>
 			<InputGroupInput
@@ -47,7 +65,19 @@ function InputSearch({ className }: { className?: string }) {
 						onSubmit();
 					}
 				}}
-				onChange={({ target: { value } }) => setSearch(value || '')}
+				onChange={({ target: { value } }) =>
+					setSearch(
+						isCNPJ(value)
+							? maskCNPJ(value)
+							: isCPF(value)
+								? maskCPF(value)
+								: isPhone(value)
+									? maskPhone(value)
+									: isPlate(value)
+										? maskPlate(value)
+										: value || '',
+					)
+				}
 			/>
 			{!!searchParams.search && (
 				<XCircleIcon
