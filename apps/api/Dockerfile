@@ -47,7 +47,9 @@ COPY --from=builder --chown=appuser:appgroup /app/package.json ./
 COPY --from=builder --chown=appuser:appgroup /app/bun.lock* ./
 COPY --from=builder --chown=appuser:appgroup /app/.npmrc ./
 
-RUN bun --bun install --frozen-lockfile --production
+# node_modules copiado do builder — NÃO reinstalar aqui, senão
+# diverge da versão contra a qual o Prisma Client (generated/) foi gerado
+COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
 
 COPY --from=builder --chown=appuser:appgroup /app/src ./src
 
