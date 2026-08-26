@@ -129,9 +129,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 						birth: insured.birth,
 						age: differenceInYears(new Date(), insured.birth),
 						phone: insured.phone,
-						...(insured.profession && {
-							profession: insured.profession,
-						}),
+						profession: insured?.profession ?? null,
 					},
 					select: {
 						id: true,
@@ -188,7 +186,7 @@ function registerRoutersServicesSafesRegister(server: Server) {
 						.then((response) => response?.id)
 				: null;
 
-			const { id: safeId, safeVehicle } = await transaction.safe.create({
+			const { id: safeId } = await transaction.safe.create({
 				data: {
 					broker: {
 						connect: {
@@ -242,9 +240,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 												}),
 												model: vehicle.model,
 												modelYear: vehicle.modelYear,
-												...(vehicle.exchange && {
-													exchange: vehicle.exchange,
-												}),
 											},
 										},
 									}),
@@ -260,9 +255,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 											}),
 											model: vehicle.model,
 											modelYear: vehicle.modelYear,
-											...(vehicle.exchange && {
-												exchange: vehicle.exchange,
-											}),
 										},
 									},
 								}),
@@ -312,28 +304,6 @@ function registerRoutersServicesSafesRegister(server: Server) {
 				},
 				relationLoadStrategy: 'join',
 			});
-
-			if (safeVehicle?.vehicleId && vehicle?.exchange) {
-				await transaction.vehicle.update({
-					where: {
-						id: safeVehicle.vehicleId,
-					},
-					data: {
-						exchange: vehicle.exchange,
-					},
-				});
-			}
-
-			if (safeVehicle?.vehicleWithoutPlateId && vehicle?.exchange) {
-				await transaction.vehicleWithoutPlate.update({
-					where: {
-						id: safeVehicle.vehicleWithoutPlateId,
-					},
-					data: {
-						exchange: vehicle.exchange,
-					},
-				});
-			}
 
 			let dueDate = startOfDay(
 				addDays(addMonths(startOfMonth(requestedAtUpdate), 1), 10),

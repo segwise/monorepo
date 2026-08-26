@@ -122,9 +122,7 @@ function registerRoutersServicesSafesByIdUpdate(server: Server) {
 						birth: insured.birth,
 						age: differenceInYears(new Date(), insured.birth),
 						phone: insured.phone,
-						...(insured.profession && {
-							profession: insured.profession,
-						}),
+						profession: insured?.profession ?? null,
 					},
 					select: {
 						id: true,
