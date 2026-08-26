@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import type React from 'react';
 import { cloneElement, useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { withMask } from 'use-mask-input';
 import { Button } from '@/components/ui/button';
@@ -77,6 +77,18 @@ import { cn } from '@/libraries/utils';
 
 interface DialogSafeEndorsementByIdProps {
 	id: string;
+}
+
+function commissionFromAmountAndPercentage(
+	amount: unknown,
+	percentage: unknown,
+) {
+	const numericAmount = getNumericValue(
+		amount == null ? 0 : (amount as number),
+	);
+	const numericPercentage = percentage == null ? 0 : Number(percentage);
+
+	return calculatePercentageOfValue(numericAmount, numericPercentage);
 }
 
 function DialogSafeEndorsementById({
@@ -263,23 +275,62 @@ function DialogSafeEndorsementDetails({
 		},
 	});
 
+	const plate = useWatch({
+		control: formVehicleConductor.control,
+		name: 'plate',
+	});
+
+	const driver = useWatch({
+		control: formVehicleConductor.control,
+		name: 'driver',
+	});
+
+	const amountVehicleConductor = useWatch({
+		control: formVehicleConductor.control,
+		name: 'amount',
+	});
+
+	const percentageVehicleConductor = useWatch({
+		control: formVehicleConductor.control,
+		name: 'percentage',
+	});
+
+	const amountAddress = useWatch({
+		control: formAddress.control,
+		name: 'amount',
+	});
+
+	const percentageAddress = useWatch({
+		control: formAddress.control,
+		name: 'percentage',
+	});
+
+	const amountFranchise = useWatch({
+		control: formFranchise.control,
+		name: 'amount',
+	});
+
+	const percentageFranchise = useWatch({
+		control: formFranchise.control,
+		name: 'percentage',
+	});
+
 	const {
 		data: plateResponse,
 		isPending: plateResponseIsPending,
 		isError: plateResponseIsError,
-	} = useVehiclesPlate(formVehicleConductor.watch('plate') ?? '');
+	} = useVehiclesPlate(plate ?? '');
 
-	const { data: driverResponse } = useCpfOrCnpj(
-		formVehicleConductor.watch('driver'),
-	);
+	const { data: driverResponse } = useCpfOrCnpj(driver);
 
 	function onSubmitVehicleConductor(props: EndorsementVehicleConductor) {
 		toast.dismiss();
 
 		vehicleConductor(
 			{
-				id,
 				...props,
+				id,
+				plate: notPlate ? null : props.plate,
 			},
 			{
 				onSuccess(_, __, ___) {
@@ -688,13 +739,10 @@ function DialogSafeEndorsementDetails({
 											style: 'currency',
 											currency: 'BRL',
 										}).format(
-											calculatePercentageOfValue(
-												getNumericValue(
-													(formVehicleConductor.watch('amount') as number) ?? 0,
-												),
-												(formVehicleConductor.watch('percentage') as number) ??
-													0,
-											) ?? 0,
+											commissionFromAmountAndPercentage(
+												amountVehicleConductor,
+												percentageVehicleConductor,
+											),
 										)}
 										placeholder='R$ 0,00'
 										className='text-left!'
@@ -806,12 +854,10 @@ function DialogSafeEndorsementDetails({
 											style: 'currency',
 											currency: 'BRL',
 										}).format(
-											calculatePercentageOfValue(
-												getNumericValue(
-													(formAddress.watch('amount') as number) ?? 0,
-												),
-												(formAddress.watch('percentage') as number) ?? 0,
-											) ?? 0,
+											commissionFromAmountAndPercentage(
+												amountAddress,
+												percentageAddress,
+											),
 										)}
 										placeholder='R$ 0,00'
 										className='text-left!'
@@ -914,12 +960,10 @@ function DialogSafeEndorsementDetails({
 											style: 'currency',
 											currency: 'BRL',
 										}).format(
-											calculatePercentageOfValue(
-												getNumericValue(
-													(formFranchise.watch('amount') as number) ?? 0,
-												),
-												(formFranchise.watch('percentage') as number) ?? 0,
-											) ?? 0,
+											commissionFromAmountAndPercentage(
+												amountFranchise,
+												percentageFranchise,
+											),
 										)}
 										placeholder='R$ 0,00'
 										className='text-left!'
