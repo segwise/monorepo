@@ -305,8 +305,6 @@ function FormProposalRegister({ id }: { id?: string }) {
 		}),
 	});
 
-	console.log(SchemaSafeRegister.safeParse(useWatch({ control }) ?? {}));
-
 	const plate = useWatch({ control, name: 'vehicle.plate' }) ?? null;
 
 	const { data: vehicleSearch, isPending: isPendingVehicleSearch } =
