@@ -29,7 +29,7 @@ const accessControlOrganizationProducer = accessControlOrganization.newRole({
 
 const auth = betterAuth({
 	appName: 'Segwise',
-	basePath: '/auth',
+	basePath: '/services/auth',
 	baseURL: environment.BASE_URL,
 	secret: environment.AUTH_SECRET,
 	trustedOrigins:
