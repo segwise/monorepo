@@ -133,6 +133,9 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 									vehicle: {
 										disconnect: true,
 									},
+									vehicleWithoutPlate: {
+										disconnect: true,
+									},
 								},
 							},
 						},
@@ -142,6 +145,17 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 				if (plate && !plateDb && (!model || !modelYear)) {
 					throw new Error('Dados do veículo inválido');
 				}
+
+				console.log(
+					driver,
+					plate,
+					model,
+					modelYear,
+					franchise,
+					amount,
+					percentage,
+					plateDb,
+				);
 
 				await transaction.safe.update({
 					where: {
