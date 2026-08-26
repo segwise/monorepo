@@ -143,57 +143,6 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 					throw new Error('Dados do veículo inválido');
 				}
 
-				console.log({
-					...(plate &&
-						plateDb && {
-							vehicle: {
-								connect: {
-									id: plateDb.id,
-								},
-							},
-						}),
-					...(plate &&
-						!plateDb && {
-							vehicle: {
-								disconnect: true,
-							},
-							vehicleWithoutPlate: {
-								upsert: {
-									create: {
-										model,
-										modelYear,
-									},
-									update: {
-										manufacturer: {
-											disconnect: true,
-										},
-										model,
-										modelYear,
-									},
-								},
-							},
-						}),
-					...(!plate && {
-						vehicle: {
-							disconnect: true,
-						},
-						vehicleWithoutPlate: {
-							upsert: {
-								create: {
-									model,
-									modelYear,
-								},
-								update: {
-									manufacturer: {
-										disconnect: true,
-									},
-									model,
-									modelYear,
-								},
-							},
-						},
-					}),
-				});
 				await transaction.safe.update({
 					where: {
 						id,
@@ -207,52 +156,34 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 								driverName: driverResponse.name,
 								driverBirth: driverResponse.birth,
 								driverAge: differenceInYears(new Date(), driverResponse.birth),
-								...(plate &&
-									plateDb && {
+								...(!!(plate ?? null) && {
+									...(!!plateDb && {
 										vehicle: {
 											connect: {
 												id: plateDb.id,
 											},
 										},
 									}),
-								...(plate &&
-									!plateDb && {
+									...(!plateDb && {
 										vehicle: {
 											disconnect: true,
 										},
 										vehicleWithoutPlate: {
-											upsert: {
-												create: {
-													model,
-													modelYear,
-												},
-												update: {
-													manufacturer: {
-														disconnect: true,
-													},
-													model,
-													modelYear,
-												},
-											},
-										},
-									}),
-								...(!plate && {
-									vehicle: {
-										disconnect: true,
-									},
-									vehicleWithoutPlate: {
-										upsert: {
 											create: {
 												model,
 												modelYear,
 											},
-											update: {
-												manufacturer: {
-													disconnect: true,
-												},
-												model,
-												modelYear,
-											},
+										},
+									}),
+								}),
+								...(!(plate ?? null) && {
+									vehicle: {
+										disconnect: true,
+									},
+									vehicleWithoutPlate: {
+										create: {
+											model,
+											modelYear,
 										},
 									},
 								}),
