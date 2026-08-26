@@ -1,4 +1,5 @@
 import { zValidator } from '@hono/zod-validator';
+import { isCNPJ, isCPF, isPhone, isPlate, maskNumber } from '@segwise/core';
 import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
@@ -135,21 +136,53 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 			if (search) {
 				where.AND = where.AND ?? [];
 
-				// @ts-expect-error
-				where.AND.push({
-					OR: [
-						{
-							insured: {
-								name: { search: search.replaceAll(' ', '&') },
+				if (isCNPJ(search)) {
+					// @ts-expect-error
+					where.AND.push({
+						insured: {
+							cnpj: maskNumber(search),
+						},
+					});
+				} else if (isCPF(search)) {
+					// @ts-expect-error
+					where.AND.push({
+						insured: {
+							cpf: maskNumber(search),
+						},
+					});
+				} else if (isPhone(search)) {
+					// @ts-expect-error
+					where.AND.push({
+						insured: {
+							phone: {
+								contains: maskNumber(search),
 							},
 						},
-						{
-							temporaryInsured: {
-								name: { search: search.replaceAll(' ', '&') },
-							},
+					});
+				} else if (isPlate(search)) {
+					// @ts-expect-error
+					where.AND.push({
+						safeVehicle: {
+							plate: search.replaceAll('-', ''),
 						},
-					],
-				});
+					});
+				} else {
+					// @ts-expect-error
+					where.AND.push({
+						OR: [
+							{
+								insured: {
+									name: { search: search.replaceAll(' ', '&') },
+								},
+							},
+							{
+								temporaryInsured: {
+									name: { search: search.replaceAll(' ', '&') },
+								},
+							},
+						],
+					});
+				}
 			}
 
 			if (!producers?.length) {
