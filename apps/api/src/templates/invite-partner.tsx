@@ -31,7 +31,7 @@ function InvitePartnerEmail({ company, url }: InvitePartnerEmailProps) {
 						<Text style={headerText}>Segwise</Text>
 					</Section>
 					<Section style={content}>
-						<Heading style={greeting}>Olá, Novo parceiro.</Heading>
+						<Heading style={greeting}>Olá, NOVO PARCEIRO.</Heading>
 						<Text style={paragraph}>
 							Você foi convidado(a) para fazer parte da plataforma da{' '}
 							<strong>Segwise</strong> em nome da organização{' '}
