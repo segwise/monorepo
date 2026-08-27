@@ -404,6 +404,34 @@ function DialogProducerRegister({
 					<FieldGroup>
 						<Controller
 							control={control}
+							name='pix'
+							render={({ field, fieldState }) => (
+								<Field
+									data-invalid={fieldState.invalid}
+									className='col-span-full'
+								>
+									<FieldLabel htmlFor='pix'>Chave PIX: </FieldLabel>
+									<Input
+										{...field}
+										id='pix'
+										value={field.value || ''}
+										aria-invalid={fieldState.invalid}
+										placeholder='Informar Chave PIX'
+										className='uppercase'
+										onChange={({ target: { value } }) =>
+											field.onChange(!value ? null : value.trim())
+										}
+									/>
+									{fieldState.invalid && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+					</FieldGroup>
+					<FieldGroup>
+						<Controller
+							control={control}
 							name='message'
 							render={({ field, fieldState }) => (
 								<Field
@@ -422,34 +450,6 @@ function DialogProducerRegister({
 										className='uppercase min-h-40'
 										onChange={({ target: { value } }) =>
 											field.onChange(!value ? null : value)
-										}
-									/>
-									{fieldState.invalid && (
-										<FieldError errors={[fieldState.error]} />
-									)}
-								</Field>
-							)}
-						/>
-					</FieldGroup>
-					<FieldGroup>
-						<Controller
-							control={control}
-							name='pix'
-							render={({ field, fieldState }) => (
-								<Field
-									data-invalid={fieldState.invalid}
-									className='col-span-full'
-								>
-									<FieldLabel htmlFor='pix'>Chave PIX: </FieldLabel>
-									<Input
-										{...field}
-										id='pix'
-										value={field.value || ''}
-										aria-invalid={fieldState.invalid}
-										placeholder='Informar Chave PIX'
-										className='uppercase'
-										onChange={({ target: { value } }) =>
-											field.onChange(!value ? null : value.trim())
 										}
 									/>
 									{fieldState.invalid && (
