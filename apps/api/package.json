@@ -41,7 +41,7 @@
 		"pdf-parse": "^2.4.5",
 		"playwright": "^1.62.1",
 		"quick-lru": "^7.3.0",
-		"react-email": "^6.9.2",
+		"react-email": "^6.9.3",
 		"resend": "^6.22.1",
 		"ua-parser-js": "^2.0.10",
 		"xior": "^0.8.4",
