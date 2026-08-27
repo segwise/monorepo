@@ -50,6 +50,49 @@ function registerRoutersServicesSafesRegister(server: Server) {
 			commissions,
 		} = ctx.req.valid('json');
 
+		if (vehicle?.plate) {
+			const isSafe = await ctx.database.safe.findFirst({
+				where: {
+					insuranceCompanyId: insuranceCompany,
+					insured: {
+						OR: [
+							{
+								cpf: insured.registration,
+							},
+							{
+								cnpj: insured.registration,
+							},
+						],
+					},
+					safeVehicle: {
+						OR: [
+							{
+								plate: vehicle.plate.replace('-', '').toLowerCase(),
+							},
+							{
+								vehicle: {
+									OR: [
+										{
+											plate: vehicle.plate.replace('-', '').toLowerCase(),
+										},
+										{
+											plateAlternative: vehicle.plate
+												.replace('-', '')
+												.toLowerCase(),
+										},
+									],
+								},
+							},
+						],
+					},
+				},
+			});
+
+			if (isSafe) {
+				throw new Error('Dados já registrados anteriormente');
+			}
+		}
+
 		if (producer) {
 			const response = await ctx.database.user.findUnique({
 				where: {
