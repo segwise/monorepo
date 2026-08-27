@@ -152,11 +152,11 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	const searchParams = useSearchParams();
 
-	const [readerPDF, setReaderPDF] = useState<boolean>(false);
-
-	const renewal =
+	const renewalInitial =
 		(searchParams.get('renewal') && searchParams.get('renewal') === 'true') ||
 		false;
+
+	const [readerPDF, setReaderPDF] = useState<boolean>(false);
 
 	const { data: producers } = useProducersSimpleFull();
 	const { data: insuranceCompanies } = useInsuranceCompaniesSimple();
@@ -190,11 +190,11 @@ function FormProposalRegister({ id }: { id?: string }) {
 			status: safe?.status || 'active',
 			producer: safe?.producer ?? null,
 			modality: safe?.modality || SchemaModality.enum.vehicle,
-			renewal,
+			renewal: renewalInitial,
 			requestedAt: safe
 				? startOfDay(
 						toZonedTime(
-							renewal
+							renewalInitial
 								? (safe.expirationAt as string)
 								: subYears(safe.expirationAt, 1),
 							'UTC',
@@ -236,7 +236,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				birth: safe?.vehicle.driver.birth ?? safe?.insured.birth ?? '',
 			},
 			...(safe?.commission &&
-				!renewal && {
+				!renewalInitial && {
 					award: safe.commission.award.toString().replace('.', ','),
 					commission: safe.commission.percentage,
 					franchise: safe.commission.franchise.toString().replace('.', ','),
@@ -250,10 +250,10 @@ function FormProposalRegister({ id }: { id?: string }) {
 				status: safe.status,
 				producer: safe.producer,
 				modality: safe.modality,
-				renewal,
+				renewal: renewalInitial,
 				requestedAt: startOfDay(
 					toZonedTime(
-						renewal
+						renewalInitial
 							? (safe.expirationAt as string)
 							: subYears(safe.expirationAt, 1),
 						'UTC',
@@ -291,19 +291,21 @@ function FormProposalRegister({ id }: { id?: string }) {
 					birth: safe?.vehicle.driver.birth ?? safe.insured.birth,
 				},
 				receivables: {
-					award: !renewal
+					award: !renewalInitial
 						? safe.commission.award.toString().replace('.', ',')
 						: 0,
-					commission: !renewal ? safe.commission.percentage : 0,
-					franchise: !renewal
+					commission: !renewalInitial ? safe.commission.percentage : 0,
+					franchise: !renewalInitial
 						? safe.commission.franchise.toString().replace('.', ',')
 						: 0,
-					installments: !renewal ? safe.commission.installments : 0,
+					installments: !renewalInitial ? safe.commission.installments : 0,
 				},
 				commissions: null,
 			},
 		}),
 	});
+
+	const renewal = useWatch({ control, name: 'renewal' });
 
 	const plate = useWatch({ control, name: 'vehicle.plate' }) ?? null;
 
@@ -373,6 +375,10 @@ function FormProposalRegister({ id }: { id?: string }) {
 	const commissionNet = commissionAmount - commissionAmountProducer;
 
 	function onChangeResponseQuotesSearch(props: QuoteRegister) {
+		if (props.renewal === true || props.renewal === false) {
+			setValue('renewal', props.renewal);
+		}
+
 		if (props.producer) {
 			setValue('producer', props.producer);
 		}
@@ -2250,6 +2256,7 @@ function DialogGetPlate({
 }
 
 type ExtractDocument = {
+	renewal: boolean;
 	modality:
 		| 'vehicle'
 		| 'motorcycle'
@@ -2367,6 +2374,7 @@ function DialogGetDocument({
 	function sendData(data: ExtractDocument) {
 		const send: QuoteRegister = {
 			readerPDF: true,
+			renewal: data.renewal,
 			driver: {
 				birth: parse(
 					data.vehicle?.driver?.birth ?? data.insured.birth,
