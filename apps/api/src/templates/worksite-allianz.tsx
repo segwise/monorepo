@@ -3,8 +3,6 @@ import type { PropsWithChildren } from 'hono/jsx';
 const ALLIANZ_LOGO = 'https://static.cdnlogo.com/logos/a/21/allianz-1.svg';
 const SEGWISE_LOGO =
 	'https://customer.segwise.com.br/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo.2b0eddfb.png&w=1920&q=100';
-const HERO_IMAGE =
-	'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&q=80';
 
 const icons = {
 	vehicle: (
@@ -128,7 +126,7 @@ function TemplateWorksiteAllianz({ leadId }: { leadId?: string } = {}) {
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<title>Worksite Allianz — SEGWISE</title>
+				<title>Worksite Allianz — SEGWISE / XCAR CORRETORA</title>
 				<script src="https://cdn.tailwindcss.com"></script>
 				<script
 					dangerouslySetInnerHTML={{
@@ -137,8 +135,8 @@ function TemplateWorksiteAllianz({ leadId }: { leadId?: string } = {}) {
 								theme: {
 									extend: {
 										colors: {
-											allianzBlue: '#00305D',
-											allianzBlueLight: '#0B4A85',
+											allianzBlue: '#141414',
+											allianzBlueLight: '#F4F6FB',
 											muted: '#6B7280',
 										},
 									},
@@ -183,38 +181,21 @@ function TemplateWorksiteAllianz({ leadId }: { leadId?: string } = {}) {
 							style={{ filter: 'invert(1)' }}
 						/>
 					</div>
-					<div className="px-10">
+					<div className="px-10 mt-6">
 						<h1 className="text-[16px] font-bold text-allianzBlue text-center leading-tight m-0 mb-3">
 							Aumente o pacote de benefícios da sua empresa com o Worksite
 							Allianz.
 						</h1>
-						<div className="relative rounded-lg overflow-hidden mb-3 break-inside-avoid">
-							<img
-								src={HERO_IMAGE}
-								alt="Worksite Allianz"
-								className="w-full h-[160px] object-cover object-[0_-45px]"
-							/>
-							<div className="absolute inset-0 bg-allianzBlue/40" />
-							<div className="absolute left-4 bottom-2.5">
-								<p className="text-[8px] font-semibold text-white uppercase tracking-wide m-0 mb-0.5">
-									Seguros com mais benefícios
-								</p>
-								<p className="text-[16px] font-bold text-white leading-none m-0">
-									Worksite Allianz
-								</p>
-							</div>
-						</div>
-
 						<p className="text-[10.5px] leading-[15px] text-[#374151] m-0 mb-1.5">
 							Olá! Tudo bem?
 						</p>
 						<p className="text-[10.5px] leading-[15px] text-[#374151] m-0 mb-1.5">
 							Eu me chamo <b>Fernando Luiz Malheiros de Sena</b>, faço parte da{' '}
-							<b>SEGWISE</b> e tenho uma novidade para você oferecer como mais
-							um benefício na sua empresa: <b>Worksite Allianz</b>. Os produtos
-							da Allianz Seguros com mais desconto e vantagens exclusivas para
-							colaboradores, extensivo a cônjuges, pais e filhos, em empresas
-							com mais de 50 colaboradores.
+							<b>SEGWISE / XCAR CORRETORA</b> e tenho uma novidade para você
+							oferecer como mais um benefício na sua empresa:{' '}
+							<b>Worksite Allianz</b>. Os produtos da Allianz Seguros com mais
+							desconto e vantagens exclusivas para colaboradores, extensivo a
+							cônjuges, pais e filhos, em empresas com mais de 50 colaboradores.
 						</p>
 						<p className="text-[10.5px] leading-[15px] text-[#374151] m-0 mb-1">
 							Aumente os benefícios que a sua empresa oferece para os
@@ -225,18 +206,16 @@ function TemplateWorksiteAllianz({ leadId }: { leadId?: string } = {}) {
 							<b>Auto, Moto, Residência, Vida e Viagem</b> e aproveitar a
 							proteção e os benefícios exclusivos da Allianz Seguros.
 						</p>
-
-						{/* Caixa única — seção de parcelamento em azul mais claro, produtos em azul escuro */}
-						<div className="rounded-lg overflow-hidden mb-3 break-inside-avoid">
+						<div className="rounded-lg overflow-hidden mb-3 mt-10 break-inside-avoid">
 							<div className="bg-allianzBlueLight text-center px-6 py-3.5">
-								<p className="text-[10.5px] leading-[15px] text-white m-0 mb-1">
+								<p className="text-[10.5px] leading-[15px] text-[#374151] m-0 mb-1">
 									Parcelamento em até 10x sem juros no débito em conta corrente
 									para os produtos de Auto e Moto.
 								</p>
-								<p className="text-[10.5px] leading-[15px] text-white m-0 mb-1">
+								<p className="text-[10.5px] leading-[15px] text-[#374151] m-0 mb-1">
 									Para Residência, Vida e Viagem, consultar regras do Produto.
 								</p>
-								<p className="text-[10.5px] leading-[15px] text-white m-0">
+								<p className="text-[10.5px] leading-[15px] text-[#374151] m-0">
 									Temos condições especiais disponíveis.
 								</p>
 							</div>
@@ -280,7 +259,6 @@ function TemplateWorksiteAllianz({ leadId }: { leadId?: string } = {}) {
 								</ProductBlock>
 							</div>
 						</div>
-
 						<p className="text-[11px] font-bold text-allianzBlue text-center m-0 mb-0.5">
 							Com Worksite Allianz, é assim, são muito mais vantagens para seus
 							colaboradores.
@@ -293,12 +271,13 @@ function TemplateWorksiteAllianz({ leadId }: { leadId?: string } = {}) {
 								Fernando Luiz Malheiros de Sena
 							</p>
 							<p className="text-[10px] text-muted m-0">
-								SEGWISE &nbsp;·&nbsp; (81) 98696-1991 &nbsp;·&nbsp; 3229-1728
+								SEGWISE / XCAR CORRETORA &nbsp;·&nbsp; (81) 98696-1991
+								&nbsp;·&nbsp; 3229-1728
 							</p>
 						</div>
 					</div>
-					<div className="bg-[#F4F6FB] px-10 py-3 border-t border-solid border-[#E5E7EB]">
-						<p className="text-[7px] leading-[10px] text-muted m-0">
+					<div className="bg-[#F4F6FB] px-10 py-3 border-t border-solid border-[#E5E7EB] mt-10">
+						<p className="text-[10px] leading-[12px] text-muted m-0">
 							Allianz Seguros S.A., CNPJ: 61.573.796/0001-66, Rua Eugênio de
 							Medeiros nº 303, ands. 1-parte, 2 ao 9, 15 e 16, Pinheiros, São
 							Paulo - CEP: 05425-000. Processos SUSEP nº 15414.002216/2004-57,
