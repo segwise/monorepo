@@ -36,6 +36,7 @@ const cilentAnthropic = new Anthropic({
 
 const SchemaDataExtract = z
 	.object({
+		renewal: z.boolean('Status de renovação inválido'),
 		modality: SchemaModality,
 		insuranceCompany: z
 			.object({
@@ -123,6 +124,7 @@ function mountPrompt(
 		Responda APENAS com um objeto JSON no formato exato abaixo, sem texto adicional, sem markdown, sem \`\`\`:
 
 		{
+			"renewal": "boolean, informação se a proposta ou apólice é uma renovação ou um seguro novo. Baseado se tem uma apólice anterior ou não"
 			"modality": "string, tipo de seguro, enum (vehicle, motorcycle, truck, health, residence, business, condominium, travel, professional, construction)",
 			"insuranceCompany": {
 				"id": "string, uuid da seguradora no banco de dados informado em 'Dados do meu banco de dados / Seguradoras'"
