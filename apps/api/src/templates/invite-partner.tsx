@@ -14,12 +14,11 @@ import {
 } from 'react-email';
 
 interface InvitePartnerEmailProps {
-	name: string;
 	company: string;
 	url: string;
 }
 
-function InvitePartnerEmail({ name, company, url }: InvitePartnerEmailProps) {
+function InvitePartnerEmail({ company, url }: InvitePartnerEmailProps) {
 	const year = new Date().getFullYear();
 
 	return (
@@ -32,7 +31,7 @@ function InvitePartnerEmail({ name, company, url }: InvitePartnerEmailProps) {
 						<Text style={headerText}>Segwise</Text>
 					</Section>
 					<Section style={content}>
-						<Heading style={greeting}>Olá, {name.toUpperCase()},</Heading>
+						<Heading style={greeting}>Olá, Novo parceiro.</Heading>
 						<Text style={paragraph}>
 							Você foi convidado(a) para fazer parte da plataforma da{' '}
 							<strong>Segwise</strong> em nome da organização{' '}

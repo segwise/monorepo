@@ -298,15 +298,6 @@ const auth = betterAuth({
 			},
 			requireEmailVerificationOnInvitation: false,
 			async sendInvitationEmail(data) {
-				const user = await database.user.findUnique({
-					where: {
-						id: data.invitation.inviterId,
-					},
-					select: {
-						name: true,
-					},
-				});
-
 				const url = new URL(
 					`http${environment.NODE_ENV !== 'development' ? 's' : ''}://${environment.NODE_ENV !== 'development' ? 'services.' : ''}${getMainDomain(environment.APPLICATION_URL)}${environment.NODE_ENV === 'development' ? `:${environment.PORT}` : ''}`,
 				);
@@ -322,7 +313,6 @@ const auth = betterAuth({
 					to: data.email,
 					subject: 'Aceitar convite de produção',
 					react: InvitePartnerEmail({
-						name: user?.name as string,
 						company: data.organization.name,
 						url: urlString,
 					}),
