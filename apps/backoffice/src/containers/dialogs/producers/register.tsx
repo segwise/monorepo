@@ -72,7 +72,7 @@ function DialogProducerRegister({
 			email: '',
 			referral: '',
 			pix: '',
-			message: `Novidade\n{{DISPLAY_NAME}} em parceria com a segwise vem ofertar a promoção\n\nGANHE EM DOBRO\n\n1 - Orientações em caso de sinistro\n2 - Consulta veicular\n3 - Acesso direto às assistências das seguradoras\n4 - Plataforma de compra e venda de veículos mais segura ( apenas clientes segwise/xcar tem acesso)\n5 - Inclua todos os seguros da família, ganhe agilidade na consulta das renovações e acesso às assistências\n\nGaranta seus benefícios: Cashback de até R$500,00 na renovação do seu seguro  *{{CODE}}*\n\nBaixe agora o aplicativo\n\n*SEGWISE*\n\nUtilize o código {{CODE}}\n\nou acesse pelo link abaixo:`,
+			message: `Novidade\n{{DISPLAY_NAME}} em parceria com a segwise vem ofertar a promoção\n\nGANHE EM DOBRO\n\n1 - Orientações em caso de sinistro\n2 - Consulta veicular\n3 - Acesso direto às assistências das seguradoras\n4 - Plataforma de compra e venda de veículos mais segura ( apenas clientes segwise/xcar tem acesso)\n5 - Inclua todos os seguros da família, ganhe agilidade na consulta das renovações e acesso às assistências\n\nBaixe agora o aplicativo *SEGWISE*\n\nUtilize o código {{CODE}}\n\nGaranta seus benefícios: Cashback de até R$500,00 na contratação ou renovação do seu seguro\n\nou acesse pelo link abaixo:`,
 		},
 	});
 
