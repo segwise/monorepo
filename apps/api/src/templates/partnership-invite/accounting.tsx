@@ -90,7 +90,6 @@ function InsurerLogoGrid() {
 	);
 }
 
-// Título de seção: linha divisória + texto, sem numeração decorativa nem cor de destaque
 function SectionTitle({ children }: PropsWithChildren) {
 	return (
 		<h2 className="text-[12px] font-bold text-primary tracking-wide uppercase m-0 mb-2 pb-1.5 border-b border-solid border-[#D1D5DB]">
@@ -99,7 +98,6 @@ function SectionTitle({ children }: PropsWithChildren) {
 	);
 }
 
-// Bullet neutro — traço cinza, sem marcador colorido
 function BulletItem({ children }: PropsWithChildren) {
 	return (
 		<div className="flex items-start gap-2 mb-0.5">
@@ -127,7 +125,6 @@ function TemplatePartnershipInviteAccounting({
 				<title>
 					Parceria comercial — Escritório de Contabilidade | SEGWISE / XCAR
 				</title>
-
 				<script src="https://cdn.tailwindcss.com"></script>
 				<script
 					dangerouslySetInnerHTML={{
@@ -147,7 +144,6 @@ function TemplatePartnershipInviteAccounting({
 						`,
 					}}
 				/>
-
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link
 					rel="preconnect"
@@ -158,7 +154,6 @@ function TemplatePartnershipInviteAccounting({
 					href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
 					rel="stylesheet"
 				/>
-
 				<style>{`
 					body { font-family: 'Inter', Arial, sans-serif; }
 					@media print {
@@ -168,7 +163,6 @@ function TemplatePartnershipInviteAccounting({
 			</head>
 			<body className="bg-white m-0">
 				<div className="mx-auto max-w-[680px]">
-					{/* Cabeçalho — faixa preta compacta, só altura suficiente pro logo */}
 					<div className="flex items-center justify-between bg-primary px-10 py-4 break-inside-avoid">
 						<img
 							src={LOGO_WHITE}
@@ -180,7 +174,6 @@ function TemplatePartnershipInviteAccounting({
 							Proposta de parceria comercial
 						</span>
 					</div>
-
 					<div className="px-10 pt-5 pb-5">
 						<h1 className="text-[18px] font-bold text-primary m-0 mb-0.5 leading-tight">
 							Parceria comercial
@@ -189,7 +182,6 @@ function TemplatePartnershipInviteAccounting({
 							Escritório de Contabilidade <br /> SEGWISE / XCAR Corretora de
 							Seguros
 						</p>
-
 						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
 							Somos da SEGWISE / XCAR CORRETORA DE SEGUROS, empresa com mais de
 							12 anos no mercado segurador, e gostaria de convidar você para uma
@@ -204,8 +196,6 @@ function TemplatePartnershipInviteAccounting({
 						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
 							Abaixo, nossa proposta:
 						</p>
-
-						{/* Seção 1 — texto corrido, sem card */}
 						<div className="mb-3 break-inside-avoid">
 							<SectionTitle>Benefícios para sua empresa</SectionTitle>
 							<BulletItem>
@@ -242,8 +232,6 @@ function TemplatePartnershipInviteAccounting({
 								aumento de receita para o escritório.
 							</BulletItem>
 						</div>
-
-						{/* Seção 2 */}
 						<div className="mb-4 break-inside-avoid">
 							<SectionTitle>Benefícios para seus clientes</SectionTitle>
 							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
@@ -279,25 +267,22 @@ function TemplatePartnershipInviteAccounting({
 								segurança — exclusiva para clientes SEGWISE / XCAR.
 							</BulletItem>
 						</div>
-
-						{/* Contato + CTA — discreto, texto corrido com botão inline, sem caixa preta */}
 						<div className="pt-20 border-t border-solid border-[#D1D5DB] break-inside-avoid">
+							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
+								SEGWISE / XCAR Corretora de Seguros &nbsp;·&nbsp;
+							</p>
 							<p className="text-[11px] leading-[15px] text-[#374151] m-0">
 								Fernando Luiz Malheiros de Sena — Diretor Geral
 							</p>
 							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
-								SEGWISE / XCAR Corretora de Seguros &nbsp;·&nbsp; 81.98696.1991
-								&nbsp;·&nbsp; 3229.1728
+								(81) 98696-1991 &nbsp;·&nbsp; 3229-1728
 							</p>
-
 							<p className="text-[9px] tracking-wide text-muted uppercase m-0 mb-1.5">
 								Seguradoras parceiras
 							</p>
 							<InsurerLogoGrid />
 						</div>
 					</div>
-
-					{/* Rodapé — linha só, sem bloco colorido */}
 					<div className="px-10 py-4 border-t border-solid border-[#E5E7EB] flex items-center justify-between">
 						<span className="text-[10px] text-muted">
 							SEGWISE / XCAR CORRETORA DE SEGUROS

@@ -11,6 +11,7 @@ import { registerRoutersServicesUtils } from '@/routers/services/utils';
 import { registerRoutersServicesVehicles } from '@/routers/services/vehicles';
 import { TemplatePartnershipInviteAccounting } from '../../templates/partnership-invite/accounting';
 import { TemplatePartnershipInviteCondominium } from '../../templates/partnership-invite/condominium';
+import { TemplateWorksiteAllianz } from '../../templates/worksite-allianz';
 import { registerRoutersEmails } from './emails';
 import { registerRoutersServicesEndorsements } from './endorsements';
 import { registerRoutersServicesMarketplace } from './marketplace';
@@ -79,6 +80,10 @@ function registerRoutersServices(server: Server) {
 		return ctx.html(TemplatePartnershipInviteCondominium());
 	});
 
+	base.get('/allianz', async (ctx) => {
+		return ctx.html(TemplateWorksiteAllianz());
+	});
+
 	base.get('/accounting/pdf', async (ctx) => {
 		const url = new URL('/accounting', ctx.req.url).toString();
 
@@ -101,6 +106,19 @@ function registerRoutersServices(server: Server) {
 			headers: {
 				'Content-Type': 'application/pdf',
 				'Content-Disposition': 'inline; filename="parceria-condominio.pdf"',
+			},
+		});
+	});
+
+	base.get('/allianz/pdf', async (ctx) => {
+		const url = new URL('/allianz', ctx.req.url).toString();
+
+		const pdfBuffer = await gerarPdfDaRota(url);
+
+		return new Response(pdfBuffer, {
+			headers: {
+				'Content-Type': 'application/pdf',
+				'Content-Disposition': 'inline; filename="parceria-allianz.pdf"',
 			},
 		});
 	});
