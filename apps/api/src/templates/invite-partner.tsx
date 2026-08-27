@@ -1,3 +1,4 @@
+/** @jsxImportSource react */
 import {
 	Body,
 	Button,
@@ -12,18 +13,14 @@ import {
 	Text,
 } from 'react-email';
 
-interface InviteParceriaEmailProps {
-	nome: string;
-	organizacao: string;
-	urlConvite: string;
+interface InvitePartnerEmailProps {
+	name: string;
+	company: string;
+	url: string;
 }
 
-function InviteParceriaEmail({
-	nome,
-	organizacao,
-	urlConvite,
-}: InviteParceriaEmailProps) {
-	const ano = new Date().getFullYear();
+function InvitePartnerEmail({ name, company, url }: InvitePartnerEmailProps) {
+	const year = new Date().getFullYear();
 
 	return (
 		<Html lang="pt-BR">
@@ -34,47 +31,39 @@ function InviteParceriaEmail({
 					<Section style={header}>
 						<Text style={headerText}>Segwise</Text>
 					</Section>
-
 					<Section style={content}>
-						<Heading style={greeting}>Olá, {nome},</Heading>
-
+						<Heading style={greeting}>Olá, {name.toUpperCase()},</Heading>
 						<Text style={paragraph}>
 							Você foi convidado(a) para fazer parte da plataforma da{' '}
 							<strong>Segwise</strong> em nome da organização{' '}
-							<strong>{organizacao}</strong>.
+							<strong>{company.toUpperCase()}</strong>.
 						</Text>
-
 						<Text style={paragraph}>
 							Nossa plataforma foi desenvolvida para simplificar a gestão de
 							corretoras de seguros, integrando cotação, emissão e
 							acompanhamento de apólices em um só lugar.
 						</Text>
-
 						<Section style={buttonContainer}>
-							<Button style={button} href={urlConvite}>
+							<Button style={button} href={url}>
 								Aceitar convite
 							</Button>
 						</Section>
-
 						<Text style={smallText}>
 							Se o botão acima não funcionar, copie e cole o link abaixo no seu
 							navegador:
 						</Text>
-						<Link href={urlConvite} style={link}>
-							{urlConvite}
+						<Link href={url} style={link}>
+							{url}
 						</Link>
-
 						<Hr style={hr} />
-
 						<Text style={footnote}>
 							Este convite é pessoal e intransferível. Caso não reconheça esta
 							solicitação, você pode ignorar este e-mail com segurança.
 						</Text>
 					</Section>
-
 					<Section style={footer}>
 						<Text style={footerText}>
-							© {ano} Segwise. Todos os direitos reservados.
+							© {year} Segwise. Todos os direitos reservados.
 						</Text>
 					</Section>
 				</Container>
@@ -82,18 +71,6 @@ function InviteParceriaEmail({
 		</Html>
 	);
 }
-
-// Dados usados na preview (npm run dev do react-email)
-InviteParceriaEmail.PreviewProps = {
-	nome: 'Fernando Sena',
-	organizacao: 'Xcar Corretora de Seguros LTDA',
-	urlConvite:
-		'https://services.segwise.com.br/accept-invitation?token=01a04417-95ba-7000-bfad-d371b229fe10',
-} satisfies InviteParceriaEmailProps;
-
-export default InviteParceriaEmail;
-
-// ---------- estilos ----------
 
 const main = {
 	backgroundColor: '#f4f5f7',
@@ -193,3 +170,5 @@ const footerText = {
 	color: '#94a3b8',
 	margin: 0,
 };
+
+export { InvitePartnerEmail };

@@ -1,4 +1,3 @@
-import { capitalizeFirstLetters } from '@segwise/core';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import {
@@ -17,6 +16,7 @@ import { environment } from '@/libraries/environment';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 import { database } from '@/services/database';
 import { email } from '@/services/email';
+import { InvitePartnerEmail } from '../../templates/invite-partner';
 import { storage } from '../storage/images';
 
 const mainDomain = getMainDomain(environment.BASE_URL);
@@ -318,15 +318,14 @@ const auth = betterAuth({
 				const urlString = url.toJSON();
 
 				await email.emails.send({
-					from: 'Segwise <security@emails.segwise.com.br>',
+					from: 'Segwise <invite@emails.segwise.com.br>',
 					to: data.email,
 					subject: 'Aceitar convite de produção',
-					html: `
-						Nome: ${user?.name}
-						Organização: ${capitalizeFirstLetters(data.organization.name).replace('Ltda', 'LTDA').replace('ltda', 'LTDA')}
-
-						URL: ${urlString}
-					`,
+					react: InvitePartnerEmail({
+						name: user?.name as string,
+						company: data.organization.name,
+						url: urlString,
+					}),
 				});
 			},
 			invitationExpiresIn: 60 * 60 * 24 * 30,
