@@ -51,7 +51,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useProducersRegister } from '@/libraries/hooks/producers/use-producers-register';
 
 function DialogProducerRegister({
-	id,
+	id: _id,
 	children,
 }: React.PropsWithChildren<{
 	id?: string;
@@ -72,7 +72,7 @@ function DialogProducerRegister({
 			email: '',
 			referral: '',
 			pix: '',
-			message: `Novidade\n{{DISPLAY_NAME}} em parceria com a segwise/xcar corretora vem ofertar a promoção\n\nGANHE EM DOBRO\n\n1 - Cashback de até R$ 500,00 na renovação ou contratação do seu seguro.\n    Utilizando o código: *{{CODE}}*\n2 - Orientações em caso de sinistro\n3 - Consulta veicular\n4 - Acesso direto às assistências das seguradoras\n5 - Plataforma de compra e venda de veículos mais segura ( apenas clientes segwise/xcar tem acesso)\n6 - Inclua todos os seguros da família, ganhe agilidade na consulta das renovações e acesso às assistências\n\nGaranta seus benefícios  *{{CODE}}*\n\nBaixe agora o aplicativo\n\n*SEGWISE*\n\nou acesse pelo link abaixo:`,
+			message: `Novidade\n{{DISPLAY_NAME}} em parceria com a segwise vem ofertar a promoção\n\nGANHE EM DOBRO\n\n1 - Orientações em caso de sinistro\n2 - Consulta veicular\n3 - Acesso direto às assistências das seguradoras\n4 - Plataforma de compra e venda de veículos mais segura ( apenas clientes segwise/xcar tem acesso)\n5 - Inclua todos os seguros da família, ganhe agilidade na consulta das renovações e acesso às assistências\n\nGaranta seus benefícios: Cashback de até R$500,00 na renovação do seu seguro  *{{CODE}}*\n\nBaixe agora o aplicativo\n\n*SEGWISE*\n\nUtilize o código {{CODE}}\n\nou acesse pelo link abaixo:`,
 		},
 	});
 
@@ -83,7 +83,7 @@ function DialogProducerRegister({
 				...(props.message && {
 					message: props.message
 						.replaceAll('{{DISPLAY_NAME}}', props.name)
-						.replaceAll('{{CODE}}', props.referral),
+						.replaceAll('{{CODE}}', props.referral.toUpperCase()),
 				}),
 			},
 			{
