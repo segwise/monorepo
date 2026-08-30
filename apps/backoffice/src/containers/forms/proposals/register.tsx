@@ -2543,6 +2543,19 @@ function InsuranceDataPreview({
 	return (
 		<div className='mt-2 bg-border rounded-md p-3'>
 			<div className='text-sm'>
+				Tipo de Seguro: <b>{data.renewal ? 'Renovação' : 'Seguro novo'}</b>
+			</div>
+			{/* @ts-expect-error */}
+			{data.renewal && data.latestProposal && (
+				<Fragment>
+					<div className='text-sm'>
+						Apólice anterior: {/* @ts-expect-error */}
+						<b>{data.latestProposal}</b>
+					</div>
+					<Separator className='bg-primary/20 my-2' />
+				</Fragment>
+			)}
+			<div className='text-sm'>
 				Modalidade: <b>{translateModality(data.modality)}</b>
 			</div>
 			<div className='text-sm'>
