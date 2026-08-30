@@ -245,11 +245,7 @@ function registerRoutersServicesMarketplaceRegister(server: Server) {
 			);
 
 			await Promise.all(
-				photosToDelete.map((path) =>
-					ctx.storage.images.delete(path).catch(() => {
-						console.error(`Falha ao deletar foto: ${path}`);
-					}),
-				),
+				photosToDelete.map((path) => ctx.storage.images.delete(path)),
 			);
 
 			const addressRes = await fetch(

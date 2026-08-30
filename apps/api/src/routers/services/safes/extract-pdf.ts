@@ -36,6 +36,11 @@ const cilentAnthropic = new Anthropic({
 
 const SchemaDataExtract = z
 	.object({
+		latestProposal: z
+			.string('Código da proposta anterior inválido')
+			.min(1, 'Código da proposta anterior inválido')
+			.toLowerCase()
+			.nullish(),
 		renewal: z.boolean('Status de renovação inválido'),
 		modality: SchemaModality,
 		insuranceCompany: z
@@ -124,6 +129,7 @@ function mountPrompt(
 		Responda APENAS com um objeto JSON no formato exato abaixo, sem texto adicional, sem markdown, sem \`\`\`:
 
 		{
+			"latestProposal": "string ou null, identificação da proposta anterior, é o código da proposta anterior caso seja renovação"
 			"renewal": "boolean, informação se a proposta ou apólice é uma renovação ou um seguro novo. Baseado se tem uma apólice anterior ou não"
 			"modality": "string, tipo de seguro, enum (vehicle, motorcycle, truck, health, residence, business, condominium, travel, professional, construction)",
 			"insuranceCompany": {
@@ -282,11 +288,10 @@ async function extractToAI(
 		} catch (error) {
 			lastError = error;
 
-			const reason =
+			const _reason =
 				error instanceof z.ZodError
 					? JSON.stringify(error.issues)
 					: String(error);
-			console.warn(`⚠️  Tentativa ${retry} falhou: ${reason}`);
 
 			if (retry < MAX_RETRIES) {
 				await new Promise((r) => setTimeout(r, 1000 * retry));
@@ -306,20 +311,11 @@ async function extractData(
 		name: string;
 	}>,
 ) {
-	try {
-		const textToPDF = await extractTextToPDF(path);
+	const textToPDF = await extractTextToPDF(path);
 
-		const data = await extractToAI(textToPDF, insuranceCompanies);
+	const data = await extractToAI(textToPDF, insuranceCompanies);
 
-		return data;
-	} catch (error) {
-		console.error(
-			'❌ Erro durante o processo:',
-			error instanceof Error ? error.message : error,
-		);
-
-		throw error;
-	}
+	return data;
 }
 
 function registerRoutersServicesSafesExtractPDF(server: Server) {
