@@ -67,8 +67,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				isExternal,
 			} = ctx.req.valid('query');
 
-			console.log('effectivedAt:', effectivedAt);
-
 			const take = limit as number;
 
 			const andConditions: Prisma.SafeWhereInput[] = [];
@@ -146,8 +144,8 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						}),
 						...(!effectivedAt && {
 							expiration: {
-								gte: startOfDay(toZonedTime(new Date(), 'UTC')),
-								lt: endOfDay(toZonedTime(endOfMonth(new Date()), 'UTC')),
+								gte: startOfDay(new Date()),
+								lt: endOfDay(endOfMonth(new Date())),
 							},
 						}),
 					}),
