@@ -44,6 +44,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { placeholder } from '@/config/placeholder';
+import { getEffectivedAtRange } from '@/libraries/get-effectived-at-range';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/insurance-companies/use-insurance-companies';
 import { useProducersSimpleFull } from '@/libraries/hooks/producers/use-producers';
 import { useSearchParams } from '@/libraries/search-params/safes';
@@ -276,53 +277,23 @@ function FilterEffectivedAt() {
 								endOfMonth(startOfToday()),
 								'dd/MM/yyyy',
 							)}`}
-						{!!searchParams.effectivedAt && (
-							<Fragment>
-								{typeof searchParams.effectivedAt === 'string' &&
-									format(parseISO(searchParams.effectivedAt), 'dd/MM/yyyy')}
-								{typeof searchParams.effectivedAt === 'object' &&
-									(isSameDay(
-										searchParams.effectivedAt instanceof Date ||
-											typeof searchParams.effectivedAt === 'string'
-											? searchParams.effectivedAt
-											: searchParams.effectivedAt?.start instanceof Date
-												? searchParams.effectivedAt.start
-												: (searchParams.effectivedAt?.start as string),
-										searchParams.effectivedAt instanceof Date ||
-											typeof searchParams.effectivedAt === 'string'
-											? searchParams.effectivedAt
-											: searchParams.effectivedAt?.end instanceof Date
-												? searchParams.effectivedAt.end
-												: (searchParams.effectivedAt?.end as string),
-									)
-										? format(
-												searchParams.effectivedAt instanceof Date ||
-													typeof searchParams.effectivedAt === 'string'
-													? searchParams.effectivedAt
-													: searchParams.effectivedAt?.start instanceof Date
-														? searchParams.effectivedAt?.start
-														: (searchParams.effectivedAt?.start as string),
-												'dd/MM/yyyy',
-											)
-										: `${format(
-												searchParams.effectivedAt instanceof Date ||
-													typeof searchParams.effectivedAt === 'string'
-													? searchParams.effectivedAt
-													: searchParams.effectivedAt?.start instanceof Date
-														? searchParams.effectivedAt?.start
-														: (searchParams.effectivedAt?.start as string),
-												'dd/MM/yyyy',
-											)} - ${format(
-												searchParams.effectivedAt instanceof Date ||
-													typeof searchParams.effectivedAt === 'string'
-													? searchParams.effectivedAt
-													: searchParams.effectivedAt?.end instanceof Date
-														? searchParams.effectivedAt?.end
-														: (searchParams.effectivedAt?.end as string),
-												'dd/MM/yyyy',
-											)}`)}
-							</Fragment>
-						)}
+						{!!searchParams.effectivedAt &&
+							(() => {
+								const { start, end } = getEffectivedAtRange(
+									searchParams.effectivedAt,
+								);
+								if (!start || !end) return null;
+
+								const sameDay = isSameDay(start, end);
+
+								return (
+									<Fragment>
+										{sameDay
+											? format(start, 'dd/MM/yyyy')
+											: `${format(start, 'dd/MM/yyyy')} - ${format(end, 'dd/MM/yyyy')}`}
+									</Fragment>
+								);
+							})()}
 						<ChevronsUpDownIcon className='size-3' />
 					</span>
 				</PopoverTrigger>
