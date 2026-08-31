@@ -19,7 +19,6 @@ import {
 	setMinutes,
 	startOfDay,
 	startOfMonth,
-	subDays,
 } from 'date-fns';
 import type { Server } from '@/@types/server';
 import { MethodPayment, StatusPayment } from '@/generated/prisma/enums';
@@ -88,8 +87,8 @@ function registerRoutersServicesSafesRegister(server: Server) {
 						],
 					},
 					requestedAt: {
-						gte: startOfDay(subDays(requestedAt, 2)),
-						lte: endOfDay(addDays(requestedAt, 2)),
+						gte: startOfDay(requestedAt),
+						lte: endOfDay(requestedAt),
 					},
 				},
 			});
