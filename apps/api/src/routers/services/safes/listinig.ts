@@ -13,6 +13,16 @@ import { serializer } from '@/db-serializers/safe/simple';
 import { type Prisma, Role, StatusSafe } from '@/generated/prisma/client';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 
+const ORDER_BY: Prisma.SafeOrderByWithRelationInput[] = [
+	{ expiration: 'asc' },
+	{ insured: { name: 'asc' } },
+];
+
+const ORDER_BY_REVERSED: Prisma.SafeOrderByWithRelationInput[] = [
+	{ expiration: 'desc' },
+	{ insured: { name: 'desc' } },
+];
+
 function registerRoutersServicesSafesSimpleListining(server: Server) {
 	server.get(
 		'/simple',
@@ -57,28 +67,70 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				isExternal,
 			} = ctx.req.valid('query');
 
-			const pageMargins = 2;
+			const take = limit as number;
+
+			// Monta os filtros AND como array desde o início — nada de mutação
+			// condicional depois nem @ts-expect-error para escapar da tipagem.
+			const andConditions: Prisma.SafeWhereInput[] = [];
+
+			if (isExternal === false) {
+				andConditions.push({
+					OR: [{ isExternal: false }, { isExternal: null }],
+				});
+			}
+
+			if (search) {
+				if (isCNPJ(search)) {
+					andConditions.push({
+						insured: { cnpj: maskNumber(search) },
+					});
+				} else if (isCPF(search)) {
+					andConditions.push({
+						insured: { cpf: maskNumber(search) },
+					});
+				} else if (isPhone(search)) {
+					andConditions.push({
+						insured: { phone: { contains: maskNumber(search) } },
+					});
+				} else if (isPlate(search)) {
+					andConditions.push({
+						safeVehicle: { plate: search.replaceAll('-', '') },
+					});
+				} else {
+					andConditions.push({
+						OR: [
+							{
+								insured: {
+									name: { search: search.replaceAll(' ', '&') },
+								},
+							},
+							{
+								temporaryInsured: {
+									name: { search: search.replaceAll(' ', '&') },
+								},
+							},
+						],
+					});
+				}
+			}
+
+			if (!producers?.length) {
+				andConditions.push({
+					OR: [
+						{ producerId: { not: '019f249d-8880-7000-b962-aace743e68e2' } },
+						{ producerId: null },
+					],
+				});
+			}
 
 			const where: Prisma.SafeWhereInput = {
-				...(!!brokerId && {
-					brokerId,
-				}),
+				...(!!brokerId && { brokerId }),
 				...(ctx?.session?.role !== Role.customer &&
 					!!brokers?.length && {
-						broker: {
-							id: {
-								in: brokers,
-							},
-						},
+						broker: { id: { in: brokers } },
 					}),
-				...(!!ids?.length && {
-					id: {
-						in: ids,
-					},
-				}),
-				...(!!isExternal && {
-					isExternal: true,
-				}),
+				...(!!ids?.length && { id: { in: ids } }),
+				...(!!isExternal && { isExternal: true }),
 				...(!!search && {
 					expiration: {
 						gte: subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
@@ -99,295 +151,66 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 							},
 						}),
 					}),
-				...(!!renewal && {
-					renewal,
-				}),
-				...(!!producers?.length && {
-					producerId: {
-						in: producers,
-					},
-				}),
+				...(!!renewal && { renewal }),
+				...(!!producers?.length && { producerId: { in: producers } }),
 				...(!!insuranceCompanies?.length && {
-					insuranceCompanyId: {
-						in: insuranceCompanies,
-					},
+					insuranceCompanyId: { in: insuranceCompanies },
 				}),
-				...(!!modality && {
-					modality: {
-						in: modality,
-					},
-				}),
-				...(!!status && {
-					status: {
-						in: status,
-					},
-				}),
+				...(!!modality && { modality: { in: modality } }),
+				...(!!status && { status: { in: status } }),
+				...(andConditions.length > 0 && { AND: andConditions }),
 			};
 
-			if (isExternal === false) {
-				where.AND = where.AND ?? [];
-
-				// @ts-expect-error
-				where.AND.push({
-					OR: [{ isExternal: false }, { isExternal: null }],
-				});
-			}
-
-			if (search) {
-				where.AND = where.AND ?? [];
-
-				if (isCNPJ(search)) {
-					// @ts-expect-error
-					where.AND.push({
-						insured: {
-							cnpj: maskNumber(search),
-						},
-					});
-				} else if (isCPF(search)) {
-					// @ts-expect-error
-					where.AND.push({
-						insured: {
-							cpf: maskNumber(search),
-						},
-					});
-				} else if (isPhone(search)) {
-					// @ts-expect-error
-					where.AND.push({
-						insured: {
-							phone: {
-								contains: maskNumber(search),
-							},
-						},
-					});
-				} else if (isPlate(search)) {
-					// @ts-expect-error
-					where.AND.push({
-						safeVehicle: {
-							plate: search.replaceAll('-', ''),
-						},
-					});
-				} else {
-					// @ts-expect-error
-					where.AND.push({
-						OR: [
-							{
-								insured: {
-									name: { search: search.replaceAll(' ', '&') },
-								},
-							},
-							{
-								temporaryInsured: {
-									name: { search: search.replaceAll(' ', '&') },
-								},
-							},
-						],
-					});
-				}
-			}
-
-			if (!producers?.length) {
-				where.AND = where.AND ?? [];
-
-				// @ts-expect-error
-				where.AND.push({
-					OR: [
-						{ producerId: { not: '019f249d-8880-7000-b962-aace743e68e2' } },
-						{ producerId: null },
-					],
-				});
-			}
-
-			const [safes, total, itemsBefore] = await ctx.database.$transaction([
+			// Busca a página atual: pede take+1 para saber se existe próxima página,
+			// sem precisar de uma segunda query.
+			const [safesWithExtra, total] = await ctx.database.$transaction([
 				ctx.database.safe.findMany({
 					where,
 					...(cursor && {
-						cursor: {
-							id: cursor,
-						},
+						cursor: { id: cursor },
+						skip: 1, // pula o próprio registro do cursor
 					}),
-					take: (limit as number) + 1,
-					orderBy: [
-						{
-							expiration: 'asc',
-						},
-						{
-							insured: {
-								name: 'asc',
-							},
-						},
-					],
+					take: take + 1,
+					orderBy: ORDER_BY,
 					select: selectPrisma,
 					relationLoadStrategy: 'join',
 				}),
 				ctx.database.safe.count({ where }),
-				cursor
-					? ctx.database.safe.count({
-							where: {
-								...where,
-								id: { gt: cursor },
-							},
-						})
-					: ctx.database.safe.count({
-							where: {
-								...where,
-								id: { in: [] },
-							},
-							take: 0,
-						}),
 			]);
 
-			const currentPage = cursor
-				? Math.floor(itemsBefore / (limit as number)) + 1
-				: 1;
+			const hasNextPage = safesWithExtra.length > take;
+			const pageSafes = safesWithExtra.slice(0, take);
+			const nextCursor = hasNextPage
+				? pageSafes[pageSafes.length - 1]!.id
+				: null;
 
-			const totalPages = Math.ceil(total / (limit as number));
+			// Cursor "anterior": busca take registros em ordem invertida a partir
+			// do cursor atual, pulando-o. O último item dessa busca invertida é,
+			// na ordem normal, o primeiro item da página anterior — é esse id que
+			// o cliente deve mandar como `cursor` para voltar uma página.
+			let previousCursor: string | null = null;
 
-			const nextCursor = safes[limit as number]?.id || null;
+			if (cursor && pageSafes.length > 0) {
+				const reversedPage = await ctx.database.safe.findMany({
+					where,
+					cursor: { id: cursor },
+					skip: 1,
+					take,
+					orderBy: ORDER_BY_REVERSED,
+					select: { id: true },
+					relationLoadStrategy: 'join',
+				});
 
-			let previousCursor = !safes.length
-				? null
-				: !cursor
-					? null
-					: (await ctx.database.safe
-							.findFirst({
-								where,
-								cursor: {
-									id: safes[0]?.id,
-								},
-								orderBy: [
-									{
-										expiration: 'asc',
-									},
-									{
-										insured: {
-											name: 'asc',
-										},
-									},
-								],
-								skip: limit as number,
-								select: {
-									id: true,
-								},
-							})
-							.then((response) => response?.id)) || null;
-
-			if (cursor === previousCursor) {
-				previousCursor = null;
-			}
-
-			const pages: Record<
-				number | 'first' | 'last' | 'count',
-				string | number | null
-			> = {
-				first: null,
-				last: null,
-				count: totalPages,
-			};
-
-			pages[currentPage] = currentPage === 1 ? null : (cursor as string);
-
-			let tempCursorForward = nextCursor;
-			for (let i = 1; i <= pageMargins; i++) {
-				if (!tempCursorForward) break;
-
-				const pageNum = currentPage + i;
-				pages[pageNum] = tempCursorForward;
-
-				if (i < pageMargins) {
-					const batchForward = await ctx.database.safe.findFirst({
-						where,
-						cursor: { id: tempCursorForward },
-						skip: limit as number,
-						orderBy: [
-							{
-								expiration: 'asc',
-							},
-							{
-								insured: {
-									name: 'asc',
-								},
-							},
-						],
-						select: { id: true },
-					});
-
-					tempCursorForward = batchForward?.id || null;
+				if (reversedPage.length > 0) {
+					previousCursor = reversedPage[reversedPage.length - 1]!.id;
 				}
 			}
-
-			if (currentPage > 1 && previousCursor) {
-				const pageNumPrev1 = currentPage - 1;
-
-				pages[pageNumPrev1] = pageNumPrev1 === 1 ? null : previousCursor;
-
-				let tempCursorBackward = previousCursor;
-				const maxBack = Math.min(pageMargins, currentPage - 1);
-
-				for (let d = 2; d <= maxBack; d++) {
-					const batchBackward = await ctx.database.safe.findFirst({
-						where,
-						cursor: { id: tempCursorBackward },
-						skip: limit as number,
-						orderBy: [
-							{
-								expiration: 'asc',
-							},
-							{
-								insured: {
-									name: 'asc',
-								},
-							},
-						],
-						select: { id: true },
-					});
-
-					const furtherPrev = batchBackward?.id || null;
-					if (!furtherPrev) break;
-
-					const pageNum = currentPage - d;
-
-					pages[pageNum] = pageNum === 1 ? null : furtherPrev;
-
-					tempCursorBackward = furtherPrev;
-				}
-			}
-
-			const skipGetLastPage = (total % (limit as number)) - 1;
-
-			const lastPage = await ctx.database.safe.findFirst({
-				where,
-				orderBy: [
-					{
-						expiration: 'asc',
-					},
-					{
-						insured: {
-							name: 'asc',
-						},
-					},
-				],
-				skip: skipGetLastPage >= 0 ? skipGetLastPage : (limit as number) - 1,
-				select: { id: true },
-			});
-
-			if (lastPage?.id) {
-				pages.last = lastPage.id;
-			}
-
-			const pageSafes = safes.slice(0, limit as number);
 
 			return ctx.json(
 				serializerCursor(pageSafes.map(serializer), {
 					total,
-					...(!!previousCursor && {
-						previous: previousCursor,
-					}),
-					...(!!nextCursor && {
-						next: nextCursor,
-					}),
-					...(!!pages && {
-						pages,
-					}),
+					...(!!previousCursor && { previous: previousCursor }),
+					...(!!nextCursor && { next: nextCursor }),
 				}),
 				200,
 			);
