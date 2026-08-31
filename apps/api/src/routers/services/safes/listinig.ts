@@ -4,7 +4,14 @@ import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
-import { endOfDay, endOfMonth, set, startOfDay, subYears } from 'date-fns';
+import {
+	endOfDay,
+	endOfMonth,
+	set,
+	startOfDay,
+	startOfToday,
+	subYears,
+} from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
@@ -144,8 +151,8 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						}),
 						...(!effectivedAt && {
 							expiration: {
-								gte: startOfDay(new Date()),
-								lt: endOfDay(endOfMonth(new Date())),
+								gte: startOfToday(),
+								lt: endOfMonth(new Date()),
 							},
 						}),
 					}),
