@@ -67,10 +67,10 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				isExternal,
 			} = ctx.req.valid('query');
 
+			console.log('effectivedAt:', effectivedAt);
+
 			const take = limit as number;
 
-			// Monta os filtros AND como array desde o início — nada de mutação
-			// condicional depois nem @ts-expect-error para escapar da tipagem.
 			const andConditions: Prisma.SafeWhereInput[] = [];
 
 			if (isExternal === false) {
@@ -161,14 +161,12 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				...(andConditions.length > 0 && { AND: andConditions }),
 			};
 
-			// Busca a página atual: pede take+1 para saber se existe próxima página,
-			// sem precisar de uma segunda query.
 			const [safesWithExtra, total] = await ctx.database.$transaction([
 				ctx.database.safe.findMany({
 					where,
 					...(cursor && {
 						cursor: { id: cursor },
-						skip: 1, // pula o próprio registro do cursor
+						skip: 1,
 					}),
 					take: take + 1,
 					orderBy: ORDER_BY,
