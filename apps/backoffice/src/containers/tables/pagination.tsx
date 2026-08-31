@@ -4,11 +4,7 @@ import { QueryObserver, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-	Pagination,
-	PaginationContent,
-	PaginationEllipsis,
-} from '@/components/ui/pagination';
+import { Pagination, PaginationContent } from '@/components/ui/pagination';
 import {
 	Select,
 	SelectContent,
@@ -164,57 +160,6 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 							<ChevronLeftIcon className='size-4' />
 							Anterior
 						</Button>
-						{!Object.entries(pages ?? {}).find(([key]) => key === '1') && (
-							<Button
-								size='icon-sm'
-								variant='outline'
-								onClick={() =>
-									setSearchParams({
-										cursor: pages?.first,
-									})
-								}
-							>
-								1
-							</Button>
-						)}
-						{!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
-						{Object.entries(pages ?? {})
-							.filter(
-								([key]) => key !== 'first' && key !== 'last' && key !== 'count',
-							)
-							.map(([key, value]) => (
-								<Button
-									key={`${key}-${value}`}
-									size='icon-sm'
-									onClick={() =>
-										setSearchParams({
-											cursor: value,
-										})
-									}
-									variant={
-										searchParams.cursor === value ? 'default' : 'outline'
-									}
-								>
-									{key}
-								</Button>
-							))}
-						{!!Object.entries(pages ?? {}).length && <PaginationEllipsis />}
-						{!!Object.fromEntries(Object.entries(pages ?? {}))?.last &&
-							!Object.entries(pages ?? {}).find(
-								([key]) => key === pages?.count?.toString(),
-							) && (
-								<Button
-									size='icon-sm'
-									onClick={() =>
-										setSearchParams({
-											cursor: pages?.last,
-										})
-									}
-									variant='outline'
-								>
-									{pages?.count}
-								</Button>
-							)}
 						<Button
 							size='sm'
 							disabled={!next}

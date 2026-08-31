@@ -273,16 +273,30 @@ function FilterEffectivedAt() {
 				<PopoverTrigger>
 					<span className='text-muted-foreground truncate cursor-pointer flex flex-row items-center justify-start gap-x-1'>
 						{!searchParams.effectivedAt &&
-							`${format(startOfToday(), 'dd/MM/yyyy')} - ${format(
-								endOfMonth(startOfToday()),
-								'dd/MM/yyyy',
-							)}`}
+							(() => {
+								const { start, end } = getEffectivedAtRange(startOfToday());
+								if (!start || !end) {
+									return null;
+								}
+
+								const sameDay = isSameDay(start, end);
+
+								return (
+									<Fragment>
+										{sameDay
+											? format(start, 'dd/MM/yyyy')
+											: `${format(start, 'dd/MM/yyyy')} - ${format(end, 'dd/MM/yyyy')}`}
+									</Fragment>
+								);
+							})()}
 						{!!searchParams.effectivedAt &&
 							(() => {
 								const { start, end } = getEffectivedAtRange(
 									searchParams.effectivedAt,
 								);
-								if (!start || !end) return null;
+								if (!start || !end) {
+									return null;
+								}
 
 								const sameDay = isSameDay(start, end);
 
