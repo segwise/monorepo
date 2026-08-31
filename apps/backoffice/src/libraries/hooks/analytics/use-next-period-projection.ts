@@ -24,7 +24,7 @@ const PERIOD_LABEL: Record<ResolvedPeriod['preset'], string> = {
 	'30d': 'Próximos 30 dias',
 	month: 'Próximo mês',
 	quarter: 'Próximo trimestre',
-	custom: 'Próximo período',
+	year: 'Próximo período',
 };
 
 /**
