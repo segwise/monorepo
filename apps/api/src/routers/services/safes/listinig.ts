@@ -152,7 +152,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						...(!effectivedAt && {
 							expiration: {
 								gte: startOfToday(),
-								lt: endOfMonth(new Date()),
+								lte: endOfMonth(new Date()),
 							},
 						}),
 					}),
