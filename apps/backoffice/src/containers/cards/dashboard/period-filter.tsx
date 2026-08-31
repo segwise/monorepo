@@ -24,7 +24,6 @@ interface ResolvedPeriod {
 
 interface PeriodFilterContextValue extends PeriodFilterState {
 	resolved: ResolvedPeriod;
-	/** Falso quando o preset é 'year' — só existe comparação YoY nesse caso. */
 	isComparisonModeSelectable: boolean;
 	setPreset: (preset: PeriodPreset) => void;
 	setComparisonMode: (mode: ComparisonMode) => void;
@@ -91,20 +90,6 @@ function resolveCurrentRange(preset: PeriodPreset): DateRange {
 	}
 }
 
-/**
- * Resolve o range de referência (comparação).
- *
- * - yoy: mesmo intervalo, um ano atrás — regra de negócio principal, já que
- *   apólices são anuais.
- * - previous-period: para presets "rolling" (7d/30d), volta o mesmo número
- *   de dias imediatamente antes. Para presets "calendário" (month/quarter),
- *   volta para a unidade calendário anterior (mês/trimestre anterior).
- * - para preset 'year', não existe "período anterior" distinto de "ano
- *   anterior" — ambos resolvem pro mesmo cálculo (yoy). A UI nunca deveria
- *   permitir escolher 'previous-period' com preset 'year' (ver
- *   isComparisonModeSelectable), mas a função resolve com segurança de
- *   qualquer forma, caso comparisonMode fique com o valor antigo salvo.
- */
 function resolveReferenceRange(
 	preset: PeriodPreset,
 	current: DateRange,

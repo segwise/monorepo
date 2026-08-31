@@ -14,8 +14,8 @@ import {
 } from '@/containers/cards/dashboard/period-filter';
 
 const PRESET_LABEL: Record<PeriodPreset, string> = {
-	'7d': 'Últimos 7 dias',
-	'30d': 'Últimos 30 dias',
+	'7d': '7 dias',
+	'30d': '30 dias',
 	month: 'Este mês',
 	quarter: 'Este trimestre',
 	year: 'Este ano',
@@ -29,13 +29,13 @@ function SelectPeriod() {
 			value={preset}
 			onValueChange={(value) => setPreset(value as PeriodPreset)}
 		>
-			<SelectTrigger className='w-full sm:w-44'>
-				<CalendarIcon className='size-4' />
-				<SelectValue>{PRESET_LABEL[preset]}</SelectValue>
+			<SelectTrigger className='w-full'>
+				<CalendarIcon className='size-4 mr-2' />
+				<SelectValue className='text-left'>{PRESET_LABEL[preset]}</SelectValue>
 			</SelectTrigger>
-			<SelectContent>
-				<SelectItem value='7d'>Últimos 7 dias</SelectItem>
-				<SelectItem value='30d'>Últimos 30 dias</SelectItem>
+			<SelectContent className='text-left'>
+				<SelectItem value='7d'>7 dias</SelectItem>
+				<SelectItem value='30d'>30 dias</SelectItem>
 				<SelectItem value='month'>Este mês</SelectItem>
 				<SelectItem value='quarter'>Este trimestre</SelectItem>
 				<SelectItem value='year'>Este ano</SelectItem>
