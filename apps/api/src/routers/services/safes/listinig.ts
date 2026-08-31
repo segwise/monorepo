@@ -146,7 +146,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						...(!!effectivedAt && {
 							expiration: {
 								gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-								lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
+								lte: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
 							},
 						}),
 						...(!effectivedAt && {
