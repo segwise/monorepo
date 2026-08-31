@@ -181,7 +181,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 			const hasNextPage = safesWithExtra.length > take;
 			const pageSafes = safesWithExtra.slice(0, take);
 			const nextCursor = hasNextPage
-				? pageSafes[pageSafes.length - 1]!.id
+				? (pageSafes[pageSafes.length - 1]?.id as string)
 				: null;
 
 			// Cursor "anterior": busca take registros em ordem invertida a partir
@@ -202,7 +202,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				});
 
 				if (reversedPage.length > 0) {
-					previousCursor = reversedPage[reversedPage.length - 1]!.id;
+					previousCursor = reversedPage[reversedPage.length - 1]?.id as string;
 				}
 			}
 
