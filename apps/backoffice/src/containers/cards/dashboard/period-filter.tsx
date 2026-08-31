@@ -161,11 +161,11 @@ function resolveReferenceRange(
 				to: new Date(current.from.getTime()),
 			};
 		}
-		case 'year':
-			return {
-				from: subtractYears(current.from, 1),
-				to: subtractYears(current.to, 1),
-			};
+		// case 'year':
+		// 	return {
+		// 		from: subtractYears(current.from, 1),
+		// 		to: subtractYears(current.to, 1),
+		// 	};
 	}
 }
 
