@@ -131,7 +131,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				...(!!isExternal && { isExternal: true }),
 				...(!!search && {
 					expiration: {
-						gte: subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
+						gte: subYears(startOfDay(new Date()), 1),
 					},
 				}),
 				...(!search &&
