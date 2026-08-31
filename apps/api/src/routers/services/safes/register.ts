@@ -11,6 +11,7 @@ import {
 	addMonths,
 	addYears,
 	differenceInYears,
+	endOfDay,
 	isSameDay,
 	isSaturday,
 	isSunday,
@@ -84,6 +85,10 @@ function registerRoutersServicesSafesRegister(server: Server) {
 								},
 							},
 						],
+					},
+					requestedAt: {
+						gte: startOfDay(requestedAt),
+						lte: endOfDay(requestedAt),
 					},
 				},
 			});
