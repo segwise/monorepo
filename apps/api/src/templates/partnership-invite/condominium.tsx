@@ -45,7 +45,7 @@ const partnerInsurers = [
 	},
 	{
 		name: 'ezze seguros',
-		logo: 'https://mo4web.com.br/wp-content/uploads/2025/06/B.png',
+		logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTPXYwtQrp2OmLV8dSV-vnQIJKBk9nBNnZOexohCq9_DfiQ1eoMqhDQ5jH0&s=10',
 	},
 	{
 		name: 'aliro seguro',
@@ -123,7 +123,8 @@ function TemplatePartnershipInviteCondominium({
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<title>
-					Parceria comercial — Administradora de condomínio | SEGWISE / XCAR
+					Parceria comercial — Administradora de condomínio | XCAR Corretora de
+					Seguros / SEGWISE
 				</title>
 				<script src="https://cdn.tailwindcss.com"></script>
 				<script
@@ -166,7 +167,7 @@ function TemplatePartnershipInviteCondominium({
 					<div className="flex items-center justify-between bg-primary px-10 py-4 break-inside-avoid">
 						<img
 							src={LOGO_WHITE}
-							alt="SEGWISE / XCAR CORRETORA DE SEGUROS"
+							alt="XCAR CORRETORA DE SEGUROS / SEGWISE"
 							width={120}
 							height={27}
 						/>
@@ -175,90 +176,96 @@ function TemplatePartnershipInviteCondominium({
 						</span>
 					</div>
 					<div className="px-10 pt-5 pb-5">
+						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
+							Ao Sr.(a) Responsável por novos negócios da administradora de
+							condomínios
+						</p>
 						<h1 className="text-[18px] font-bold text-primary m-0 mb-0.5 leading-tight">
-							Parceria comercial
+							Prezado(a) Senhor(a),
 						</h1>
 						<p className="text-[12px] font-semibold text-[#4B5563] m-0 mb-3">
-							Administradora de condomínio <br /> SEGWISE / XCAR Corretora de
-							Seguros
-						</p>
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-							Somos da SEGWISE / XCAR CORRETORA DE SEGUROS, empresa com mais de
-							12 anos no mercado segurador, e gostaria de convidar você para uma
-							ação conjunta na proteção financeira e tranquilidade dos
-							condôminos dos edifícios sob sua gestão.
-						</p>
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-							Com o programa – Gestão + Proteção, você levará descontos,
-							conhecimento e benefícios aos condôminos sem qualquer custo nesta
-							operação.
+							Uma ótima oportunidade de levar benefícios aos clientes sob Gestão
+							de sua empresa
 						</p>
 						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
-							Abaixo, nossa proposta:
+							Meu nome é Fernando Luiz Malheiros de Sena, diretor da XCAR
+							Corretora de Seguros / SEGWISE e gostaria, em parceria com sua
+							empresa, oferecer: o programa contabilidade estratégica + proteção
+							de bens, vidas e negócios – conheça os benefícios
 						</p>
 						<div className="mb-3 break-inside-avoid">
-							<SectionTitle>Benefícios para sua empresa</SectionTitle>
+							<SectionTitle>Aos clientes</SectionTitle>
+							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
+								Acesso ao aplicativo - SEGWISE
+							</p>
+							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
+								Um aplicativo verdadeiramente relevante que vem para ampliar os
+								benefícios que sua empresa já oferece, funcionando como um
+								assistente de bolso, centralizando serviços e informações
+								essências como os descritos abaixo:
+							</p>
 							<BulletItem>
-								Comissionamento de <b>____%</b> do ganho da corretora decorrente
-								da indicação de condôminos que resulte na efetiva contratação de
-								seguros através da indicação.
+								EVITAR NEGATIVA DE SINISTRO – orientações sobre temas como:
+								Principal Condutor, CEP de pernoite, cobertura para conditores
+								entre 18 a 25 anos de idade, deveres do segurado, recusa da
+								apólice.........
 							</BulletItem>
 							<BulletItem>
-								Comissionamento <b>vitalício</b>: mesmo que o condômino deixe
-								seu escritório, por qualquer motivo, você continua sendo o
-								beneficiário enquanto este cliente estiver segurado na SEGWISE /
-								XCAR.
+								CONSULTA VEICULAR – Informações sobre: Valor médio da FIPE –
+								multas – gravames – infrações – débitos – IPVA - licenciamentos
+								– DPVAT – roubo – sinistros
 							</BulletItem>
 							<BulletItem>
-								O cliente, mesmo que no primeiro momento não faça adesão ao
-								seguro, continuará recebendo ofertas com preços promocionais — e
-								a qualquer época que faça a adesão, a administradora mantém o
-								direito ao comissionamento vitalício de <b>___%</b> sobre o
-								ganho trazido à corretora.
+								ASSISTÊNCIAS – telefones para solicitar um reboque, abrir um
+								sinistro, solicitar substituição de vidros, faróis e lanternas,
+								etc
 							</BulletItem>
 							<BulletItem>
-								A administradora do condomínio receberá todo o apoio necessário
-								à divulgação da parceria, sem qualquer custo — apenas ganhos
-								advindos dos seguros adquiridos pelos clientes da
-								administradora.
+								ORIENTAÇÃO NO SINISTRO – como agir, para onde ligar, o que fazer
+								e se houver vítima...
 							</BulletItem>
 							<BulletItem>
-								Demonstrativo em tempo real das adesões ao aplicativo
-								disponibilizado aos condôminos. Uma vez cadastrado em nome da
-								administradora, o cadastro permanece vinculado a quem o
-								originou, mesmo sem vínculo posterior.
-							</BulletItem>
-							<BulletItem>
-								Benefícios com parcerias que geram diminuição de custos para os
-								condôminos e aumento de receita para a administradora.
+								DESCONTOS EXCLUSIVOS – na aquisição ou renovação de seguros
 							</BulletItem>
 						</div>
 						<div className="mb-4 break-inside-avoid">
-							<SectionTitle>Benefícios para os condôminos</SectionTitle>
+							<SectionTitle>O escritório</SectionTitle>
 							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-								Acesso ao aplicativo SEGWISE: um assistente de bolso que
-								centraliza serviços e informações essenciais, como:
+								Acesso ao aplicativo - PARCEIRO
 							</p>
 							<BulletItem>
-								Desconto exclusivo na aquisição ou renovação de seguros.
-							</BulletItem>
-							<BulletItem>Orçamentos grátis e sem compromisso.</BulletItem>
-							<BulletItem>
-								Orientação sobre qual ação tomar em cada tipo de sinistro.
+								Aplicativo dedicado ao escritório, com demonstrativo do número
+								de adesões e ao relatório financeiro decorrentes das indicações,
+								e aos direitos conforme abaixo:
 							</BulletItem>
 							<BulletItem>
-								Como agir, para onde ligar e o que fazer em caso de vítima.
+								COMISSIONAMENTO VITALÍCIO – percentual dos ganhos da corretora
+								decorrente da indicação dos condôminos que resulte na efetiva
+								contratação de seguros.
+							</BulletItem>
+							<BulletItem>
+								CUSTO DE IMPLANTAÇÃO – sem qualquer custo financeiro ou laboral
 							</BulletItem>
 						</div>
-						<div className="pt-20 border-t border-solid border-[#D1D5DB] break-inside-avoid">
-							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
-								SEGWISE / XCAR Corretora de Seguros &nbsp;·&nbsp;
+						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
+							Coloco-me à disposição para esclarecer eventuais dúvidas e
+							apresentar mais detalhes sobre o programa.
+						</p>
+						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
+							Atenciosamente,
+						</p>
+						<div className="pt-8 border-t border-solid border-[#D1D5DB] break-inside-avoid">
+							<p className="text-[11px] leading-[15px] text-[#374151] m-0">
+								Fernando Luiz Malheiros de Sena
 							</p>
 							<p className="text-[11px] leading-[15px] text-[#374151] m-0">
-								Fernando Luiz Malheiros de Sena — Diretor Geral
+								Diretor Geral
 							</p>
 							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
-								(81) 98696-1991 &nbsp;·&nbsp; 3229-1728
+								Fones: (81) 98696-1991 - (81) 3229-1728
+							</p>
+							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
+								XCAR Corretora de Seguros / SEGWISE
 							</p>
 							<p className="text-[9px] tracking-wide text-muted uppercase m-0 mb-1.5">
 								Seguradoras parceiras
@@ -268,7 +275,7 @@ function TemplatePartnershipInviteCondominium({
 					</div>
 					<div className="px-10 py-4 border-t border-solid border-[#E5E7EB] flex items-center justify-between">
 						<span className="text-[10px] text-muted">
-							SEGWISE / XCAR CORRETORA DE SEGUROS
+							XCAR CORRETORA DE SEGUROS / SEGWISE
 						</span>
 						<span className="text-[10px] text-muted">segwise.com.br</span>
 					</div>
