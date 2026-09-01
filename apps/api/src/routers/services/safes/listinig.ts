@@ -4,14 +4,7 @@ import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
-import {
-	endOfDay,
-	endOfToday,
-	set,
-	startOfDay,
-	startOfToday,
-	subYears,
-} from 'date-fns';
+import { endOfDay, set, startOfDay, subYears } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
@@ -46,19 +39,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 			}),
 		),
 		async (ctx) => {
-			const brokerId =
-				ctx?.session?.brokerId ||
-				(await ctx.database.broker
-					.findFirst({
-						orderBy: {
-							createdAt: 'asc',
-						},
-						select: {
-							id: true,
-						},
-					})
-					.then((response) => response?.id));
-
 			const {
 				cursor,
 				limit,
@@ -73,6 +53,23 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				ids,
 				isExternal,
 			} = ctx.req.valid('query');
+
+			const brokerId =
+				ctx?.session?.brokerId ||
+				(await ctx.database.broker
+					.findFirst({
+						orderBy: {
+							createdAt: 'asc',
+						},
+						select: {
+							id: true,
+						},
+					})
+					.then((response) => response?.id));
+
+			const timeZoneClient = ctx.req.raw.headers.get('cf-timezone') ?? 'UTC';
+
+			console.log(timeZoneClient);
 
 			const take = limit as number;
 
@@ -151,8 +148,8 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						}),
 						...(!effectivedAt && {
 							expiration: {
-								gte: startOfToday(),
-								lte: endOfToday(),
+								gte: startOfDay(toZonedTime(new Date(), timeZoneClient)),
+								lte: endOfDay(toZonedTime(new Date(), timeZoneClient)),
 							},
 						}),
 					}),
