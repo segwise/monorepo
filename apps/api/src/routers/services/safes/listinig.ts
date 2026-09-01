@@ -121,6 +121,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				});
 			}
 
+			console.log(ctx.timezone);
 			const where: Prisma.SafeWhereInput = {
 				...(!!brokerId && { brokerId }),
 				...(ctx?.session?.role !== Role.customer &&
