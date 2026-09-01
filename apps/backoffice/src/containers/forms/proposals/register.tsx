@@ -2100,7 +2100,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				type='submit'
 				form='form-proposal-register'
 				className='w-full'
-				disabled={isMutation || isUpdation || !isValidForm}
+				disabled={isMutation || isUpdation}
 				textPending={
 					!id ? 'Salvando' : !!id && renewal ? 'Salvando' : 'Atualizando'
 				}
