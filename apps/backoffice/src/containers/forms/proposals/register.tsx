@@ -60,13 +60,20 @@ import {
 	SaveIcon,
 	SearchIcon,
 	TruckIcon,
+	UploadIcon,
 	User2Icon,
 	UserCircle2Icon,
 	XCircleIcon,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type React from 'react';
-import { cloneElement, Fragment, useEffect, useState } from 'react';
+import {
+	cloneElement,
+	Fragment,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { withMask } from 'use-mask-input';
@@ -138,6 +145,7 @@ import { useSafesRegister } from '@/libraries/hooks/safes/use-safes-register';
 import { useSafesUpdate } from '@/libraries/hooks/safes/use-safes-update';
 import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 import { useVehiclesPlate } from '@/libraries/hooks/vehicles/use-vehicles-plate';
+import { cn } from '@/libraries/utils';
 
 const ENTER_NAVIGATION_MAP: Record<string, string> = {
 	'vehicle-plate': 'vehicle-usage',
@@ -179,7 +187,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 		getValues,
 		setFocus,
 		reset,
-		formState: { isDirty, isValid: isValidForm },
+		formState: { isValid: isValidForm },
 	} = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
@@ -468,6 +476,15 @@ function FormProposalRegister({ id }: { id?: string }) {
 			if (props.receivables.installments) {
 				// @ts-expect-error
 				setValue('receivables.installments', props.receivables.installments);
+			}
+
+			// @ts-expect-error
+			if (props.receivables.commission) {
+				setValue(
+					'receivables.commission',
+					// @ts-expect-error
+					props.receivables.commission,
+				);
 			}
 		}
 
@@ -2083,7 +2100,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				type='submit'
 				form='form-proposal-register'
 				className='w-full'
-				disabled={isMutation || isUpdation || !isDirty}
+				disabled={isMutation || isUpdation || !isValidForm}
 				textPending={
 					!id ? 'Salvando' : !!id && renewal ? 'Salvando' : 'Atualizando'
 				}
@@ -2321,6 +2338,8 @@ function DialogGetDocument({
 		file: z.file('Documento inválido'),
 	});
 
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
 	const { data, mutate, isPending, isSuccess, reset } = useMutation<
 		ExtractDocument,
 		Error,
@@ -2407,15 +2426,25 @@ function DialogGetDocument({
 				award: data.award,
 				franchise: data.franchise,
 				installments: data.installments,
+				// @ts-expect-error
+				commission: data.commission,
 			},
 		};
 
 		onChange(send);
 	}
 
+	useEffect(() => {
+		return () => {
+			if (previewUrl) {
+				URL.revokeObjectURL(previewUrl);
+			}
+		};
+	}, [previewUrl]);
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent>
+			<DialogContent className='min-w-xl'>
 				<DialogHeader>
 					<DialogTitle className='flex flex-row items-center justify-start gap-x-1'>
 						<BrainIcon className='size-5' /> Preenchimento via PDF
@@ -2427,35 +2456,112 @@ function DialogGetDocument({
 				<Separator />
 				{(!isPending || (isSuccess && !data)) && (
 					<form onSubmit={handleSubmit(onSubmit)} noValidate>
-						<Controller
-							control={control}
-							name='file'
-							render={({ field, fieldState }) => (
-								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel htmlFor='document'>Documento:</FieldLabel>
-									<Input
-										{...field}
-										value={undefined}
-										type='file'
-										id='document'
-										placeholder='Insira o documento'
-										aria-invalid={fieldState.invalid}
-										onChange={(e) => {
-											const file = e.target.files?.[0];
+						{!data && (
+							<Controller
+								control={control}
+								name='file'
+								render={({ field, fieldState }) => {
+									// biome-ignore lint/correctness/useHookAtTopLevel: useState
+									const [isDragging, setIsDragging] = useState(false);
 
-											reset();
+									const handleFile = (file: File | undefined) => {
+										reset();
 
+										setPreviewUrl((current) => {
+											if (current) URL.revokeObjectURL(current);
+											return file ? URL.createObjectURL(file) : null;
+										});
+
+										if (file) {
+											field.onChange(file);
+										}
+									};
+
+									// biome-ignore lint/correctness/useHookAtTopLevel: useCallback
+									const handleDragOver = useCallback((e: React.DragEvent) => {
+										e.preventDefault();
+										e.stopPropagation();
+										setIsDragging(true);
+									}, []);
+
+									// biome-ignore lint/correctness/useHookAtTopLevel: useCallback
+									const handleDragLeave = useCallback((e: React.DragEvent) => {
+										e.preventDefault();
+										e.stopPropagation();
+										setIsDragging(false);
+									}, []);
+
+									// biome-ignore lint/correctness/useHookAtTopLevel: useCallback
+									// biome-ignore lint/correctness/useExhaustiveDependencies: useCallback
+									const handleDrop = useCallback(
+										(e: React.DragEvent) => {
+											e.preventDefault();
+											e.stopPropagation();
+											setIsDragging(false);
+
+											const file = e.dataTransfer.files?.[0];
 											if (file) {
-												field.onChange(file);
+												handleFile(file);
 											}
-										}}
-									/>
-									{fieldState.invalid && (
-										<FieldError errors={[fieldState.error]} />
-									)}
-								</Field>
-							)}
-						/>
+										},
+										[field],
+									);
+
+									return (
+										<Field data-invalid={fieldState.invalid}>
+											{field.value && previewUrl && (
+												<div className='flex flex-col gap-y-2'>
+													<iframe
+														src={previewUrl}
+														title='Preview do documento'
+														className='h-96 w-full rounded-md border'
+													/>
+												</div>
+											)}
+											<FieldLabel htmlFor='document'>Documento:</FieldLabel>
+											<label
+												htmlFor='document'
+												onDragOver={handleDragOver}
+												onDragLeave={handleDragLeave}
+												onDrop={handleDrop}
+												className={cn(
+													'flex flex-col items-center justify-center gap-y-2 rounded-md border-2 border-dashed p-6 transition-colors',
+													isDragging
+														? 'border-primary bg-primary/5'
+														: 'border-muted-foreground/25',
+													fieldState.invalid && 'border-destructive',
+												)}
+											>
+												<UploadIcon className='size-6 text-muted-foreground' />
+												<p className='text-sm text-muted-foreground'>
+													Arraste o PDF aqui ou clique para selecionar
+												</p>
+												<Input
+													{...field}
+													value={undefined}
+													type='file'
+													id='document'
+													accept='application/pdf'
+													placeholder='Insira o documento'
+													aria-invalid={fieldState.invalid}
+													hidden
+													className='cursor-pointer file:cursor-pointer hidden'
+													onChange={(e) => handleFile(e.target.files?.[0])}
+												/>
+											</label>
+											{field.value && (
+												<p className='text-sm text-muted-foreground'>
+													Arquivo selecionado: {field.value.name}
+												</p>
+											)}
+											{fieldState.invalid && (
+												<FieldError errors={[fieldState.error]} />
+											)}
+										</Field>
+									);
+								}}
+							/>
+						)}
 						{!!data && (
 							<InsuranceDataPreview
 								data={data}
@@ -2467,6 +2573,11 @@ function DialogGetDocument({
 								}}
 								onCancel={() => {
 									reset();
+
+									if (previewUrl) {
+										URL.revokeObjectURL(previewUrl);
+										setPreviewUrl(null);
+									}
 								}}
 							/>
 						)}
@@ -2540,6 +2651,27 @@ function InsuranceDataPreview({
 	onConfirm: (data: ExtractDocument) => void;
 	onCancel: () => void;
 }) {
+	const Schema = z.object({
+		commission: z.coerce
+			.number('Comissão inválida')
+			.min(1, 'Comissão inválida')
+			.max(100, 'Comissão inválida'),
+	});
+
+	const {
+		control,
+		getValues,
+		formState: { isValid, isDirty },
+	} = useForm({
+		mode: 'all',
+		criteriaMode: 'all',
+		reValidateMode: 'onChange',
+		resolver: zodResolver(Schema),
+		defaultValues: {
+			commission: '',
+		},
+	});
+
 	return (
 		<div className='mt-2 bg-border rounded-md p-3'>
 			<div className='text-sm'>
@@ -2668,6 +2800,31 @@ function InsuranceDataPreview({
 					</b>
 				</div>
 			</div>
+			<Separator className='bg-primary/20 my-2' />
+			<Controller
+				control={control}
+				name='commission'
+				render={({ field, fieldState }) => (
+					<Field data-invalid={fieldState.invalid}>
+						<FieldLabel htmlFor='receivables-commission'>Comissão:</FieldLabel>
+						<InputGroup className='bg-background'>
+							<InputGroupAddon align='inline-start' className='pr-3 border-r'>
+								%
+							</InputGroupAddon>
+							<InputGroupInput
+								{...field}
+								ref={withMask('decimal')}
+								id='commission'
+								aria-invalid={fieldState.invalid}
+								value={String(field.value || '')}
+								placeholder='0,00'
+								className='text-left!'
+							/>
+						</InputGroup>
+						{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+					</Field>
+				)}
+			/>
 			<div className='flex gap-2 mt-3'>
 				<Button
 					variant='outline'
@@ -2677,7 +2834,18 @@ function InsuranceDataPreview({
 				>
 					Descartar
 				</Button>
-				<Button size='sm' className='w-full' onClick={() => onConfirm(data)}>
+				<Button
+					size='sm'
+					className='w-full'
+					onClick={() =>
+						onConfirm({
+							...data,
+							// @ts-expect-error
+							commission: getValues('commission'),
+						})
+					}
+					disabled={!isValid || !isDirty}
+				>
 					Preencher Dados
 				</Button>
 			</div>
