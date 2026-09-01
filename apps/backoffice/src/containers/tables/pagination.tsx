@@ -45,16 +45,14 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 					? [searchParamsPayments, setSearchParamsPayments]
 					: [searchParamsProducers, setSearchParamsProducers];
 
-	const [{ total, previous, next, pages }, setState] = useState<{
+	const [{ total, previous, next }, setState] = useState<{
 		total: number;
 		previous: string | null;
 		next: string | null;
-		pages: Record<number | 'first' | 'last' | 'count', string | null> | null;
 	}>({
 		total: 0,
 		previous: null,
 		next: null,
-		pages: null,
 	});
 
 	useEffect(() => {
@@ -149,9 +147,7 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 							disabled={!previous}
 							onClick={() =>
 								setSearchParams({
-									cursor: Object.values(pages ?? {}).includes(previous)
-										? previous
-										: null,
+									cursor: previous,
 								})
 							}
 							variant='outline'
