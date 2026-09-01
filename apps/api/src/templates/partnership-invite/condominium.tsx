@@ -188,13 +188,13 @@ function TemplatePartnershipInviteCondominium({
 							de sua empresa
 						</p>
 						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
-							Meu nome é Fernando Luiz Malheiros de Sena, diretor da XCAR
-							Corretora de Seguros / SEGWISE e gostaria, em parceria com sua
-							empresa, oferecer: o programa contabilidade estratégica + proteção
-							de bens, vidas e negócios – conheça os benefícios
+							Meu nome é Fernando Luiz Malheiros de Sena, diretor da{' '}
+							<b>XCAR CORRETORA DE SEGUROS / SEGWISE</b> e gostaria, em parceria
+							com sua empresa, oferecer: o programa gestão + proteção – conheça
+							os benefícios
 						</p>
 						<div className="mb-3 break-inside-avoid">
-							<SectionTitle>Aos clientes</SectionTitle>
+							<SectionTitle>Benefícios aos clientes</SectionTitle>
 							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
 								Acesso ao aplicativo - SEGWISE
 							</p>
@@ -206,7 +206,7 @@ function TemplatePartnershipInviteCondominium({
 							</p>
 							<BulletItem>
 								EVITAR NEGATIVA DE SINISTRO – orientações sobre temas como:
-								Principal Condutor, CEP de pernoite, cobertura para conditores
+								Principal Condutor, CEP de pernoite, cobertura para condutores
 								entre 18 a 25 anos de idade, deveres do segurado, recusa da
 								apólice.........
 							</BulletItem>
@@ -216,9 +216,9 @@ function TemplatePartnershipInviteCondominium({
 								– DPVAT – roubo – sinistros
 							</BulletItem>
 							<BulletItem>
-								ASSISTÊNCIAS – telefones para solicitar um reboque, abrir um
-								sinistro, solicitar substituição de vidros, faróis e lanternas,
-								etc
+								ASSISTÊNCIAS – telefones para solicitar reboque, abrir um
+								sinistro, solicitar substituição de vidros, faróis, lanternas e
+								etc...
 							</BulletItem>
 							<BulletItem>
 								ORIENTAÇÃO NO SINISTRO – como agir, para onde ligar, o que fazer
@@ -229,7 +229,7 @@ function TemplatePartnershipInviteCondominium({
 							</BulletItem>
 						</div>
 						<div className="mb-4 break-inside-avoid">
-							<SectionTitle>O escritório</SectionTitle>
+							<SectionTitle>Benefícios ao escritório</SectionTitle>
 							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
 								Acesso ao aplicativo - PARCEIRO
 							</p>
