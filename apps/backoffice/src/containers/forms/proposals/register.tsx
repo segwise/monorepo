@@ -2385,7 +2385,9 @@ function DialogGetDocument({
 
 		mutate(file, {
 			onError(error) {
-				toast.error(error.message);
+				toast.error(error.message, {
+					description: 'Tente novamente!',
+				});
 			},
 		});
 	}
