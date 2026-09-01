@@ -6,7 +6,7 @@ import {
 } from '@segwise/core/schemas';
 import {
 	endOfDay,
-	endOfMonth,
+	endOfToday,
 	set,
 	startOfDay,
 	startOfToday,
@@ -152,7 +152,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						...(!effectivedAt && {
 							expiration: {
 								gte: startOfToday(),
-								lte: endOfMonth(new Date()),
+								lte: endOfToday(),
 							},
 						}),
 					}),
