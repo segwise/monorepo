@@ -34,6 +34,7 @@ type Variables = {
 	};
 	browser: Awaited<typeof acquirePage>;
 	transfeera: Xior;
+	timezone: string;
 };
 
 type AppBindings = {

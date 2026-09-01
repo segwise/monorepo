@@ -16,6 +16,7 @@ import {
 	sessionMiddleware,
 } from '@/server/middlewares/session';
 import { storageMiddleware } from '@/server/middlewares/storage';
+import { timezoneMiddleware } from './middlewares/timezone';
 
 const server = new Hono<AppBindings>({
 	strict: true,
@@ -46,6 +47,8 @@ server.use(trimTrailingSlash());
 server.use(corsMiddleware);
 
 server.use(environmentMiddleware);
+
+server.use(timezoneMiddleware);
 
 server.use(replaceSession);
 

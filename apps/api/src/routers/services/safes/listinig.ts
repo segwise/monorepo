@@ -67,10 +67,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					})
 					.then((response) => response?.id));
 
-			const timeZoneClient = ctx.req.raw.headers.get('cf-timezone') ?? 'UTC';
-
-			console.log(timeZoneClient);
-
 			const take = limit as number;
 
 			const andConditions: Prisma.SafeWhereInput[] = [];
@@ -148,8 +144,8 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						}),
 						...(!effectivedAt && {
 							expiration: {
-								gte: startOfDay(toZonedTime(new Date(), timeZoneClient)),
-								lte: endOfDay(toZonedTime(new Date(), timeZoneClient)),
+								gte: startOfDay(toZonedTime(new Date(), ctx.timezone)),
+								lte: endOfDay(toZonedTime(new Date(), ctx.timezone)),
 							},
 						}),
 					}),
