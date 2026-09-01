@@ -40,6 +40,7 @@ const corsDefaultMiddleware: MiddlewareHandler = cors({
 		'Content-Type',
 		'Authorization',
 		'X-Client-App',
+		'X-timezone',
 		'X-Requested-With',
 	],
 });
@@ -47,7 +48,7 @@ const corsDefaultMiddleware: MiddlewareHandler = cors({
 const corsAuthMiddleware: MiddlewareHandler = cors({
 	origin: isAllowedOrigin,
 	credentials: true,
-	allowHeaders: ['Content-Type', 'Authorization', 'X-Client-App'],
+	allowHeaders: ['Content-Type', 'Authorization', 'X-Client-App', 'X-timezone'],
 	allowMethods: ['POST', 'GET', 'OPTIONS'],
 	exposeHeaders: ['Content-Length'],
 	maxAge: 600,
