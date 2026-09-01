@@ -38,6 +38,7 @@ const auth = createAuthClient({
 		headers: new Headers({
 			...xior.defaults.headers,
 			'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
+			'X-timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
 		}),
 	},
 	plugins: [
