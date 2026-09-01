@@ -238,6 +238,8 @@ async function extractToAI(
 
 			const parsed = JSON.parse(jsonClear);
 
+			console.log(SchemaDataExtract.safeParse(parsed));
+
 			const valid = SchemaDataExtract.parse(parsed);
 
 			const [isBirthInsured, isBirthDriver, insuredIsTheDriver] = [
