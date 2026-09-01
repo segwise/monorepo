@@ -34,17 +34,17 @@ function DashboardPage() {
 				<CardActionRequired />
 
 				<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-					<CardKpiConversionRate />
-					<CardKpiAverageTicket />
-					<CardKpiClosingTime />
-					<CardKpiForecastedCommission />
-				</div>
-
-				<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
 					<CardKpiPoliciesCount />
 					<CardKpiNetPremium />
 					<CardKpiQuotesCount />
 					<CardKpiCommission />
+				</div>
+
+				<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+					<CardKpiConversionRate />
+					<CardKpiAverageTicket />
+					<CardKpiClosingTime />
+					<CardKpiForecastedCommission />
 				</div>
 
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
