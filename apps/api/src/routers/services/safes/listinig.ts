@@ -180,10 +180,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				? (pageSafes[pageSafes.length - 1]?.id as string)
 				: null;
 
-			// Cursor "anterior": busca take registros em ordem invertida a partir
-			// do cursor atual, pulando-o. O último item dessa busca invertida é,
-			// na ordem normal, o primeiro item da página anterior — é esse id que
-			// o cliente deve mandar como `cursor` para voltar uma página.
 			let previousCursor: string | null = null;
 
 			if (cursor && pageSafes.length > 0) {
@@ -225,6 +221,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					}),
 				}),
 			),
+			(ctx) => console.log(ctx),
 		),
 		async (ctx) => {
 			const { registration, birth } = ctx.req.valid('query');
@@ -233,47 +230,41 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				Date.UTC(birth.getFullYear(), birth.getMonth(), birth.getDate()),
 			);
 
+			const where: Prisma.SafeWhereInput = {
+				OR: [
+					{
+						isExternal: false,
+					},
+					{
+						isExternal: null,
+					},
+				],
+				insured: {
+					OR: [
+						{
+							cpf: registration,
+						},
+						{
+							cnpj: registration,
+						},
+					],
+					birth: birthUtc,
+				},
+
+				status: StatusSafe.active,
+				expiration: {
+					gte: new Date(),
+				},
+			};
+
 			const [safes, count] = await ctx.database.$transaction([
 				ctx.database.safe.findMany({
-					where: {
-						OR: [
-							{
-								isExternal: false,
-							},
-							{
-								isExternal: null,
-							},
-						],
-						insured: {
-							OR: [
-								{
-									cpf: registration,
-								},
-								{
-									cnpj: registration,
-								},
-							],
-							birth: birthUtc,
-						},
-
-						status: StatusSafe.active,
-						expiration: {
-							gte: new Date(),
-						},
-					},
+					where,
 					select: selectPrisma,
 					relationLoadStrategy: 'join',
 				}),
 				ctx.database.safe.count({
-					where: {
-						insured: {
-							cpf: registration,
-							birth: {
-								lte: birth,
-								gte: birth,
-							},
-						},
-					},
+					where,
 				}),
 			]);
 
