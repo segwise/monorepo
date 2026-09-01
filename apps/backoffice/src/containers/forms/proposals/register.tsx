@@ -2338,8 +2338,6 @@ function DialogGetDocument({
 		file: z.file('Documento inválido'),
 	});
 
-	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
 	const { data, mutate, isPending, isSuccess, reset } = useMutation<
 		ExtractDocument,
 		Error,
@@ -2436,14 +2434,6 @@ function DialogGetDocument({
 		onChange(send);
 	}
 
-	useEffect(() => {
-		return () => {
-			if (previewUrl) {
-				URL.revokeObjectURL(previewUrl);
-			}
-		};
-	}, [previewUrl]);
-
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className='min-w-xl'>
@@ -2468,11 +2458,6 @@ function DialogGetDocument({
 
 									const handleFile = (file: File | undefined) => {
 										reset();
-
-										setPreviewUrl((current) => {
-											if (current) URL.revokeObjectURL(current);
-											return file ? URL.createObjectURL(file) : null;
-										});
 
 										if (file) {
 											field.onChange(file);
@@ -2511,15 +2496,6 @@ function DialogGetDocument({
 
 									return (
 										<Field data-invalid={fieldState.invalid}>
-											{field.value && previewUrl && (
-												<div className='flex flex-col gap-y-2'>
-													<iframe
-														src={previewUrl}
-														title='Preview do documento'
-														className='h-96 w-full rounded-md border'
-													/>
-												</div>
-											)}
 											<FieldLabel htmlFor='document'>Documento:</FieldLabel>
 											<label
 												htmlFor='document'
@@ -2575,11 +2551,6 @@ function DialogGetDocument({
 								}}
 								onCancel={() => {
 									reset();
-
-									if (previewUrl) {
-										URL.revokeObjectURL(previewUrl);
-										setPreviewUrl(null);
-									}
 								}}
 							/>
 						)}
