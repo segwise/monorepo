@@ -236,6 +236,7 @@ function FilterrequestedAt() {
 	function onReset() {
 		setSearchParams({
 			requestedAt: null,
+			cursor: null,
 		});
 
 		setDate(defaultDate);
