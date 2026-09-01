@@ -14,7 +14,7 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 		storage.getString('filters:insurances:ids') || '[]',
 	) as Array<string>;
 
-	if (!myFiltersIds.length) {
+	if (!myFiltersIds?.length) {
 		return {
 			data: [],
 		};
@@ -22,11 +22,13 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 
 	const url = new URL(`${api.config?.baseURL}/safes/simple`);
 
-	if (myFiltersIds) {
+	if (myFiltersIds?.length) {
 		for (const item of myFiltersIds) {
 			url.searchParams.append('ids', item);
 		}
 	}
+
+	url.searchParams.append('limit', '100');
 
 	const { data } = await api.get<ResponseDataCursor<SafeSimple>>(
 		url.toString(),
@@ -43,9 +45,9 @@ async function safesListining({ signal }: { signal: AbortSignal }) {
 				requestedAt: endOfDay(
 					toZonedTime(response.requestedAt as string, 'UTC'),
 				),
-				effectivedAt: endOfDay(
-					toZonedTime(response.effectivedAt as string, 'UTC'),
-				),
+				effectivedAt: response.effectivedAt
+					? endOfDay(toZonedTime(response.effectivedAt as string, 'UTC'))
+					: null,
 				expiration: endOfDay(toZonedTime(response.expiration as string, 'UTC')),
 			}))
 			.sort((a, b) => compareAsc(a.expiration, b.expiration))
