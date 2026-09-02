@@ -224,7 +224,6 @@ async function extractToAI(
 		);
 	}
 
-	// também verifica se há caractere de substituição Unicode (indica encoding quebrado)
 	const replacementChar = textChunk.match(/\uFFFD/g);
 	if (replacementChar) {
 		console.log(
@@ -232,6 +231,13 @@ async function extractToAI(
 			replacementChar.length,
 		);
 	}
+
+	const testResponse = await clientOpenAI.chat.completions.create({
+		model: AI_MODEL,
+		max_tokens: 50,
+		messages: [{ role: 'user', content: 'Diga oi em uma palavra.' }],
+	});
+	console.log('TESTE SIMPLES:', testResponse.choices[0]?.message.content);
 
 	for (let retry = 1; retry <= MAX_RETRIES; retry++) {
 		try {
