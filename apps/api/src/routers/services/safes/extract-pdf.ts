@@ -175,6 +175,7 @@ function mountPrompt(
 		Informações adicionais:
 		- Existe algumas seguradoras que são do mesmo grupo, a onde é referenciado o CNPJ do grupo, mas a proposta pode ser de outras segurada, então veja realmente qual é a segurada quando for nesses casos não pelo rodapé, mas sim pelo cabeçalho ou conteúdo interno como site ou nome do tipo de seguro, pode conseguir achar como em algum lugar "NOME DA SEGURADO seguro (auto, residencial, residencia, etc...)"
 		- Quando identificar como seguradora yellum, verifica se tem em algum lugar como aliro seguro, pois pode ser que seja da aliro e não da yellum pois são do mesmo grupo, mas marcas diferentes que respondem pelo mesmo grupo, então informe seguradora como aliro
+		- Quando identificar como seguradora porto, verifica se tem em algum lugar como azul seguro, pois pode ser que seja da azul e não da porto pois são do mesmo grupo, mas marcas diferentes que respondem pelo mesmo grupo, então informe seguradora como azul
 		
 		Dados do meu banco de dados:
 		- Seguradoras:
