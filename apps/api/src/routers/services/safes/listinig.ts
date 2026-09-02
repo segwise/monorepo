@@ -221,7 +221,6 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					}),
 				}),
 			),
-			(ctx) => console.log(ctx),
 		),
 		async (ctx) => {
 			const { registration, birth } = ctx.req.valid('query');

@@ -238,7 +238,12 @@ async function extractToAI(
 
 			const parsed = JSON.parse(jsonClear);
 
-			console.log(SchemaDataExtract.safeParse(parsed));
+			if (!SchemaDataExtract.safeParse(parsed).success) {
+				console.log(
+					SchemaDataExtract.safeParse(parsed).error,
+					SchemaDataExtract.safeParse(parsed).data,
+				);
+			}
 
 			const valid = SchemaDataExtract.parse(parsed);
 
