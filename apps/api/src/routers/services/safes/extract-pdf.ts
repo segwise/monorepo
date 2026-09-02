@@ -199,6 +199,21 @@ async function extractToAI(
 
 	let lastError: unknown;
 
+	console.log(
+		'Preview do texto extraído:',
+		JSON.stringify(textChunk.slice(0, 500)),
+	);
+
+	// biome-ignore lint/suspicious/noControlCharactersInRegex: <explanation>
+	const controlChars = textChunk.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g);
+	if (controlChars) {
+		console.log(
+			'Caracteres de controle encontrados:',
+			controlChars.length,
+			[...new Set(controlChars)].map((c) => c.charCodeAt(0)),
+		);
+	}
+
 	for (let retry = 1; retry <= MAX_RETRIES; retry++) {
 		try {
 			const content = mountPrompt(textChunk, {
