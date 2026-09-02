@@ -211,18 +211,25 @@ async function extractToAI(
 
 	let lastError: unknown;
 
-	console.log(
-		'Preview do texto extraído:',
-		JSON.stringify(textChunk.slice(0, 500)),
-	);
-
 	// biome-ignore lint/suspicious/noControlCharactersInRegex: <explanation>
 	const controlChars = textChunk.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g);
 	if (controlChars) {
 		console.log(
-			'Caracteres de controle encontrados:',
+			'Caracteres de controle no TEXTO COMPLETO:',
 			controlChars.length,
+		);
+		console.log(
+			'Códigos únicos:',
 			[...new Set(controlChars)].map((c) => c.charCodeAt(0)),
+		);
+	}
+
+	// também verifica se há caractere de substituição Unicode (indica encoding quebrado)
+	const replacementChar = textChunk.match(/\uFFFD/g);
+	if (replacementChar) {
+		console.log(
+			'Caracteres de substituição Unicode (�) encontrados:',
+			replacementChar.length,
 		);
 	}
 
