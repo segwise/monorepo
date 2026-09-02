@@ -102,12 +102,24 @@ async function extractTextToPDF(buffer: ArrayBuffer): Promise<string> {
 	return text;
 }
 
+function sanitizeText(text: string): string {
+	return (
+		text
+			// biome-ignore lint/suspicious/noControlCharactersInRegex: regex
+			.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+			.replace(/\r\n/g, '\n')
+			.replace(/\n{3,}/g, '\n\n')
+	);
+}
+
 function chunkText(text: string, maxChars = 24_000): string {
-	if (text.length <= maxChars) {
+	const clean = sanitizeText(text);
+
+	if (clean.length <= maxChars) {
 		return text;
 	}
 
-	return text.slice(0, maxChars);
+	return clean.slice(0, maxChars);
 }
 
 function mountPrompt(
