@@ -1,4 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { zValidator } from '@hono/zod-validator';
 import {
 	isCPF,
@@ -13,8 +12,8 @@ import {
 	SchemaPostalCode,
 	SchemaVehicleUsage,
 } from '@segwise/core';
-
 import { format } from 'date-fns';
+import OpenAI from 'openai';
 import { PDFParse } from 'pdf-parse';
 import { z } from 'zod';
 import type { Server } from '@/@types/server';
@@ -28,7 +27,7 @@ const AI_API_KEY = process.env.AI_API_KEY as string;
 const MAX_RETRIES = 3;
 const REQUEST_TIMEOUT_MS = 30_000;
 
-const cilentAnthropic = new Anthropic({
+const clientOpenAI = new OpenAI({
 	baseURL: AI_BASE_URL,
 	apiKey: AI_API_KEY,
 	timeout: REQUEST_TIMEOUT_MS,
@@ -207,8 +206,9 @@ async function extractToAI(
 				},
 			});
 
-			const response = await cilentAnthropic.messages.create({
+			const response = await clientOpenAI.chat.completions.create({
 				model: AI_MODEL,
+				max_completion_tokens: 4096,
 				messages: [
 					{
 						role: 'system',
@@ -220,11 +220,9 @@ async function extractToAI(
 						content,
 					},
 				],
-				max_tokens: 0,
 			});
 
-			// @ts-expect-error
-			const textResult = response.choices[0].message.content;
+			const textResult = response.choices[0]?.message.content;
 
 			if (!textResult) {
 				throw new Error('Modelo retornou resposta vazia.');
