@@ -202,10 +202,11 @@ async function extractToAI(
 	for (let retry = 1; retry <= MAX_RETRIES; retry++) {
 		try {
 			const content = mountPrompt(textChunk, {
-				database: {
-					insuranceCompanies,
-				},
+				database: { insuranceCompanies },
 			});
+
+			console.log('Tamanho do prompt:', content.length, 'caracteres');
+			console.log('Qtd seguradoras:', insuranceCompanies.length);
 
 			const response = await clientOpenAI.chat.completions.create({
 				model: AI_MODEL,
