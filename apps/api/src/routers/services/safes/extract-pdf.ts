@@ -387,6 +387,8 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 
 				const cached = await ctx.cache.get(`pdf-extract:${hash}`);
 
+				console.log('cached:', cached);
+
 				if (cached) {
 					return ctx.json(JSON.parse(cached), 200);
 				}
