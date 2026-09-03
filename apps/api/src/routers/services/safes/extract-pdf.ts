@@ -214,6 +214,8 @@ async function extractToAI(
 	// biome-ignore lint/suspicious/noControlCharactersInRegex: regex
 	const controlChars = textChunk.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g);
 
+	console.log('controlChars:', controlChars);
+
 	if (controlChars) {
 		console.log(
 			'Caracteres de controle no TEXTO COMPLETO:',
@@ -363,8 +365,6 @@ async function extractData(
 ) {
 	const textToPDF = await extractTextToPDF(path);
 
-	console.log('textToPDF:', textToPDF);
-
 	const data = await extractToAI(textToPDF, insuranceCompanies);
 
 	return data;
@@ -388,8 +388,6 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const hash = Bun.hash(buffer).toString(16);
 
 				const cached = await ctx.cache.get(`pdf-extract:${hash}`);
-
-				console.log('cached:', cached);
 
 				if (cached) {
 					return ctx.json(JSON.parse(cached), 200);
