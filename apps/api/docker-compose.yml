@@ -50,11 +50,10 @@ services:
 
 networks:
   internal-network:
-    driver: brigde
+    driver: bridge
     internal: true
   dokploy-network:
     external: true
 
 volumes:
   cache-data:
-  
