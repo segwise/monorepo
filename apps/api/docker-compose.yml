@@ -50,7 +50,7 @@ services:
 
 networks:
   internal-network:
-    driver: brige
+    driver: brigde
     internal: true
   dokploy-network:
     external: true
