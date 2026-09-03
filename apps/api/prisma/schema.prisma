@@ -519,7 +519,7 @@ model InsuranceCompanyContact {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@unique([categoryId, value])
+  @@unique([categoryId, value, isWhatsapp])
   @@unique([categoryId, index])
   @@map("insurance_companies_contacts")
 }
