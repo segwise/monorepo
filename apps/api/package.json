@@ -36,7 +36,6 @@
 		"date-fns-tz": "^3.2.0",
 		"handlebars": "^4.7.9",
 		"headroom": "^0.0.1",
-		"headroom-ai": "^0.37.0",
 		"hono": "^4.13.4",
 		"ioredis": "^5.11.1",
 		"openai": "^7.9.0",

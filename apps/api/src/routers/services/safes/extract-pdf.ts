@@ -13,7 +13,6 @@ import {
 	SchemaVehicleUsage,
 } from '@segwise/core';
 import { format } from 'date-fns';
-import { compress } from 'headroom-ai';
 import OpenAI from 'openai';
 import { PDFParse } from 'pdf-parse';
 import { z } from 'zod';
@@ -222,19 +221,17 @@ async function extractToAI(
 			const response = await clientOpenAI.chat.completions.create({
 				model: AI_MODEL,
 				max_tokens: 4096,
-				messages: (
-					await compress([
-						{
-							role: 'system',
-							content:
-								'Você é um extrator de dados cirúrgico e preciso. Responda APENAS com um objeto JSON válido que segue exatamente o schema pedido, sem markdown, sem texto fora do JSON.',
-						},
-						{
-							role: 'user',
-							content,
-						},
-					])
-				).messages,
+				messages: [
+					{
+						role: 'system',
+						content:
+							'Você é um extrator de dados cirúrgico e preciso. Responda APENAS com um objeto JSON válido que segue exatamente o schema pedido, sem markdown, sem texto fora do JSON.',
+					},
+					{
+						role: 'user',
+						content,
+					},
+				],
 			});
 
 			const textResult = response.choices[0]?.message.content;

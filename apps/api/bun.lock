@@ -15,7 +15,6 @@
         "date-fns-tz": "^3.2.0",
         "handlebars": "^4.7.9",
         "headroom": "^0.0.1",
-        "headroom-ai": "^0.37.0",
         "hono": "^4.13.4",
         "ioredis": "^5.11.1",
         "openai": "^7.9.0",
@@ -570,8 +569,6 @@
     "hashish": ["hashish@0.0.4", "", { "dependencies": { "traverse": ">=0.2.4" } }, "sha512-xyD4XgslstNAs72ENaoFvgMwtv8xhiDtC2AtzCG+8yF7W/Knxxm9BX+e2s25mm+HxMKh0rBmXVOEGF3zNImXvA=="],
 
     "headroom": ["headroom@0.0.1", "", {}, "sha512-1dar/idxQI/JQzQFwxHnYFmSk0ae7nGrKfaosgV3lY8+N//dPtLSZBdi7nHyZDKeDMaiggt4caBfbPj82q6ZIQ=="],
-
-    "headroom-ai": ["headroom-ai@0.37.0", "", { "peerDependencies": { "@ai-sdk/provider": ">=1.0.0", "@anthropic-ai/sdk": ">=0.30.0", "ai": ">=6.0.0", "openai": ">=4.0.0" }, "optionalPeers": ["@ai-sdk/provider", "@anthropic-ai/sdk", "ai", "openai"] }, "sha512-LhhcQyEmcOtH6MNgcaoU2OnI/7QlMyF1CZPYdZwIWyumXjnTM6JXZZpbIufT2LFWD6cYWdUsrk3iXa9LOY3hvw=="],
 
     "hono": ["hono@4.13.4", "", {}, "sha512-AGEwKIyRMHRv1t8Wjwa3LHxQ61X5CqrdFT+4BRNTpqS5aJNnpl5WLjADb7vFlJzI/8uK7T5QLVApCMQKNa3LgQ=="],
 
