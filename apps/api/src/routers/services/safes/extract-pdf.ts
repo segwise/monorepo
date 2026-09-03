@@ -363,6 +363,8 @@ async function extractData(
 ) {
 	const textToPDF = await extractTextToPDF(path);
 
+	console.log('textToPDF:', textToPDF);
+
 	const data = await extractToAI(textToPDF, insuranceCompanies);
 
 	return data;
