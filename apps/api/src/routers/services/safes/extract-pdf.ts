@@ -185,7 +185,6 @@ function mountPrompt(
 		- O ID e o Nome da seguradora você vai ver os dados em 'Dados do meu banco de dados / Seguradoras' pra popular esses parâmetros do "insuranceCompany" baseado no meu banco de dados 
 
 		Informações adicionais:
-		- Em alguns caso o CEP de Pernoite pode está cortado no conteúdo, pode estar com 5 digitos e o restante cortado, aí para situações assim deve verificar o cep do segurado e esse cep de pernoite para ver se são semelhantes ou não, caso seja semelhante com os mesmo 5 dígitos iniciais iguais, considerar que é o mesmo do seguro. Caso não considere o CEP de Pernoite com os 5 dígitos, e adicione no final dele "000"
 		- Existe algumas seguradoras que são do mesmo grupo, a onde é referenciado o CNPJ do grupo, mas a proposta pode ser de outras segurada, então veja realmente qual é a segurada quando for nesses casos não pelo rodapé, mas sim pelo cabeçalho ou conteúdo interno como site ou nome do tipo de seguro, pode conseguir achar como em algum lugar "NOME DA SEGURADO seguro (auto, residencial, residencia, etc...)"
 		- Quando identificar como seguradora yellum, verifica se tem em algum lugar como aliro seguro, pois pode ser que seja da aliro e não da yellum pois são do mesmo grupo, mas marcas diferentes que respondem pelo mesmo grupo, então informe seguradora como aliro
 		- Quando identificar como seguradora porto, verifica se tem em algum lugar como azul seguro, pois pode ser que seja da azul e não da porto pois são do mesmo grupo, mas marcas diferentes que respondem pelo mesmo grupo, então informe seguradora como azul
