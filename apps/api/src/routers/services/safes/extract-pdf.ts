@@ -220,7 +220,7 @@ async function extractToAI(
 
 			const response = await clientOpenAI.chat.completions.create({
 				model: AI_MODEL,
-				max_tokens: 4096,
+				max_completion_tokens: 4096,
 				messages: [
 					{
 						role: 'system',
