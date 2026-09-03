@@ -1,4 +1,7 @@
+'use client';
+
 import { zodResolver } from '@hookform/resolvers/zod';
+
 import {
 	calculatePercentageOfValue,
 	capitalizeFirstLetters,
@@ -16,19 +19,22 @@ import {
 	SchemaEndorsementFranchise,
 	SchemaEndorsementVehicleConductor,
 } from '@segwise/core';
+import { useMutation } from '@tanstack/react-query';
 import { format, startOfToday } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import {
 	CarIcon,
 	DollarSignIcon,
+	FilePenIcon,
 	FilePlusIcon,
 	Loader2Icon,
 	MapPinIcon,
 	SaveIcon,
+	UploadIcon,
 	XCircleIcon,
 } from 'lucide-react';
 import type React from 'react';
-import { cloneElement, useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { withMask } from 'use-mask-input';
@@ -42,7 +48,6 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from '@/components/ui/dialog';
 import {
 	Field,
@@ -62,6 +67,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { api } from '@/libraries/api';
 import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 import {
 	useEndorsementAddress,
@@ -77,6 +83,14 @@ import { cn } from '@/libraries/utils';
 
 interface DialogSafeEndorsementByIdProps {
 	id: string;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}
+
+interface DialogSafeEndorsementDetailsProps {
+	id?: string | null;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
 }
 
 function commissionFromAmountAndPercentage(
@@ -91,104 +105,295 @@ function commissionFromAmountAndPercentage(
 	return calculatePercentageOfValue(numericAmount, numericPercentage);
 }
 
+type VehicleConductorFields = {
+	driver: string;
+	plate: string | null;
+	model: string;
+	modelYear: string | number;
+	franchise: number;
+	amount: number;
+	percentage: number;
+};
+
+type AddressFields = {
+	postalCode: string;
+	amount: number;
+	percentage: number;
+};
+
+type FranchiseFields = {
+	franchise: number;
+	amount: number;
+	percentage: number;
+};
+
+type CancelFields = {
+	effectivedAt: Date;
+};
+
+type DocumentFieldsMap = {
+	vehicle_conductor: VehicleConductorFields;
+	address: AddressFields;
+	franchise: FranchiseFields;
+	cancellation: CancelFields;
+};
+
+type ExtractEndorsementDocument = {
+	[K in keyof DocumentFieldsMap]: {
+		safeId: string;
+		type: K;
+		data: DocumentFieldsMap[K];
+	};
+}[keyof DocumentFieldsMap];
+
 function DialogSafeEndorsementById({
 	id,
-	children,
-}: React.PropsWithChildren<DialogSafeEndorsementByIdProps>) {
-	const [open, setOpen] = useState<boolean>(false);
-
+	open,
+	onOpenChange,
+}: DialogSafeEndorsementByIdProps) {
 	const { data, isPending } = useEndorsements(id, open);
 
-	// @ts-expect-error
-	const Comp = cloneElement(children, {
-		onSelect: (e) => e.preventDefault(),
-	});
+	const [openId, setOpenId] = useState<boolean>(false);
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>{Comp}</DialogTrigger>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Endossos do Seguro</DialogTitle>
-					<DialogDescription>
-						Aqui estão os endossos gerados da apólice
-					</DialogDescription>
-				</DialogHeader>
-				<Separator />
-				<div className='space-y-3'>
-					{isPending &&
-						Array.from({ length: 3 }).map((_, index) => (
-							<Skeleton key={index.toString()} className='w-full h-18' />
-						))}
-					{!isPending && !data?.length && (
-						<div className='bg-muted px-4 py-6 rounded-md border border-border text-sm text-muted-foreground font-normal'>
-							Não há endosso para a apólice vigente
-						</div>
-					)}
-					{!isPending &&
-						data?.map(({ id, type, effectivedAt, createdAt }) => (
-							<div
-								key={id}
-								className='border border-border bg-muted rounded-md p-4'
-							>
-								<div className='text-sm'>
-									<b>
-										Endosso de{' '}
-										{type === 'cancellation'
-											? 'Cancelamento'
-											: type === 'address'
-												? 'Endereço'
-												: type === 'franchise'
-													? 'Frânquia'
-													: 'Veicular | Condutor'}
-									</b>
-								</div>
-								<div className='text-sm'>
-									<b>Data:</b>{' '}
-									{format(
-										toZonedTime(effectivedAt ?? createdAt, 'UTC'),
-										'dd/MM/yyyy',
-									)}
-								</div>
+		<Fragment>
+			<Dialog open={open} onOpenChange={onOpenChange}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Endossos do Seguro</DialogTitle>
+						<DialogDescription>
+							Aqui estão os endossos gerados da apólice
+						</DialogDescription>
+					</DialogHeader>
+					<Separator />
+					<div className='space-y-3'>
+						{isPending &&
+							Array.from({ length: 3 }).map((_, index) => (
+								<Skeleton key={index.toString()} className='w-full h-18' />
+							))}
+						{!isPending && !data?.length && (
+							<div className='bg-muted px-4 py-6 rounded-md border border-border text-sm text-muted-foreground font-normal'>
+								Não há endosso para a apólice vigente
 							</div>
-						))}
-				</div>
-				<Separator />
-				<DialogFooter>
-					<DialogClose asChild>
-						<Button variant='destructive' tabIndex={-1}>
-							Fechar <XCircleIcon />
-						</Button>
-					</DialogClose>
-					<DialogSafeEndorsementDetails id={id}>
-						<Button>
+						)}
+						{!isPending &&
+							data?.map(({ id, type, effectivedAt, createdAt }) => (
+								<div
+									key={id}
+									className='border border-border bg-muted rounded-md p-4'
+								>
+									<div className='text-sm'>
+										<b>
+											Endosso de{' '}
+											{type === 'cancellation'
+												? 'Cancelamento'
+												: type === 'address'
+													? 'Endereço'
+													: type === 'franchise'
+														? 'Frânquia'
+														: 'Veicular | Condutor'}
+										</b>
+									</div>
+									<div className='text-sm'>
+										<b>Data:</b>{' '}
+										{format(
+											toZonedTime(effectivedAt ?? createdAt, 'UTC'),
+											'dd/MM/yyyy',
+										)}
+									</div>
+								</div>
+							))}
+					</div>
+					<Separator />
+					<DialogFooter>
+						<DialogClose>
+							<Button variant='destructive' tabIndex={-1}>
+								Fechar <XCircleIcon />
+							</Button>
+						</DialogClose>
+						<Button onClick={() => setOpenId(true)}>
 							Novo Endosso <FilePlusIcon />
 						</Button>
-					</DialogSafeEndorsementDetails>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+			<DialogSafeEndorsementDetails
+				id={id}
+				open={openId}
+				onOpenChange={setOpenId}
+			/>
+		</Fragment>
+	);
+}
+
+function EndorsementDropzone({
+	id,
+	onChangePending,
+	onExtracted,
+}: {
+	id?: string | null;
+	onChangePending: (pending: boolean) => void;
+	onExtracted: (data: ExtractEndorsementDocument) => void;
+}) {
+	const [isDragging, setIsDragging] = useState(false);
+	const [fileName, setFileName] = useState<string | null>(null);
+
+	const { mutate, isPending } = useMutation<
+		ExtractEndorsementDocument,
+		Error,
+		File
+	>({
+		mutationKey: ['endorsement', 'extract', 'pdf'],
+		mutationFn: async (file) => {
+			const formData = new FormData();
+
+			formData.append('file', file);
+
+			const url = new URL(
+				`${api.config?.baseURL as string}/endorsements/extract-pdf`,
+			);
+
+			if (id) {
+				url.searchParams.append('id', id);
+			}
+
+			const response = await fetch(url.toString(), {
+				method: 'POST',
+				body: formData,
+			});
+
+			if (!response.ok) {
+				throw new Error((await response.json()).message);
+			}
+
+			const data = await response.json();
+
+			return data;
+		},
+	});
+
+	function handleFile(file: File | undefined) {
+		if (!file) {
+			return;
+		}
+
+		setFileName(file.name);
+
+		toast.dismiss();
+
+		mutate(file, {
+			onSuccess(extracted) {
+				onExtracted(extracted);
+			},
+			onError(error) {
+				toast.error(error.message, {
+					description: 'Tente novamente!',
+				});
+			},
+		});
+	}
+
+	function handleDragOver(e: React.DragEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(true);
+	}
+
+	function handleDragLeave(e: React.DragEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(false);
+	}
+
+	function handleDrop(e: React.DragEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(false);
+
+		const file = e.dataTransfer.files?.[0];
+
+		if (file) {
+			handleFile(file);
+		}
+	}
+
+	useEffect(() => {
+		onChangePending(isPending);
+	}, [isPending, onChangePending]);
+
+	return (
+		<Field>
+			<FieldLabel htmlFor='endorsement-document'>
+				Documento de Endosso:
+			</FieldLabel>
+			<label
+				htmlFor='endorsement-document'
+				onDragOver={handleDragOver}
+				onDragLeave={handleDragLeave}
+				onDrop={handleDrop}
+				className={cn(
+					'flex flex-col items-center justify-center gap-y-2 rounded-md border-2 border-dashed p-6 transition-colors cursor-pointer',
+					isDragging
+						? 'border-primary bg-primary/5'
+						: 'border-muted-foreground/25',
+				)}
+			>
+				{isPending ? (
+					<Loader2Icon className='size-6 text-muted-foreground animate-spin' />
+				) : (
+					<UploadIcon className='size-6 text-muted-foreground' />
+				)}
+				<p className='text-sm text-muted-foreground'>
+					{isPending
+						? 'Extraindo dados do documento...'
+						: 'Arraste o PDF aqui ou clique para selecionar'}
+				</p>
+				<Input
+					type='file'
+					id='endorsement-document'
+					accept='application/pdf'
+					hidden
+					disabled={isPending}
+					className='cursor-pointer file:cursor-pointer hidden'
+					onChange={(e) => handleFile(e.target.files?.[0])}
+				/>
+			</label>
+			{fileName && !isPending && (
+				<FieldDescription className='text-xs'>
+					Último arquivo enviado: {fileName}
+				</FieldDescription>
+			)}
+		</Field>
 	);
 }
 
 function DialogSafeEndorsementDetails({
-	id,
-	children,
-}: React.PropsWithChildren<DialogSafeEndorsementByIdProps>) {
-	const [open, setOpen] = useState<boolean>(false);
-
+	id: idProp,
+	open,
+	onOpenChange,
+}: DialogSafeEndorsementDetailsProps) {
 	const [type, setType] = useState<
 		'vehicle_conductor' | 'address' | 'franchise' | 'cancellation' | null
 	>(null);
 
 	const [notPlate, setNotPlate] = useState<boolean>(false);
 
+	const [resolvedId, setResolvedId] = useState<string | null>(idProp ?? null);
+
+	const [formUnlocked, setFormUnlocked] = useState<boolean>(false);
+
+	const id = resolvedId ?? '';
+
+	const formIsLocked = !formUnlocked;
+
+	const [isQuering, setIsQuering] = useState<boolean>(false);
+
 	const { data: endorsementPercentage } = useEndorsementPercentage(id, {
-		enabled: open && !!type,
+		enabled: open && !!type && !!resolvedId,
 	});
 	const { data: vehicleConductorQuery } = useEndorsementVehicleConductorQuery(
 		id,
-		type === 'vehicle_conductor',
+		type === 'vehicle_conductor' && !!resolvedId,
 	);
 	const { mutate: vehicleConductor, isPending: isPendingVehicleCondutor } =
 		useEndorsementVehicleConductor();
@@ -336,7 +541,7 @@ function DialogSafeEndorsementDetails({
 				onSuccess(_, __, ___) {
 					toast.success('Endosso registrado!'.toUpperCase());
 
-					setOpen(false);
+					onOpenChange(false);
 				},
 				onError(error) {
 					toast.error(
@@ -359,7 +564,7 @@ function DialogSafeEndorsementDetails({
 				onSuccess(_, __, ___) {
 					toast.success('Endosso registrado!'.toUpperCase());
 
-					setOpen(false);
+					onOpenChange(false);
 				},
 				onError(error) {
 					toast.error(
@@ -382,7 +587,7 @@ function DialogSafeEndorsementDetails({
 				onSuccess(_, __, ___) {
 					toast.success('Endosso registrado!'.toUpperCase());
 
-					setOpen(false);
+					onOpenChange(false);
 				},
 				onError(error) {
 					toast.error(
@@ -405,7 +610,7 @@ function DialogSafeEndorsementDetails({
 				onSuccess(_, __, ___) {
 					toast.success('Endosso registrado!'.toUpperCase());
 
-					setOpen(false);
+					onOpenChange(false);
 				},
 				onError(error) {
 					toast.error(
@@ -452,6 +657,89 @@ function DialogSafeEndorsementDetails({
 		}
 	}
 
+	function handleExtractedDocument(extracted: ExtractEndorsementDocument) {
+		if (idProp) {
+			if (extracted.safeId && extracted.safeId !== idProp) {
+				toast.error(
+					'O documento enviado pertence a outro seguro e não corresponde à apólice atual.'.toUpperCase(),
+				);
+
+				return;
+			}
+		} else {
+			setResolvedId(extracted.safeId);
+		}
+
+		setType(extracted.type);
+
+		if (extracted.type === 'vehicle_conductor') {
+			const parsedData = extracted.data;
+
+			setNotPlate(!parsedData.plate);
+
+			formVehicleConductor.setValue('driver', maskCPF(parsedData.driver ?? ''));
+			formVehicleConductor.setValue(
+				'plate',
+				parsedData.plate ? maskPlate(parsedData.plate) : '',
+			);
+			formVehicleConductor.setValue(
+				'model',
+				capitalizeFirstLetters(parsedData.model ?? ''),
+			);
+			formVehicleConductor.setValue('modelYear', parsedData.modelYear ?? '');
+			formVehicleConductor.setValue(
+				'franchise',
+				parsedData.franchise.toString().replace('.', ',') ?? '0',
+			);
+			formVehicleConductor.setValue(
+				'amount',
+				parsedData.amount.toString().replace('.', ',') ?? '0',
+			);
+			formVehicleConductor.setValue(
+				'percentage',
+				parsedData.percentage ?? endorsementPercentage?.percentage ?? 0,
+			);
+		}
+
+		if (extracted.type === 'address') {
+			const parsedData = extracted.data;
+
+			formAddress.setValue(
+				'postalCode',
+				maskPostalCode(parsedData.postalCode ?? ''),
+			);
+			formAddress.setValue('amount', parsedData.amount ?? 0);
+			formAddress.setValue(
+				'percentage',
+				parsedData.percentage ?? endorsementPercentage?.percentage ?? 0,
+			);
+		}
+
+		if (extracted.type === 'franchise') {
+			const parsedData = extracted.data;
+
+			formFranchise.setValue('franchise', parsedData.franchise ?? 0);
+			formFranchise.setValue('amount', parsedData.amount ?? 0);
+			formFranchise.setValue(
+				'percentage',
+				parsedData.percentage ?? endorsementPercentage?.percentage ?? 0,
+			);
+		}
+
+		if (extracted.type === 'cancellation') {
+			const parsedData = extracted.data;
+
+			formCancel.setValue(
+				'effectivedAt',
+				parsedData.effectivedAt
+					? new Date(parsedData.effectivedAt)
+					: startOfToday(),
+			);
+		}
+
+		setFormUnlocked(true);
+	}
+
 	useEffect(() => {
 		if (plateResponse) {
 			formVehicleConductor.setValue(
@@ -468,9 +756,19 @@ function DialogSafeEndorsementDetails({
 		}
 	}, [formVehicleConductor, plateResponseIsError]);
 
+	function handleOpenChange(nextOpen: boolean) {
+		onOpenChange(nextOpen);
+
+		if (!nextOpen) {
+			setType(null);
+			setNotPlate(false);
+			setResolvedId(idProp ?? null);
+			setFormUnlocked(false);
+		}
+	}
+
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>{children}</DialogTrigger>
+		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogContent overlayOpacityDivide>
 				<DialogHeader>
 					<DialogTitle>Novo Endosso</DialogTitle>
@@ -479,530 +777,607 @@ function DialogSafeEndorsementDetails({
 					</DialogDescription>
 				</DialogHeader>
 				<Separator />
-				<div className='space-y-2'>
-					<Field className='col-span-full'>
-						<FieldLabel htmlFor='message'>Tipo de endosso:</FieldLabel>
-						<Select
-							value={type as keyof typeof type}
-							// @ts-expect-error
-							onValueChange={setType}
-						>
-							<SelectTrigger>
-								<SelectValue>
-									{type ? undefined : 'Selecionar tipo'}
-								</SelectValue>
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value='vehicle_conductor'>
-									<div className='flex flex-row items-center justify-start gap-x-2'>
-										<CarIcon /> Veicular | Condutor
-									</div>
-								</SelectItem>
-								<SelectItem value='address'>
-									<div className='flex flex-row items-center justify-start gap-x-2'>
-										<MapPinIcon /> Endereço
-									</div>
-								</SelectItem>
-								<SelectItem value='franchise'>
-									<div className='flex flex-row items-center justify-start gap-x-2'>
-										<DollarSignIcon /> Frânquia
-									</div>
-								</SelectItem>
-								<SelectItem value='cancellation'>
-									<div className='flex flex-row items-center justify-start gap-x-2'>
-										<XCircleIcon /> Cancelamento
-									</div>
-								</SelectItem>
-							</SelectContent>
-						</Select>
-					</Field>
-					{type === 'vehicle_conductor' && (
-						<form
-							noValidate
-							className='space-y-2 mt-4'
-							onKeyDown={handleFormKeyDown}
-						>
-							<FieldGroup className='grid grid-cols-2 gap-2'>
-								<Controller
-									control={formVehicleConductor.control}
-									name={notPlate ? 'model' : 'plate'}
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<div className='flex flex-row items-center justify-between'>
-												<FieldLabel>
-													{notPlate ? 'Modelo' : 'Placa'}:
-												</FieldLabel>
-												<FieldLabel
-													htmlFor='not-plate'
-													className='flex flex-row items-center justify-end gap-x-1 text-xs'
-												>
-													Sem placa?{' '}
-													<Switch
-														id='not-plate'
-														size='sm'
-														checked={notPlate}
-														onCheckedChange={setNotPlate}
-													/>
-												</FieldLabel>
-											</div>
-											{!notPlate && (
-												<div className='flex flex-row items-center justify-between'>
-													<Input
-														{...field}
-														value={String(field.value ?? '')}
-														placeholder='AAA-0000 ou AAA0A00'
-														onChange={({ target: { value } }) => {
-															field.onChange(maskPlate(value));
+				<div className='space-y-4 overflow-scroll max-h-[70vh]'>
+					<EndorsementDropzone
+						id={idProp}
+						onChangePending={setIsQuering}
+						onExtracted={handleExtractedDocument}
+					/>
+					{!isQuering && (
+						<Fragment>
+							{formIsLocked && (
+								<div className='flex flex-col items-center gap-y-2 text-center'>
+									<p className='text-sm text-muted-foreground'>
+										{idProp
+											? 'Envie o PDF do endosso para preenchimento automático, ou continue manualmente.'
+											: 'Envie o PDF do endosso para a IA identificar o seguro e preencher os dados automaticamente.'}
+									</p>
+									{idProp && (
+										<Button
+											type='button'
+											variant='outline'
+											size='sm'
+											onClick={() => setFormUnlocked(true)}
+										>
+											<FilePenIcon /> Preencher manualmente
+										</Button>
+									)}
+								</div>
+							)}
+							{!formIsLocked && (
+								<>
+									<Separator />
+									<Field className='col-span-full'>
+										<FieldLabel htmlFor='message'>Tipo de endosso:</FieldLabel>
+										<Select
+											value={type as keyof typeof type}
+											// @ts-expect-error
+											onValueChange={setType}
+										>
+											<SelectTrigger>
+												<SelectValue>
+													{type ? undefined : 'Selecionar tipo'}
+												</SelectValue>
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value='vehicle_conductor'>
+													<div className='flex flex-row items-center justify-start gap-x-2'>
+														<CarIcon /> Veicular | Condutor
+													</div>
+												</SelectItem>
+												<SelectItem value='address'>
+													<div className='flex flex-row items-center justify-start gap-x-2'>
+														<MapPinIcon /> Endereço
+													</div>
+												</SelectItem>
+												<SelectItem value='franchise'>
+													<div className='flex flex-row items-center justify-start gap-x-2'>
+														<DollarSignIcon /> Frânquia
+													</div>
+												</SelectItem>
+												<SelectItem value='cancellation'>
+													<div className='flex flex-row items-center justify-start gap-x-2'>
+														<XCircleIcon /> Cancelamento
+													</div>
+												</SelectItem>
+											</SelectContent>
+										</Select>
+									</Field>
+									{!resolvedId && (
+										<FieldDescription className='text-xs'>
+											Nenhum seguro identificado ainda — envie um PDF de endosso
+											para a IA localizar a apólice.
+										</FieldDescription>
+									)}
+									{type === 'vehicle_conductor' && (
+										<form
+											noValidate
+											className='space-y-2 mt-4'
+											onKeyDown={handleFormKeyDown}
+										>
+											<FieldGroup className='grid grid-cols-2 gap-2'>
+												<Controller
+													control={formVehicleConductor.control}
+													name={notPlate ? 'model' : 'plate'}
+													render={({ field, fieldState }) => (
+														<Field data-invalid={fieldState.invalid}>
+															<div className='flex flex-row items-center justify-between'>
+																<FieldLabel>
+																	{notPlate ? 'Modelo' : 'Placa'}:
+																</FieldLabel>
+																<FieldLabel
+																	htmlFor='not-plate'
+																	className='flex flex-row items-center justify-end gap-x-1 text-xs'
+																>
+																	Sem placa?{' '}
+																	<Switch
+																		id='not-plate'
+																		size='sm'
+																		checked={notPlate}
+																		onCheckedChange={setNotPlate}
+																	/>
+																</FieldLabel>
+															</div>
+															{!notPlate && (
+																<div className='flex flex-row items-center justify-between'>
+																	<Input
+																		{...field}
+																		value={String(field.value ?? '')}
+																		placeholder='AAA-0000 ou AAA0A00'
+																		onChange={({ target: { value } }) => {
+																			field.onChange(maskPlate(value));
 
-															if (!isPlate(value)) {
-																formVehicleConductor.setValue('model', '');
-																formVehicleConductor.setValue('modelYear', '');
+																			if (!isPlate(value)) {
+																				formVehicleConductor.setValue(
+																					'model',
+																					'',
+																				);
+																				formVehicleConductor.setValue(
+																					'modelYear',
+																					'',
+																				);
+																			}
+																		}}
+																	/>
+																	{field.value &&
+																		isPlate(field.value) &&
+																		plateResponseIsPending && (
+																			<Loader2Icon className='animate-spin size-4 text-muted-foreground ml-3' />
+																		)}
+																</div>
+															)}
+															{notPlate && (
+																<Input
+																	{...field}
+																	value={String(field.value ?? '')}
+																	placeholder='Modelo do veículo'
+																	onChange={({ target: { value } }) =>
+																		field.onChange(
+																			capitalizeFirstLetters(value),
+																		)
+																	}
+																/>
+															)}
+															{fieldState.invalid && (
+																<FieldError errors={[fieldState.error]} />
+															)}
+														</Field>
+													)}
+												/>
+												{!notPlate && (
+													<Controller
+														control={formVehicleConductor.control}
+														name='model'
+														render={({ field, fieldState }) => (
+															<Field data-invalid={fieldState.invalid}>
+																<FieldLabel htmlFor='model'>Modelo:</FieldLabel>
+																<Input
+																	{...field}
+																	value={String(field.value ?? '')}
+																	placeholder='Modelo do veículo'
+																	onChange={({ target: { value } }) =>
+																		field.onChange(
+																			capitalizeFirstLetters(value),
+																		)
+																	}
+																/>
+																{fieldState.invalid && (
+																	<FieldError errors={[fieldState.error]} />
+																)}
+															</Field>
+														)}
+													/>
+												)}
+												<Controller
+													control={formVehicleConductor.control}
+													name='modelYear'
+													render={({ field, fieldState }) => (
+														<Field data-invalid={fieldState.invalid}>
+															<FieldLabel htmlFor='model-year'>
+																Ano do Modelo:
+															</FieldLabel>
+															<Input
+																{...field}
+																id='model-year'
+																aria-invalid={fieldState.invalid}
+																value={String(field.value || '')}
+																placeholder='0000'
+															/>
+															{fieldState.invalid && (
+																<FieldError errors={[fieldState.error]} />
+															)}
+														</Field>
+													)}
+												/>
+												<Controller
+													control={formVehicleConductor.control}
+													name='franchise'
+													render={({ field, fieldState }) => (
+														<Field
+															data-invalid={fieldState.invalid}
+															className={cn('', notPlate && 'col-span-full')}
+														>
+															<FieldLabel htmlFor='franchise'>
+																Frânquia:
+															</FieldLabel>
+															<Input
+																{...field}
+																ref={withMask('brl-currency')}
+																id='franchise'
+																aria-invalid={fieldState.invalid}
+																value={String(field.value || '')}
+																placeholder='R$ 0,00'
+																className='text-left!'
+															/>
+															{fieldState.invalid && (
+																<FieldError errors={[fieldState.error]} />
+															)}
+														</Field>
+													)}
+												/>
+												<Controller
+													control={formVehicleConductor.control}
+													name='driver'
+													render={({ field, fieldState }) => (
+														<Field
+															data-invalid={fieldState.invalid}
+															className='col-span-full'
+														>
+															<FieldLabel>CPF do Condutor:</FieldLabel>
+															<Input
+																{...field}
+																aria-invalid={fieldState.invalid}
+																placeholder='000.000.000-00'
+																onChange={({ target: { value } }) =>
+																	field.onChange(maskCPF(value))
+																}
+															/>
+															{driverResponse?.name && (
+																<FieldDescription className='text-foreground text-xs -mt-2'>
+																	{capitalizeFirstLetters(driverResponse.name)}
+																</FieldDescription>
+															)}
+														</Field>
+													)}
+												/>
+											</FieldGroup>
+											<Separator className='opacity-100 my-4' />
+											<FieldGroup className='grid grid-cols-3 gap-2'>
+												<Controller
+													control={formVehicleConductor.control}
+													name='amount'
+													render={({ field, fieldState }) => (
+														<Field data-invalid={fieldState.invalid}>
+															<FieldLabel htmlFor='amount'>Valor:</FieldLabel>
+															<Input
+																{...field}
+																ref={withMask('brl-currency')}
+																id='amount'
+																aria-invalid={fieldState.invalid}
+																value={String(field.value || '')}
+																placeholder='R$ 0,00'
+																className='text-left!'
+															/>
+															{fieldState.invalid && (
+																<FieldError errors={[fieldState.error]} />
+															)}
+														</Field>
+													)}
+												/>
+												<Controller
+													control={formVehicleConductor.control}
+													name='percentage'
+													render={({ field, fieldState }) => (
+														<Field data-invalid={fieldState.invalid}>
+															<FieldLabel htmlFor='percentage'>
+																Percentual:
+															</FieldLabel>
+															<Input
+																{...field}
+																id='percentage'
+																ref={withMask('percentage')}
+																aria-invalid={fieldState.invalid}
+																value={String(field.value || '')}
+																placeholder='0 %'
+																className='text-left!'
+																onKeyDown={(e) => {
+																	if (
+																		e.code === 'Enter' &&
+																		formVehicleConductor.formState.isValid
+																	) {
+																		formVehicleConductor.handleSubmit(
+																			onSubmitVehicleConductor,
+																		)();
+																	}
+																}}
+															/>
+															{fieldState.invalid && (
+																<FieldError errors={[fieldState.error]} />
+															)}
+														</Field>
+													)}
+												/>
+												<Field>
+													<FieldLabel htmlFor='commission'>
+														Comissão:
+													</FieldLabel>
+													<Input
+														readOnly
+														id='commission'
+														value={new Intl.NumberFormat('pt-BR', {
+															style: 'currency',
+															currency: 'BRL',
+														}).format(
+															commissionFromAmountAndPercentage(
+																amountVehicleConductor,
+																percentageVehicleConductor,
+															),
+														)}
+														placeholder='R$ 0,00'
+														className='text-left!'
+														tabIndex={-1}
+														onKeyDown={(e) => {
+															if (
+																e.code === 'Enter' &&
+																formVehicleConductor.formState.isValid
+															) {
+																formVehicleConductor.handleSubmit(
+																	onSubmitVehicleConductor,
+																)();
 															}
 														}}
 													/>
-													{field.value &&
-														isPlate(field.value) &&
-														plateResponseIsPending && (
-															<Loader2Icon className='animate-spin size-4 text-muted-foreground ml-3' />
+												</Field>
+											</FieldGroup>
+										</form>
+									)}
+									{type === 'address' && (
+										<form
+											noValidate
+											className='space-y-2 mt-4'
+											onKeyDown={handleFormKeyDown}
+										>
+											<Controller
+												control={formAddress.control}
+												name='postalCode'
+												render={({ field, fieldState }) => (
+													<Field data-invalid={fieldState.invalid}>
+														<FieldLabel htmlFor='postal-code'>
+															CEP de Pernoite:
+														</FieldLabel>
+														<Input
+															{...field}
+															id='postal-code'
+															aria-invalid={fieldState.invalid}
+															value={field.value ?? ''}
+															placeholder='00000-000'
+															className='text-left!'
+															onChange={({ target: { value } }) =>
+																field.onChange(maskPostalCode(value))
+															}
+														/>
+														{fieldState.invalid && (
+															<FieldError errors={[fieldState.error]} />
 														)}
-												</div>
-											)}
-											{notPlate && (
-												<Input
-													{...field}
-													value={String(field.value ?? '')}
-													placeholder='Modelo do veículo'
-													onChange={({ target: { value } }) =>
-														field.onChange(capitalizeFirstLetters(value))
-													}
-												/>
-											)}
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								{!notPlate && (
-									<Controller
-										control={formVehicleConductor.control}
-										name='model'
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='model'>Modelo:</FieldLabel>
-												<Input
-													{...field}
-													value={String(field.value ?? '')}
-													placeholder='Modelo do veículo'
-													onChange={({ target: { value } }) =>
-														field.onChange(capitalizeFirstLetters(value))
-													}
-												/>
-												{fieldState.invalid && (
-													<FieldError errors={[fieldState.error]} />
+													</Field>
 												)}
-											</Field>
-										)}
-									/>
-								)}
-								<Controller
-									control={formVehicleConductor.control}
-									name='modelYear'
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='model-year'>
-												Ano do Modelo:
-											</FieldLabel>
-											<Input
-												{...field}
-												id='model-year'
-												aria-invalid={fieldState.invalid}
-												value={String(field.value || '')}
-												placeholder='0000'
 											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
+											<Separator className='opacity-100 my-4' />
+											<FieldGroup className='grid grid-cols-3 gap-2'>
+												<Controller
+													control={formAddress.control}
+													name='amount'
+													render={({ field, fieldState }) => (
+														<Field data-invalid={fieldState.invalid}>
+															<FieldLabel htmlFor='amount'>Valor:</FieldLabel>
+															<Input
+																{...field}
+																ref={withMask('brl-currency')}
+																id='amount'
+																aria-invalid={fieldState.invalid}
+																value={String(field.value || '')}
+																placeholder='R$ 0,00'
+																className='text-left!'
+															/>
+															{fieldState.invalid && (
+																<FieldError errors={[fieldState.error]} />
+															)}
+														</Field>
+													)}
+												/>
+												<Controller
+													control={formAddress.control}
+													name='percentage'
+													render={({ field, fieldState }) => (
+														<Field data-invalid={fieldState.invalid}>
+															<FieldLabel htmlFor='percentage'>
+																Percentual:
+															</FieldLabel>
+															<Input
+																{...field}
+																id='percentage'
+																ref={withMask('percentage')}
+																aria-invalid={fieldState.invalid}
+																value={String(field.value || '')}
+																placeholder='0 %'
+																className='text-left!'
+																onKeyDown={(e) => {
+																	if (
+																		e.code === 'Enter' &&
+																		formAddress.formState.isValid
+																	) {
+																		formAddress.handleSubmit(onSubmitAddress)();
+																	}
+																}}
+															/>
+															{fieldState.invalid && (
+																<FieldError errors={[fieldState.error]} />
+															)}
+														</Field>
+													)}
+												/>
+												<Field>
+													<FieldLabel htmlFor='commission'>
+														Comissão:
+													</FieldLabel>
+													<Input
+														readOnly
+														id='commission'
+														value={new Intl.NumberFormat('pt-BR', {
+															style: 'currency',
+															currency: 'BRL',
+														}).format(
+															commissionFromAmountAndPercentage(
+																amountAddress,
+																percentageAddress,
+															),
+														)}
+														placeholder='R$ 0,00'
+														className='text-left!'
+														tabIndex={-1}
+														onKeyDown={(e) => {
+															if (
+																e.code === 'Enter' &&
+																formAddress.formState.isValid
+															) {
+																formAddress.handleSubmit(onSubmitAddress)();
+															}
+														}}
+													/>
+												</Field>
+											</FieldGroup>
+										</form>
 									)}
-								/>
-								<Controller
-									control={formVehicleConductor.control}
-									name='franchise'
-									render={({ field, fieldState }) => (
-										<Field
-											data-invalid={fieldState.invalid}
-											className={cn('', notPlate && 'col-span-full')}
+									{type === 'franchise' && (
+										<form
+											noValidate
+											className='space-y-2 mt-4'
+											onKeyDown={handleFormKeyDown}
 										>
-											<FieldLabel htmlFor='franchise'>Frânquia:</FieldLabel>
-											<Input
-												{...field}
-												ref={withMask('brl-currency')}
-												id='franchise'
-												aria-invalid={fieldState.invalid}
-												value={String(field.value || '')}
-												placeholder='R$ 0,00'
-												className='text-left!'
+											<Controller
+												control={formFranchise.control}
+												name='franchise'
+												render={({ field, fieldState }) => (
+													<Field data-invalid={fieldState.invalid}>
+														<FieldLabel htmlFor='franchise'>
+															Frânquia:
+														</FieldLabel>
+														<Input
+															{...field}
+															ref={withMask('brl-currency')}
+															id='franchise'
+															aria-invalid={fieldState.invalid}
+															value={String(field.value || '')}
+															placeholder='R$ 0,00'
+															className='text-left!'
+														/>
+														{fieldState.invalid && (
+															<FieldError errors={[fieldState.error]} />
+														)}
+													</Field>
+												)}
 											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
+											<Separator className='opacity-100 my-4' />
+											<FieldGroup className='grid grid-cols-3 gap-2'>
+												<Controller
+													control={formFranchise.control}
+													name='amount'
+													render={({ field, fieldState }) => (
+														<Field data-invalid={fieldState.invalid}>
+															<FieldLabel htmlFor='amount'>Valor:</FieldLabel>
+															<Input
+																{...field}
+																ref={withMask('brl-currency')}
+																id='amount'
+																aria-invalid={fieldState.invalid}
+																value={String(field.value || '')}
+																placeholder='R$ 0,00'
+																className='text-left!'
+															/>
+															{fieldState.invalid && (
+																<FieldError errors={[fieldState.error]} />
+															)}
+														</Field>
+													)}
+												/>
+												<Controller
+													control={formFranchise.control}
+													name='percentage'
+													render={({ field, fieldState }) => (
+														<Field data-invalid={fieldState.invalid}>
+															<FieldLabel htmlFor='percentage'>
+																Percentual:
+															</FieldLabel>
+															<Input
+																{...field}
+																id='percentage'
+																ref={withMask('percentage')}
+																aria-invalid={fieldState.invalid}
+																value={String(field.value || '')}
+																placeholder='0 %'
+																className='text-left!'
+																onKeyDown={(e) => {
+																	if (
+																		e.code === 'Enter' &&
+																		formFranchise.formState.isValid
+																	) {
+																		formFranchise.handleSubmit(
+																			onSubmitFranchise,
+																		)();
+																	}
+																}}
+															/>
+															{fieldState.invalid && (
+																<FieldError errors={[fieldState.error]} />
+															)}
+														</Field>
+													)}
+												/>
+												<Field>
+													<FieldLabel htmlFor='commission'>
+														Comissão:
+													</FieldLabel>
+													<Input
+														readOnly
+														id='commission'
+														value={new Intl.NumberFormat('pt-BR', {
+															style: 'currency',
+															currency: 'BRL',
+														}).format(
+															commissionFromAmountAndPercentage(
+																amountFranchise,
+																percentageFranchise,
+															),
+														)}
+														placeholder='R$ 0,00'
+														className='text-left!'
+														tabIndex={-1}
+														onKeyDown={(e) => {
+															if (
+																e.code === 'Enter' &&
+																formFranchise.formState.isValid
+															) {
+																formFranchise.handleSubmit(onSubmitFranchise)();
+															}
+														}}
+													/>
+												</Field>
+											</FieldGroup>
+										</form>
 									)}
-								/>
-								<Controller
-									control={formVehicleConductor.control}
-									name='driver'
-									render={({ field, fieldState }) => (
-										<Field
-											data-invalid={fieldState.invalid}
-											className='col-span-full'
+									{type === 'cancellation' && (
+										<form
+											noValidate
+											className='mt-4'
+											onKeyDown={handleFormKeyDown}
 										>
-											<FieldLabel>CPF do Condutor:</FieldLabel>
-											<Input
-												{...field}
-												aria-invalid={fieldState.invalid}
-												placeholder='000.000.000-00'
-												onChange={({ target: { value } }) =>
-													field.onChange(maskCPF(value))
-												}
+											<Controller
+												control={formCancel.control}
+												name='effectivedAt'
+												render={({ field, fieldState }) => (
+													<Field data-invalid={fieldState.invalid}>
+														<FieldLabel>Data de cancelamento:</FieldLabel>
+														{/* @ts-ignore */}
+														<DatePickerInput
+															{...field}
+															invalid={fieldState.invalid}
+														/>
+														{fieldState.invalid && (
+															<FieldError errors={[fieldState.error]} />
+														)}
+													</Field>
+												)}
 											/>
-											{driverResponse?.name && (
-												<FieldDescription className='text-foreground text-xs -mt-2'>
-													{capitalizeFirstLetters(driverResponse.name)}
-												</FieldDescription>
-											)}
-										</Field>
+										</form>
 									)}
-								/>
-							</FieldGroup>
-							<Separator className='opacity-100 my-4' />
-							<FieldGroup className='grid grid-cols-3 gap-2'>
-								<Controller
-									control={formVehicleConductor.control}
-									name='amount'
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='amount'>Valor:</FieldLabel>
-											<Input
-												{...field}
-												ref={withMask('brl-currency')}
-												id='amount'
-												aria-invalid={fieldState.invalid}
-												value={String(field.value || '')}
-												placeholder='R$ 0,00'
-												className='text-left!'
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Controller
-									control={formVehicleConductor.control}
-									name='percentage'
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='percentage'>Percentual:</FieldLabel>
-											<Input
-												{...field}
-												id='percentage'
-												ref={withMask('percentage')}
-												aria-invalid={fieldState.invalid}
-												value={String(field.value || '')}
-												placeholder='0 %'
-												className='text-left!'
-												onKeyDown={(e) => {
-													if (
-														e.code === 'Enter' &&
-														formVehicleConductor.formState.isValid
-													) {
-														formVehicleConductor.handleSubmit(
-															onSubmitVehicleConductor,
-														)();
-													}
-												}}
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Field>
-									<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
-									<Input
-										readOnly
-										id='commission'
-										value={new Intl.NumberFormat('pt-BR', {
-											style: 'currency',
-											currency: 'BRL',
-										}).format(
-											commissionFromAmountAndPercentage(
-												amountVehicleConductor,
-												percentageVehicleConductor,
-											),
-										)}
-										placeholder='R$ 0,00'
-										className='text-left!'
-										tabIndex={-1}
-										onKeyDown={(e) => {
-											if (
-												e.code === 'Enter' &&
-												formVehicleConductor.formState.isValid
-											) {
-												formVehicleConductor.handleSubmit(
-													onSubmitVehicleConductor,
-												)();
-											}
-										}}
-									/>
-								</Field>
-							</FieldGroup>
-						</form>
-					)}
-					{type === 'address' && (
-						<form
-							noValidate
-							className='space-y-2 mt-4'
-							onKeyDown={handleFormKeyDown}
-						>
-							<Controller
-								control={formAddress.control}
-								name='postalCode'
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor='postal-code'>
-											CEP de Pernoite:
-										</FieldLabel>
-										<Input
-											{...field}
-											id='postal-code'
-											aria-invalid={fieldState.invalid}
-											value={field.value ?? ''}
-											placeholder='00000-000'
-											className='text-left!'
-											onChange={({ target: { value } }) =>
-												field.onChange(maskPostalCode(value))
-											}
-										/>
-										{fieldState.invalid && (
-											<FieldError errors={[fieldState.error]} />
-										)}
-									</Field>
-								)}
-							/>
-							<Separator className='opacity-100 my-4' />
-							<FieldGroup className='grid grid-cols-3 gap-2'>
-								<Controller
-									control={formAddress.control}
-									name='amount'
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='amount'>Valor:</FieldLabel>
-											<Input
-												{...field}
-												ref={withMask('brl-currency')}
-												id='amount'
-												aria-invalid={fieldState.invalid}
-												value={String(field.value || '')}
-												placeholder='R$ 0,00'
-												className='text-left!'
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Controller
-									control={formAddress.control}
-									name='percentage'
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='percentage'>Percentual:</FieldLabel>
-											<Input
-												{...field}
-												id='percentage'
-												ref={withMask('percentage')}
-												aria-invalid={fieldState.invalid}
-												value={String(field.value || '')}
-												placeholder='0 %'
-												className='text-left!'
-												onKeyDown={(e) => {
-													if (
-														e.code === 'Enter' &&
-														formAddress.formState.isValid
-													) {
-														formAddress.handleSubmit(onSubmitAddress)();
-													}
-												}}
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Field>
-									<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
-									<Input
-										readOnly
-										id='commission'
-										value={new Intl.NumberFormat('pt-BR', {
-											style: 'currency',
-											currency: 'BRL',
-										}).format(
-											commissionFromAmountAndPercentage(
-												amountAddress,
-												percentageAddress,
-											),
-										)}
-										placeholder='R$ 0,00'
-										className='text-left!'
-										tabIndex={-1}
-										onKeyDown={(e) => {
-											if (e.code === 'Enter' && formAddress.formState.isValid) {
-												formAddress.handleSubmit(onSubmitAddress)();
-											}
-										}}
-									/>
-								</Field>
-							</FieldGroup>
-						</form>
-					)}
-					{type === 'franchise' && (
-						<form
-							noValidate
-							className='space-y-2 mt-4'
-							onKeyDown={handleFormKeyDown}
-						>
-							<Controller
-								control={formFranchise.control}
-								name='franchise'
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor='franchise'>Frânquia:</FieldLabel>
-										<Input
-											{...field}
-											ref={withMask('brl-currency')}
-											id='franchise'
-											aria-invalid={fieldState.invalid}
-											value={String(field.value || '')}
-											placeholder='R$ 0,00'
-											className='text-left!'
-										/>
-										{fieldState.invalid && (
-											<FieldError errors={[fieldState.error]} />
-										)}
-									</Field>
-								)}
-							/>
-							<Separator className='opacity-100 my-4' />
-							<FieldGroup className='grid grid-cols-3 gap-2'>
-								<Controller
-									control={formFranchise.control}
-									name='amount'
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='amount'>Valor:</FieldLabel>
-											<Input
-												{...field}
-												ref={withMask('brl-currency')}
-												id='amount'
-												aria-invalid={fieldState.invalid}
-												value={String(field.value || '')}
-												placeholder='R$ 0,00'
-												className='text-left!'
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Controller
-									control={formFranchise.control}
-									name='percentage'
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='percentage'>Percentual:</FieldLabel>
-											<Input
-												{...field}
-												id='percentage'
-												ref={withMask('percentage')}
-												aria-invalid={fieldState.invalid}
-												value={String(field.value || '')}
-												placeholder='0 %'
-												className='text-left!'
-												onKeyDown={(e) => {
-													if (
-														e.code === 'Enter' &&
-														formFranchise.formState.isValid
-													) {
-														formFranchise.handleSubmit(onSubmitFranchise)();
-													}
-												}}
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Field>
-									<FieldLabel htmlFor='commission'>Comissão:</FieldLabel>
-									<Input
-										readOnly
-										id='commission'
-										value={new Intl.NumberFormat('pt-BR', {
-											style: 'currency',
-											currency: 'BRL',
-										}).format(
-											commissionFromAmountAndPercentage(
-												amountFranchise,
-												percentageFranchise,
-											),
-										)}
-										placeholder='R$ 0,00'
-										className='text-left!'
-										tabIndex={-1}
-										onKeyDown={(e) => {
-											if (
-												e.code === 'Enter' &&
-												formFranchise.formState.isValid
-											) {
-												formFranchise.handleSubmit(onSubmitFranchise)();
-											}
-										}}
-									/>
-								</Field>
-							</FieldGroup>
-						</form>
-					)}
-					{type === 'cancellation' && (
-						<form noValidate className='mt-4' onKeyDown={handleFormKeyDown}>
-							<Controller
-								control={formCancel.control}
-								name='effectivedAt'
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel>Data de cancelamento:</FieldLabel>
-										{/* @ts-ignore */}
-										<DatePickerInput {...field} invalid={fieldState.invalid} />
-										{fieldState.invalid && (
-											<FieldError errors={[fieldState.error]} />
-										)}
-									</Field>
-								)}
-							/>
-						</form>
+								</>
+							)}
+						</Fragment>
 					)}
 				</div>
 				<Separator />
 				<DialogFooter>
-					<DialogClose asChild>
+					<DialogClose>
 						<Button variant='destructive' tabIndex={-1}>
 							Fechar <XCircleIcon />
 						</Button>
@@ -1015,7 +1390,7 @@ function DialogSafeEndorsementDetails({
 							isPendingFranchise ||
 							isCanceling
 						}
-						disabled={!type}
+						disabled={formIsLocked || !type || !resolvedId}
 						onClick={() => {
 							if (type === 'vehicle_conductor') {
 								formVehicleConductor.handleSubmit(onSubmitVehicleConductor)();
@@ -1043,4 +1418,4 @@ function DialogSafeEndorsementDetails({
 	);
 }
 
-export { DialogSafeEndorsementById };
+export { DialogSafeEndorsementById, DialogSafeEndorsementDetails };

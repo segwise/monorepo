@@ -1,11 +1,13 @@
+'use client';
+
 import {
 	FilterIcon,
 	MoreHorizontalIcon,
 	PlusIcon,
 	PrinterIcon,
 } from 'lucide-react';
-import type { Metadata } from 'next';
 import Link from 'next/link';
+import { useState } from 'react';
 import { InputSearch } from '@/components/input-search';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
@@ -18,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { CardAnalyticsStatusCountList } from '@/containers/cards/analytics/status/count';
+import { DialogSafeEndorsementDetails } from '@/containers/dialogs/safes/endorsement';
 import { FilterBasisOfAnalysis } from '@/containers/tables/filter-base-of-analytics';
 import { TablePagination } from '@/containers/tables/pagination';
 import {
@@ -27,11 +30,9 @@ import {
 import { TableSafesSheetFilters } from '@/containers/tables/safes/filters/sheet';
 import { TableSafesSimple } from '@/containers/tables/safes/simple';
 
-export const metadata: Metadata = {
-	title: 'Propostas',
-};
-
 function ProposalsPage() {
+	const [openNewEndorsement, setopenNewEndorsement] = useState<boolean>(false);
+
 	return (
 		<main className='grid grid-cols-1 gap-6 mt-1'>
 			<div className='flex flex-row items-center justify-between'>
@@ -61,6 +62,9 @@ function ProposalsPage() {
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align='end'>
+								{/* <DropdownMenuItem onClick={() => setopenNewEndorsement(true)}>
+									<FilePenIcon /> Novo Endosso ( PDF )
+								</DropdownMenuItem> */}
 								<DropdownMenuItem>
 									<PrinterIcon /> Imprimir
 								</DropdownMenuItem>
@@ -82,6 +86,12 @@ function ProposalsPage() {
 				</Card>
 				<TablePagination type='proposals' />
 			</div>
+			{!!openNewEndorsement && (
+				<DialogSafeEndorsementDetails
+					open={openNewEndorsement}
+					onOpenChange={setopenNewEndorsement}
+				/>
+			)}
 		</main>
 	);
 }

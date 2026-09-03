@@ -144,10 +144,10 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 					<PaginationContent className='max-sm:w-full'>
 						<Button
 							size='sm'
-							disabled={!previous}
+							disabled={previous === undefined}
 							onClick={() =>
 								setSearchParams({
-									cursor: previous,
+									cursor: previous || null,
 								})
 							}
 							variant='outline'

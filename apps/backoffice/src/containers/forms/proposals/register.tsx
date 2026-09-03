@@ -45,7 +45,6 @@ import {
 import { toZonedTime } from 'date-fns-tz';
 import {
 	BikeIcon,
-	BotIcon,
 	BrainIcon,
 	Building2Icon,
 	CalendarIcon,
@@ -54,6 +53,7 @@ import {
 	CircleDollarSignIcon,
 	ClipboardIcon,
 	FileCogIcon,
+	FilePenIcon,
 	FileTextIcon,
 	Loader2Icon,
 	MoreVerticalIcon,
@@ -721,11 +721,11 @@ function FormProposalRegister({ id }: { id?: string }) {
 					<DropdownMenuContent align='start' side='bottom'>
 						<DialogGetPlate onChange={onChangeResponseQuotesSearch}>
 							<DropdownMenuItem>
-								<BotIcon /> Via Cotação
+								<FilePenIcon /> Cotação
 							</DropdownMenuItem>
 						</DialogGetPlate>
 						<DropdownMenuItem onSelect={() => setOpenDocumentDialog(true)}>
-							<FileCogIcon /> Via Proposta ( PDF )
+							<FileTextIcon /> Proposta ( PDF )
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>

@@ -85,6 +85,7 @@ function TableSafesHeaderFilters() {
 			modality: null,
 			status: null,
 			renewal: null,
+			cursor: null,
 		});
 	}
 
@@ -217,6 +218,7 @@ function FilterEffectivedAt() {
 
 	function onChange() {
 		setSearchParams({
+			cursor: null,
 			...(date === null
 				? null
 				: !!date.from && !!date.to && isSameDay(date.from, date.to)
@@ -247,6 +249,7 @@ function FilterEffectivedAt() {
 	function onReset() {
 		setSearchParams({
 			effectivedAt: null,
+			cursor: null,
 		});
 
 		setDate(defaultDate);
@@ -389,12 +392,14 @@ function FilterProducers() {
 	function clearSearchParams() {
 		setSearchParams({
 			producers: null,
+			cursor: null,
 		});
 	}
 
 	function removeItem(item: string) {
 		setSearchParams({
 			producers: searchParams.producers?.filter((e) => e !== item) || null,
+			cursor: null,
 		});
 	}
 
@@ -512,6 +517,7 @@ function FilterInsuranceCompanies() {
 	function clearSearchParams() {
 		setSearchParams({
 			insuranceCompanies: null,
+			cursor: null,
 		});
 	}
 
@@ -519,6 +525,7 @@ function FilterInsuranceCompanies() {
 		setSearchParams({
 			insuranceCompanies:
 				searchParams.insuranceCompanies?.filter((e) => e !== item) || null,
+			cursor: null,
 		});
 	}
 
@@ -631,12 +638,14 @@ function FilterModality() {
 	function clearSearchParams() {
 		setSearchParams({
 			modality: null,
+			cursor: null,
 		});
 	}
 
 	function removeItem(item: string) {
 		setSearchParams({
 			modality: searchParams.modality?.filter((e) => e !== item) || null,
+			cursor: null,
 		});
 	}
 
@@ -752,12 +761,14 @@ function FilterStatus() {
 	function clearSearchParams() {
 		setSearchParams({
 			status: null,
+			cursor: null,
 		});
 	}
 
 	function removeItem(item: string) {
 		setSearchParams({
 			status: searchParams.status?.filter((e) => e !== item) || null,
+			cursor: null,
 		});
 	}
 	if (!items.length) {

@@ -47,6 +47,8 @@ function InputSearch({ className }: { className?: string }) {
 			}),
 			cursor: null,
 			requestedAt: null,
+			// @ts-expect-error
+			effectivedAt: null,
 		});
 	}
 

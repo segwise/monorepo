@@ -1,8 +1,18 @@
+'use client';
+
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/utils';
+
+function isOutsideWindowBlur(target: EventTarget | null) {
+	if (!(target instanceof HTMLElement)) {
+		return true;
+	}
+
+	return !document.contains(target);
+}
 
 const Dialog = DialogPrimitive.Root;
 
@@ -40,6 +50,9 @@ const DialogContent = React.forwardRef<
 			children,
 			removeOverlay = false,
 			overlayOpacityDivide = false,
+			onPointerDownOutside,
+			onInteractOutside,
+			onFocusOutside,
 			...props
 		},
 		ref,
@@ -56,6 +69,30 @@ const DialogContent = React.forwardRef<
 					'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg',
 					className,
 				)}
+				onInteractOutside={(e) => {
+					if (isOutsideWindowBlur(e.target)) {
+						e.preventDefault();
+						return;
+					}
+
+					onInteractOutside?.(e);
+				}}
+				onPointerDownOutside={(e) => {
+					if (isOutsideWindowBlur(e.target)) {
+						e.preventDefault();
+						return;
+					}
+
+					onPointerDownOutside?.(e);
+				}}
+				onFocusOutside={(e) => {
+					if (isOutsideWindowBlur(e.target)) {
+						e.preventDefault();
+						return;
+					}
+
+					onFocusOutside?.(e);
+				}}
 				{...props}
 			>
 				{children}
