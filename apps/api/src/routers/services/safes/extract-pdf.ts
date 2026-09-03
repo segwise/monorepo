@@ -296,7 +296,6 @@ async function extractToAI(
 
 			return responseValid;
 		} catch (error) {
-			console.error(error);
 			lastError = error;
 
 			const _reason =
