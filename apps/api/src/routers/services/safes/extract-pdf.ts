@@ -225,6 +225,7 @@ async function extractToAI(
 	}
 
 	const replacementChar = textChunk.match(/\uFFFD/g);
+
 	if (replacementChar) {
 		console.log(
 			'Caracteres de substituição Unicode (�) encontrados:',
