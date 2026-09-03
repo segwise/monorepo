@@ -1,6 +1,6 @@
 const excludeWords = ['a', 'e', 'i', 'o', 'u', 'da', 'de', 'do', 'dos', 'em'];
 
-function capitalizeFirstLetters(text: string) {
+function capitalizeFirstLetters(text: string = '') {
 	const words = text.split(' ');
 
 	const capitalizedWords = words.map((word) => {
