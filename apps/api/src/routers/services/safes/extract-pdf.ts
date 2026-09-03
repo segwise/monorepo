@@ -13,6 +13,7 @@ import {
 	SchemaVehicleUsage,
 } from '@segwise/core';
 import { format } from 'date-fns';
+import { compress } from 'headroom-ai';
 import OpenAI from 'openai';
 import { PDFParse } from 'pdf-parse';
 import { z } from 'zod';
@@ -211,62 +212,28 @@ async function extractToAI(
 
 	let lastError: unknown;
 
-	// biome-ignore lint/suspicious/noControlCharactersInRegex: regex
-	const controlChars = textChunk.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g);
-
-	if (controlChars) {
-		console.log(
-			'Caracteres de controle no TEXTO COMPLETO:',
-			controlChars.length,
-		);
-		console.log(
-			'Códigos únicos:',
-			[...new Set(controlChars)].map((c) => c.charCodeAt(0)),
-		);
-	}
-
-	const replacementChar = textChunk.match(/\uFFFD/g);
-
-	if (replacementChar) {
-		console.log(
-			'Caracteres de substituição Unicode (�) encontrados:',
-			replacementChar.length,
-		);
-	}
-
-	console.log('iniciou');
-	const testResponse = await clientOpenAI.chat.completions.create({
-		model: AI_MODEL,
-		max_tokens: 50,
-		messages: [{ role: 'user', content: 'Diga oi em uma palavra.' }],
-	});
-	console.log('passou');
-
-	console.log('TESTE SIMPLES:', testResponse.choices[0]?.message.content);
-
 	for (let retry = 1; retry <= MAX_RETRIES; retry++) {
 		try {
 			const content = mountPrompt(textChunk, {
 				database: { insuranceCompanies },
 			});
 
-			console.log('Tamanho do prompt:', content.length, 'caracteres');
-			console.log('Qtd seguradoras:', insuranceCompanies.length);
-
 			const response = await clientOpenAI.chat.completions.create({
 				model: AI_MODEL,
 				max_tokens: 4096,
-				messages: [
-					{
-						role: 'system',
-						content:
-							'Você é um extrator de dados cirúrgico e preciso. Responda APENAS com um objeto JSON válido que segue exatamente o schema pedido, sem markdown, sem texto fora do JSON.',
-					},
-					{
-						role: 'user',
-						content,
-					},
-				],
+				messages: (
+					await compress([
+						{
+							role: 'system',
+							content:
+								'Você é um extrator de dados cirúrgico e preciso. Responda APENAS com um objeto JSON válido que segue exatamente o schema pedido, sem markdown, sem texto fora do JSON.',
+						},
+						{
+							role: 'user',
+							content,
+						},
+					])
+				).messages,
 			});
 
 			const textResult = response.choices[0]?.message.content;
@@ -282,13 +249,6 @@ async function extractToAI(
 				.replace(/```\s*$/i, '');
 
 			const parsed = JSON.parse(jsonClear);
-
-			if (!SchemaDataExtract.safeParse(parsed).success) {
-				console.log(
-					SchemaDataExtract.safeParse(parsed).error,
-					SchemaDataExtract.safeParse(parsed).data,
-				);
-			}
 
 			const valid = SchemaDataExtract.parse(parsed);
 
