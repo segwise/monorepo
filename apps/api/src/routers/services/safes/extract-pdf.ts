@@ -116,7 +116,7 @@ function chunkText(text: string, maxChars = 24_000): string {
 	const clean = sanitizeText(text);
 
 	if (clean.length <= maxChars) {
-		return text;
+		return clean;
 	}
 
 	return clean.slice(0, maxChars);
