@@ -214,8 +214,6 @@ async function extractToAI(
 	// biome-ignore lint/suspicious/noControlCharactersInRegex: regex
 	const controlChars = textChunk.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g);
 
-	console.log('controlChars:', controlChars);
-
 	if (controlChars) {
 		console.log(
 			'Caracteres de controle no TEXTO COMPLETO:',
@@ -236,11 +234,13 @@ async function extractToAI(
 		);
 	}
 
+	console.log('iniciou');
 	const testResponse = await clientOpenAI.chat.completions.create({
 		model: AI_MODEL,
 		max_tokens: 50,
 		messages: [{ role: 'user', content: 'Diga oi em uma palavra.' }],
 	});
+	console.log('passou');
 
 	console.log('TESTE SIMPLES:', testResponse.choices[0]?.message.content);
 
