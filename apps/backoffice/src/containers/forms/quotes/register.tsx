@@ -485,7 +485,6 @@ function FormQuoteRegister() {
 																	? {
 																			value: value,
 																			label: capitalizeFirstLetters(
-																				// @ts-expect-error
 																				insuranceCompanies?.find(
 																					(e) => e.id === value,
 																				)?.name,
