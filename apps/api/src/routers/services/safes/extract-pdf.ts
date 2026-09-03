@@ -237,6 +237,7 @@ async function extractToAI(
 		max_tokens: 50,
 		messages: [{ role: 'user', content: 'Diga oi em uma palavra.' }],
 	});
+
 	console.log('TESTE SIMPLES:', testResponse.choices[0]?.message.content);
 
 	for (let retry = 1; retry <= MAX_RETRIES; retry++) {
