@@ -213,6 +213,7 @@ async function extractToAI(
 
 	// biome-ignore lint/suspicious/noControlCharactersInRegex: regex
 	const controlChars = textChunk.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g);
+
 	if (controlChars) {
 		console.log(
 			'Caracteres de controle no TEXTO COMPLETO:',
