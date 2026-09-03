@@ -17,7 +17,7 @@ function serializerCursor<T = unknown, K = unknown>(
 	return {
 		data,
 		total: props.total,
-		...(!!props?.previous && {
+		...((!!props?.previous || props.previous === '') && {
 			previous: props.previous,
 		}),
 		...(!!props?.next && {

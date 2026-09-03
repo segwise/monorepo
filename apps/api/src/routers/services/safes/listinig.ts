@@ -13,6 +13,16 @@ import { serializer } from '@/db-serializers/safe/simple';
 import { type Prisma, Role, StatusSafe } from '@/generated/prisma/client';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 
+const ORDER_BY_SEARCH: Prisma.SafeOrderByWithRelationInput[] = [
+	{ expiration: 'desc' },
+	{ insured: { name: 'asc' } },
+];
+
+const ORDER_BY_REVERSED_SEARCH: Prisma.SafeOrderByWithRelationInput[] = [
+	{ expiration: 'asc' },
+	{ insured: { name: 'desc' } },
+];
+
 const ORDER_BY: Prisma.SafeOrderByWithRelationInput[] = [
 	{ expiration: 'asc' },
 	{ insured: { name: 'asc' } },
@@ -22,6 +32,38 @@ const ORDER_BY_REVERSED: Prisma.SafeOrderByWithRelationInput[] = [
 	{ expiration: 'desc' },
 	{ insured: { name: 'desc' } },
 ];
+
+/**
+ * Calcula o cursor da página anterior a partir do resultado da query reversa.
+ *
+ * Regras (validadas por simulação, ver histórico da conversa):
+ * - Se não sobrou o item "extra" (reversedPage.length <= take), mas ainda
+ *   existe pelo menos 1 item, a página anterior É a primeira página —
+ *   nesse caso o cursor correto é `null` (a query forward sem cursor já
+ *   retorna a primeira página corretamente; não existe "id anterior ao
+ *   primeiro item" para apontar).
+ * - Se sobrou o item extra, o cursor correto é o ÚLTIMO item do slice
+ *   usável (os `take` primeiros itens do reversedPage) — não o item
+ *   extra em si. Usar o item extra desloca a página anterior em 1
+ *   posição para trás; usar o primeiro item do slice usável desloca a
+ *   página anterior em 1 posição para frente.
+ */
+function resolvePreviousCursor(
+	reversedPage: { id: string }[],
+	take: number,
+): string | null {
+	if (reversedPage.length === 0) {
+		return null;
+	}
+
+	if (reversedPage.length <= take) {
+		// Não sobrou o "+1": a página anterior é a primeira página.
+		return null;
+	}
+
+	const usable = reversedPage.slice(0, take);
+	return usable[usable.length - 1]?.id ?? null;
+}
 
 function registerRoutersServicesSafesSimpleListining(server: Server) {
 	server.get(
@@ -159,6 +201,11 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				...(andConditions.length > 0 && { AND: andConditions }),
 			};
 
+			const orderBy = search ? ORDER_BY_SEARCH : ORDER_BY;
+			const orderByReversed = search
+				? ORDER_BY_REVERSED_SEARCH
+				: ORDER_BY_REVERSED;
+
 			const [safesWithExtra, total] = await ctx.database.$transaction([
 				ctx.database.safe.findMany({
 					where,
@@ -167,7 +214,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						skip: 1,
 					}),
 					take: take + 1,
-					orderBy: ORDER_BY,
+					orderBy,
 					select: selectPrisma,
 					relationLoadStrategy: 'join',
 				}),
@@ -187,21 +234,21 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 					where,
 					cursor: { id: cursor },
 					skip: 1,
-					take,
-					orderBy: ORDER_BY_REVERSED,
+					take: take + 1,
+					orderBy: orderByReversed,
 					select: { id: true },
 					relationLoadStrategy: 'join',
 				});
 
-				if (reversedPage.length > 0) {
-					previousCursor = reversedPage[reversedPage.length - 1]?.id as string;
-				}
+				previousCursor = resolvePreviousCursor(reversedPage, take);
 			}
+
+			const hasPreviousPage = !!cursor && pageSafes.length > 0;
 
 			return ctx.json(
 				serializerCursor(pageSafes.map(serializer), {
 					total,
-					...(!!previousCursor && { previous: previousCursor }),
+					...(hasPreviousPage && { previous: previousCursor ?? '' }),
 					...(!!nextCursor && { next: nextCursor }),
 				}),
 				200,
