@@ -409,9 +409,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				);
 
 				return ctx.json(data, 200);
-			} catch (error) {
-				console.error(error);
-
+			} catch {
 				return ctx.json(
 					{
 						message: 'Falha ao extrair dados do documento',

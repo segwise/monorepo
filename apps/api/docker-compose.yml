@@ -33,6 +33,7 @@ services:
       IOS_XCAR_APP_URL: ${IOS_XCAR_APP_URL}
       ANDROID_XCAR_APP_URL: ${ANDROID_XCAR_APP_URL}
     networks:
+      - internal-network
       - dokploy-network
     depends_on:
       - cache
@@ -43,9 +44,14 @@ services:
     command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
     volumes:
       - cache-data:/data
+    networks:
+      - internal-network
     restart: unless-stopped
 
 networks:
+  internal-network:
+    driver: brige
+    internal: true
   dokploy-network:
     external: true
 
