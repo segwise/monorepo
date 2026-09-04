@@ -249,6 +249,9 @@ model Safe {
 
   externalId String? @db.Uuid
 
+  proposalCode String? @map("proposal_code")
+  policyCode   String? @map("policy_code")
+
   producerId String? @map("producer_id") @db.Uuid
   producer   User?   @relation("producer_safes", fields: [producerId], references: [id], onDelete: Restrict)
 
