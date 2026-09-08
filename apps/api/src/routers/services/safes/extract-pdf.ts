@@ -181,7 +181,7 @@ function mountPrompt(
 		- Não invente dados que não estão no texto.
 		- Nenhum campo pode ter mais de um dado, é sempre um único dado, nunca dois dados no mesmo campo separado por "ou", ",", ou algum outro tipo de separador
 		- Na utilização do veículo que for particular, considerar como lazer e ida e volta ao trabalho
-		- O valor da frânquia nunca pode somar de outros serviços, o valor deve ser sempre somente da frânquia base do seguro, e nunca somar nada, caso tenha dificuldade de saber qual é, normalmente é usado o termo "básico" ou "básica" na cobertura contratada
+		- O valor da frânquia nunca pode somar de outros serviços, o valor deve ser sempre somente da frânquia base do seguro, e nunca somar nada, caso tenha dificuldade de saber qual é, normalmente é usado o termo "básico" ou "básica" na cobertura contratada, e normalmente é o primeiro da lista de coberturas
 		- O ID e o Nome da seguradora você vai ver os dados em 'Dados do meu banco de dados / Seguradoras' pra popular esses parâmetros do "insuranceCompany" baseado no meu banco de dados 
 
 		Informações adicionais:
