@@ -45,7 +45,7 @@ const partnerInsurers = [
 	},
 	{
 		name: 'ezze seguros',
-		logo: 'https://mo4web.com.br/wp-content/uploads/2025/06/B.png',
+		logo: 'https://static.wixstatic.com/media/cba4e8_33d99b33ebab4ac2a8fffa1ec210240b~mv2.png/v1/fill/w_600,h_600,al_c/cba4e8_33d99b33ebab4ac2a8fffa1ec210240b~mv2.png',
 	},
 	{
 		name: 'aliro seguro',
@@ -65,7 +65,7 @@ const partnerInsurers = [
 	},
 	{
 		name: 'justos seguros',
-		logo: 'https://cdn.prod.website-files.com/63bdbbd2c764e85f370a866e/65b0678c2788500d8aaf36ee_justons-new-black.svg',
+		logo: 'https://d15k2d11r6t6rl.cloudfront.net/public/users/Integrators/7ba73aaa-3da9-4cf1-abf2-ccc85dea5875/uid_28112/Logos%20seguradoras-Mari%20%28site%29%20%20%20%287%29_3.png',
 	},
 ];
 
@@ -114,7 +114,7 @@ function TemplatePartnershipInviteAccounting({
 }: {
 	leadId?: string;
 } = {}) {
-	const urlMessage = new URL('https://segwise.com.br/nova-parceria');
+	const urlMessage = new URL('https://segwise.com.br/gestao-protecao');
 	if (leadId) urlMessage.searchParams.set('leadId', leadId);
 
 	return (
@@ -123,7 +123,7 @@ function TemplatePartnershipInviteAccounting({
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<title>
-					Parceria comercial — Escritório de Contabilidade | SEGWISE / XCAR
+					Gestão + Proteção — Escritório de Contabilidade | SEGWISE / XCAR
 				</title>
 				<script src="https://cdn.tailwindcss.com"></script>
 				<script
@@ -175,107 +175,112 @@ function TemplatePartnershipInviteAccounting({
 						</span>
 					</div>
 					<div className="px-10 pt-5 pb-5">
-						<h1 className="text-[18px] font-bold text-primary m-0 mb-0.5 leading-tight">
-							Parceria comercial
+						{/* Data e destinatário — formato carta, como no texto original */}
+						<p className="text-[11px] text-[#374151] text-right m-0 mb-5">
+							Recife, ______ de __________________ de 2026.
+						</p>
+						<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+							Ao Sr.(a) Responsável por novos negócios contadores/escritório de
+							contabilidade
+						</p>
+						<p className="text-[11px] text-[#374151] m-0 mb-4">
+							Prezado(a) Senhor(a),
+						</p>
+
+						<h1 className="text-[16px] font-bold text-primary m-0 mb-4 leading-tight">
+							Uma ótima oportunidade de levar benefícios aos clientes sob Gestão
+							de sua empresa
 						</h1>
-						<p className="text-[12px] font-semibold text-[#4B5563] m-0 mb-3">
-							Escritório de Contabilidade <br /> SEGWISE / XCAR Corretora de
-							Seguros
-						</p>
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-							Somos da SEGWISE / XCAR CORRETORA DE SEGUROS, empresa com mais de
-							12 anos no mercado segurador, e gostaria de convidar você para uma
-							ação conjunta na proteção financeira e na tranquilidade dos seus
-							clientes diante de imprevistos.
-						</p>
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-							Com o programa – Contabilidade Estratégica e Proteção de Bens,
-							Vida e Negócios, você levará descontos e benefícios aos seus
-							clientes sem qualquer custo na operação.
-						</p>
+
 						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
-							Abaixo, nossa proposta:
+							Meu nome é <b>Fernando Luiz Malheiros de Sena</b>, diretor da{' '}
+							<b>Xcar Corretora de Seguros</b> e gostaria, em parceria com sua
+							empresa, oferecer o programa: <b>GESTÃO + PROTEÇÃO</b> – conheça
+							os benefícios
 						</p>
+
 						<div className="mb-3 break-inside-avoid">
-							<SectionTitle>Benefícios para sua empresa</SectionTitle>
-							<BulletItem>
-								Comissionamento de <b>___%</b> sobre o ganho da corretora nos
-								produtos adquiridos através da indicação do escritório de
-								contabilidade.
-							</BulletItem>
-							<BulletItem>
-								Comissionamento <b>vitalício</b>: mesmo que o empresário deixe
-								seu escritório, por qualquer motivo, você continua sendo o
-								beneficiário enquanto este cliente estiver segurado na SEGWISE /
-								XCAR.
-							</BulletItem>
-							<BulletItem>
-								O cliente, mesmo que no primeiro momento não faça adesão ao
-								seguro, continuará recebendo ofertas com preços promocionais — e
-								a qualquer época que faça a adesão, o escritório mantém o
-								direito ao comissionamento vitalício de <b>___%</b> sobre o
-								ganho trazido à corretora.
-							</BulletItem>
-							<BulletItem>
-								O escritório de contabilidade receberá todo o apoio necessário à
-								divulgação da parceria, sem qualquer custo — apenas ganhos
-								advindos dos seguros adquiridos pelos clientes do escritório.
-							</BulletItem>
-							<BulletItem>
-								Demonstrativo em tempo real das adesões ao aplicativo
-								disponibilizado aos clientes do escritório. Uma vez cadastrado
-								em nome do escritório, o cadastro permanece vinculado a quem o
-								originou, mesmo sem vínculo posterior.
-							</BulletItem>
-							<BulletItem>
-								Parcerias que geram diminuição de custos para seus clientes e
-								aumento de receita para o escritório.
-							</BulletItem>
-						</div>
-						<div className="mb-4 break-inside-avoid">
-							<SectionTitle>Benefícios para seus clientes</SectionTitle>
+							<SectionTitle>1) Benefícios aos clientes</SectionTitle>
 							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-								Acesso ao aplicativo SEGWISE: um assistente de bolso que
-								centraliza serviços e informações essenciais, como:
+								Acesso ao aplicativo - segwise
+							</p>
+							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
+								Um aplicativo verdadeiramente relevante que vem para ampliar os
+								benefícios que sua empresa já oferece, funcionando como um
+								assistente de bolso, centralizando serviços e informações
+								essências como os descritos abaixo:
 							</p>
 							<BulletItem>
-								Desconto exclusivo na aquisição ou renovação de seguros.
-							</BulletItem>
-							<BulletItem>Orçamentos grátis e sem compromisso.</BulletItem>
-							<BulletItem>
-								Orientação sobre qual ação tomar em cada tipo de sinistro.
-							</BulletItem>
-							<BulletItem>
-								Como agir, para onde ligar e o que fazer em caso de vítima.
+								<b>EVITAR NEGATIVA DE SINISTRO</b> – orientações sobre temas
+								como: Principal Condutor, CEP de pernoite, cobertura para
+								conditores entre 18 a 25 anos de idade, deveres do segurado,
+								recusa da apólice.........
 							</BulletItem>
 							<BulletItem>
-								Telefones de assistência para solicitar reboque, abrir sinistro
-								ou solicitar substituição de vidros.
+								<b>CONSULTA VEICULAR</b> – Informações sobre: Valor médio da
+								FIPE – multas – gravames – infrações – débitos – IPVA -
+								licenciamentos – DPVAT – roubo – sinistros
 							</BulletItem>
 							<BulletItem>
-								Orientações sobre Principal Condutor, CEP de pernoite, cobertura
-								para condutores entre 18 e 25 anos, deveres do segurado e recusa
-								da apólice.
+								<b>ASSISTÊNCIAS</b> – telefones para solicitar um reboque, abrir
+								um sinistro, solicitar substituição de vidros, faróis e
+								lanternas, etc
 							</BulletItem>
 							<BulletItem>
-								Consulta veicular na compra de um veículo: valor médio FIPE,
-								multas, gravames, infrações, débitos, IPVA, licenciamento,
-								DPVAT, roubo e sinistros.
+								<b>ORIENTAÇÃO NO SINISTRO</b> – como agir, para onde ligar, o
+								que fazer e se houver vítima...
 							</BulletItem>
 							<BulletItem>
-								Plataforma gratuita para compra e venda de veículos com maior
-								segurança — exclusiva para clientes SEGWISE / XCAR.
+								<b>DESCONTOS EXCLUSIVOS</b> – na aquisição ou renovação de
+								seguros
 							</BulletItem>
 						</div>
-						<div className="pt-20 border-t border-solid border-[#D1D5DB] break-inside-avoid">
-							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
-								SEGWISE / XCAR Corretora de Seguros &nbsp;·&nbsp;
+
+						<div className="mb-4 break-inside-avoid">
+							<SectionTitle>
+								2) Benefícios ao escritório de contabilidade
+							</SectionTitle>
+							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
+								Acesso ao aplicativo - parceiro
 							</p>
+							<BulletItem>
+								Aplicativo dedicado a administradora, com demonstrativo do
+								número de adesões e ao relatório financeiro decorrentes das
+								indicações, e aos direitos conforme abaixo:
+							</BulletItem>
+							<BulletItem>
+								<b>COMISSIONAMENTO VITALÍCIO</b> – percentual dos ganhos da
+								corretora decorrente da indicação dos clientes que resulte na
+								efetiva contratação de seguros.
+							</BulletItem>
+							<BulletItem>
+								<b>CUSTO DE IMPLANTAÇÃO</b> – sem qualquer custo financeiro ou
+								laboral
+							</BulletItem>
+						</div>
+
+						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-4">
+							Coloco-me à disposição para esclarecer eventuais dúvidas e
+							apresentar mais detalhes sobre o programa.
+						</p>
+
+						{/* Fechamento — Atenciosamente + assinatura, como no texto original */}
+						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-4">
+							Atenciosamente,
+						</p>
+
+						<div className="pt-16 border-t border-solid border-[#D1D5DB] break-inside-avoid">
 							<p className="text-[11px] leading-[15px] text-[#374151] m-0">
-								Fernando Luiz Malheiros de Sena — Diretor Geral
+								Fernando Luiz Malheiros de Sena
+							</p>
+							<p className="text-[11px] leading-[15px] text-muted m-0">
+								Diretor Geral
 							</p>
 							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
-								(81) 98696-1991 &nbsp;·&nbsp; 3229-1728
+								Fones: 81.98696.1991 &nbsp;-&nbsp; 81.3229.1728
+							</p>
+							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
+								XCAR Corretora de Seguros
 							</p>
 							<p className="text-[9px] tracking-wide text-muted uppercase m-0 mb-1.5">
 								Seguradoras parceiras
