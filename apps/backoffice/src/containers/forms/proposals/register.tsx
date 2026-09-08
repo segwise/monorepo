@@ -2298,7 +2298,7 @@ type ExtractDocument = {
 		profession: string | null;
 	};
 	vehicle: {
-		plate: string;
+		plate?: string | null;
 		model: string;
 		year: number;
 		usage:
@@ -2705,9 +2705,11 @@ function InsuranceDataPreview({
 				<>
 					<Separator className='bg-primary/20 my-2' />
 					<div className='flex flex-row items-center justify-between gap-x-2'>
-						<div className='text-sm'>
-							Placa: <b>{maskPlate(data.vehicle.plate)}</b>
-						</div>
+						{data.vehicle.plate && (
+							<div className='text-sm'>
+								Placa: <b>{maskPlate(data.vehicle.plate)}</b>
+							</div>
+						)}
 						<div className='text-sm'>
 							Modelo: <b>{capitalizeFirstLetters(data.vehicle.model)}</b>
 						</div>
