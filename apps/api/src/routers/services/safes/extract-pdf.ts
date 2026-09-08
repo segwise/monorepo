@@ -60,7 +60,7 @@ const SchemaDataExtract = z
 			.strict(),
 		vehicle: z
 			.object({
-				plate: SchemaPlate,
+				plate: SchemaPlate.nullish(),
 				model: z.string(),
 				year: z.number(),
 				usage: SchemaVehicleUsage,
@@ -156,7 +156,7 @@ function mountPrompt(
 				"profession": "string ou null"
 			},
 			"vehicle": {
-				"plate": "string, placa do veículo",
+				"plate": "string ou null, placa do veículo, pode ser um veículo zero, por tanto não ter placa",
 				"model": "string, modelo do veículo",
 				"year": "number, ano do modelo do veículo",
 				"usage": "string, uso do veículo, enum (leisure_and_work, leisure, client_supplier_visits, app_based_transport, taxi, public_transportation, delivieries, tourism)",
@@ -297,11 +297,6 @@ async function extractToAI(
 			return responseValid;
 		} catch (error) {
 			lastError = error;
-
-			const _reason =
-				error instanceof z.ZodError
-					? JSON.stringify(error.issues)
-					: String(error);
 
 			if (retry < MAX_RETRIES) {
 				await new Promise((r) => setTimeout(r, 1000 * retry));
