@@ -182,7 +182,7 @@ function mountPrompt(
 		- Nenhum campo pode ter mais de um dado, é sempre um único dado, nunca dois dados no mesmo campo separado por "ou", ",", ou algum outro tipo de separador
 		- Na utilização do veículo que for particular, considerar como lazer e ida e volta ao trabalho
 		- O valor da frânquia nunca pode somar de outros serviços, o valor deve ser sempre somente da frânquia base do seguro, e nunca somar nada, caso tenha dificuldade de saber qual é, normalmente é usado o termo "básico" ou "básica" na cobertura contratada, e normalmente é o primeiro da lista de coberturas. Tome muito cuidado, pois alguns documentos tem o prêmio da cobertura e a frânquia um do lado da outra, verifique a ordem usando o header da cobertura ou a listagem para garantir o valor correto
-		- Tenha muito cuidado com o valor da frânquia, nunca confunda com o valor do prêmio da frânquia
+		- Tenha muito cuidado com o valor da frânquia, nunca confunda com o valor do prêmio da frânquia, veja que em alguns casos que possa ficar confuso, a frânquia poderá está na mesma descrição do valor informando "X porcento da obrigatória", tenha cuidado, porquê normalmente a frânquia é maior que o prêmio líquido da frânquia, porquê não pode confundir o valor do prêmio da frânquia, com o valor da frânquia
 		- O ID e o Nome da seguradora você vai ver os dados em 'Dados do meu banco de dados / Seguradoras' pra popular esses parâmetros do "insuranceCompany" baseado no meu banco de dados 
 
 		Informações adicionais:
