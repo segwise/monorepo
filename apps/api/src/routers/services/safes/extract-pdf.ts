@@ -1,6 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import {
 	isCPF,
+	maskNumber,
 	SchemaCNPJ,
 	SchemaCPF,
 	SchemaCPFOrCNPJ,
@@ -53,7 +54,13 @@ const SchemaDataExtract = z
 			.object({
 				name: SchemaName,
 				registration: SchemaCPFOrCNPJ,
-				phone: SchemaPhone,
+				phone: z
+					.string('Celular inválido')
+					.transform(maskNumber)
+					.transform((value) =>
+						value.slice(0, 2) === '00' ? value.slice(2) : value,
+					)
+					.pipe(SchemaPhone),
 				birth: SchemaDateString.nullish(),
 				profession: z.string().nullish(),
 			})
