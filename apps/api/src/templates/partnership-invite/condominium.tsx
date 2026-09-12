@@ -1,5 +1,3 @@
-import type { PropsWithChildren } from 'hono/jsx';
-
 const LOGO_WHITE = 'https://cdn.segwise.com.br/images-public/Group%2077.svg';
 
 const partnerInsurers = [
@@ -45,7 +43,7 @@ const partnerInsurers = [
 	},
 	{
 		name: 'ezze seguros',
-		logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTPXYwtQrp2OmLV8dSV-vnQIJKBk9nBNnZOexohCq9_DfiQ1eoMqhDQ5jH0&s=10',
+		logo: 'https://mo4web.com.br/wp-content/uploads/2025/06/B.png',
 	},
 	{
 		name: 'aliro seguro',
@@ -90,31 +88,14 @@ function InsurerLogoGrid() {
 	);
 }
 
-function SectionTitle({ children }: PropsWithChildren) {
-	return (
-		<h2 className="text-[12px] font-bold text-primary tracking-wide uppercase m-0 mb-2 pb-1.5 border-b border-solid border-[#D1D5DB]">
-			{children}
-		</h2>
-	);
-}
-
-function BulletItem({ children }: PropsWithChildren) {
-	return (
-		<div className="flex items-start gap-2 mb-0.5">
-			<span className="text-[11px] text-[#9CA3AF] leading-[15px]">–</span>
-			<p className="text-[11px] leading-[15px] text-[#374151] m-0">
-				{children}
-			</p>
-		</div>
-	);
-}
-
 function TemplatePartnershipInviteCondominium({
 	leadId,
 }: {
 	leadId?: string;
 } = {}) {
-	const urlMessage = new URL('https://segwise.com.br/nova-parceria');
+	const urlMessage = new URL(
+		'https://segwise.com.br/gestao-protecao-condominio',
+	);
 	if (leadId) urlMessage.searchParams.set('leadId', leadId);
 
 	return (
@@ -122,10 +103,7 @@ function TemplatePartnershipInviteCondominium({
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<title>
-					Parceria comercial — Administradora de condomínio | XCAR Corretora de
-					Seguros / SEGWISE
-				</title>
+				<title>Gestão + Proteção — Administradora de Condomínios | XCAR</title>
 				<script src="https://cdn.tailwindcss.com"></script>
 				<script
 					dangerouslySetInnerHTML={{
@@ -167,7 +145,7 @@ function TemplatePartnershipInviteCondominium({
 					<div className="flex items-center justify-between bg-primary px-10 py-4 break-inside-avoid">
 						<img
 							src={LOGO_WHITE}
-							alt="XCAR CORRETORA DE SEGUROS / SEGWISE"
+							alt="XCAR CORRETORA DE SEGUROS"
 							width={120}
 							height={27}
 						/>
@@ -176,96 +154,165 @@ function TemplatePartnershipInviteCondominium({
 						</span>
 					</div>
 					<div className="px-10 pt-5 pb-5">
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
-							Ao Sr.(a) Responsável por novos negócios da administradora de
-							condomínios
+						<p className="text-[11px] text-[#374151] text-right m-0 mb-5">
+							Recife, ____ de __________________ de 2026.
 						</p>
-						<h1 className="text-[18px] font-bold text-primary m-0 mb-0.5 leading-tight">
+						<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+							À(ao) Sr.(a) Responsável por Novos Negócios
+						</p>
+						<p className="text-[11px] text-[#374151] m-0 mb-0.5">
+							(Administradora de Condomínios)
+						</p>
+						<p className="text-[11px] text-[#374151] m-0 mb-4">
 							Prezado(a) Senhor(a),
-						</h1>
-						<p className="text-[12px] font-semibold text-[#4B5563] m-0 mb-3">
-							Uma ótima oportunidade de levar benefícios aos clientes sob Gestão
-							de sua empresa
 						</p>
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
-							Meu nome é Fernando Luiz Malheiros de Sena, diretor da{' '}
-							<b>XCAR CORRETORA DE SEGUROS / SEGWISE</b> e gostaria, em parceria
-							com sua empresa, oferecer: o programa gestão + proteção – conheça
-							os benefícios
+
+						<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-4">
+							Uma excelente oportunidade para ampliar os benefícios oferecidos
+							aos clientes sob a gestão de sua empresa.
 						</p>
-						<div className="mb-3 break-inside-avoid">
-							<SectionTitle>Benefícios aos clientes</SectionTitle>
-							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-								Acesso ao aplicativo - SEGWISE
-							</p>
-							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-								Um aplicativo verdadeiramente relevante que vem para ampliar os
-								benefícios que sua empresa já oferece, funcionando como um
-								assistente de bolso, centralizando serviços e informações
-								essências como os descritos abaixo:
-							</p>
-							<BulletItem>
-								EVITAR NEGATIVA DE SINISTRO – orientações sobre temas como:
-								Principal Condutor, CEP de pernoite, cobertura para condutores
-								entre 18 a 25 anos de idade, deveres do segurado, recusa da
-								apólice.........
-							</BulletItem>
-							<BulletItem>
-								CONSULTA VEICULAR – Informações sobre: Valor médio da FIPE –
-								multas – gravames – infrações – débitos – IPVA - licenciamentos
-								– DPVAT – roubo – sinistros
-							</BulletItem>
-							<BulletItem>
-								ASSISTÊNCIAS – telefones para solicitar reboque, abrir um
-								sinistro, solicitar substituição de vidros, faróis, lanternas e
-								etc...
-							</BulletItem>
-							<BulletItem>
-								ORIENTAÇÃO NO SINISTRO – como agir, para onde ligar, o que fazer
-								e se houver vítima...
-							</BulletItem>
-							<BulletItem>
-								DESCONTOS EXCLUSIVOS – na aquisição ou renovação de seguros
-							</BulletItem>
-						</div>
+
+						<p className="text-[12px] font-bold text-primary m-0 mb-1.5">
+							PROTEÇÃO AO PATRIMÔNIO
+						</p>
+						<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-3">
+							Sendo a missão de sua empresa cuidar da gestão e do patrimônio
+							coletivo dos condomínios, apresentamos uma parceria com a XCAR
+							Corretora de Seguros para também oferecer proteção aos bens
+							particulares dos condôminos, agregando valor aos serviços já
+							disponibilizados.
+						</p>
+						<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-4">
+							Meu nome é Fernando Luiz Malheiros de Sena, Diretor da XCAR
+							Corretora de Seguros, e gostaria de apresentar, em parceria com
+							sua empresa, o programa "GESTÃO + PROTEÇÃO", desenvolvido para
+							gerar benefícios aos condôminos e novas oportunidades para a
+							administradora.
+						</p>
+
 						<div className="mb-4 break-inside-avoid">
-							<SectionTitle>Benefícios ao escritório</SectionTitle>
-							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-								Acesso ao aplicativo - PARCEIRO
+							<p className="text-[12px] font-bold text-primary m-0 mb-1.5">
+								1. BENEFÍCIOS AOS CLIENTES
 							</p>
-							<BulletItem>
-								Aplicativo dedicado ao escritório, com demonstrativo do número
-								de adesões e ao relatório financeiro decorrentes das indicações,
-								e aos direitos conforme abaixo:
-							</BulletItem>
-							<BulletItem>
-								COMISSIONAMENTO VITALÍCIO – percentual dos ganhos da corretora
-								decorrente da indicação dos condôminos que resulte na efetiva
-								contratação de seguros.
-							</BulletItem>
-							<BulletItem>
-								CUSTO DE IMPLANTAÇÃO – sem qualquer custo financeiro ou laboral
-							</BulletItem>
+							<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								Acesso ao aplicativo Segwise
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								Um aplicativo relevante e de fácil utilização, que amplia os
+								benefícios oferecidos pela administradora, funcionando como um
+								verdadeiro assistente de bolso e centralizando serviços,
+								informações e orientações essenciais, tais como:
+							</p>
+
+							<div className="flex items-start gap-2 mb-1">
+								<span className="text-[11px] text-[#9CA3AF] leading-[16px]">
+									•
+								</span>
+								<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<b>EVITAR NEGATIVA DE SINISTRO</b> – orientações sobre temas
+									como principal condutor, CEP de pernoite, cobertura para
+									condutores entre 18 e 25 anos, deveres do segurado, situações
+									que podem ocasionar recusa de cobertura, entre outros.
+								</p>
+							</div>
+							<div className="flex items-start gap-2 mb-1">
+								<span className="text-[11px] text-[#9CA3AF] leading-[16px]">
+									•
+								</span>
+								<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<b>CONSULTA VEICULAR</b> – informações sobre valor médio da
+									FIPE, multas, gravames, infrações, débitos, IPVA,
+									licenciamento, DPVAT, roubo e sinistros.
+								</p>
+							</div>
+							<div className="flex items-start gap-2 mb-1">
+								<span className="text-[11px] text-[#9CA3AF] leading-[16px]">
+									•
+								</span>
+								<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<b>ASSISTÊNCIAS</b> – telefones e orientações para solicitar
+									reboque, comunicar sinistro, solicitar substituição de vidros,
+									faróis e lanternas, entre outros serviços.
+								</p>
+							</div>
+							<div className="flex items-start gap-2">
+								<span className="text-[11px] text-[#9CA3AF] leading-[16px]">
+									•
+								</span>
+								<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<b>ORIENTAÇÃO EM CASO DE SINISTRO</b> – informações sobre como
+									agir, para onde ligar, quais providências tomar e como
+									proceder em situações que envolvam vítimas.
+								</p>
+							</div>
 						</div>
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
-							Coloco-me à disposição para esclarecer eventuais dúvidas e
-							apresentar mais detalhes sobre o programa.
-						</p>
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
+
+						<div className="mb-4 break-inside-avoid">
+							<p className="text-[12px] font-bold text-primary m-0 mb-1.5">
+								2. BENEFÍCIOS PARA A ADMINISTRADORA DE CONDOMÍNIOS
+							</p>
+
+							<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								PROTEÇÃO PATRIMONIAL
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								Amplie o seu leque de benefícios, oferecendo aos condôminos a
+								possibilidade de proteger seus patrimônios particulares por meio
+								de uma parceria com a XCAR Corretora de Seguros, com acesso a
+								condições comerciais diferenciadas e descontos exclusivos na
+								contratação ou renovação de seguros.
+							</p>
+
+							<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								COMISSIONAMENTO VITALÍCIO
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								Percentual sobre os ganhos da corretora decorrentes das
+								indicações de clientes que resultem na efetiva contratação de
+								seguros, conforme as condições estabelecidas na parceria.
+							</p>
+
+							<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								CUSTO DE IMPLANTAÇÃO
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								Sem qualquer custo financeiro ou necessidade de estrutura
+								operacional adicional por parte da administradora.
+							</p>
+
+							<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								ACESSO AO APLICATIVO PARA PARCEIROS
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+								Aplicativo dedicado à administradora de condomínios, permitindo
+								o acompanhamento das adesões realizadas e o acesso a relatórios
+								financeiros referentes às indicações e aos resultados da
+								parceria.
+							</p>
+						</div>
+
+						<div className="mb-6 break-inside-avoid">
+							<p className="text-[12px] font-bold text-primary m-0 mb-1.5">
+								CONSIDERAÇÕES FINAIS
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+								Coloco-me à disposição para esclarecer eventuais dúvidas e
+								apresentar, de forma detalhada, o funcionamento do programa,
+								suas condições e os benefícios que a parceria poderá
+								proporcionar à sua empresa e aos seus clientes.
+							</p>
+						</div>
+
+						<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-4">
 							Atenciosamente,
 						</p>
-						<div className="pt-8 border-t border-solid border-[#D1D5DB] break-inside-avoid">
-							<p className="text-[11px] leading-[15px] text-[#374151] m-0">
+
+						<div className="pt-16 border-t border-solid border-[#D1D5DB] break-inside-avoid">
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0">
 								Fernando Luiz Malheiros de Sena
 							</p>
-							<p className="text-[11px] leading-[15px] text-[#374151] m-0">
-								Diretor Geral
-							</p>
-							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
-								Fones: (81) 98696-1991 - (81) 3229-1728
-							</p>
-							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
-								XCAR Corretora de Seguros / SEGWISE
+							<p className="text-[11px] leading-[16px] text-muted m-0 mb-3">
+								Diretor – XCAR Corretora de Seguros
 							</p>
 							<p className="text-[9px] tracking-wide text-muted uppercase m-0 mb-1.5">
 								Seguradoras parceiras
@@ -275,7 +322,7 @@ function TemplatePartnershipInviteCondominium({
 					</div>
 					<div className="px-10 py-4 border-t border-solid border-[#E5E7EB] flex items-center justify-between">
 						<span className="text-[10px] text-muted">
-							XCAR CORRETORA DE SEGUROS / SEGWISE
+							XCAR CORRETORA DE SEGUROS
 						</span>
 						<span className="text-[10px] text-muted">segwise.com.br</span>
 					</div>

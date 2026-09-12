@@ -1,5 +1,3 @@
-import type { PropsWithChildren } from 'hono/jsx';
-
 const LOGO_WHITE = 'https://cdn.segwise.com.br/images-public/Group%2077.svg';
 
 const partnerInsurers = [
@@ -45,7 +43,7 @@ const partnerInsurers = [
 	},
 	{
 		name: 'ezze seguros',
-		logo: 'https://static.wixstatic.com/media/cba4e8_33d99b33ebab4ac2a8fffa1ec210240b~mv2.png/v1/fill/w_600,h_600,al_c/cba4e8_33d99b33ebab4ac2a8fffa1ec210240b~mv2.png',
+		logo: 'https://mo4web.com.br/wp-content/uploads/2025/06/B.png',
 	},
 	{
 		name: 'aliro seguro',
@@ -65,7 +63,7 @@ const partnerInsurers = [
 	},
 	{
 		name: 'justos seguros',
-		logo: 'https://d15k2d11r6t6rl.cloudfront.net/public/users/Integrators/7ba73aaa-3da9-4cf1-abf2-ccc85dea5875/uid_28112/Logos%20seguradoras-Mari%20%28site%29%20%20%20%287%29_3.png',
+		logo: 'https://cdn.prod.website-files.com/63bdbbd2c764e85f370a866e/65b0678c2788500d8aaf36ee_justons-new-black.svg',
 	},
 ];
 
@@ -90,31 +88,14 @@ function InsurerLogoGrid() {
 	);
 }
 
-function SectionTitle({ children }: PropsWithChildren) {
-	return (
-		<h2 className="text-[12px] font-bold text-primary tracking-wide uppercase m-0 mb-2 pb-1.5 border-b border-solid border-[#D1D5DB]">
-			{children}
-		</h2>
-	);
-}
-
-function BulletItem({ children }: PropsWithChildren) {
-	return (
-		<div className="flex items-start gap-2 mb-0.5">
-			<span className="text-[11px] text-[#9CA3AF] leading-[15px]">–</span>
-			<p className="text-[11px] leading-[15px] text-[#374151] m-0">
-				{children}
-			</p>
-		</div>
-	);
-}
-
 function TemplatePartnershipInviteAccounting({
 	leadId,
 }: {
 	leadId?: string;
 } = {}) {
-	const urlMessage = new URL('https://segwise.com.br/gestao-protecao');
+	const urlMessage = new URL(
+		'https://segwise.com.br/gestao-protecao-contabilidade',
+	);
 	if (leadId) urlMessage.searchParams.set('leadId', leadId);
 
 	return (
@@ -122,9 +103,7 @@ function TemplatePartnershipInviteAccounting({
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<title>
-					Gestão + Proteção — Escritório de Contabilidade | SEGWISE / XCAR
-				</title>
+				<title>Gestão + Proteção — Escritório de Contabilidade | XCAR</title>
 				<script src="https://cdn.tailwindcss.com"></script>
 				<script
 					dangerouslySetInnerHTML={{
@@ -166,7 +145,7 @@ function TemplatePartnershipInviteAccounting({
 					<div className="flex items-center justify-between bg-primary px-10 py-4 break-inside-avoid">
 						<img
 							src={LOGO_WHITE}
-							alt="SEGWISE / XCAR CORRETORA DE SEGUROS"
+							alt="XCAR CORRETORA DE SEGUROS"
 							width={120}
 							height={27}
 						/>
@@ -175,112 +154,175 @@ function TemplatePartnershipInviteAccounting({
 						</span>
 					</div>
 					<div className="px-10 pt-5 pb-5">
-						{/* Data e destinatário — formato carta, como no texto original */}
 						<p className="text-[11px] text-[#374151] text-right m-0 mb-5">
-							Recife, ______ de __________________ de 2026.
+							Recife, ____ de __________________ de 2026.
 						</p>
 						<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
-							Ao Sr.(a) Responsável por novos negócios contadores/escritório de
-							contabilidade
+							Ao(À) Sr.(a) Responsável por Novos Negócios
+						</p>
+						<p className="text-[11px] text-[#374151] m-0 mb-0.5">
+							(Contador(a) / Escritório de Contabilidade)
 						</p>
 						<p className="text-[11px] text-[#374151] m-0 mb-4">
 							Prezado(a) Senhor(a),
 						</p>
 
-						<h1 className="text-[16px] font-bold text-primary m-0 mb-4 leading-tight">
-							Uma ótima oportunidade de levar benefícios aos clientes sob Gestão
-							de sua empresa
-						</h1>
-
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-3">
-							Meu nome é <b>Fernando Luiz Malheiros de Sena</b>, diretor da{' '}
-							<b>Xcar Corretora de Seguros</b> e gostaria, em parceria com sua
-							empresa, oferecer o programa: <b>GESTÃO + PROTEÇÃO</b> – conheça
-							os benefícios
+						<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-4">
+							Uma excelente oportunidade para ampliar os benefícios oferecidos
+							aos clientes sob a gestão de sua empresa.
 						</p>
 
-						<div className="mb-3 break-inside-avoid">
-							<SectionTitle>1) Benefícios aos clientes</SectionTitle>
-							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-								Acesso ao aplicativo - segwise
+						<p className="text-[12px] font-bold text-primary m-0 mb-1.5">
+							PROTEÇÃO AO PATRIMÔNIO
+						</p>
+						<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-3">
+							Seu cliente, seja proprietário de uma pequena, média ou grande
+							empresa, atuando nos segmentos de comércio, serviços ou indústria,
+							está exposto diariamente a diversos riscos que podem comprometer
+							seu patrimônio, suas operações e até mesmo a continuidade de suas
+							atividades. Por isso, contar com uma proteção adequada é
+							fundamental para reduzir impactos financeiros e preservar o
+							negócio.
+						</p>
+						<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-4">
+							Meu nome é Fernando Luiz Malheiros de Sena, Diretor da XCAR
+							Corretora de Seguros, e gostaria de apresentar, em parceria com
+							seu escritório, o programa "GESTÃO + PROTEÇÃO", criado para
+							agregar valor aos serviços contábeis e oferecer aos seus clientes
+							acesso a soluções de proteção patrimonial e seguros.
+						</p>
+
+						<div className="mb-4 break-inside-avoid">
+							<p className="text-[12px] font-bold text-primary m-0 mb-1.5">
+								1. BENEFÍCIOS AOS CLIENTES
 							</p>
-							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-								Um aplicativo verdadeiramente relevante que vem para ampliar os
-								benefícios que sua empresa já oferece, funcionando como um
-								assistente de bolso, centralizando serviços e informações
-								essências como os descritos abaixo:
+							<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								Acesso ao aplicativo Segwise
 							</p>
-							<BulletItem>
-								<b>EVITAR NEGATIVA DE SINISTRO</b> – orientações sobre temas
-								como: Principal Condutor, CEP de pernoite, cobertura para
-								conditores entre 18 a 25 anos de idade, deveres do segurado,
-								recusa da apólice.........
-							</BulletItem>
-							<BulletItem>
-								<b>CONSULTA VEICULAR</b> – Informações sobre: Valor médio da
-								FIPE – multas – gravames – infrações – débitos – IPVA -
-								licenciamentos – DPVAT – roubo – sinistros
-							</BulletItem>
-							<BulletItem>
-								<b>ASSISTÊNCIAS</b> – telefones para solicitar um reboque, abrir
-								um sinistro, solicitar substituição de vidros, faróis e
-								lanternas, etc
-							</BulletItem>
-							<BulletItem>
-								<b>ORIENTAÇÃO NO SINISTRO</b> – como agir, para onde ligar, o
-								que fazer e se houver vítima...
-							</BulletItem>
-							<BulletItem>
-								<b>DESCONTOS EXCLUSIVOS</b> – na aquisição ou renovação de
-								seguros
-							</BulletItem>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								Um aplicativo relevante e de fácil utilização, desenvolvido para
+								ampliar os benefícios já oferecidos por sua empresa, funcionando
+								como um verdadeiro assistente de bolso e centralizando serviços,
+								informações e orientações essenciais, tais como:
+							</p>
+
+							<div className="flex items-start gap-2 mb-1">
+								<span className="text-[11px] text-[#9CA3AF] leading-[16px]">
+									•
+								</span>
+								<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<b>EVITAR NEGATIVA DE SINISTRO</b> – orientações sobre temas
+									como principal condutor, CEP de pernoite, cobertura para
+									condutores entre 18 e 25 anos, deveres do segurado, situações
+									que podem ocasionar recusa de cobertura, entre outros.
+								</p>
+							</div>
+							<div className="flex items-start gap-2 mb-1">
+								<span className="text-[11px] text-[#9CA3AF] leading-[16px]">
+									•
+								</span>
+								<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<b>CONSULTA VEICULAR</b> – informações sobre valor médio da
+									FIPE, multas, gravames, infrações, débitos, IPVA,
+									licenciamento, DPVAT, roubo e sinistros.
+								</p>
+							</div>
+							<div className="flex items-start gap-2 mb-1">
+								<span className="text-[11px] text-[#9CA3AF] leading-[16px]">
+									•
+								</span>
+								<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<b>ASSISTÊNCIAS</b> – telefones e orientações para solicitar
+									reboque, comunicar um sinistro, solicitar substituição de
+									vidros, faróis e lanternas, entre outros serviços.
+								</p>
+							</div>
+							<div className="flex items-start gap-2">
+								<span className="text-[11px] text-[#9CA3AF] leading-[16px]">
+									•
+								</span>
+								<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<b>ORIENTAÇÃO EM CASO DE SINISTRO</b> – informações sobre como
+									agir, para onde ligar, quais providências tomar e como
+									proceder em situações que envolvam vítimas.
+								</p>
+							</div>
 						</div>
 
 						<div className="mb-4 break-inside-avoid">
-							<SectionTitle>
-								2) Benefícios ao escritório de contabilidade
-							</SectionTitle>
-							<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-1.5">
-								Acesso ao aplicativo - parceiro
+							<p className="text-[12px] font-bold text-primary m-0 mb-1.5">
+								2. BENEFÍCIOS PARA O ESCRITÓRIO DE CONTABILIDADE
 							</p>
-							<BulletItem>
-								Aplicativo dedicado a administradora, com demonstrativo do
-								número de adesões e ao relatório financeiro decorrentes das
-								indicações, e aos direitos conforme abaixo:
-							</BulletItem>
-							<BulletItem>
-								<b>COMISSIONAMENTO VITALÍCIO</b> – percentual dos ganhos da
-								corretora decorrente da indicação dos clientes que resulte na
-								efetiva contratação de seguros.
-							</BulletItem>
-							<BulletItem>
-								<b>CUSTO DE IMPLANTAÇÃO</b> – sem qualquer custo financeiro ou
-								laboral
-							</BulletItem>
+
+							<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								PROTEÇÃO PATRIMONIAL DOS CLIENTES
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								Incorpore ao seu leque de benefícios uma solução para proteção
+								do patrimônio e da continuidade dos negócios de seus clientes,
+								oferecendo uma parceria com a XCAR Corretora de Seguros, com
+								condições comerciais diferenciadas e descontos exclusivos na
+								contratação ou renovação de seguros, conforme as condições de
+								cada produto.
+							</p>
+
+							<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								COMISSIONAMENTO VITALÍCIO
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								Percentual sobre os ganhos da corretora decorrentes das
+								indicações de clientes que resultem na efetiva contratação de
+								seguros, conforme as condições estabelecidas na parceria.
+							</p>
+
+							<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								CUSTO DE IMPLANTAÇÃO
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								Sem qualquer custo financeiro para o escritório e sem
+								necessidade de estrutura ou carga operacional adicional
+								relevante para a implantação da parceria.
+							</p>
+
+							<p className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								ACESSO AO APLICATIVO PARA PARCEIROS
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+								Aplicativo dedicado ao escritório de contabilidade, permitindo
+								acompanhar o número de adesões e consultar relatórios
+								financeiros relacionados às indicações e aos resultados da
+								parceria.
+							</p>
 						</div>
 
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-4">
-							Coloco-me à disposição para esclarecer eventuais dúvidas e
-							apresentar mais detalhes sobre o programa.
-						</p>
+						<div className="mb-6 break-inside-avoid">
+							<p className="text-[12px] font-bold text-primary m-0 mb-1.5">
+								CONSIDERAÇÕES FINAIS
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								A parceria GESTÃO + PROTEÇÃO permite ao escritório de
+								contabilidade ampliar o valor entregue aos seus clientes,
+								oferecendo acesso a soluções de proteção patrimonial sem
+								interferir na atividade principal do escritório.
+							</p>
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0">
+								Coloco-me à disposição para esclarecer eventuais dúvidas e
+								apresentar, de forma detalhada, o funcionamento do programa,
+								suas condições e os benefícios que essa parceria poderá
+								proporcionar ao seu escritório e aos seus clientes.
+							</p>
+						</div>
 
-						{/* Fechamento — Atenciosamente + assinatura, como no texto original */}
-						<p className="text-[11px] leading-[15px] text-[#374151] m-0 mb-4">
+						<p className="text-[11px] leading-[16px] text-[#374151] m-0 mb-4">
 							Atenciosamente,
 						</p>
 
 						<div className="pt-16 border-t border-solid border-[#D1D5DB] break-inside-avoid">
-							<p className="text-[11px] leading-[15px] text-[#374151] m-0">
+							<p className="text-[11px] leading-[16px] text-[#374151] m-0">
 								Fernando Luiz Malheiros de Sena
 							</p>
-							<p className="text-[11px] leading-[15px] text-muted m-0">
-								Diretor Geral
-							</p>
-							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
-								Fones: 81.98696.1991 &nbsp;-&nbsp; 81.3229.1728
-							</p>
-							<p className="text-[11px] leading-[15px] text-muted m-0 mb-3">
-								XCAR Corretora de Seguros
+							<p className="text-[11px] leading-[16px] text-muted m-0 mb-3">
+								Diretor – XCAR Corretora de Seguros
 							</p>
 							<p className="text-[9px] tracking-wide text-muted uppercase m-0 mb-1.5">
 								Seguradoras parceiras
@@ -290,7 +332,7 @@ function TemplatePartnershipInviteAccounting({
 					</div>
 					<div className="px-10 py-4 border-t border-solid border-[#E5E7EB] flex items-center justify-between">
 						<span className="text-[10px] text-muted">
-							SEGWISE / XCAR CORRETORA DE SEGUROS
+							XCAR CORRETORA DE SEGUROS
 						</span>
 						<span className="text-[10px] text-muted">segwise.com.br</span>
 					</div>
