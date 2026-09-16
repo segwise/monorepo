@@ -36,7 +36,6 @@ const contactsAccounting: Contact[] = [
 	// 	nome: 'Meta Contadores Associados Ltda',
 	// 	email: 'reinaldomendes@hotmail.com',
 	// },
-	// continuar daqui
 	// {
 	// 	nome: '100 Porcento Audit - Auditores Independentes S/S',
 	// 	email: 'fcaldas@100porcento.srv.br',
@@ -82,6 +81,7 @@ const contactsAccounting: Contact[] = [
 	// 	nome: 'Asisconta - Ass. Contabil e Fiscal S/C Ltda.',
 	// 	email: 'gqueiros@assconta.com.br',
 	// },
+	// continuar daqui
 	// {
 	// 	nome: 'Ativa Contabil e Processamento de Dados Ltda - ME',
 	// 	email: 'cida@emcconsultoria.combr',
@@ -311,7 +311,10 @@ const contactsCondominium: Contact[] = [
 	// 	nome: 'Arrecifes Negócios Imobiliários',
 	// 	email: 'arrecifes@arrecifes.com.br',
 	// },
-	// continuar daqui
+	// {
+	// 	nome: 'Acta Administração Especializada',
+	// 	email: 'gerente.operacional@actaadm.com.br',
+	// },
 	// { nome: 'Avellar Imóveis', email: 'avellarimoveis@avellarimoveis.com.br' },
 	// { nome: 'BCI Imobiliária', email: 'comercial@bciimobiliaria.com.br' },
 	// { nome: 'Bello Lar Imóveis', email: 'ffn@bellolarimoveis.com.br' },
@@ -338,6 +341,7 @@ const contactsCondominium: Contact[] = [
 	// 	email: 'clientes@dcronegocios.com.br',
 	// },
 	// { nome: 'DCT Consultoria Imobiliaria', email: 'direct@directimoveis.com.br' },
+	// continuar daqui
 	// {
 	// 	nome: 'Exclusive Assessoria Condominial',
 	// 	email: 'contato@exclusiveassessoria.com.br',
@@ -425,13 +429,13 @@ const contactsCondominium: Contact[] = [
 function registerRoutersEmails(server: Server) {
 	const base = server.basePath('/send-email');
 
-	base.post('/accounting', async (ctx) => {
+	base.get('/accounting', async (ctx) => {
 		for (const contact of contactsAccounting) {
 			await ctx.email.emails.send(
 				{
 					subject:
 						'Parceria comercial - Escritório de Contabilidade e a SEGWISE / XCAR CORRETORA DE SEGUROS',
-					from: 'XCAR Corretora <parceria@emails.segwise.com.br>',
+					from: 'XCAR Corretora <parceria@emails.xcarcorretora.com.br>',
 					to: contact.email.toLowerCase(),
 					react: TemplatePartnershipInviteAccounting(),
 				},
@@ -449,13 +453,13 @@ function registerRoutersEmails(server: Server) {
 		);
 	});
 
-	base.post('/condominium', async (ctx) => {
+	base.get('/condominium', async (ctx) => {
 		for (const contact of contactsCondominium) {
 			await ctx.email.emails.send(
 				{
 					subject:
 						'Parceria comercial - Administradora de condomínio e a SEGWISE / XCAR CORRETORA DE SEGUROS',
-					from: 'XCAR Corretora <parceria@emails.segwise.com.br>',
+					from: 'XCAR Corretora <parceria@emails.xcarcorretora.com.br>',
 					to: contact.email.toLowerCase(),
 					react: TemplatePartnershipInviteCondominium(),
 				},
