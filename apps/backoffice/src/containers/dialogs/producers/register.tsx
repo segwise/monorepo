@@ -72,7 +72,7 @@ function DialogProducerRegister({
 			email: '',
 			referral: '',
 			pix: '',
-			message: `Novidade\nA {{DISPLAY_NAME}} em parceria com a segwise vem ofertar a promoção\n\nGANHE EM DOBRO\n1 - Orientações em caso de sinistro\n2 - Consulta veicular\n3 - Acesso direto às assistências das seguradoras\n4 - Plataforma de compra e venda de veículos mais segura ( apenas clientes segwise/xcar tem acesso)\n5 - Inclua todos os seguros da família, ganhe agilidade na consulta das renovações e acesso às assistências\n\nBaixe agora o aplicativo *SEGWISE*\n\nUtilize o código {{CODE}}\n\nDescontos reais e exclusivos na renovação ou aquisição do seu seguro\nGaranta seus benefícios\n\nou acesse pelo link abaixo:`,
+			message: `Novidade\nA {{DISPLAY_NAME}} em parceria com a Segwise vem ofertar a promoção\n\nGANHE EM DOBRO\n1 - Orientações em caso de sinistro\n2 - Consulta veicular\n3 - Acesso direto às assistências das seguradoras\n4 - Plataforma de compra e venda de veículos mais segura ( apenas clientes segwise/xcar tem acesso)\n5 - Inclua todos os seguros da família, ganhe agilidade na consulta das renovações e acesso às assistências\n\nBaixe agora o aplicativo *SEGWISE*\n\nUtilize o código *{{CODE}}*\n\nDescontos reais e exclusivos na renovação ou aquisição do seu seguro\n\nGaranta seus benefícios\n\nou acesse pelo link abaixo:`,
 		},
 	});
 
