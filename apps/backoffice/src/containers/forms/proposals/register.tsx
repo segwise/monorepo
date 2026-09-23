@@ -247,7 +247,9 @@ function FormProposalRegister({ id }: { id?: string }) {
 				!renewalInitial && {
 					award: safe.commission.award.toString().replace('.', ','),
 					commission: safe.commission.percentage,
-					franchise: safe.commission.franchise.toString().replace('.', ','),
+					franchise: (safe.commission.franchise ?? 0)
+						.toString()
+						.replace('.', ','),
 					installments: safe.commission.installments,
 				}),
 			commissions: null,
@@ -304,7 +306,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 						: 0,
 					commission: !renewalInitial ? safe.commission.percentage : 0,
 					franchise: !renewalInitial
-						? safe.commission.franchise.toString().replace('.', ',')
+						? (safe.commission.franchise ?? 0).toString().replace('.', ',')
 						: 0,
 					installments: !renewalInitial ? safe.commission.installments : 0,
 				},

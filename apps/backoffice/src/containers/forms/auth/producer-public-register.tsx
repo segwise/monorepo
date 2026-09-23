@@ -42,7 +42,9 @@ function FormProducerPublicRegister({ slug }: { slug: string }) {
 	function onSubmit(props: ProducerPublicRegister) {
 		mutate(props, {
 			onSuccess() {
-				router.push('/register/sucesso');
+				router.push(
+					`/register/sucesso?email=${encodeURIComponent(props.email)}`,
+				);
 			},
 			onError(error) {
 				toast.error(error.message || 'Falha ao concluir cadastro');
