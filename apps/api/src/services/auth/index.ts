@@ -11,6 +11,7 @@ import {
 	defaultStatements,
 } from 'better-auth/plugins/organization/access';
 import { secondaryStorage } from '@/auth/adapters/secondary-storage';
+import { buildAcceptInvitationUrl } from '@/functions/hostname/build-accept-invitation-url';
 import { getMainDomain } from '@/functions/hostname/get-main-domain';
 import { environment } from '@/libraries/environment';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
@@ -298,15 +299,7 @@ const auth = betterAuth({
 			},
 			requireEmailVerificationOnInvitation: false,
 			async sendInvitationEmail(data) {
-				const url = new URL(
-					`http${environment.NODE_ENV !== 'development' ? 's' : ''}://${environment.NODE_ENV !== 'development' ? 'services.' : ''}${getMainDomain(environment.APPLICATION_URL)}${environment.NODE_ENV === 'development' ? `:${environment.PORT}` : ''}`,
-				);
-
-				url.pathname = '/accept-invitation';
-
-				url.searchParams.set('token', data.id);
-
-				const urlString = url.toJSON();
+				const urlString = buildAcceptInvitationUrl(environment, data.id);
 
 				await email.emails.send({
 					from: 'Segwise <invite@emails.xcarcorretora.com.br>',

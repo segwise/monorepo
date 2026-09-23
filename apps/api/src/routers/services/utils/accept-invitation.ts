@@ -2,7 +2,7 @@ import { zValidator } from '@hono/zod-validator';
 import { SchemaPassword } from '@segwise/core';
 import z from 'zod';
 import type { Server } from '@/@types/server';
-import { getMainDomain } from '@/functions/hostname/get-main-domain';
+import { buildProducerPortalUrl } from '@/functions/hostname/build-producer-portal-url';
 import { responseReplaceSession } from '@/functions/response/replace-session';
 import { Role } from '@/generated/prisma/enums';
 
@@ -40,10 +40,8 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 
 			if (invitation?.role === Role.producer) {
 				const url = new URL(
-					`http${ctx.environment.NODE_ENV !== 'development' ? 's' : ''}://${ctx.environment.NODE_ENV !== 'development' ? 'producer.' : ''}${getMainDomain(ctx.environment.APPLICATION_URL)}${ctx.environment.NODE_ENV === 'development' ? `:3000` : ''}`,
+					buildProducerPortalUrl(ctx.environment, '/accept-invitation'),
 				);
-
-				url.pathname = '/accept-invitation';
 
 				url.searchParams.set('token', token);
 
