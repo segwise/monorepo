@@ -19,7 +19,7 @@
         "@radix-ui/react-slot": "^1.3.3",
         "@radix-ui/react-tabs": "^1.1.21",
         "@radix-ui/react-tooltip": "^1.2.16",
-        "@segwise/core": "^1.1.446",
+        "@segwise/core": "^1.1.447",
         "@tanstack/react-query": "^5.102.5",
         "better-auth": "^1.7.1",
         "class-variance-authority": "^0.7.1",
@@ -286,7 +286,7 @@
 
     "@radix-ui/rect": ["@radix-ui/rect@1.1.3", "", {}, "sha512-JtyZR+mqgBibTo8xea3B6ZRmzZiM/YeVBtUkas6zMuXjAlfIFIW2FgqeM9eLyvEaYX66vr6DJMK+4U6LV0KhNw=="],
 
-    "@segwise/core": ["@segwise/core@1.1.446", "https://npm.pkg.github.com/download/@segwise/core/1.1.446/454813e612f25475a13a097011018ef91a76ab71", { "dependencies": { "date-fns-tz": "^3.2.0", "decimal.js": "^10.6.0" }, "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-dI6W2qJ0kXte8n6BiXjtafpH+Uat/3YqI/+xYE20EvfbhhdaWacwwedKDsLcEBUOF8RlrsMDHr53j/8Zxp0PrA=="],
+    "@segwise/core": ["@segwise/core@1.1.447", "https://npm.pkg.github.com/download/@segwise/core/1.1.447/b58b4e7a17d71e61e07cb6ea85a52edd36727fe5", { "dependencies": { "date-fns-tz": "^3.2.0", "decimal.js": "^10.6.0" }, "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-+h7T71sC+8J4AqYF7zOblGUtHcDEr0UJDZyfzY8XqoTYkFtPu4KKvXZcN0cNyiPoRMzIy8A/dIUPkM2pLNjtEw=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 

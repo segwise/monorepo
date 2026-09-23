@@ -13,6 +13,13 @@ const PUBLIC_ROUTES = [
 	'/accept-invitation',
 ];
 
+// Diferente de PUBLIC_ROUTES: essas rotas são públicas sempre, mesmo com
+// sessão ativa — não são telas de "pré-login" (como /sign-in), então não
+// fazem sentido redirecionar para /dashboard quando já logado. Prefixo
+// (não exato) porque carrega o slug da corretora, ex.:
+// /register/minha-corretora — link de auto-cadastro público de produtor.
+const ALWAYS_PUBLIC_ROUTE_PREFIXES = ['/register/'];
+
 const COOKIE_PREFIX = getCookiePrefix();
 
 const getSessionCached = unstable_cache(
@@ -49,6 +56,19 @@ const getSessionCached = unstable_cache(
 
 async function proxy(request: NextRequest) {
 	const pathname = request.nextUrl.pathname;
+
+	const isAlwaysPublicRoute = ALWAYS_PUBLIC_ROUTE_PREFIXES.some((prefix) =>
+		pathname.startsWith(prefix),
+	);
+
+	if (isAlwaysPublicRoute) {
+		const redirectTo = new URL(
+			ACCESS ? `/${ACCESS}${pathname}` : `/${pathname}`,
+			request.url,
+		);
+
+		return NextResponse.rewrite(redirectTo);
+	}
 
 	const session = await getSessionCached(
 		// @ts-expect-error

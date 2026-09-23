@@ -4,6 +4,7 @@ import { InputSearch } from '@/components/input-search';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DialogProducerRegister } from '@/containers/dialogs/producers/register';
+import { ButtonCopyProducerPublicLink } from '@/containers/producers/button-copy-public-link';
 import { TablePagination } from '@/containers/tables/pagination';
 import { TableProducersSimple } from '@/containers/tables/producers/simple';
 
@@ -22,6 +23,7 @@ function ProducersPage() {
 					<Button variant='outline' className='dark:bg-primary max-sm:flex-1'>
 						<FilterIcon /> Filtrar
 					</Button>
+					<ButtonCopyProducerPublicLink />
 					<DialogProducerRegister>
 						<Button className='max-sm:flex-1'>
 							<PlusIcon /> Cadastrar
