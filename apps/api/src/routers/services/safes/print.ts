@@ -47,7 +47,7 @@ const htmlText = `
         </tbody>
         <tbody>
           {{#each rows}}
-          <tr>
+          <tr class='break-inside-avoid'>
             <td class='border border-black px-1 py-0.5 text-center'>{{this.order}}</td>
             <td class='border border-black px-1 py-0.5 text-center'>{{this.expirationLabel}}</td>
             <td class='border border-black px-1 py-0.5 text-center'>{{#if this.firstInsuranceYear}}{{this.firstInsuranceYear}}{{else}}—{{/if}}</td>
