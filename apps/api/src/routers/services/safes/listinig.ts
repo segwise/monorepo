@@ -1,31 +1,20 @@
 import { zValidator } from '@hono/zod-validator';
-import { isCNPJ, isCPF, isPhone, isPlate, maskNumber } from '@segwise/core';
 import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
-import { endOfDay, set, startOfDay, subYears } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { set } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
 import { serializer } from '@/db-serializers/safe/simple';
-import { type Prisma, Role, StatusSafe } from '@/generated/prisma/client';
+import { type Prisma, StatusSafe } from '@/generated/prisma/client';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
-
-const ORDER_BY_SEARCH: Prisma.SafeOrderByWithRelationInput[] = [
-	{ expiration: 'desc' },
-	{ insured: { name: 'asc' } },
-];
+import { buildSafeSimpleWhere } from './build-safe-simple-where';
 
 const ORDER_BY_REVERSED_SEARCH: Prisma.SafeOrderByWithRelationInput[] = [
 	{ expiration: 'asc' },
 	{ insured: { name: 'desc' } },
-];
-
-const ORDER_BY: Prisma.SafeOrderByWithRelationInput[] = [
-	{ expiration: 'asc' },
-	{ insured: { name: 'asc' } },
 ];
 
 const ORDER_BY_REVERSED: Prisma.SafeOrderByWithRelationInput[] = [
@@ -81,127 +70,15 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 			}),
 		),
 		async (ctx) => {
-			const {
-				cursor,
-				limit,
-				search,
-				producers,
-				insuranceCompanies,
-				brokers,
-				effectivedAt,
-				modality,
-				status,
-				renewal,
-				ids,
-				isExternal,
-			} = ctx.req.valid('query');
+			const { cursor, limit, search } = ctx.req.valid('query');
 
-			const brokerId =
-				ctx?.session?.brokerId ||
-				(await ctx.database.broker
-					.findFirst({
-						orderBy: {
-							createdAt: 'asc',
-						},
-						select: {
-							id: true,
-						},
-					})
-					.then((response) => response?.id));
+			const { where, orderBy } = await buildSafeSimpleWhere(
+				ctx.req.valid('query'),
+				ctx,
+			);
 
 			const take = limit as number;
 
-			const andConditions: Prisma.SafeWhereInput[] = [];
-
-			if (isExternal === false) {
-				andConditions.push({
-					OR: [{ isExternal: false }, { isExternal: null }],
-				});
-			}
-
-			if (search) {
-				if (isCNPJ(search)) {
-					andConditions.push({
-						insured: { cnpj: maskNumber(search) },
-					});
-				} else if (isCPF(search)) {
-					andConditions.push({
-						insured: { cpf: maskNumber(search) },
-					});
-				} else if (isPhone(search)) {
-					andConditions.push({
-						insured: { phone: { contains: maskNumber(search) } },
-					});
-				} else if (isPlate(search)) {
-					andConditions.push({
-						safeVehicle: { plate: search.replaceAll('-', '') },
-					});
-				} else {
-					andConditions.push({
-						OR: [
-							{
-								insured: {
-									name: { search: search.replaceAll(' ', '&') },
-								},
-							},
-							{
-								temporaryInsured: {
-									name: { search: search.replaceAll(' ', '&') },
-								},
-							},
-						],
-					});
-				}
-			}
-
-			if (!producers?.length) {
-				andConditions.push({
-					OR: [
-						{ producerId: { not: '019f249d-8880-7000-b962-aace743e68e2' } },
-						{ producerId: null },
-					],
-				});
-			}
-
-			const where: Prisma.SafeWhereInput = {
-				...(!!brokerId && { brokerId }),
-				...(ctx?.session?.role !== Role.customer &&
-					!!brokers?.length && {
-						broker: { id: { in: brokers } },
-					}),
-				...(!!ids?.length && { id: { in: ids } }),
-				...(!!isExternal && { isExternal: true }),
-				...(!!search && {
-					expiration: {
-						gte: subYears(startOfDay(new Date()), 1),
-					},
-				}),
-				...(!search &&
-					!ids?.length && {
-						...(!!effectivedAt && {
-							expiration: {
-								gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-								lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-							},
-						}),
-						...(!effectivedAt && {
-							expiration: {
-								gte: startOfDay(toZonedTime(new Date(), ctx.timezone)),
-								lte: endOfDay(toZonedTime(new Date(), ctx.timezone)),
-							},
-						}),
-					}),
-				...(!!renewal && { renewal }),
-				...(!!producers?.length && { producerId: { in: producers } }),
-				...(!!insuranceCompanies?.length && {
-					insuranceCompanyId: { in: insuranceCompanies },
-				}),
-				...(!!modality && { modality: { in: modality } }),
-				...(!!status && { status: { in: status } }),
-				...(andConditions.length > 0 && { AND: andConditions }),
-			};
-
-			const orderBy = search ? ORDER_BY_SEARCH : ORDER_BY;
 			const orderByReversed = search
 				? ORDER_BY_REVERSED_SEARCH
 				: ORDER_BY_REVERSED;

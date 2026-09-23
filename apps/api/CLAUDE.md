@@ -102,6 +102,31 @@ porta de dev) está em `functions/hostname/build-producer-portal-url.ts`,
 reaproveitada também pelo redirect de `utils/accept-invitation.ts` — qualquer
 mudança em como o portal do produtor é endereçado deve mexer só nesse helper.
 
+## Geração de PDF: `ctx.browser()` + Handlebars + pdf-lib
+
+Padrão já usado em `routers/services/quotes/[id]/print.ts` e reaproveitado em
+`routers/services/safes/print.ts` (impressão em massa da listagem de
+propostas, com os mesmos filtros da tabela, ignorando paginação): template
+HTML como string compilada com `hbs.compile` (Tailwind via CDN no `<head>`
+para estilizar sem precisar de build step), `const { page, release } = await
+ctx.browser()` → `page.setContent(html)` → `page.pdf({...})` → `PDFDocument`
+(pdf-lib) só para metadata (título/autor) → `Response` com
+`Content-Type: application/pdf`. **Não** usar o padrão antigo de
+`routers/services/index.ts` (`gerarPdfDaRota`, que navega para uma rota
+própria via `page.goto` e mantém um browser Chromium próprio duplicado) — ele
+tem um bug de tipo conhecido (`ctx.html(<Element>)` não compila) e não serve
+para conteúdo autenticado/escopado por corretora, já que `page.goto` não
+carrega a sessão da requisição original. Use sempre `ctx.browser()` (do
+`browserMiddleware`, pool gerenciado em `libraries/pdf/browser.ts`) com
+`page.setContent`.
+
+Se uma nova rota de listagem precisar de uma versão "imprimir com os mesmos
+filtros, sem paginação", replique o padrão de
+`routers/services/safes/build-safe-simple-where.ts`: a lógica de `where` do
+Prisma fica extraída num módulo à parte, importado tanto pela rota de
+listagem paginada quanto pela de impressão — nunca duplicar a lógica de
+filtro entre as duas, ou elas divergem silenciosamente com o tempo.
+
 ## Integrações externas (ver `.env.example` para a lista completa de envs)
 
 PostgreSQL, Redis, MinIO (S3), Ollama (LLM self-hosted, `OLLAMA_*`/`AI_*`),

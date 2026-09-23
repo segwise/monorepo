@@ -4,6 +4,7 @@ import { registerRoutersServicesSafesById } from '@/routers/services/safes/[id]'
 import { registerRoutersServicesSafesSimpleListining } from '@/routers/services/safes/listinig';
 import { registerRoutersServicesSafesRegister } from '@/routers/services/safes/register';
 import { registerRoutersServicesSafesExtractPDF } from './extract-pdf';
+import { registerRoutersServicesSafesPrint } from './print';
 
 function registerRoutersServicesSafes(server: Server) {
 	const base = server.basePath('/safes');
@@ -12,6 +13,7 @@ function registerRoutersServicesSafes(server: Server) {
 	registerRoutersServicesSafesRegister(base);
 	registerRoutersServicesSafesSimpleListining(base);
 	registerRoutersServicesSafesExtractPDF(base);
+	registerRoutersServicesSafesPrint(base);
 }
 
 export { registerRoutersServicesSafes };
