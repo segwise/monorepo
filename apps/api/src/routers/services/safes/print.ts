@@ -18,7 +18,7 @@ const htmlText = `
       <title>{{title}}</title>
       <script src='https://cdn.tailwindcss.com'></script>
     </head>
-    <body class='p-3 text-black'>
+    <body class='text-black' style='margin: 0; padding: 12px 12px 12px 12px;'>
       <table class='w-full text-xs border-collapse'>
         <tbody>
           <tr>
