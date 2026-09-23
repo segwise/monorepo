@@ -2,6 +2,7 @@
 
 import {
 	FilterIcon,
+	Loader2Icon,
 	MoreHorizontalIcon,
 	PlusIcon,
 	PrinterIcon,
@@ -12,6 +13,7 @@ import { InputSearch } from '@/components/input-search';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -29,9 +31,28 @@ import {
 } from '@/containers/tables/safes/filters/header';
 import { TableSafesSheetFilters } from '@/containers/tables/safes/filters/sheet';
 import { TableSafesSimple } from '@/containers/tables/safes/simple';
+import { useSafesPrintList } from '@/libraries/hooks/safes/use-safes-print';
+import { useSearchParams } from '@/libraries/search-params/safes';
 
 function ProposalsPage() {
 	const [openNewEndorsement, setopenNewEndorsement] = useState<boolean>(false);
+
+	const [searchParams] = useSearchParams();
+
+	const { mutate: printList, isPending: isPendingPrint } = useSafesPrintList();
+
+	function printProposals() {
+		printList({
+			effectived: false,
+			search: searchParams.search,
+			producers: searchParams.producers,
+			insuranceCompanies: searchParams.insuranceCompanies,
+			modality: searchParams.modality,
+			status: searchParams.status,
+			renewal: searchParams.renewal,
+			effectivedAt: searchParams.effectivedAt,
+		});
+	}
 
 	return (
 		<main className='grid grid-cols-1 gap-6 mt-1'>
@@ -65,8 +86,16 @@ function ProposalsPage() {
 								{/* <DropdownMenuItem onClick={() => setopenNewEndorsement(true)}>
 									<FilePenIcon /> Novo Endosso ( PDF )
 								</DropdownMenuItem> */}
-								<DropdownMenuItem>
-									<PrinterIcon /> Imprimir
+								<DropdownMenuItem
+									disabled={isPendingPrint}
+									onClick={printProposals}
+								>
+									{isPendingPrint ? (
+										<Loader2Icon className='animate-spin' />
+									) : (
+										<PrinterIcon />
+									)}
+									{isPendingPrint ? 'Gerando PDF...' : 'Imprimir'}
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
@@ -92,6 +121,23 @@ function ProposalsPage() {
 					onOpenChange={setopenNewEndorsement}
 				/>
 			)}
+			<Dialog open={isPendingPrint} onOpenChange={() => {}}>
+				<DialogContent
+					className='max-w-sm [&>button]:hidden'
+					onEscapeKeyDown={(event) => event.preventDefault()}
+					onInteractOutside={(event) => event.preventDefault()}
+				>
+					<div className='flex flex-col items-center gap-y-3 py-4 text-center'>
+						<Loader2Icon className='size-8 animate-spin text-primary' />
+						<div>
+							<p className='font-semibold'>Gerando PDF</p>
+							<p className='text-sm text-muted-foreground'>
+								Isso pode levar alguns instantes...
+							</p>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</main>
 	);
 }
