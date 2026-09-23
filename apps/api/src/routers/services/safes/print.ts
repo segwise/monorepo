@@ -22,7 +22,7 @@ const htmlText = `
       <table class='w-full text-xs border-collapse'>
         <tbody>
           <tr>
-            <td colspan='7' class='border border-black p-1.5'>
+            <td colspan='7' class='border border-black px-1 py-0.5'>
               <div class='flex flex-row items-stretch justify-between'>
                 <div>
                   <span class='text-lg font-extrabold uppercase'>{{brokerName}}</span>
@@ -36,25 +36,25 @@ const htmlText = `
             </td>
           </tr>
           <tr class='text-left'>
-            <th class='border border-black px-0.5 py-0.5 text-center w-8'>#</th>
-            <th class='border border-black px-0.5 py-0.5 text-center w-20'>Vigência</th>
-            <th class='border border-black px-0.5 py-0.5 text-center w-10'>Ano</th>
-            <th class='border border-black px-0.5 py-0.5'>Segurado</th>
-            <th class='border border-black px-0.5 py-0.5'>Produtor</th>
-            <th class='border border-black px-0.5 py-0.5'>Seguradora</th>
-            <th class='border border-black px-0.5 py-0.5 text-center w-12 font-bold'>%</th>
+            <th class='border border-black px-1 py-0.5 text-center w-8'>#</th>
+            <th class='border border-black px-1 py-0.5 text-center w-20'>Vigência</th>
+            <th class='border border-black px-1 py-0.5 text-center w-10'>Ano</th>
+            <th class='border border-black px-1 py-0.5'>Segurado</th>
+            <th class='border border-black px-1 py-0.5'>Produtor</th>
+            <th class='border border-black px-1 py-0.5'>Seguradora</th>
+            <th class='border border-black px-1 py-0.5 text-center w-12 font-bold'>%</th>
           </tr>
         </tbody>
         <tbody>
           {{#each rows}}
           <tr>
-            <td class='border border-black px-0.5 py-0.5 text-center'>{{this.order}}</td>
-            <td class='border border-black px-0.5 py-0.5 text-center'>{{this.expirationLabel}}</td>
-            <td class='border border-black px-0.5 py-0.5 text-center'>{{#if this.firstInsuranceYear}}{{this.firstInsuranceYear}}{{else}}—{{/if}}</td>
-            <td class='border border-black px-0.5 py-0.5 max-w-[260px] truncate'>{{this.insuredName}}</td>
-            <td class='border border-black px-0.5 py-0.5'>{{this.producerName}}</td>
-            <td class='border border-black px-0.5 py-0.5'>{{this.insuranceCompanyName}}</td>
-            <td class='border border-black px-0.5 py-0.5 text-center'>{{this.commissionPercentage}}</td>
+            <td class='border border-black px-1 py-0.5 text-center'>{{this.order}}</td>
+            <td class='border border-black px-1 py-0.5 text-center'>{{this.expirationLabel}}</td>
+            <td class='border border-black px-1 py-0.5 text-center'>{{#if this.firstInsuranceYear}}{{this.firstInsuranceYear}}{{else}}—{{/if}}</td>
+            <td class='border border-black px-1 py-0.5 max-w-[260px] truncate'>{{this.insuredName}}</td>
+            <td class='border border-black px-1 py-0.5'>{{this.producerName}}</td>
+            <td class='border border-black px-1 py-0.5'>{{this.insuranceCompanyName}}</td>
+            <td class='border border-black px-1 py-0.5 text-center'>{{this.commissionPercentage}}</td>
           </tr>
           {{/each}}
         </tbody>
