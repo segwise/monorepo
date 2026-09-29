@@ -1,5 +1,6 @@
 export * from './endorsement';
 export * from './financing';
+export * from './marketing';
 export * from './marketplace';
 export * from './payments';
 export * from './payments';
