@@ -1,4 +1,4 @@
-FROM oven/bun:1.3.5-alpine AS base
+FROM oven/bun:1.4.2-alpine AS base
 
 FROM base AS deps
 WORKDIR /app
@@ -47,8 +47,6 @@ COPY --from=builder --chown=appuser:appgroup /app/package.json ./
 COPY --from=builder --chown=appuser:appgroup /app/bun.lock* ./
 COPY --from=builder --chown=appuser:appgroup /app/.npmrc ./
 
-# node_modules copiado do builder — NÃO reinstalar aqui, senão
-# diverge da versão contra a qual o Prisma Client (generated/) foi gerado
 COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
 
 COPY --from=builder --chown=appuser:appgroup /app/src ./src
