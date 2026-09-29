@@ -54,9 +54,48 @@ const SchemaProducerStartOfProductionPayment = z.literal(
 	'Data de pagamento de comissão inválida',
 );
 
+// Mensal usa 1 dia de pagamento; quinzenal precisa de 2 dias distintos.
+const SchemaProducerStartOfProductionPaymentDays = z
+	.array(SchemaProducerStartOfProductionPayment, 'Dias de pagamento inválidos')
+	.min(1, 'Informe o dia de pagamento')
+	.max(2, 'Informe no máximo 2 dias de pagamento');
+
+function refineProducerPaymentDays(
+	values: {
+		typeOfPayment: z.infer<typeof SchemaProducerTypeOfPayment>;
+		startOfPayment: number[];
+	},
+	ctx: z.RefinementCtx,
+) {
+	const expected = values.typeOfPayment === 'bi_weekly' ? 2 : 1;
+
+	if (values.startOfPayment.length !== expected) {
+		ctx.addIssue({
+			code: 'custom',
+			path: ['startOfPayment'],
+			message:
+				expected === 2
+					? 'Pagamento quinzenal exige 2 dias de pagamento'
+					: 'Informe apenas 1 dia de pagamento',
+		});
+
+		return;
+	}
+
+	if (new Set(values.startOfPayment).size !== values.startOfPayment.length) {
+		ctx.addIssue({
+			code: 'custom',
+			path: ['startOfPayment'],
+			message: 'Os dias de pagamento devem ser diferentes',
+		});
+	}
+}
+
 export {
 	SchemaProducerType,
 	SchemaProducerAreaOfActivity,
 	SchemaProducerTypeOfPayment,
 	SchemaProducerStartOfProductionPayment,
+	SchemaProducerStartOfProductionPaymentDays,
+	refineProducerPaymentDays,
 };

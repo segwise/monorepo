@@ -7,7 +7,7 @@ import { SchemaName } from '../utils/name';
 import { SchemaPhone } from '../utils/phone';
 import { SchemaReferral } from './referral';
 import {
-	SchemaProducerStartOfProductionPayment,
+	SchemaProducerStartOfProductionPaymentDays,
 	SchemaProducerType,
 	SchemaProducerTypeOfPayment,
 } from './type';
@@ -29,7 +29,8 @@ const SchemaProducerSimple = z.object({
 		.number('Percentual de comissão inválido')
 		.min(1, 'Percentual de comissão inválido')
 		.max(100, 'Percentual de comissão inválido'),
-	startOfProductionPayment: SchemaProducerStartOfProductionPayment,
+	startOfProductionPayment: SchemaProducerStartOfProductionPaymentDays,
+	status: z.enum(['active', 'suspended'], 'Status inválido'),
 	memberSince: z.coerce
 		.date('Data de início inválida')
 		.or(z.iso.datetime('Data de início inválida')),

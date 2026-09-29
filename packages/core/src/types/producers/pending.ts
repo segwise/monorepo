@@ -10,7 +10,7 @@ type ProducerPending = {
 	typeOfProduction: string | null;
 	percentageOfProduction: number | null;
 	typeOfProductionPayment: string | null;
-	startOfProductionPayment: number | null;
+	startOfProductionPayment: number[];
 	invitedAt: string;
 	expiresAt: string;
 };

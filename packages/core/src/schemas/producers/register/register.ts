@@ -1,8 +1,9 @@
 import z from 'zod';
 import { SchemaReferral } from '../../producers/referral';
 import {
+	refineProducerPaymentDays,
 	SchemaProducerAreaOfActivity,
-	SchemaProducerStartOfProductionPayment,
+	SchemaProducerStartOfProductionPaymentDays,
 	SchemaProducerTypeOfPayment,
 } from '../../producers/type';
 import { SchemaEmail, SchemaName, SchemaPhone } from '../../utils';
@@ -12,24 +13,26 @@ import { SchemaCPFOrCNPJ } from '../../utils/document';
 // código de indicação e mensagem promocional fazem parte da parceria
 // externa. Produtor interno usa SchemaProducerRegisterInternal, bem mais
 // simples (ver register/internal.ts).
-const SchemaProducerRegister = z.object({
-	referral: SchemaReferral,
-	type: SchemaProducerAreaOfActivity,
-	cpfOrCnpj: SchemaCPFOrCNPJ,
-	name: SchemaName,
-	phone: SchemaPhone,
-	email: SchemaEmail,
-	percentage: z.coerce
-		.number('Percentual de comissão inválido')
-		.min(1, 'Percentual de comissão inválido')
-		.max(100, 'Percentual de comissão inválido'),
-	typeOfPayment: SchemaProducerTypeOfPayment,
-	startOfPayment: SchemaProducerStartOfProductionPayment,
-	message: z
-		.string('Mensagem de indicação inválida')
-		.min(1, 'Mensagem de indicação inválida')
-		.nullish(),
-	pix: z.string('Chave PIX inválida'),
-});
+const SchemaProducerRegister = z
+	.object({
+		referral: SchemaReferral,
+		type: SchemaProducerAreaOfActivity,
+		cpfOrCnpj: SchemaCPFOrCNPJ,
+		name: SchemaName,
+		phone: SchemaPhone,
+		email: SchemaEmail,
+		percentage: z.coerce
+			.number('Percentual de comissão inválido')
+			.min(1, 'Percentual de comissão inválido')
+			.max(100, 'Percentual de comissão inválido'),
+		typeOfPayment: SchemaProducerTypeOfPayment,
+		startOfPayment: SchemaProducerStartOfProductionPaymentDays,
+		message: z
+			.string('Mensagem de indicação inválida')
+			.min(1, 'Mensagem de indicação inválida')
+			.nullish(),
+		pix: z.string('Chave PIX inválida'),
+	})
+	.superRefine(refineProducerPaymentDays);
 
 export { SchemaProducerRegister };

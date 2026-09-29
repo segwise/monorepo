@@ -12,6 +12,8 @@ const SchemaSearchParamsProducerSimple = z
 			.max(100, 'Limite de registros não pode ser maior de 100')
 			.default(10),
 		kind: z.enum(['all', 'partner', 'producer']).nullish(),
+		from: z.iso.date('Data inicial inválida').nullish(),
+		to: z.iso.date('Data final inválida').nullish(),
 	})
 	.strict();
 
