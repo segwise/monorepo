@@ -7,6 +7,7 @@ const selectPrisma = {
 	phone: true,
 	image: true,
 	cpf: true,
+	pix: true,
 	members: {
 		select: {
 			referral: true,
@@ -14,6 +15,7 @@ const selectPrisma = {
 			typeOfProductionPayment: true,
 			percentageOfProduction: true,
 			startOfProductionPayment: true,
+			createdAt: true,
 		},
 	},
 } as const satisfies Prisma.UserSelect;

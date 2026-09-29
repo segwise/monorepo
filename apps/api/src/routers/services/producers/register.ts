@@ -1,10 +1,5 @@
 import { zValidator } from '@hono/zod-validator';
-import {
-	isCNPJ,
-	isCPF,
-	SchemaProducerRegister,
-	SchemaProducerType,
-} from '@segwise/core';
+import { isCNPJ, isCPF, SchemaProducerRegister } from '@segwise/core';
 import { XiorError } from 'xior';
 import type { Server } from '@/@types/server';
 import { Role } from '@/generated/prisma/enums';
@@ -104,10 +99,7 @@ function registerRoutersServicesProducersRegister(server: Server) {
 					...(!!message && {
 						invitationMessage: message,
 					}),
-					...(type &&
-						type !== SchemaProducerType.enum.producer && {
-							typeOfProduction: type,
-						}),
+					typeOfProduction: type,
 					...(percentage && {
 						percentageOfProduction: percentage,
 					}),

@@ -43,6 +43,8 @@ function serializer(
 			| 8
 			| 3
 			| 16,
+		memberSince: member?.createdAt as Date,
+		pix: props.pix,
 	} satisfies ProducerSimple;
 }
 

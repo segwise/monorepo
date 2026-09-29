@@ -14,7 +14,7 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 		async (ctx) => {
 			const brokerId = ctx.session.brokerId;
 
-			const { cursor, limit, search } = ctx.req.valid('query');
+			const { cursor, limit, search, kind } = ctx.req.valid('query');
 
 			const pageMargins = 2;
 
@@ -30,6 +30,8 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 						some: {
 							brokerId,
 							role: Role.producer,
+							...(kind === 'partner' && { typeOfProduction: { not: null } }),
+							...(kind === 'producer' && { typeOfProduction: null }),
 						},
 					},
 				}),
