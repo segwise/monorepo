@@ -5,8 +5,9 @@ import { maskPhone } from '@segwise/core/masks';
 import type { ProducerPendingKind, ProducerType } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { format } from 'date-fns';
-import { InfoIcon, Trash2Icon } from 'lucide-react';
+import { InfoIcon, RefreshCwIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,7 +33,39 @@ import {
 } from '@/components/ui/tooltip';
 import { DialogProducerPendingDelete } from '@/containers/dialogs/producers/pending-delete';
 import { useProducersPending } from '@/libraries/hooks/producers/use-producers-pending';
+import { useProducersPendingRenewById } from '@/libraries/hooks/producers/use-producers-pending-renew';
 import { cn } from '@/libraries/utils';
+
+function ButtonPendingRenew({ id }: { id: string }) {
+	const { mutate, isPending } = useProducersPendingRenewById(id);
+
+	function onClick() {
+		mutate(undefined, {
+			onSuccess() {
+				toast.success('CONVITE RENOVADO COM SUCESSO!');
+			},
+			onError(error) {
+				toast.error(error.message || 'Falha ao renovar convite');
+			},
+		});
+	}
+
+	return (
+		<Tooltip>
+			<TooltipTrigger asChild>
+				<Button
+					size='icon-sm'
+					variant='outline'
+					isPending={isPending}
+					onClick={onClick}
+				>
+					<RefreshCwIcon />
+				</Button>
+			</TooltipTrigger>
+			<TooltipContent>Renovar Convite</TooltipContent>
+		</Tooltip>
+	);
+}
 
 function TableProducersPending({
 	kind,
@@ -103,8 +136,8 @@ function TableProducersPending({
 							</TableCell>
 						</TableRow>
 					)}
-					{items.map(
-						({
+					{items.map((item) => {
+						const {
 							id,
 							kind: itemKind,
 							name,
@@ -113,7 +146,11 @@ function TableProducersPending({
 							typeOfProduction,
 							invitedAt,
 							expiresAt,
-						}) => (
+						} = item;
+
+						const isExpired = new Date(expiresAt) < new Date();
+
+						return (
 							<TableRow key={id}>
 								<TableCell className='text-left w-60'>
 									<span className='block text-sm font-medium truncate line-clamp-1 max-w-40'>
@@ -152,29 +189,35 @@ function TableProducersPending({
 								<TableCell className='w-40 text-center text-xs font-medium'>
 									{format(new Date(invitedAt), 'dd/MM/yyyy')}
 								</TableCell>
-								<TableCell className='w-40 text-center text-xs font-medium'>
-									{format(new Date(expiresAt), 'dd/MM/yyyy')}
+								<TableCell className='w-40 text-center'>
+									<span className='block text-xs font-medium mb-1'>
+										{format(new Date(expiresAt), 'dd/MM/yyyy')}
+									</span>
+									<Badge
+										variant={isExpired ? 'destructive' : 'success'}
+										className='line-clamp-1'
+									>
+										{isExpired ? 'Expirado' : 'Válido'}
+									</Badge>
 								</TableCell>
 								<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
-									<DropdownMenu>
-										<DropdownMenuTrigger asChild>
-											<Button size='icon-sm' variant='outline'>
-												<MoreHorizontalIcon />
-											</Button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent align='end'>
-											<DropdownMenuItem
+									{isExpired && <ButtonPendingRenew id={id} />}
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												size='icon-sm'
 												variant='destructive'
 												onClick={() => setDeleteId(id)}
 											>
-												<Trash2Icon className='size-4!' /> Excluir Convite
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
+												<Trash2Icon />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Excluir Convite</TooltipContent>
+									</Tooltip>
 								</TableCell>
 							</TableRow>
-						),
-					)}
+						);
+					})}
 				</TableBody>
 			</Table>
 			{deleteId && (

@@ -45,7 +45,7 @@ function ProducersPage() {
 					<ButtonGroup>
 						<DialogProducerRegisterInternal>
 							<Button className='max-sm:flex-1'>
-								<PlusIcon /> Cadastrar Produtor
+								<PlusIcon /> Produtor
 							</Button>
 						</DialogProducerRegisterInternal>
 						<DropdownMenu>
@@ -59,7 +59,7 @@ function ProducersPage() {
 									<DropdownMenuItem
 										onSelect={(event) => event.preventDefault()}
 									>
-										<PlusIcon /> Cadastrar Parceiro
+										<PlusIcon /> Parceiro
 									</DropdownMenuItem>
 								</DialogProducerPartnerRegister>
 							</DropdownMenuContent>

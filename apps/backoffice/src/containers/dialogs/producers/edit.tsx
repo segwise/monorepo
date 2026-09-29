@@ -60,8 +60,8 @@ function DialogProducerPartnerEdit({
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaProducerPartnerUpdate),
 		defaultValues: {
-			name: producer.name,
-			phone: producer.contact.phone || '',
+			name: capitalizeFirstLetters(producer.name),
+			phone: producer.contact.phone ? maskPhone(producer.contact.phone) : '',
 			type: producer.typeOfProduction as z.infer<
 				typeof SchemaProducerAreaOfActivity
 			>,
@@ -75,17 +75,15 @@ function DialogProducerPartnerEdit({
 
 	function onSubmit(props: ProducerPartnerUpdate) {
 		mutate(props, {
-			async onSuccess(_data, _variables, _mutate, ctx) {
+			onSuccess(_data, _variables, _mutate, ctx) {
 				toast.success('PARCEIRO ATUALIZADO COM SUCESSO!');
 
-				await Promise.all([
-					ctx.client.invalidateQueries({ queryKey: ['producers', 'simple'] }),
-					ctx.client.invalidateQueries({
-						queryKey: ['producers', 'simple', 'full'],
-					}),
-				]);
-
 				onOpenChange(false);
+
+				ctx.client.invalidateQueries({ queryKey: ['producers', 'simple'] });
+				ctx.client.invalidateQueries({
+					queryKey: ['producers', 'simple', 'full'],
+				});
 			},
 			onError(error) {
 				toast.error(error.message || 'Falha ao atualizar registro');

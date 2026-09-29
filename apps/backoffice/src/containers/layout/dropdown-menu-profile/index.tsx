@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { placeholder } from '@/config/placeholder';
 import { getSessionCache } from '@/functions/auth/get-session-cache';
-import { cn } from '@/utils';
 import { DropdownmenuButtonSignOut } from './sign-out';
 
 async function DropdownMenuProfile({
@@ -78,7 +77,7 @@ async function DropdownMenuProfile({
 			</Activity>
 			<DropdownMenuContent
 				align={variant === 'topbar' ? 'end' : 'center'}
-				className={cn('w-60', variant === 'sidebar' && 'dark')}
+				className='w-60'
 			>
 				<Button
 					variant='ghost'

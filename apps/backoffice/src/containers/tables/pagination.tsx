@@ -61,8 +61,16 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 			basisOfAnalysis: _basisOfAnalysis,
 			// @ts-expect-error
 			effectived: _effectived,
-			...params
+			// "status" sai sempre daqui: nos produtores é só a aba
+			// Ativos/Pendentes da página (não vai pra API, ver
+			// TableProducersSimple); nas outras telas onde é um filtro real
+			// (ex.: safes), é adicionado de volta logo abaixo.
+			status: _status,
+			...rest
 		} = searchParams;
+
+		const params =
+			type === 'producers' ? rest : { ...rest, status: searchParams.status };
 
 		const observer = new QueryObserver(queryCllient, {
 			queryKey: [...queryKeys[type], params],

@@ -29,7 +29,9 @@ function FieldView({ label, value }: { label: string; value?: string | null }) {
 	return (
 		<Field>
 			<FieldLabel>{label}</FieldLabel>
-			<span className='text-sm font-medium'>{value || '—'}</span>
+			<span className='text-sm font-medium text-muted-foreground'>
+				{value || '—'}
+			</span>
 		</Field>
 	);
 }
@@ -54,7 +56,11 @@ function SheetProducerView({
 							? 'Detalhes do Parceiro'
 							: 'Detalhes do Produtor'}
 					</SheetTitle>
-					<SheetDescription>Somente visualização</SheetDescription>
+					<SheetDescription>
+						{producer?.typeOfProduction
+							? 'Contato, área de atuação e comissão'
+							: 'Contato e comissão'}
+					</SheetDescription>
 				</SheetHeader>
 				<Separator />
 				{!!producer && (

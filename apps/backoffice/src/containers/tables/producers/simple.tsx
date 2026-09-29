@@ -5,22 +5,11 @@ import { maskCNPJ, maskCPF, maskPhone } from '@segwise/core/masks';
 import type { ProducerSimple } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { format } from 'date-fns';
-import {
-	EyeIcon,
-	InfoIcon,
-	MoreHorizontalIcon,
-	PencilIcon,
-} from 'lucide-react';
+import { EyeIcon, InfoIcon, PencilIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
 	Empty,
 	EmptyDescription,
@@ -113,7 +102,6 @@ function TableProducersSimple() {
 									<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 								</TableCell>
 								<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
-									<Skeleton className='size-9 rounded-sm' />
 									<Skeleton className='size-9 rounded-sm' />
 									<Skeleton className='size-9 rounded-sm' />
 								</TableCell>
@@ -232,25 +220,30 @@ function TableProducersSimple() {
 									</Badge>
 								</TableCell>
 								<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
-									<Button
-										size='icon-sm'
-										variant='outline'
-										onClick={() => setViewItem(item)}
-									>
-										<EyeIcon />
-									</Button>
-									<DropdownMenu>
-										<DropdownMenuTrigger asChild>
-											<Button size='icon-sm' variant='outline'>
-												<MoreHorizontalIcon />
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												size='icon-sm'
+												variant='outline'
+												onClick={() => setViewItem(item)}
+											>
+												<EyeIcon />
 											</Button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent align='end'>
-											<DropdownMenuItem onClick={() => openEdit(item)}>
-												<PencilIcon className='size-4!' /> Editar
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
+										</TooltipTrigger>
+										<TooltipContent>Visualizar</TooltipContent>
+									</Tooltip>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												size='icon-sm'
+												variant='outline'
+												onClick={() => openEdit(item)}
+											>
+												<PencilIcon />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Editar</TooltipContent>
+									</Tooltip>
 								</TableCell>
 							</TableRow>
 						);

@@ -62,8 +62,8 @@ function DialogProducerInternalEdit({
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaProducerInternalUpdate),
 		defaultValues: {
-			name: producer.name,
-			phone: producer.contact.phone || '',
+			name: capitalizeFirstLetters(producer.name),
+			phone: producer.contact.phone ? maskPhone(producer.contact.phone) : '',
 			percentage: producer.percentageOfProduction,
 			typeOfPayment: producer.typeOfProductionPayment,
 			startOfPayment: producer.startOfProductionPayment,
@@ -73,17 +73,15 @@ function DialogProducerInternalEdit({
 
 	function onSubmit(props: ProducerInternalUpdate) {
 		mutate(props, {
-			async onSuccess(_data, _variables, _mutate, ctx) {
+			onSuccess(_data, _variables, _mutate, ctx) {
 				toast.success('PRODUTOR ATUALIZADO COM SUCESSO!');
 
-				await Promise.all([
-					ctx.client.invalidateQueries({ queryKey: ['producers', 'simple'] }),
-					ctx.client.invalidateQueries({
-						queryKey: ['producers', 'simple', 'full'],
-					}),
-				]);
-
 				onOpenChange(false);
+
+				ctx.client.invalidateQueries({ queryKey: ['producers', 'simple'] });
+				ctx.client.invalidateQueries({
+					queryKey: ['producers', 'simple', 'full'],
+				});
 			},
 			onError(error) {
 				toast.error(error.message || 'Falha ao atualizar registro');
