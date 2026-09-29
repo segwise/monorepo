@@ -1,16 +1,15 @@
 'use client';
 
 import { maskPhone } from '@segwise/core/masks';
+import type { MarketingContact } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { format } from 'date-fns';
 import {
-	ArrowLeftIcon,
 	MailOpenIcon,
 	MousePointerClickIcon,
 	PlusIcon,
 	Trash2Icon,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -38,15 +37,43 @@ import {
 	useMarketingContactRemove,
 	useMarketingContacts,
 } from '@/libraries/hooks/marketing/use-marketing';
+import { cn } from '@/libraries/utils';
 
-const STATUS_LABEL = {
-	never: 'Não enviado',
-	sent: 'Enviado',
-	delivered: 'Entregue',
-	bounced: 'Não entregue',
-	complained: 'Marcou spam',
-	failed: 'Falhou',
+const STATUS_BADGE = {
+	never: {
+		label: 'Não enviado',
+		className: 'bg-transparent text-muted-foreground',
+	},
+	sent: { label: 'Enviado', className: 'border-0 bg-slate-500 text-white' },
+	delivered: {
+		label: 'Entregue',
+		className: 'border-0 bg-green-500 text-white',
+	},
+	opened: { label: 'Aberto', className: 'border-0 bg-blue-500 text-white' },
+	clicked: { label: 'Clicado', className: 'border-0 bg-purple-500 text-white' },
+	bounced: {
+		label: 'Não entregue',
+		className: 'border-0 bg-red-500 text-white',
+	},
+	complained: { label: 'Spam', className: 'border-0 bg-orange-500 text-white' },
+	failed: { label: 'Falhou', className: 'border-0 bg-red-700 text-white' },
 } as const;
+
+function statusOf(contact: MarketingContact): keyof typeof STATUS_BADGE {
+	if (contact.status === 'bounced' || contact.status === 'complained') {
+		return contact.status;
+	}
+
+	if (contact.clickedAt) {
+		return 'clicked';
+	}
+
+	if (contact.openedAt) {
+		return 'opened';
+	}
+
+	return contact.status;
+}
 
 function formatDate(date: string | null) {
 	return date ? format(new Date(date), 'dd/MM/yyyy HH:mm') : '-';
@@ -79,11 +106,6 @@ function MarketingContactsPage() {
 		<main className='grid grid-cols-1 gap-6 max-sm:gap-3 mt-1'>
 			<div className='flex flex-row items-center justify-between'>
 				<div className='flex flex-row items-center gap-x-3'>
-					<Button size='icon-sm' variant='outline' asChild>
-						<Link href='/marketing'>
-							<ArrowLeftIcon />
-						</Link>
-					</Button>
 					<div>
 						<h1 className='text-lg font-semibold leading-none'>
 							{campaign?.name ?? 'Campanha'}
@@ -109,7 +131,7 @@ function MarketingContactsPage() {
 								<TableHead className='text-center w-40'>Abriu</TableHead>
 								<TableHead className='text-center w-40'>Clicou</TableHead>
 								<TableHead className='text-center w-32'>Status</TableHead>
-								<TableHead className='text-right w-30'>Ações</TableHead>
+								<TableHead className='text-right'>Ações</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -172,23 +194,15 @@ function MarketingContactsPage() {
 									</TableCell>
 									<TableCell className='w-32 text-center'>
 										<Badge
-											variant={
-												contact.clickedAt
-													? 'success'
-													: contact.openedAt
-														? 'active'
-														: 'default'
-											}
-											className='px-2'
+											className={cn(
+												'px-2',
+												STATUS_BADGE[statusOf(contact)].className,
+											)}
 										>
-											{contact.clickedAt
-												? 'Clicou'
-												: contact.openedAt
-													? 'Abriu'
-													: STATUS_LABEL[contact.status]}
+											{STATUS_BADGE[statusOf(contact)].label}
 										</Badge>
 									</TableCell>
-									<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+									<TableCell className='justify-end flex flex-row gap-x-2'>
 										<Tooltip>
 											<TooltipTrigger asChild>
 												<Button

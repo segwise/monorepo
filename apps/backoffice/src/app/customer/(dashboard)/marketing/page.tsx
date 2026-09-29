@@ -170,12 +170,14 @@ function MarketingPage() {
 					<Table>
 						<TableHeader>
 							<TableRow>
-								<TableHead className='text-left w-60'>Campanha</TableHead>
-								<TableHead className='text-left flex-1'>Modelo</TableHead>
-								<TableHead className='text-center w-48'>Agendamento</TableHead>
-								<TableHead className='text-center w-28'>Contatos</TableHead>
-								<TableHead className='text-center w-40'>Último envio</TableHead>
-								<TableHead className='text-center w-32'>Status</TableHead>
+								<TableHead className='text-left flex-1'>Campanha</TableHead>
+								<TableHead className='text-left w-56 max-md:hidden'>
+									Agendamento
+								</TableHead>
+								<TableHead className='text-center w-24 max-sm:hidden'>
+									Contatos
+								</TableHead>
+								<TableHead className='text-center w-28'>Status</TableHead>
 								<TableHead className='text-right'>Ações</TableHead>
 							</TableRow>
 						</TableHeader>
@@ -202,25 +204,30 @@ function MarketingPage() {
 							)}
 							{campaigns.map((campaign) => (
 								<TableRow key={campaign.id}>
-									<TableCell className='text-left w-60 text-sm font-medium'>
-										{campaign.name}
+									<TableCell className='text-left flex-1 min-w-0'>
+										<span className='block text-sm font-medium truncate'>
+											{campaign.name}
+										</span>
+										<span className='block text-xs text-muted-foreground font-normal leading-none truncate mt-0.5'>
+											{templates.find(
+												(item) => item.value === campaign.template,
+											)?.label ?? campaign.template}
+										</span>
 									</TableCell>
-									<TableCell className='text-left flex-1 text-xs font-medium text-muted-foreground'>
-										{templates.find((item) => item.value === campaign.template)
-											?.label ?? campaign.template}
+									<TableCell className='text-left w-56 max-md:hidden'>
+										<span className='block text-xs font-medium'>
+											{describeSchedule(campaign)}
+										</span>
+										<span className='block text-xs text-muted-foreground font-normal leading-none mt-0.5'>
+											{campaign.lastRunAt
+												? `Último envio ${format(new Date(campaign.lastRunAt), 'dd/MM/yyyy HH:mm')}`
+												: 'Nunca enviada'}
+										</span>
 									</TableCell>
-									<TableCell className='w-48 text-center text-xs font-medium'>
-										{describeSchedule(campaign)}
-									</TableCell>
-									<TableCell className='w-28 text-center text-xs font-medium'>
+									<TableCell className='w-24 text-center text-xs font-medium max-sm:hidden'>
 										{campaign.contactsCount}
 									</TableCell>
-									<TableCell className='w-40 text-center text-xs font-medium'>
-										{campaign.lastRunAt
-											? format(new Date(campaign.lastRunAt), 'dd/MM/yyyy HH:mm')
-											: '-'}
-									</TableCell>
-									<TableCell className='w-32 text-center'>
+									<TableCell className='w-28 text-center'>
 										<Badge
 											variant={campaign.active ? 'success' : 'default'}
 											className='px-2'
