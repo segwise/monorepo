@@ -9,7 +9,7 @@
         "@hono/zod-validator": "^0.7.6",
         "@prisma/adapter-pg": "^7.10.0",
         "@prisma/client": "^7.10.0",
-        "@segwise/core": "^1.1.447",
+        "@segwise/core": "^1.1.448",
         "better-auth": "^1.7.1",
         "date-fns": "^4.4.0",
         "date-fns-tz": "^3.2.0",
@@ -324,7 +324,7 @@
 
     "@react-email/ui": ["@react-email/ui@6.9.2", "", { "dependencies": { "esbuild": "0.28.1", "next": "16.3.0" } }, "sha512-nCE8uZJuhNB7E6j8Prq6tfcswHMbiNwM4a+t2Q83AjgkDUhki1TwvKjQ9yfLLSquQuu9oFKNaTvYUNZ8yTdGNw=="],
 
-    "@segwise/core": ["@segwise/core@1.1.447", "https://npm.pkg.github.com/download/@segwise/core/1.1.447/b58b4e7a17d71e61e07cb6ea85a52edd36727fe5", { "dependencies": { "date-fns-tz": "^3.2.0", "decimal.js": "^10.6.0" }, "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-+h7T71sC+8J4AqYF7zOblGUtHcDEr0UJDZyfzY8XqoTYkFtPu4KKvXZcN0cNyiPoRMzIy8A/dIUPkM2pLNjtEw=="],
+    "@segwise/core": ["@segwise/core@1.1.448", "https://npm.pkg.github.com/download/@segwise/core/1.1.448/42c35bd097668d4f301b15830a1dda394bcc9e34", { "dependencies": { "date-fns-tz": "^3.2.0", "decimal.js": "^10.6.0" }, "peerDependencies": { "date-fns": "^4.1.0", "typescript": "^5.9.3", "zod": "^4.3.6" } }, "sha512-jXkoHXMgci8w/UhfIKKbRn/S0/xrUksmhCpNseQ2Hq57HPmArS1UMYoo27EcIC+fT41+g0IZqLAWPM+ybPNtyQ=="],
 
     "@selderee/plugin-htmlparser2": ["@selderee/plugin-htmlparser2@0.11.0", "", { "dependencies": { "domhandler": "^5.0.3", "selderee": "^0.11.0" } }, "sha512-P33hHGdldxGabLFjPPpaTxVolMrzrcegejx+0GxjrIb9Zv48D8yAIA/QTDR2dFl7Uz7urX8aX6+5bCZslr+gWQ=="],
 
