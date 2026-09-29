@@ -33,6 +33,7 @@ const SchemaProducerSimple = z.object({
 	memberSince: z.coerce
 		.date('Data de início inválida')
 		.or(z.iso.datetime('Data de início inválida')),
+	pix: z.string('Chave PIX inválida').nullish(),
 });
 
 export { SchemaProducerSimple };
