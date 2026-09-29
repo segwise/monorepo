@@ -25,10 +25,12 @@ import { useMarketingContactAdd } from '@/libraries/hooks/marketing/use-marketin
 
 function DialogMarketingContact({
 	campaignId,
+	campaignName,
 	open,
 	onOpenChange,
 }: {
 	campaignId: string;
+	campaignName?: string;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
@@ -70,6 +72,10 @@ function DialogMarketingContact({
 					</DialogDescription>
 				</DialogHeader>
 				<Separator />
+				<div className='rounded-md border bg-muted/40 px-3 py-2 text-sm'>
+					<span className='text-muted-foreground'>Campanha: </span>
+					<span className='font-medium'>{campaignName ?? '-'}</span>
+				</div>
 				<form onSubmit={handleSubmit(onSubmit)} className='grid gap-4'>
 					<Controller
 						control={control}

@@ -3,6 +3,7 @@
 import type { MarketingCampaign } from '@segwise/core/types';
 import { format } from 'date-fns';
 import {
+	FilterIcon,
 	PencilIcon,
 	PlusIcon,
 	SendIcon,
@@ -32,11 +33,17 @@ import {
 import { DialogMarketingCampaign } from '@/containers/dialogs/marketing/campaign';
 import { DialogMarketingConfirm } from '@/containers/dialogs/marketing/confirm';
 import {
+	MarketingCampaignFilters,
+	MarketingCampaignFiltersCount,
+} from '@/containers/marketing/campaign-filters';
+import { MarketingSearch } from '@/containers/marketing/search';
+import {
 	useMarketingCampaignDelete,
 	useMarketingCampaignSend,
 	useMarketingCampaigns,
 	useMarketingTemplates,
 } from '@/libraries/hooks/marketing/use-marketing';
+import { useCampaignSearchParams } from '@/libraries/search-params/marketing';
 
 function describeSchedule(campaign: MarketingCampaign) {
 	const hour = `${String(campaign.hour).padStart(2, '0')}:00`;
@@ -106,12 +113,12 @@ function CampaignActions({
 				open={confirm === 'send'}
 				onOpenChange={(open) => !open && setConfirm(null)}
 				title='Enviar Agora'
-				description={`O e-mail será enviado imediatamente para os ${campaign.contactsCount} contatos da campanha, além do agendamento normal.`}
+				description='O e-mail será enviado agora, além do agendamento normal. Quem já recebeu nos últimos 7 dias não recebe de novo.'
 				isPending={send.isPending}
 				onConfirm={() =>
 					send.mutate(undefined, {
-						onSuccess() {
-							toast.success('ENVIO ADICIONADO À FILA!');
+						onSuccess(response) {
+							toast.success(response.message.toUpperCase());
 							setConfirm(null);
 						},
 						onError: (error) => toast.error(error.message),
@@ -147,7 +154,19 @@ function MarketingPage() {
 		campaign: MarketingCampaign | null;
 	}>({ open: false, campaign: null });
 
-	const campaigns = data || [];
+	const [searchParams, setSearchParams] = useCampaignSearchParams();
+
+	const term = (searchParams.search || '').trim().toLowerCase();
+
+	const campaigns = (data || []).filter(
+		(campaign) =>
+			(!term || campaign.name.toLowerCase().includes(term)) &&
+			(!searchParams.status ||
+				campaign.active === (searchParams.status === 'active')) &&
+			(!searchParams.frequency ||
+				campaign.frequency === searchParams.frequency) &&
+			(!searchParams.template || campaign.template === searchParams.template),
+	);
 
 	return (
 		<main className='grid grid-cols-1 gap-6 max-sm:gap-3 mt-1'>
@@ -164,6 +183,19 @@ function MarketingPage() {
 						<PlusIcon /> Nova campanha
 					</Button>
 				</div>
+			</div>
+			<div className='flex flex-row max-sm:flex-col max-sm:space-y-2 sm:items-center sm:justify-between'>
+				<MarketingSearch
+					className='max-sm:w-full'
+					placeholder='Pesquisar campanha...'
+					value={searchParams.search || ''}
+					onChange={(search) => setSearchParams({ search })}
+				/>
+				<MarketingCampaignFilters>
+					<Button variant='outline' className='dark:bg-primary max-sm:flex-1'>
+						<FilterIcon /> Filtrar <MarketingCampaignFiltersCount />
+					</Button>
+				</MarketingCampaignFilters>
 			</div>
 			<Card className='p-0 overflow-hidden'>
 				<CardContent className='p-0'>
@@ -197,7 +229,9 @@ function MarketingPage() {
 								<TableRow className='hover:bg-transparent'>
 									<TableCell colSpan={100} className='text-center py-10'>
 										<span className='text-sm text-muted-foreground'>
-											Nenhuma campanha criada ainda
+											{data?.length
+												? 'Nenhuma campanha encontrada com os filtros'
+												: 'Nenhuma campanha criada ainda'}
 										</span>
 									</TableCell>
 								</TableRow>

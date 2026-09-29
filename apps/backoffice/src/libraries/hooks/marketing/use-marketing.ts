@@ -126,6 +126,29 @@ const useMarketingContactAdd = (campaignId: string) =>
 		},
 	});
 
+const useMarketingContactSend = (campaignId: string) =>
+	useMutation<ResponseDefault, Error, string>({
+		mutationKey: ['marketing', 'contacts', 'send', campaignId],
+		mutationFn: async (contactId) => {
+			try {
+				return (
+					await api.post<ResponseDefault>(
+						`/marketing/campaigns/${campaignId}/contacts/${contactId}/send`,
+					)
+				).data;
+			} catch (error) {
+				throw toError(error, 'Falha ao enviar e-mail');
+			}
+		},
+		async onSuccess(_data, _variables, _result, ctx) {
+			// O worker grava o envio em seguida; recarrega a lista depois.
+			setTimeout(
+				() => ctx.client.invalidateQueries({ queryKey: ['marketing'] }),
+				4000,
+			);
+		},
+	});
+
 const useMarketingContactRemove = (campaignId: string) =>
 	useMutation<ResponseDefault, Error, string>({
 		mutationKey: ['marketing', 'contacts', 'remove', campaignId],
@@ -153,5 +176,6 @@ export {
 	useMarketingCampaignSend,
 	useMarketingContacts,
 	useMarketingContactAdd,
+	useMarketingContactSend,
 	useMarketingContactRemove,
 };

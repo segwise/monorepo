@@ -3,11 +3,13 @@
 import { maskPhone } from '@segwise/core/masks';
 import type { MarketingContact } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
-import { format } from 'date-fns';
+import { endOfDay, format, parse, startOfDay } from 'date-fns';
 import {
+	FilterIcon,
 	MailOpenIcon,
 	MousePointerClickIcon,
 	PlusIcon,
+	SendIcon,
 	Trash2Icon,
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -33,46 +35,57 @@ import {
 import { DialogMarketingConfirm } from '@/containers/dialogs/marketing/confirm';
 import { DialogMarketingContact } from '@/containers/dialogs/marketing/contact';
 import {
+	MarketingContactFilters,
+	MarketingContactFiltersCount,
+} from '@/containers/marketing/contact-filters';
+import {
+	STATUS_BADGE,
+	statusDateOf,
+	statusOf,
+} from '@/containers/marketing/contact-status';
+import { MarketingSearch } from '@/containers/marketing/search';
+import {
+	useMarketingCampaignSend,
 	useMarketingCampaigns,
 	useMarketingContactRemove,
+	useMarketingContactSend,
 	useMarketingContacts,
 } from '@/libraries/hooks/marketing/use-marketing';
+import { useContactSearchParams } from '@/libraries/search-params/marketing';
 import { cn } from '@/libraries/utils';
 
-const STATUS_BADGE = {
-	never: {
-		label: 'Não enviado',
-		className: 'bg-transparent text-muted-foreground',
-	},
-	sent: { label: 'Enviado', className: 'border-0 bg-slate-500 text-white' },
-	delivered: {
-		label: 'Entregue',
-		className: 'border-0 bg-green-500 text-white',
-	},
-	opened: { label: 'Aberto', className: 'border-0 bg-blue-500 text-white' },
-	clicked: { label: 'Clicado', className: 'border-0 bg-purple-500 text-white' },
-	bounced: {
-		label: 'Não entregue',
-		className: 'border-0 bg-red-500 text-white',
-	},
-	complained: { label: 'Spam', className: 'border-0 bg-orange-500 text-white' },
-	failed: { label: 'Falhou', className: 'border-0 bg-red-700 text-white' },
-} as const;
-
-function statusOf(contact: MarketingContact): keyof typeof STATUS_BADGE {
-	if (contact.status === 'bounced' || contact.status === 'complained') {
-		return contact.status;
+// from/to vêm como yyyy-MM-dd; "to" vale até o fim do dia.
+function isWithinRange(
+	date: string | null,
+	from?: string | null,
+	to?: string | null,
+) {
+	if (!from && !to) {
+		return true;
 	}
 
-	if (contact.clickedAt) {
-		return 'clicked';
+	if (!date) {
+		return false;
 	}
 
-	if (contact.openedAt) {
-		return 'opened';
-	}
+	const time = new Date(date).getTime();
 
-	return contact.status;
+	return (
+		(!from ||
+			time >= startOfDay(parse(from, 'yyyy-MM-dd', new Date())).getTime()) &&
+		(!to || time <= endOfDay(parse(to, 'yyyy-MM-dd', new Date())).getTime())
+	);
+}
+
+const RESEND_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Espelha a regra do backend: sem reenvio dentro da janela de 7 dias.
+function receivedRecently(contact: MarketingContact) {
+	return (
+		!!contact.lastSentAt &&
+		contact.status !== 'failed' &&
+		Date.now() - new Date(contact.lastSentAt).getTime() < RESEND_WINDOW_MS
+	);
 }
 
 function formatDate(date: string | null) {
@@ -85,22 +98,48 @@ function MarketingContactsPage() {
 	const { data: campaigns } = useMarketingCampaigns();
 	const { data, isPending } = useMarketingContacts(id);
 	const remove = useMarketingContactRemove(id);
+	const sendOne = useMarketingContactSend(id);
+	const sendAll = useMarketingCampaignSend(id);
 
+	const [confirmSendAll, setConfirmSendAll] = useState(false);
 	const [adding, setAdding] = useState(false);
 	const [removeId, setRemoveId] = useState<string | null>(null);
 
 	const campaign = campaigns?.find((item) => item.id === id);
 
+	const [searchParams, setSearchParams] = useContactSearchParams();
+
 	// Quem clicou aparece primeiro, depois quem abriu: são os contatos para ligar.
-	const contacts = [...(data || [])].sort(
+	const allContacts = [...(data || [])].sort(
 		(a, b) =>
 			Number(!!b.clickedAt) - Number(!!a.clickedAt) ||
 			Number(!!b.openedAt) - Number(!!a.openedAt) ||
 			a.name.localeCompare(b.name),
 	);
 
-	const opened = contacts.filter((item) => item.openedAt).length;
-	const clicked = contacts.filter((item) => item.clickedAt).length;
+	const term = (searchParams.search || '').trim().toLowerCase();
+	const termDigits = term.replace(/\D/g, '');
+
+	const contacts = allContacts.filter(
+		(contact) =>
+			(!term ||
+				contact.name.toLowerCase().includes(term) ||
+				contact.email.toLowerCase().includes(term) ||
+				(!!termDigits && !!contact.phone?.includes(termDigits))) &&
+			(!searchParams.status || statusOf(contact) === searchParams.status) &&
+			isWithinRange(
+				statusDateOf(contact, searchParams.status || 'all'),
+				searchParams.from,
+				searchParams.to,
+			),
+	);
+
+	const pendingToSend = allContacts.filter(
+		(contact) => !receivedRecently(contact),
+	).length;
+
+	const opened = allContacts.filter((item) => item.openedAt).length;
+	const clicked = allContacts.filter((item) => item.clickedAt).length;
 
 	return (
 		<main className='grid grid-cols-1 gap-6 max-sm:gap-3 mt-1'>
@@ -111,13 +150,36 @@ function MarketingContactsPage() {
 							{campaign?.name ?? 'Campanha'}
 						</h1>
 						<p className='text-sm text-muted-foreground mt-1'>
-							{contacts.length} contatos · {opened} abriram · {clicked} clicaram
+							{allContacts.length} contatos · {opened} abriram · {clicked}{' '}
+							clicaram
 						</p>
 					</div>
 				</div>
-				<Button onClick={() => setAdding(true)}>
-					<PlusIcon /> Adicionar contato
-				</Button>
+				<div className='flex flex-row items-center gap-x-2'>
+					<Button
+						variant='outline'
+						disabled={!pendingToSend}
+						onClick={() => setConfirmSendAll(true)}
+					>
+						<SendIcon /> Enviar ({pendingToSend})
+					</Button>
+					<Button onClick={() => setAdding(true)}>
+						<PlusIcon /> Adicionar contato
+					</Button>
+				</div>
+			</div>
+			<div className='flex flex-row max-sm:flex-col max-sm:space-y-2 sm:items-center sm:justify-between'>
+				<MarketingSearch
+					className='max-sm:w-full'
+					placeholder='Pesquisar nome, e-mail ou celular...'
+					value={searchParams.search || ''}
+					onChange={(search) => setSearchParams({ search })}
+				/>
+				<MarketingContactFilters>
+					<Button variant='outline' className='dark:bg-primary max-sm:flex-1'>
+						<FilterIcon /> Filtrar <MarketingContactFiltersCount />
+					</Button>
+				</MarketingContactFilters>
 			</div>
 			<Card className='p-0 overflow-hidden'>
 				<CardContent className='p-0'>
@@ -150,7 +212,9 @@ function MarketingContactsPage() {
 								<TableRow className='hover:bg-transparent'>
 									<TableCell colSpan={100} className='text-center py-10'>
 										<span className='text-sm text-muted-foreground'>
-											Nenhum contato na lista
+											{allContacts.length
+												? 'Nenhum contato encontrado com os filtros'
+												: 'Nenhum contato na lista'}
 										</span>
 									</TableCell>
 								</TableRow>
@@ -205,6 +269,35 @@ function MarketingContactsPage() {
 									<TableCell className='justify-end flex flex-row gap-x-2'>
 										<Tooltip>
 											<TooltipTrigger asChild>
+												<span>
+													<Button
+														size='icon-sm'
+														variant='outline'
+														disabled={
+															receivedRecently(contact) ||
+															(sendOne.isPending &&
+																sendOne.variables === contact.id)
+														}
+														onClick={() =>
+															sendOne.mutate(contact.id, {
+																onSuccess: () =>
+																	toast.success('ENVIO ADICIONADO À FILA!'),
+																onError: (error) => toast.error(error.message),
+															})
+														}
+													>
+														<SendIcon />
+													</Button>
+												</span>
+											</TooltipTrigger>
+											<TooltipContent>
+												{receivedRecently(contact)
+													? 'Já recebeu nos últimos 7 dias'
+													: 'Enviar e-mail'}
+											</TooltipContent>
+										</Tooltip>
+										<Tooltip>
+											<TooltipTrigger asChild>
 												<Button
 													size='icon-sm'
 													variant='destructive'
@@ -224,8 +317,25 @@ function MarketingContactsPage() {
 			</Card>
 			<DialogMarketingContact
 				campaignId={id}
+				campaignName={campaign?.name}
 				open={adding}
 				onOpenChange={setAdding}
+			/>
+			<DialogMarketingConfirm
+				open={confirmSendAll}
+				onOpenChange={setConfirmSendAll}
+				title='Enviar E-mail'
+				description={`O e-mail será enviado agora para ${pendingToSend} contato(s). Quem já recebeu nos últimos 7 dias não recebe de novo.`}
+				isPending={sendAll.isPending}
+				onConfirm={() =>
+					sendAll.mutate(undefined, {
+						onSuccess(response) {
+							toast.success(response.message.toUpperCase());
+							setConfirmSendAll(false);
+						},
+						onError: (error) => toast.error(error.message),
+					})
+				}
 			/>
 			<DialogMarketingConfirm
 				open={!!removeId}
