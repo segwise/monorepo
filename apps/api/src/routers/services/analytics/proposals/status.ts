@@ -60,6 +60,15 @@ function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 				);
 			}
 
+			if (!effectivedAt) {
+				return ctx.json(
+					{
+						message: 'Informe o período para consulta',
+					},
+					409,
+				);
+			}
+
 			const where: Prisma.SafeWhereInput = {
 				...(!!brokerId && {
 					brokerId,
