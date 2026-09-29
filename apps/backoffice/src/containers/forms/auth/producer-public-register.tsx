@@ -2,9 +2,13 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { maskCNPJ, maskCPF, maskNumber, maskPhone } from '@segwise/core/masks';
-import { SchemaProducerPublicRegister } from '@segwise/core/schemas';
+import {
+	SchemaProducerAreaOfActivity,
+	SchemaProducerPublicRegister,
+} from '@segwise/core/schemas';
+import { translateProducerType } from '@segwise/core/translate';
 import type { ProducerPublicRegister } from '@segwise/core/types';
-import { capitalizeFirstLetters } from '@segwise/core/utils';
+import { capitalizeFirstLetters, generateReferral } from '@segwise/core/utils';
 import { isCPF } from '@segwise/core/valids';
 import { SendIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -16,8 +20,16 @@ import {
 	FieldError,
 	FieldGroup,
 	FieldLabel,
+	FieldSet,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { useProducersPublicRegister } from '@/libraries/hooks/producers/use-producers-public-register';
 
 function FormProducerPublicRegister({ slug }: { slug: string }) {
@@ -36,6 +48,8 @@ function FormProducerPublicRegister({ slug }: { slug: string }) {
 			phone: '',
 			email: '',
 			pix: '',
+			type: undefined,
+			referral: '',
 		},
 	});
 
@@ -133,6 +147,68 @@ function FormProducerPublicRegister({ slug }: { slug: string }) {
 							onChange={({ target: { value } }) =>
 								field.onChange(maskPhone(value))
 							}
+						/>
+						{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+					</Field>
+				)}
+			/>
+			<Controller
+				control={control}
+				name='type'
+				render={({ field, fieldState }) => (
+					<Field data-invalid={fieldState.invalid} className='col-span-full'>
+						<FieldLabel htmlFor='type'>Área de Atuação:</FieldLabel>
+						<Select
+							{...field}
+							value={field.value || ''}
+							onValueChange={field.onChange}
+						>
+							<SelectTrigger id='type' aria-invalid={fieldState.invalid}>
+								<SelectValue placeholder='Selecionar' />
+							</SelectTrigger>
+							<SelectContent className='max-h-70'>
+								{SchemaProducerAreaOfActivity.options
+									.slice()
+									.sort((a, b) =>
+										translateProducerType(a).localeCompare(
+											translateProducerType(b),
+										),
+									)
+									.map((item) => (
+										<SelectItem key={item} value={item}>
+											{capitalizeFirstLetters(translateProducerType(item))}
+										</SelectItem>
+									))}
+							</SelectContent>
+						</Select>
+						{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+					</Field>
+				)}
+			/>
+			<Controller
+				control={control}
+				name='referral'
+				render={({ field, fieldState }) => (
+					<Field data-invalid={fieldState.invalid} className='col-span-full'>
+						<FieldSet className='flex flex-row items-center justify-between'>
+							<FieldLabel htmlFor='referral'>Código de Indicação:</FieldLabel>
+							<Button
+								type='button'
+								variant='link'
+								size='sm'
+								className='text-xs'
+								onClick={() => field.onChange(generateReferral())}
+							>
+								Gerar Código Aleatório
+							</Button>
+						</FieldSet>
+						<Input
+							{...field}
+							id='referral'
+							aria-invalid={fieldState.invalid}
+							placeholder='Escolher ou gerar um código'
+							className='uppercase'
+							onChange={({ target: { value } }) => field.onChange(value.trim())}
 						/>
 						{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 					</Field>
