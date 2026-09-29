@@ -15,6 +15,7 @@ const selectPrisma = {
 			typeOfProductionPayment: true,
 			percentageOfProduction: true,
 			startOfProductionPayment: true,
+			status: true,
 			createdAt: true,
 		},
 	},

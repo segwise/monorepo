@@ -1,3 +1,4 @@
+import '@/libraries/marketing/worker';
 import { gracefulShutdown } from '@/libraries/shutdown';
 import { registerRouters } from '@/routers';
 import { server } from '@/server';

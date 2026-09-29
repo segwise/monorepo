@@ -21,7 +21,7 @@ const SchemaBrokerSlugParam = z.object({
 const PUBLIC_REGISTER_DEFAULTS = {
 	percentage: 10,
 	typeOfPayment: TypeOfProductionPayment.monthly,
-	startOfPayment: 5,
+	startOfPayment: [5] as number[],
 	invitationExpiresInMs: 1000 * 60 * 60 * 24 * 30,
 } as const;
 

@@ -1,6 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsProducerPending } from '@segwise/core/schemas';
 import type { ProducerPending } from '@segwise/core/types';
+import { endOfDay, startOfDay } from 'date-fns';
 import type { Server } from '@/@types/server.d';
 import { Role, StatusInvitation } from '@/generated/prisma/enums';
 
@@ -9,7 +10,7 @@ function registerRoutersServicesProducersPending(server: Server) {
 		'/pending',
 		zValidator('query', SchemaSearchParamsProducerPending),
 		async (ctx) => {
-			const { kind } = ctx.req.valid('query');
+			const { kind, from, to } = ctx.req.valid('query');
 
 			const brokerId =
 				ctx?.session?.brokerId ||
@@ -27,6 +28,12 @@ function registerRoutersServicesProducersPending(server: Server) {
 					status: StatusInvitation.pending,
 					...(kind === 'partner' && { typeOfProduction: { not: null } }),
 					...(kind === 'producer' && { typeOfProduction: null }),
+					...((from || to) && {
+						createdAt: {
+							...(from && { gte: startOfDay(new Date(`${from}T00:00:00`)) }),
+							...(to && { lte: endOfDay(new Date(`${to}T00:00:00`)) }),
+						},
+					}),
 				},
 				select: {
 					id: true,

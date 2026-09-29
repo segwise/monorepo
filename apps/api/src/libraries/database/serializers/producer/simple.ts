@@ -36,13 +36,15 @@ function serializer(
 		typeOfProductionPayment:
 			member?.typeOfProductionPayment as TypeOfProductionPayment,
 		percentageOfProduction: member?.percentageOfProduction as number,
-		startOfProductionPayment: member?.startOfProductionPayment as
+		startOfProductionPayment: member?.startOfProductionPayment as (
 			| 1
-			| 10
+			| 3
 			| 5
 			| 8
-			| 3
-			| 16,
+			| 10
+			| 15
+		)[],
+		status: member?.status as 'active' | 'suspended',
 		memberSince: member?.createdAt as Date,
 		pix: props.pix,
 	} satisfies ProducerSimple;

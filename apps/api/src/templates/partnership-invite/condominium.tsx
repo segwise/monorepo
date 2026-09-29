@@ -1,5 +1,6 @@
 import {
 	Body,
+	Button,
 	Column,
 	Font,
 	Head,
@@ -118,8 +119,10 @@ function InsurerLogoGrid() {
 
 function TemplatePartnershipInviteCondominium({
 	leadId,
+	whatsappUrl,
 }: {
 	leadId?: string;
+	whatsappUrl?: string;
 } = {}) {
 	const urlMessage = new URL(
 		'https://segwise.com.br/gestao-protecao-condominio',
@@ -353,6 +356,17 @@ function TemplatePartnershipInviteCondominium({
 									proporcionar à sua empresa e aos seus clientes.
 								</Text>
 							</Section>
+
+							{whatsappUrl && (
+								<Section className="mb-6 text-center">
+									<Button
+										href={whatsappUrl}
+										className="rounded bg-[#25D366] px-6 py-3 text-[12px] font-bold text-white"
+									>
+										Falar pelo WhatsApp
+									</Button>
+								</Section>
+							)}
 
 							<Text className="text-[11px] leading-[16px] text-[#374151] m-0 mb-4">
 								Atenciosamente,

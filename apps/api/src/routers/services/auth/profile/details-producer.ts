@@ -107,12 +107,13 @@ function registerRoutersServicesAuthProfileDetailsProducer(server: Server) {
 						(a, b) => a.commissionAmountProducer?.toNumber() || 0 + b,
 						0,
 					) || 0,
-				dateOfReceipt: addMonths(
-					startOfDay(
-						setDate(startOfToday(), member?.startOfProductionPayment as number),
-					),
-					1,
-				),
+				dateOfReceipt: (member?.startOfProductionPayment ?? [])
+					.map((day) => {
+						const date = startOfDay(setDate(startOfToday(), day));
+
+						return date > startOfToday() ? date : addMonths(date, 1);
+					})
+					.sort((a, b) => a.getTime() - b.getTime())[0],
 				quotes: quotes.map((props) => ({
 					...(props.insuranceCompany && {
 						...(props.insuranceCompany?.icon && {

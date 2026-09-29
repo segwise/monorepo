@@ -1,5 +1,6 @@
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
+import { registerRoutersServicesProducersByIdDelete } from './delete';
 import { registerRoutersServicesProducersByIdUpdate } from './update';
 import { registerRoutersServicesProducersByIdUpdateInternal } from './update-internal';
 
@@ -8,6 +9,7 @@ function registerRoutersServicesProducersById(server: Server) {
 		`/:id{${z.regexes.uuid7.source.slice(1).slice(0, -1)}}`,
 	);
 
+	registerRoutersServicesProducersByIdDelete(base);
 	registerRoutersServicesProducersByIdUpdate(base);
 	registerRoutersServicesProducersByIdUpdateInternal(base);
 }

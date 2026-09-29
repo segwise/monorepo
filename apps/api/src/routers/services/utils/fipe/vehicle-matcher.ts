@@ -204,7 +204,7 @@ function rankFipeCandidates(
 				(Number.parseFloat(b.similaridade) || 0) -
 				(Number.parseFloat(a.similaridade) || 0),
 		);
-    
+
 		return {
 			ranked: bySimilaridade.map((c) => ({
 				...c,
@@ -218,8 +218,4 @@ function rankFipeCandidates(
 	return { ranked: scored, strategy };
 }
 
-export {
-  type FipeCandidate,
-  type ScoredCandidate,
-  rankFipeCandidates
-}
+export { type FipeCandidate, type ScoredCandidate, rankFipeCandidates };

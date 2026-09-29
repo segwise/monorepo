@@ -555,6 +555,8 @@ model Broker {
 
   paymentPayerAndReceivers PaymentPayerAndReceiver[] @relation("broker_to_payment_payer_and_receiver")
 
+  marketingCampaigns MarketingCampaign[] @relation("broker_to_marketing_campaign")
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -1024,4 +1026,99 @@ enum EndorsementType {
   address
   franchise
   cancellation
+}
+
+enum MarketingTemplate {
+  partnership_accounting
+  partnership_condominium
+}
+
+enum MarketingFrequency {
+  daily
+  monthly
+}
+
+enum StatusMarketingDelivery {
+  sent
+  delivered
+  bounced
+  complained
+  failed
+}
+
+model MarketingCampaign {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  brokerId String @map("broker_id") @db.Uuid
+  broker   Broker @relation("broker_to_marketing_campaign", fields: [brokerId], references: [id], onDelete: Cascade)
+
+  name     String
+  template MarketingTemplate
+  subject  String
+
+  whatsappPhone   String  @map("whatsapp_phone")
+  whatsappMessage String? @map("whatsapp_message") @db.Text
+
+  frequency  MarketingFrequency
+  dayOfMonth Int?               @map("day_of_month") @db.SmallInt
+  hour       Int                @default(9) @db.SmallInt
+
+  active    Boolean   @default(false)
+  lastRunAt DateTime? @map("last_run_at") @db.Timestamptz
+
+  contacts   MarketingContact[]  @relation("marketing_campaign_to_contact")
+  deliveries MarketingDelivery[] @relation("marketing_campaign_to_delivery")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([brokerId])
+  @@map("marketing_campaigns")
+}
+
+model MarketingContact {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  campaignId String            @map("campaign_id") @db.Uuid
+  campaign   MarketingCampaign @relation("marketing_campaign_to_contact", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  name  String
+  email String
+  phone String?
+
+  deliveries MarketingDelivery[] @relation("marketing_contact_to_delivery")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([campaignId, email])
+  @@index([campaignId])
+  @@map("marketing_contacts")
+}
+
+model MarketingDelivery {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  campaignId String            @map("campaign_id") @db.Uuid
+  campaign   MarketingCampaign @relation("marketing_campaign_to_delivery", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  contactId String           @map("contact_id") @db.Uuid
+  contact   MarketingContact @relation("marketing_contact_to_delivery", fields: [contactId], references: [id], onDelete: Cascade)
+
+  resendId String? @map("resend_id")
+
+  status StatusMarketingDelivery @default(sent)
+  error  String?
+
+  sentAt      DateTime  @default(now()) @map("sent_at") @db.Timestamptz
+  deliveredAt DateTime? @map("delivered_at") @db.Timestamptz
+  openedAt    DateTime? @map("opened_at") @db.Timestamptz
+  clickedAt   DateTime? @map("clicked_at") @db.Timestamptz
+  openCount   Int       @default(0) @map("open_count")
+  clickCount  Int       @default(0) @map("click_count")
+
+  @@unique([resendId])
+  @@index([campaignId])
+  @@index([contactId])
+  @@map("marketing_deliveries")
 }

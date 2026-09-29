@@ -12,6 +12,7 @@ const SchemaEnvironment = z.object({
 	MINIO_ACCESS_KEY: z.string('MINIO_ACCESS_KEY inválido'),
 	MINIO_SECRET_KEY: z.string('MINIO_SECRET_KEY inválido'),
 	RESEND_API_KEY: z.string('RESEND_API_KEY inválido'),
+	RESEND_WEBHOOK_SECRET: z.string().optional(),
 	APIPLACAS_TOKEN: z.string('APIPLACAS_TOKEN inválido'),
 	CPFCNPJ_TOKEN: z.string('CPFCNPJ_TOKEN inválido'),
 	PLACA_FIPE_TOKEN: z.string('PLACA_FIPE_TOKEN inválido'),

@@ -1,5 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsProducerSimple } from '@segwise/core';
+import { endOfDay, startOfDay } from 'date-fns';
 import type { Server } from '@/@types/server.d';
 import type { Prisma } from '@/generated/prisma/client';
 import { Role } from '@/generated/prisma/enums';
@@ -14,7 +15,7 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 		async (ctx) => {
 			const brokerId = ctx.session.brokerId;
 
-			const { cursor, limit, search, kind } = ctx.req.valid('query');
+			const { cursor, limit, search, kind, from, to } = ctx.req.valid('query');
 
 			const pageMargins = 2;
 
@@ -32,6 +33,14 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 							role: Role.producer,
 							...(kind === 'partner' && { typeOfProduction: { not: null } }),
 							...(kind === 'producer' && { typeOfProduction: null }),
+							...((from || to) && {
+								createdAt: {
+									...(from && {
+										gte: startOfDay(new Date(`${from}T00:00:00`)),
+									}),
+									...(to && { lte: endOfDay(new Date(`${to}T00:00:00`)) }),
+								},
+							}),
 						},
 					},
 				}),

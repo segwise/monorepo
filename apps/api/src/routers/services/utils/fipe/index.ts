@@ -3,7 +3,7 @@ import { ptBR } from 'date-fns/locale';
 import xior, { XiorError } from 'xior';
 import type { Server } from '@/@types/server';
 import { environment } from '@/libraries/environment';
-import { rankFipeCandidates, type FipeCandidate } from './vehicle-matcher';
+import { type FipeCandidate, rankFipeCandidates } from './vehicle-matcher';
 
 const CACHE_KEY = (plate: string) => `fipe-plates:${plate}`;
 
