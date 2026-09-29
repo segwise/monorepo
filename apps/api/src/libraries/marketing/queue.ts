@@ -48,10 +48,10 @@ async function removeCampaignSchedule(campaignId: string) {
 	await marketingQueue.removeJobScheduler(`campaign:${campaignId}`);
 }
 
-async function enqueueCampaignNow(campaignId: string) {
+async function enqueueCampaignNow(campaignId: string, contactIds?: string[]) {
 	await marketingQueue.add(
 		'send-campaign',
-		{ campaignId, manual: true },
+		{ campaignId, manual: true, ...(contactIds && { contactIds }) },
 		{ removeOnComplete: 50, removeOnFail: 100 },
 	);
 }

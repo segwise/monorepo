@@ -2,6 +2,10 @@ import { zValidator } from '@hono/zod-validator';
 import { SchemaMarketingCampaign } from '@segwise/core';
 import type { Server } from '@/@types/server';
 import {
+	countEligibleContacts,
+	RESEND_WINDOW_DAYS,
+} from '@/libraries/marketing/eligibility';
+import {
 	enqueueCampaignNow,
 	removeCampaignSchedule,
 	syncCampaignSchedule,
@@ -134,9 +138,23 @@ function registerRoutersServicesMarketingCampaigns(server: Server) {
 			return ctx.json({ message: 'A campanha não tem contatos' }, 400);
 		}
 
+		const eligible = await countEligibleContacts(id);
+
+		if (!eligible) {
+			return ctx.json(
+				{
+					message: `Todos os contatos já receberam nos últimos ${RESEND_WINDOW_DAYS} dias`,
+				},
+				409,
+			);
+		}
+
 		await enqueueCampaignNow(id);
 
-		return ctx.json({ message: 'Envio adicionado à fila' }, 202);
+		return ctx.json(
+			{ message: `Envio para ${eligible} contato(s) adicionado à fila` },
+			202,
+		);
 	});
 }
 

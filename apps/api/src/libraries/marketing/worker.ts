@@ -2,20 +2,26 @@ import { Worker } from 'bullmq';
 import { format } from 'date-fns';
 import { database } from '@/services/database';
 import { email } from '@/services/email';
+import { findEligibleContacts } from './eligibility';
 import { connection, MARKETING_QUEUE } from './queue';
 import { buildWhatsappUrl, marketingTemplates } from './templates';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function sendCampaign(campaignId: string, manual: boolean) {
+async function sendCampaign(
+	campaignId: string,
+	manual: boolean,
+	contactIds?: string[],
+) {
 	const campaign = await database.marketingCampaign.findUnique({
 		where: { id: campaignId },
-		include: { contacts: true },
 	});
 
 	if (!campaign || (!campaign.active && !manual)) {
 		return { sent: 0 };
 	}
+
+	const contacts = await findEligibleContacts(campaign.id, contactIds);
 
 	const template = marketingTemplates[campaign.template];
 	const whatsappUrl = buildWhatsappUrl(
@@ -26,7 +32,7 @@ async function sendCampaign(campaignId: string, manual: boolean) {
 
 	let sent = 0;
 
-	for (const contact of campaign.contacts) {
+	for (const contact of contacts) {
 		const { data, error } = await email.emails.send(
 			{
 				from: 'XCAR Corretora <parceria@emails.xcarcorretora.com.br>',
@@ -68,7 +74,11 @@ const marketingWorker = new Worker(
 	MARKETING_QUEUE,
 	async (job) => {
 		if (job.name === 'send-campaign') {
-			return await sendCampaign(job.data.campaignId, !!job.data.manual);
+			return await sendCampaign(
+				job.data.campaignId,
+				!!job.data.manual,
+				job.data.contactIds,
+			);
 		}
 	},
 	{ connection, concurrency: 1 },
