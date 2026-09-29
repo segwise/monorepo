@@ -11,6 +11,7 @@ services:
       AUTH_SECRET: ${AUTH_SECRET}
       DATABASE_URL: ${DATABASE_URL}
       CACHE_URL: redis://cache:6379
+      QUEUE_URL: redis://queue:6379
       AI_BASE_URL: ${AI_BASE_URL}
       AI_MODEL: ${AI_MODEL}
       AI_API_KEY: ${AI_API_KEY}
@@ -37,13 +38,41 @@ services:
       - dokploy-network
     depends_on:
       - cache
+      - queue
     restart: unless-stopped
 
   cache:
     image: redis:8
-    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --save
+      - "60"
+      - "1"
+      - --maxmemory
+      - 512mb
+      - --maxmemory-policy
+      - volatile-lru
     volumes:
       - cache-data:/data
+    networks:
+      - internal-network
+    restart: unless-stopped
+
+  queue:
+    image: redis:8
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --save
+      - "60"
+      - "1"
+      - --maxmemory-policy
+      - noeviction
+    volumes:
+      - queue-data:/data
     networks:
       - internal-network
     restart: unless-stopped
@@ -57,3 +86,4 @@ networks:
 
 volumes:
   cache-data:
+  queue-data:

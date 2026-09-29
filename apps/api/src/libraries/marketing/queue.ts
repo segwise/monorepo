@@ -6,7 +6,7 @@ import { environment } from '@/libraries/environment';
 const MARKETING_QUEUE = 'marketing';
 const TIMEZONE = 'America/Sao_Paulo';
 
-const connection = new IORedis(environment.CACHE_URL, {
+const connection = new IORedis(environment.QUEUE_URL, {
 	maxRetriesPerRequest: null,
 });
 
