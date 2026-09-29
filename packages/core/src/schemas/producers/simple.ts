@@ -30,6 +30,9 @@ const SchemaProducerSimple = z.object({
 		.min(1, 'Percentual de comissão inválido')
 		.max(100, 'Percentual de comissão inválido'),
 	startOfProductionPayment: SchemaProducerStartOfProductionPayment,
+	memberSince: z.coerce
+		.date('Data de início inválida')
+		.or(z.iso.datetime('Data de início inválida')),
 });
 
 export { SchemaProducerSimple };
