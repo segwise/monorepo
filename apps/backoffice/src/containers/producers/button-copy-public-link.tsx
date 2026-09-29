@@ -31,7 +31,7 @@ function ButtonCopyProducerPublicLink() {
 			textPending='Carregando'
 			onClick={copyLink}
 		>
-			<LinkIcon /> Link de Cadastro
+			<LinkIcon /> Link de Parceria
 		</Button>
 	);
 }

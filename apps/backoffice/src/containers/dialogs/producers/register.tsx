@@ -3,9 +3,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { maskCNPJ, maskCPF, maskNumber, maskPhone } from '@segwise/core/masks';
 import {
+	SchemaProducerAreaOfActivity,
 	SchemaProducerRegister,
 	SchemaProducerStartOfProductionPayment,
-	SchemaProducerType,
 	SchemaProducerTypeOfPayment,
 } from '@segwise/core/schemas';
 import {
@@ -42,7 +42,6 @@ import {
 	Select,
 	SelectContent,
 	SelectItem,
-	SelectSeparator,
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
@@ -50,12 +49,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useProducersRegister } from '@/libraries/hooks/producers/use-producers-register';
 
-function DialogProducerRegister({
-	id: _id,
-	children,
-}: React.PropsWithChildren<{
-	id?: string;
-}>) {
+function DialogProducerPartnerRegister({ children }: React.PropsWithChildren) {
 	const [open, setOpen] = useState<boolean>(false);
 
 	const { mutate, isPending } = useProducersRegister();
@@ -113,7 +107,7 @@ function DialogProducerRegister({
 			<DialogTrigger asChild>{children}</DialogTrigger>
 			<DialogContent className='max-w-5xl h-screen'>
 				<DialogHeader>
-					<DialogTitle>Cadastrar Novo Produtor</DialogTitle>
+					<DialogTitle>Cadastrar Novo Parceiro</DialogTitle>
 					<DialogDescription>Atenção ao realizar a ação</DialogDescription>
 				</DialogHeader>
 				<Separator />
@@ -323,7 +317,7 @@ function DialogProducerRegister({
 							name='type'
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid} className='col-span-1'>
-									<FieldLabel htmlFor='type'>Tipo do Parceiro:</FieldLabel>
+									<FieldLabel htmlFor='type'>Área de Atuação:</FieldLabel>
 									<Select
 										{...field}
 										value={field.value || ''}
@@ -333,16 +327,8 @@ function DialogProducerRegister({
 											<SelectValue placeholder='Selecionar' />
 										</SelectTrigger>
 										<SelectContent className='max-h-70'>
-											<SelectItem value={SchemaProducerType.enum.producer}>
-												{capitalizeFirstLetters(
-													translateProducerType(
-														SchemaProducerType.enum.producer,
-													),
-												)}
-											</SelectItem>
-											<SelectSeparator />
-											{SchemaProducerType.options
-												.filter((e) => e !== SchemaProducerType.enum.producer)
+											{SchemaProducerAreaOfActivity.options
+												.slice()
 												.sort((a, b) =>
 													translateProducerType(a).localeCompare(
 														translateProducerType(b),
@@ -480,4 +466,4 @@ function DialogProducerRegister({
 	);
 }
 
-export { DialogProducerRegister };
+export { DialogProducerPartnerRegister };

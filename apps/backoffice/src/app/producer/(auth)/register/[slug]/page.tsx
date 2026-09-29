@@ -39,10 +39,15 @@ async function ProducerPublicRegisterContent({
 	return (
 		<>
 			<h1 className='text-2xl font-bold leading-none mb-1'>
-				Seja um parceiro {broker.fantasy || broker.name}
+				Seja um parceiro {(broker.fantasy || broker.name).toUpperCase()}
 			</h1>
-			<p className='text-muted-foreground font-medium text-sm leading-none mb-4'>
+			<p className='text-muted-foreground font-medium text-sm leading-none mb-1'>
 				Preencha seus dados para começar a indicar clientes
+			</p>
+			<p className='text-muted-foreground text-xs leading-snug mb-4'>
+				Este cadastro é exclusivo para parceiros (academias, escritórios,
+				influenciadores etc). Produtores internos são cadastrados diretamente
+				pela equipe.
 			</p>
 			<FormProducerPublicRegister slug={slug} />
 		</>
