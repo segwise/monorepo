@@ -4,6 +4,7 @@ import { registerRoutersServicesProducersById } from '@/routers/services/produce
 import { registerRoutersServicesProducersSimpleListining } from '@/routers/services/producers/listinig';
 import { registerRoutersServicesProducersPending } from '@/routers/services/producers/pending';
 import { registerRoutersServicesProducersPendingDelete } from '@/routers/services/producers/pending-delete';
+import { registerRoutersServicesProducersPendingRenew } from '@/routers/services/producers/pending-renew';
 import { registerRoutersServicesProducersPublicLink } from '@/routers/services/producers/public-link';
 import { registerRoutersServicesProducersPublicRegister } from '@/routers/services/producers/public-register';
 import { registerRoutersServicesProducersRegister } from '@/routers/services/producers/register';
@@ -20,6 +21,7 @@ function registerRoutersServicesProducers(server: Server) {
 	registerRoutersServicesProducersPublicLink(base);
 	registerRoutersServicesProducersPending(base);
 	registerRoutersServicesProducersPendingDelete(base);
+	registerRoutersServicesProducersPendingRenew(base);
 }
 
 export { registerRoutersServicesProducers };

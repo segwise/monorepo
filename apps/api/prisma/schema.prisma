@@ -574,12 +574,14 @@ model Member {
 
   role Role
 
+  status StatusMember @default(active)
+
   referral String?
 
   typeOfProduction         TypeOfProduction?        @map("type_of_production")
   percentageOfProduction   Int?                     @map("percentage_of_production") @db.SmallInt
   typeOfProductionPayment  TypeOfProductionPayment? @map("type_of_production_payment")
-  startOfProductionPayment Int?                     @map("start_of_production_payment") @db.SmallInt
+  startOfProductionPayment Int[]                    @map("start_of_production_payment")
 
   invitationMessage String? @map("invitation_message") @db.Text
 
@@ -609,7 +611,7 @@ model Invitation {
   typeOfProduction         TypeOfProduction?        @map("type_of_production")
   percentageOfProduction   Int?                     @map("percentage_of_production") @db.SmallInt
   typeOfProductionPayment  TypeOfProductionPayment? @map("type_of_production_payment")
-  startOfProductionPayment Int?                     @map("start_of_production_payment") @db.SmallInt
+  startOfProductionPayment Int[]                    @map("start_of_production_payment")
 
   invitationMessage String? @map("invitation_message") @db.Text
 
@@ -834,6 +836,11 @@ enum StatusSafe {
   canceled
   suspended
   active
+}
+
+enum StatusMember {
+  active
+  suspended
 }
 
 enum MaritalStatus {

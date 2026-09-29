@@ -261,7 +261,7 @@ const auth = betterAuth({
 							required: false,
 						},
 						startOfProductionPayment: {
-							type: 'number',
+							type: 'number[]',
 							required: false,
 						},
 					},
