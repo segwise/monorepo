@@ -54,9 +54,41 @@ const SchemaProducerStartOfProductionPayment = z.literal(
 	'Data de pagamento de comissão inválida',
 );
 
-// Mensal usa 1 dia de pagamento; quinzenal precisa de 2 dias distintos.
+// Segundo dia do pagamento quinzenal: precisa cair de 13 a 17 dias depois
+// do primeiro, pra manter o intervalo de uma quinzena.
+const SchemaProducerSecondStartOfProductionPayment = z.literal(
+	[15, 16, 18, 20, 22, 23, 25, 28, 30],
+	'Data de pagamento de comissão inválida',
+);
+
+const PRODUCER_FORTNIGHT_GAP = { min: 13, max: 17 } as const;
+
+function getProducerSecondPaymentDays(firstDay?: number) {
+	const options = SchemaProducerSecondStartOfProductionPayment.values
+		.values()
+		.toArray();
+
+	if (!firstDay) {
+		return options;
+	}
+
+	return options.filter(
+		(day) =>
+			day - firstDay >= PRODUCER_FORTNIGHT_GAP.min &&
+			day - firstDay <= PRODUCER_FORTNIGHT_GAP.max,
+	);
+}
+
+// Mensal usa 1 dia de pagamento; quinzenal precisa de 2 dias, o segundo
+// compatível com uma quinzena depois do primeiro.
 const SchemaProducerStartOfProductionPaymentDays = z
-	.array(SchemaProducerStartOfProductionPayment, 'Dias de pagamento inválidos')
+	.array(
+		z.union([
+			SchemaProducerStartOfProductionPayment,
+			SchemaProducerSecondStartOfProductionPayment,
+		]),
+		'Dias de pagamento inválidos',
+	)
 	.min(1, 'Informe o dia de pagamento')
 	.max(2, 'Informe no máximo 2 dias de pagamento');
 
@@ -68,6 +100,7 @@ function refineProducerPaymentDays(
 	ctx: z.RefinementCtx,
 ) {
 	const expected = values.typeOfPayment === 'bi_weekly' ? 2 : 1;
+	const [first, second] = values.startOfPayment;
 
 	if (values.startOfPayment.length !== expected) {
 		ctx.addIssue({
@@ -82,11 +115,26 @@ function refineProducerPaymentDays(
 		return;
 	}
 
-	if (new Set(values.startOfPayment).size !== values.startOfPayment.length) {
+	if (!SchemaProducerStartOfProductionPayment.safeParse(first).success) {
 		ctx.addIssue({
 			code: 'custom',
 			path: ['startOfPayment'],
-			message: 'Os dias de pagamento devem ser diferentes',
+			message: 'Primeiro dia de pagamento inválido',
+		});
+
+		return;
+	}
+
+	if (
+		expected === 2 &&
+		!(getProducerSecondPaymentDays(first) as number[]).includes(
+			second as number,
+		)
+	) {
+		ctx.addIssue({
+			code: 'custom',
+			path: ['startOfPayment'],
+			message: 'O segundo dia deve ser cerca de uma quinzena após o primeiro',
 		});
 	}
 }
@@ -96,6 +144,8 @@ export {
 	SchemaProducerAreaOfActivity,
 	SchemaProducerTypeOfPayment,
 	SchemaProducerStartOfProductionPayment,
+	SchemaProducerSecondStartOfProductionPayment,
 	SchemaProducerStartOfProductionPaymentDays,
+	getProducerSecondPaymentDays,
 	refineProducerPaymentDays,
 };
