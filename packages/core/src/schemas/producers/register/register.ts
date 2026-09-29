@@ -1,16 +1,20 @@
 import z from 'zod';
 import { SchemaReferral } from '../../producers/referral';
 import {
+	SchemaProducerAreaOfActivity,
 	SchemaProducerStartOfProductionPayment,
-	SchemaProducerType,
 	SchemaProducerTypeOfPayment,
 } from '../../producers/type';
 import { SchemaEmail, SchemaName, SchemaPhone } from '../../utils';
 import { SchemaCPFOrCNPJ } from '../../utils/document';
 
+// Cadastro de PARCEIRO (admin cadastrando manualmente) — área de atuação,
+// código de indicação e mensagem promocional fazem parte da parceria
+// externa. Produtor interno usa SchemaProducerRegisterInternal, bem mais
+// simples (ver register/internal.ts).
 const SchemaProducerRegister = z.object({
 	referral: SchemaReferral,
-	type: SchemaProducerType,
+	type: SchemaProducerAreaOfActivity,
 	cpfOrCnpj: SchemaCPFOrCNPJ,
 	name: SchemaName,
 	phone: SchemaPhone,
