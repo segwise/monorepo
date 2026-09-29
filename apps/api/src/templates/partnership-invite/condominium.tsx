@@ -190,9 +190,6 @@ function TemplatePartnershipInviteCondominium({
 						</Section>
 
 						<Section className="px-10 pt-5 pb-5">
-							<Text className="text-[11px] text-[#374151] text-right m-0 mb-5">
-								Recife, ____ de __________________ de 2026.
-							</Text>
 							<Text className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
 								À(ao) Sr.(a) Responsável por Novos Negócios
 							</Text>
