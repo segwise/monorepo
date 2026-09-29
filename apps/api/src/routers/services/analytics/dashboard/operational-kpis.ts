@@ -1,7 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import type { Database } from '@/@types/database';
 import type { Server } from '@/@types/server';
-import { policiesWhere, quotesWhere } from '@/libraries/dashboard/metrics';
+import { productionWhere, quotesWhere } from '@/libraries/dashboard/metrics';
 import { type DayRange, percentChange } from '@/libraries/dashboard/range';
 import { periodRanges, requireBrokerId, SchemaDashboardPeriod } from './query';
 
@@ -19,7 +19,7 @@ async function kpisOf(database: Database, brokerId: string, range: DayRange) {
 				select: { requestedAt: true, statusAt: true },
 			}),
 			database.safe.aggregate({
-				where: policiesWhere(brokerId, range),
+				where: productionWhere(database, brokerId, range),
 				_count: { _all: true },
 				_sum: { award: true },
 			}),

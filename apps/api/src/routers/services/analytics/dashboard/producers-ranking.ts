@@ -1,7 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import z from 'zod';
 import type { Server } from '@/@types/server';
-import { policiesWhere } from '@/libraries/dashboard/metrics';
+import { productionWhere } from '@/libraries/dashboard/metrics';
 import { buildRange } from '@/libraries/dashboard/range';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 import { requireBrokerId, SchemaDashboardPeriod } from './query';
@@ -24,7 +24,10 @@ function registerRoutersServicesAnalyticsDashboardProducersRanking(
 
 			const grouped = await ctx.database.safe.groupBy({
 				by: ['producerId'],
-				where: { ...policiesWhere(brokerId, range), producerId: { not: null } },
+				where: {
+					...productionWhere(ctx.database, brokerId, range),
+					producerId: { not: null },
+				},
 				_count: { _all: true },
 				_sum: { commissionGross: true },
 				orderBy: { _sum: { commissionGross: 'desc' } },

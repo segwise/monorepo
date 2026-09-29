@@ -1,6 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
 import type { Server } from '@/@types/server';
-import { policiesWhere } from '@/libraries/dashboard/metrics';
+import { productionWhere } from '@/libraries/dashboard/metrics';
 import { buildRange } from '@/libraries/dashboard/range';
 import { requireBrokerId, SchemaDashboardPeriod } from './query';
 
@@ -19,7 +19,7 @@ function registerRoutersServicesAnalyticsDashboardInsuranceDistribution(
 
 			const grouped = await ctx.database.safe.groupBy({
 				by: ['insuranceCompanyId'],
-				where: policiesWhere(brokerId, range),
+				where: productionWhere(ctx.database, brokerId, range),
 				_count: { _all: true },
 				orderBy: { _count: { insuranceCompanyId: 'desc' } },
 			});

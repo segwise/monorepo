@@ -1,6 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
 import type { Server } from '@/@types/server';
-import { policiesWhere, quotesWhere } from '@/libraries/dashboard/metrics';
+import { productionWhere, quotesWhere } from '@/libraries/dashboard/metrics';
 import { buildRange } from '@/libraries/dashboard/range';
 import { requireBrokerId, SchemaDashboardPeriod } from './query';
 
@@ -17,7 +17,7 @@ function registerRoutersServicesAnalyticsDashboardConversionFunnel(
 
 			const quoteWhere = quotesWhere(brokerId, range);
 
-			const [requested, answered, confirmed, policies] = await Promise.all([
+			const [requested, answered, confirmed, proposals] = await Promise.all([
 				ctx.database.quote.count({ where: quoteWhere }),
 				ctx.database.quote.count({
 					where: {
@@ -28,7 +28,9 @@ function registerRoutersServicesAnalyticsDashboardConversionFunnel(
 				ctx.database.quote.count({
 					where: { ...quoteWhere, status: 'confirmed' },
 				}),
-				ctx.database.safe.count({ where: policiesWhere(brokerId, range) }),
+				ctx.database.safe.count({
+					where: productionWhere(ctx.database, brokerId, range),
+				}),
 			]);
 
 			return ctx.json(
@@ -49,7 +51,7 @@ function registerRoutersServicesAnalyticsDashboardConversionFunnel(
 							label: 'Cotações confirmadas',
 							value: confirmed,
 						},
-						{ stage: 'policies', label: 'Apólices emitidas', value: policies },
+						{ stage: 'proposals', label: 'Propostas', value: proposals },
 					],
 				},
 				200,

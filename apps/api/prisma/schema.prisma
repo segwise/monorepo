@@ -302,6 +302,11 @@ model Safe {
   statusAt      DateTime   @default(now()) @map("status_at") @db.Timestamptz
   statusMessage String?    @map("status_message")
 
+  // Data em que o seguro perdeu a vigência por cancelamento (antes do fim).
+  // Nulo quando a vigência apenas terminou: nesse caso status também vira
+  // "canceled", então status sozinho não diferencia as duas situações.
+  canceledAt DateTime? @map("canceled_at") @db.Date
+
   requestedAt  DateTime  @map("requested_at") @db.Timestamptz
   effectivedAt DateTime? @map("effectived_at") @db.Date
   expiration   DateTime  @db.Date
@@ -313,6 +318,7 @@ model Safe {
 
   @@unique([externalId])
   @@unique([previousSafeId])
+  @@index([brokerId, canceledAt])
   @@map("safes")
 }
 

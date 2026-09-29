@@ -155,7 +155,7 @@ function registerRoutersServicesAnalyticsDashboardActionRequired(
 			},
 			{
 				kind: 'policy-expiring' as const,
-				title: 'Apólices vencendo em 30 dias',
+				title: 'Propostas vencendo em 30 dias',
 				href: '/proposals',
 				count: expiringCount,
 				items: expiringItems.map((item) => ({

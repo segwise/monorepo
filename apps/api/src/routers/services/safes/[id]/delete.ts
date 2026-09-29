@@ -7,21 +7,18 @@ function registerRoutersServicesSafesByIdDelete(server: Server) {
 
 			const brokerId = ctx.session.brokerId;
 
-			const safe = await ctx.database.$transaction(async (transaction) => {
+			await ctx.database.$transaction(async (transaction) => {
 				const safe = await transaction.safe.delete({
 					where: {
 						id,
 					},
 					select: {
 						brokerId: true,
-						effectivedAt: true,
 					},
 				});
 
 				if (safe.brokerId !== brokerId) {
-					throw new Error(
-						`${safe.effectivedAt ? 'Apólice' : 'Proposata'} não pode ser excluída pelo usuário`,
-					);
+					throw new Error('Proposta não pode ser excluída pelo usuário');
 				}
 
 				return safe;
@@ -29,7 +26,7 @@ function registerRoutersServicesSafesByIdDelete(server: Server) {
 
 			return ctx.json(
 				{
-					message: `${safe.effectivedAt ? 'Apólice' : 'Proposata'} excluída com sucesso`,
+					message: 'Proposta excluída com sucesso',
 				},
 				200,
 			);

@@ -1,8 +1,20 @@
 import { zValidator } from '@hono/zod-validator';
-import { getYear, subDays, subYears } from 'date-fns';
+import {
+	endOfMonth,
+	getYear,
+	startOfMonth,
+	subMonths,
+	subYears,
+} from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
-import { metricSeries, sumSeries } from '@/libraries/dashboard/metrics';
+import {
+	cappedTotal,
+	median,
+	metricSeries,
+	monthlyTotals,
+	sumSeries,
+} from '@/libraries/dashboard/metrics';
 import { buildRange } from '@/libraries/dashboard/range';
 import {
 	requireBrokerId,
@@ -11,16 +23,19 @@ import {
 } from './query';
 
 // Crescimento fora dessa faixa distorce a projeção (base pequena).
-const GROWTH_MIN = -0.5;
-const GROWTH_MAX = 1;
-const RUN_RATE_DAYS = 90;
+const GROWTH_MIN = -0.3;
+const GROWTH_MAX = 0.3;
 
 const clamp = (value: number) =>
 	Math.min(GROWTH_MAX, Math.max(GROWTH_MIN, value));
 
+const AVERAGE_MONTH_DAYS = 30.44;
+
 function registerRoutersServicesAnalyticsDashboardProjections(server: Server) {
-	// Próximos 12 meses = últimos 12 meses × crescimento sobre os 12 meses
-	// anteriores. "Acumulado" é o ano corrente até hoje.
+	// Próximos 12 meses = últimos 12 meses (calendário, incluindo o atual) ×
+	// crescimento sobre os 12 meses anteriores. Cada mês é limitado a
+	// 0,5×–1,5× a mediana para um mês atípico não distorcer o resultado.
+	// "Acumulado" é o ano corrente até o fim do mês atual.
 	server.get(
 		'/yearly-projection',
 		zValidator('query', z.object({ kind: SchemaDashboardMetricKind })),
@@ -29,8 +44,8 @@ function registerRoutersServicesAnalyticsDashboardProjections(server: Server) {
 			const { kind } = ctx.req.valid('query');
 			const now = new Date();
 
-			const total = async (from: Date, to: Date) =>
-				sumSeries(
+			const months = async (from: Date, to: Date) =>
+				monthlyTotals(
 					await metricSeries(
 						ctx.database,
 						brokerId,
@@ -40,25 +55,28 @@ function registerRoutersServicesAnalyticsDashboardProjections(server: Server) {
 					),
 				);
 
-			const startOfYear = new Date(getYear(now), 0, 1);
-			const last12 = subDays(now, 364);
+			const last12Start = startOfMonth(subMonths(now, 11));
+			const monthEnd = endOfMonth(now);
 
-			const [accumulated, last12Months, previous12Months] = await Promise.all([
-				total(startOfYear, now),
-				total(last12, now),
-				total(subYears(last12, 1), subYears(now, 1)),
+			const [accumulated, last12, previous12] = await Promise.all([
+				months(new Date(getYear(now), 0, 1), monthEnd),
+				months(last12Start, monthEnd),
+				months(subYears(last12Start, 1), subYears(monthEnd, 1)),
 			]);
 
-			const growthRate = previous12Months
-				? clamp((last12Months - previous12Months) / previous12Months)
+			const last12Total = cappedTotal(last12);
+			const previous12Total = cappedTotal(previous12);
+
+			const growthRate = previous12Total
+				? clamp((last12Total - previous12Total) / previous12Total)
 				: 0;
 
 			return ctx.json(
 				{
 					kind,
 					targetYear: getYear(now) + 1,
-					projectedValue: last12Months * (1 + growthRate),
-					currentYearAccumulated: accumulated,
+					projectedValue: last12Total * (1 + growthRate),
+					currentYearAccumulated: accumulated.reduce((a, b) => a + b, 0),
 					growthRate,
 				},
 				200,
@@ -66,8 +84,8 @@ function registerRoutersServicesAnalyticsDashboardProjections(server: Server) {
 		},
 	);
 
-	// Próximo período (mesma duração do selecionado) = média diária dos
-	// últimos 90 dias × dias do período.
+	// Próximo período (mesma duração do selecionado) = mediana dos últimos 6
+	// meses fechados, proporcional aos dias do período.
 	server.get(
 		'/next-period-projection',
 		zValidator(
@@ -83,8 +101,8 @@ function registerRoutersServicesAnalyticsDashboardProjections(server: Server) {
 
 			const period = buildRange(from, to, ctx.timezone);
 			const recent = buildRange(
-				subDays(now, RUN_RATE_DAYS - 1),
-				now,
+				startOfMonth(subMonths(now, 6)),
+				endOfMonth(subMonths(now, 1)),
 				ctx.timezone,
 			);
 
@@ -95,7 +113,8 @@ function registerRoutersServicesAnalyticsDashboardProjections(server: Server) {
 
 			const currentPeriodValue = sumSeries(currentSeries);
 			const projectedValue =
-				(sumSeries(recentSeries) / RUN_RATE_DAYS) * period.days.length;
+				(median(monthlyTotals(recentSeries)) / AVERAGE_MONTH_DAYS) *
+				period.days.length;
 
 			return ctx.json(
 				{

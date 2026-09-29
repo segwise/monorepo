@@ -14,17 +14,35 @@ type MetricKind =
 
 type MetricPoint = { date: string; value: number };
 
-// Apólice "emitida" = início de vigência dentro do período, sem cancelada,
-// sem externa e sem o produtor de teste.
-function policiesWhere(
+// Produção = proposta. Tudo no sistema é proposta; uma apólice só existe se
+// foi cadastrada como tal ou confirmada manualmente (effectivedAt), e mesmo
+// assim conta como qualquer outra proposta aqui.
+// - Data da produção: requestedAt (início da vigência). Ele é gravado em
+//   00:00 UTC, por isso é comparado por data UTC e não pelo fuso do usuário.
+// - Fora: só quem perdeu a vigência por cancelamento ANTES do fim dela. O
+//   sistema marca como "canceled" também o seguro que apenas terminou a
+//   vigência (statusAt >= expiration), e esse continua sendo produção do
+//   período em que foi vendido.
+// - Fora também: externos e o produtor de teste (mesma exclusão de
+//   analytics/proposals/count.ts).
+function productionWhere(
+	database: Database,
 	brokerId: string,
 	range: DayRange,
 ): Prisma.SafeWhereInput {
+	const endExclusive = new Date(range.dateTo);
+	endExclusive.setUTCDate(endExclusive.getUTCDate() + 1);
+
 	return {
 		brokerId,
-		effectivedAt: { gte: range.dateFrom, lte: range.dateTo },
-		status: { not: 'canceled' },
+		requestedAt: { gte: range.dateFrom, lt: endExclusive },
 		AND: [
+			{
+				OR: [
+					{ status: { not: 'canceled' } },
+					{ statusAt: { gte: database.safe.fields.expiration } },
+				],
+			},
 			{ OR: [{ isExternal: false }, { isExternal: null }] },
 			{
 				OR: [
@@ -66,16 +84,12 @@ async function metricSeries(
 		}
 	} else {
 		const safes = await database.safe.findMany({
-			where: policiesWhere(brokerId, range),
-			select: { effectivedAt: true, award: true, commissionGross: true },
+			where: productionWhere(database, brokerId, range),
+			select: { requestedAt: true, award: true, commissionGross: true },
 		});
 
 		for (const safe of safes) {
-			if (!safe.effectivedAt) {
-				continue;
-			}
-
-			const key = safe.effectivedAt.toISOString().slice(0, 10);
+			const key = safe.requestedAt.toISOString().slice(0, 10);
 
 			add(
 				key,
@@ -97,10 +111,50 @@ async function metricSeries(
 const sumSeries = (series: MetricPoint[]) =>
 	series.reduce((total, point) => total + point.value, 0);
 
+function median(values: number[]) {
+	if (!values.length) {
+		return 0;
+	}
+
+	const sorted = [...values].sort((a, b) => a - b);
+	const middle = Math.floor(sorted.length / 2);
+
+	return sorted.length % 2
+		? (sorted[middle] as number)
+		: ((sorted[middle - 1] as number) + (sorted[middle] as number)) / 2;
+}
+
+function monthlyTotals(series: MetricPoint[]) {
+	const totals = new Map<string, number>();
+
+	for (const point of series) {
+		const month = point.date.slice(0, 7);
+
+		totals.set(month, (totals.get(month) ?? 0) + point.value);
+	}
+
+	return [...totals.values()];
+}
+
+// Soma de meses em que nenhum mês passa de 1,5× nem fica abaixo de 0,5× a
+// mediana: um mês atípico (ex.: uma apólice frota gigante) não distorce a
+// projeção.
+function cappedTotal(months: number[]) {
+	const mid = median(months);
+
+	return months.reduce(
+		(total, value) => total + Math.min(mid * 1.5, Math.max(mid * 0.5, value)),
+		0,
+	);
+}
+
 export {
 	EXCLUDED_PRODUCER_ID,
+	cappedTotal,
+	median,
+	monthlyTotals,
 	metricSeries,
-	policiesWhere,
+	productionWhere,
 	quotesWhere,
 	sumSeries,
 	type MetricKind,

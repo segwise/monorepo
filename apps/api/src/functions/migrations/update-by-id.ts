@@ -228,6 +228,20 @@ function getCommission(receivables: OldSafe['receivables']): number {
 	return receivables.commission ?? receivables.comission ?? 0;
 }
 
+// No sistema antigo `active = false` valia tanto para cancelamento quanto para
+// vigência encerrada. Só é cancelamento se foi desativado antes do fim.
+function legacyCanceledAt(oldSafe: {
+	active: boolean;
+	updated_at: string;
+	validity_end: string;
+}) {
+	const disabledAt = new Date(oldSafe.updated_at);
+
+	return !oldSafe.active && disabledAt < new Date(oldSafe.validity_end)
+		? disabledAt
+		: null;
+}
+
 async function migration() {
 	if (!BROKER_ID) {
 		throw new Error('BROKER_ID não configurado no arquivo de migração.');
@@ -358,6 +372,7 @@ async function migration() {
 						oldSafe.receivables.producer?.installments ?? null,
 					status: oldSafe.active ? 'active' : 'canceled',
 					statusAt: oldSafe.updated_at,
+					canceledAt: legacyCanceledAt(oldSafe),
 					createdAt: oldSafe.created_at,
 					...(vehicle && modality === 'vehicle'
 						? {
@@ -408,6 +423,7 @@ async function migration() {
 						oldSafe.receivables.producer?.installments ?? null,
 					status: oldSafe.active ? 'active' : 'canceled',
 					statusAt: oldSafe.updated_at,
+					canceledAt: legacyCanceledAt(oldSafe),
 					createdAt: oldSafe.created_at,
 					...(vehicle && modality === 'vehicle'
 						? {
@@ -549,6 +565,7 @@ async function migrationById(id: string) {
 				oldSafe.receivables.producer?.installments ?? null,
 			status: oldSafe.active ? 'active' : 'canceled',
 			statusAt: oldSafe.updated_at,
+			canceledAt: legacyCanceledAt(oldSafe),
 			createdAt: oldSafe.created_at,
 			...(vehicle && modality === 'vehicle'
 				? {
@@ -598,6 +615,7 @@ async function migrationById(id: string) {
 				oldSafe.receivables.producer?.installments ?? null,
 			status: oldSafe.active ? 'active' : 'canceled',
 			statusAt: oldSafe.updated_at,
+			canceledAt: legacyCanceledAt(oldSafe),
 			createdAt: oldSafe.created_at,
 			...(vehicle && modality === 'vehicle'
 				? {

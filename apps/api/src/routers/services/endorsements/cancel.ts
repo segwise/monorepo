@@ -3,6 +3,8 @@ import { SchemaEndorsementCancel } from '@segwise/core/schemas';
 import type { Server } from '@/@types/server';
 import { EndorsementType, StatusSafe } from '@/generated/prisma/enums';
 
+const CANCELED_BY_ENDORSEMENT_MESSAGE = 'Cancelado por endosso';
+
 function registerRoutersServicesEndorsementsCancel(server: Server) {
 	server.post(
 		'/cancel',
@@ -48,6 +50,9 @@ function registerRoutersServicesEndorsementsCancel(server: Server) {
 				},
 				data: {
 					status: StatusSafe.canceled,
+					statusAt: effectivedAt,
+					canceledAt: effectivedAt,
+					statusMessage: CANCELED_BY_ENDORSEMENT_MESSAGE,
 					endorsements: {
 						create: {
 							type,
