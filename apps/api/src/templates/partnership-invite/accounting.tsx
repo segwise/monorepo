@@ -386,7 +386,7 @@ function TemplatePartnershipInviteAccounting({
 									Diretor – XCAR Corretora de Seguros
 								</Text>
 								<Text className="text-[11px] leading-[16px] text-muted m-0 mb-3">
-									(81) 98696-1991
+									(81) 98696-1991 - (81) 3229-1728
 								</Text>
 								<Text className="text-[9px] tracking-wide text-muted uppercase m-0 mb-1.5">
 									Seguradoras parceiras
