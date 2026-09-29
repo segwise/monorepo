@@ -11,6 +11,7 @@ import {
 	HandCoinsIcon,
 	LandmarkIcon,
 	LayoutDashboardIcon,
+	MegaphoneIcon,
 	UserStarIcon,
 	Users2Icon,
 	UsersRoundIcon,
@@ -197,6 +198,16 @@ const sidebar: Array<{
 							title: 'Produtores',
 							pathname: '/producers',
 							icon: UserStarIcon,
+						},
+					],
+				},
+				{
+					label: 'Marketing',
+					items: [
+						{
+							title: 'Campanhas',
+							pathname: '/marketing',
+							icon: MegaphoneIcon,
 						},
 					],
 				},

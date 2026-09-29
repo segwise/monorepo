@@ -11,6 +11,8 @@ const useSearchParams = () =>
 		search: parseAsString,
 		limit: parseAsInteger,
 		status: parseAsStringEnum(['active', 'pending'] as const),
+		from: parseAsString,
+		to: parseAsString,
 		kind: parseAsStringEnum(['all', 'partner', 'producer'] as const),
 	});
 

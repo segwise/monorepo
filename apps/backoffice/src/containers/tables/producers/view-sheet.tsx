@@ -131,8 +131,14 @@ function SheetProducerView({
 								)}
 							/>
 							<FieldView
-								label='Dia de Pagamento'
-								value={`Dia ${producer.startOfProductionPayment}`}
+								label={
+									producer.startOfProductionPayment.length > 1
+										? 'Dias de Pagamento'
+										: 'Dia de Pagamento'
+								}
+								value={producer.startOfProductionPayment
+									.map((day) => `Dia ${day}`)
+									.join(' e ')}
 							/>
 							<FieldView
 								label='Membro desde'

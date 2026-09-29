@@ -44,7 +44,7 @@ function ProducersPage() {
 					<ButtonCopyProducerPublicLink />
 					<ButtonGroup>
 						<DialogProducerRegisterInternal>
-							<Button className='max-sm:flex-1'>
+							<Button className='max-sm:flex-1 border-r border-r-border/50'>
 								<PlusIcon /> Produtor
 							</Button>
 						</DialogProducerRegisterInternal>
@@ -71,7 +71,13 @@ function ProducersPage() {
 				<Card className='p-0 overflow-hidden'>
 					<CardContent className='p-0'>
 						{status === 'active' && <TableProducersSimple />}
-						{status === 'pending' && <TableProducersPending kind={kind} />}
+						{status === 'pending' && (
+							<TableProducersPending
+								kind={kind}
+								from={searchParams.from}
+								to={searchParams.to}
+							/>
+						)}
 					</CardContent>
 				</Card>
 				{status === 'active' && <TablePagination type='producers' />}

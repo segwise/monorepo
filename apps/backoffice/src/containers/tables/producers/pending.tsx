@@ -69,10 +69,14 @@ function ButtonPendingRenew({ id }: { id: string }) {
 
 function TableProducersPending({
 	kind,
+	from,
+	to,
 }: {
 	kind: ProducerPendingKind | 'all';
+	from?: string | null;
+	to?: string | null;
 }) {
-	const { data, isPending, isSuccess } = useProducersPending(kind);
+	const { data, isPending, isSuccess } = useProducersPending(kind, from, to);
 
 	const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -200,7 +204,7 @@ function TableProducersPending({
 										{isExpired ? 'Expirado' : 'Válido'}
 									</Badge>
 								</TableCell>
-								<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+								<TableCell className='justify-end flex flex-row gap-x-2'>
 									{isExpired && <ButtonPendingRenew id={id} />}
 									<Tooltip>
 										<TooltipTrigger asChild>

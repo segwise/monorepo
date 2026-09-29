@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { maskCNPJ, maskCPF, maskNumber, maskPhone } from '@segwise/core/masks';
 import {
 	SchemaProducerRegisterInternal,
-	SchemaProducerStartOfProductionPayment,
 	SchemaProducerTypeOfPayment,
 } from '@segwise/core/schemas';
 import { translateProducerTypeOfPayment } from '@segwise/core/translate';
@@ -36,6 +35,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { ProducerPaymentDays } from '@/containers/forms/producers/payment-days';
 import { useProducersRegisterInternal } from '@/libraries/hooks/producers/use-producers-register-internal';
 
 // Só mensal e quinzenal fazem sentido pra produtor interno (semanal não é
@@ -50,7 +50,7 @@ function DialogProducerRegisterInternal({ children }: React.PropsWithChildren) {
 
 	const { mutate, isPending } = useProducersRegisterInternal();
 
-	const { control, handleSubmit, reset, setValue } = useForm({
+	const { control, watch, handleSubmit, reset, setValue } = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
 		reValidateMode: 'onChange',
@@ -60,6 +60,7 @@ function DialogProducerRegisterInternal({ children }: React.PropsWithChildren) {
 			name: '',
 			phone: '',
 			email: '',
+			startOfPayment: [],
 			pix: '',
 		},
 	});
@@ -255,30 +256,17 @@ function DialogProducerRegisterInternal({ children }: React.PropsWithChildren) {
 						render={({ field, fieldState }) => (
 							<Field data-invalid={fieldState.invalid} className='col-span-1'>
 								<FieldLabel htmlFor='startOfPayment'>
-									Dia de Pagamento:
+									{watch('typeOfPayment') === 'bi_weekly'
+										? 'Dias de Pagamento:'
+										: 'Dia de Pagamento:'}
 								</FieldLabel>
-								<Select
-									{...field}
-									value={field.value ? String(field.value) : ''}
-									onValueChange={(value) => field.onChange(Number(value))}
-								>
-									<SelectTrigger
-										id='startOfPayment'
-										aria-invalid={fieldState.invalid}
-									>
-										<SelectValue placeholder='Selecionar' />
-									</SelectTrigger>
-									<SelectContent>
-										{SchemaProducerStartOfProductionPayment.values
-											.values()
-											.toArray()
-											.map((item) => (
-												<SelectItem key={item} value={String(item)}>
-													Dia {item}
-												</SelectItem>
-											))}
-									</SelectContent>
-								</Select>
+								<ProducerPaymentDays
+									id='startOfPayment'
+									typeOfPayment={watch('typeOfPayment')}
+									value={field.value}
+									onChange={field.onChange}
+									invalid={fieldState.invalid}
+								/>
 								{fieldState.invalid && (
 									<FieldError errors={[fieldState.error]} />
 								)}

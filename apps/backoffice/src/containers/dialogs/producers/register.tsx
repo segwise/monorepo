@@ -5,7 +5,6 @@ import { maskCNPJ, maskCPF, maskNumber, maskPhone } from '@segwise/core/masks';
 import {
 	SchemaProducerAreaOfActivity,
 	SchemaProducerRegister,
-	SchemaProducerStartOfProductionPayment,
 	SchemaProducerTypeOfPayment,
 } from '@segwise/core/schemas';
 import {
@@ -47,6 +46,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { ProducerPaymentDays } from '@/containers/forms/producers/payment-days';
 import { useProducersRegister } from '@/libraries/hooks/producers/use-producers-register';
 
 function DialogProducerPartnerRegister({ children }: React.PropsWithChildren) {
@@ -54,7 +54,7 @@ function DialogProducerPartnerRegister({ children }: React.PropsWithChildren) {
 
 	const { mutate, isPending } = useProducersRegister();
 
-	const { control, handleSubmit, reset, setValue } = useForm({
+	const { control, watch, handleSubmit, reset, setValue } = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
 		reValidateMode: 'onChange',
@@ -65,6 +65,7 @@ function DialogProducerPartnerRegister({ children }: React.PropsWithChildren) {
 			phone: '',
 			email: '',
 			referral: '',
+			startOfPayment: [],
 			pix: '',
 			message: `Novidade\nA {{DISPLAY_NAME}} em parceria com a Segwise vem ofertar a promoção\n\nGANHE EM DOBRO\n1 - Orientações em caso de sinistro\n2 - Consulta veicular\n3 - Acesso direto às assistências das seguradoras\n4 - Plataforma de compra e venda de veículos mais segura ( apenas clientes segwise/xcar tem acesso)\n5 - Inclua todos os seguros da família, ganhe agilidade na consulta das renovações e acesso às assistências\n\nBaixe agora o aplicativo *SEGWISE*\n\nUtilize o código *{{CODE}}*\n\nDescontos reais e exclusivos na renovação ou aquisição do seu seguro\n\nGaranta seus benefícios\n\nou acesse pelo link abaixo:`,
 		},
@@ -282,30 +283,17 @@ function DialogProducerPartnerRegister({ children }: React.PropsWithChildren) {
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid} className='col-span-1'>
 									<FieldLabel htmlFor='startOfPayment'>
-										Dia de Pagamento:
+										{watch('typeOfPayment') === 'bi_weekly'
+											? 'Dias de Pagamento:'
+											: 'Dia de Pagamento:'}
 									</FieldLabel>
-									<Select
-										{...field}
-										value={field.value ? String(field.value) : ''}
-										onValueChange={(value) => field.onChange(Number(value))}
-									>
-										<SelectTrigger
-											id='startOfPayment'
-											aria-invalid={fieldState.invalid}
-										>
-											<SelectValue placeholder='Selecionar' />
-										</SelectTrigger>
-										<SelectContent>
-											{SchemaProducerStartOfProductionPayment.values
-												.values()
-												.toArray()
-												.map((item) => (
-													<SelectItem key={item} value={String(item)}>
-														Dia {item}
-													</SelectItem>
-												))}
-										</SelectContent>
-									</Select>
+									<ProducerPaymentDays
+										id='startOfPayment'
+										typeOfPayment={watch('typeOfPayment')}
+										value={field.value}
+										onChange={field.onChange}
+										invalid={fieldState.invalid}
+									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
 									)}

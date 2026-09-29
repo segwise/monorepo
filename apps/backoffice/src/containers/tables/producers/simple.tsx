@@ -5,7 +5,7 @@ import { maskCNPJ, maskCPF, maskPhone } from '@segwise/core/masks';
 import type { ProducerSimple } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { format } from 'date-fns';
-import { EyeIcon, InfoIcon, PencilIcon } from 'lucide-react';
+import { EyeIcon, InfoIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,7 @@ import {
 	TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { placeholder } from '@/config/placeholder';
+import { DialogProducerDelete } from '@/containers/dialogs/producers/delete';
 import { DialogProducerPartnerEdit } from '@/containers/dialogs/producers/edit';
 import { DialogProducerInternalEdit } from '@/containers/dialogs/producers/edit-internal';
 import { useProducersSimple } from '@/libraries/hooks/producers/use-producers';
@@ -47,10 +48,13 @@ function TableProducersSimple() {
 		search: searchParams.search,
 		limit: searchParams.limit,
 		kind: searchParams.kind,
+		from: searchParams.from,
+		to: searchParams.to,
 	});
 
 	const [viewItem, setViewItem] = useState<ProducerSimple | null>(null);
 	const [editItem, setEditItem] = useState<ProducerSimple | null>(null);
+	const [deleteItem, setDeleteItem] = useState<ProducerSimple | null>(null);
 
 	function openEdit(item: ProducerSimple) {
 		setViewItem(null);
@@ -102,6 +106,7 @@ function TableProducersSimple() {
 									<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 								</TableCell>
 								<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+									<Skeleton className='size-9 rounded-sm' />
 									<Skeleton className='size-9 rounded-sm' />
 									<Skeleton className='size-9 rounded-sm' />
 								</TableCell>
@@ -215,11 +220,16 @@ function TableProducersSimple() {
 									{format(new Date(memberSince), 'dd/MM/yyyy')}
 								</TableCell>
 								<TableCell className='w-40 text-center'>
-									<Badge variant='success' className='px-2'>
-										Ativo
+									<Badge
+										variant={
+											item.status === 'suspended' ? 'warning' : 'success'
+										}
+										className='px-2'
+									>
+										{item.status === 'suspended' ? 'Suspenso' : 'Ativo'}
 									</Badge>
 								</TableCell>
-								<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+								<TableCell className='justify-end flex flex-row gap-x-2'>
 									<Tooltip>
 										<TooltipTrigger asChild>
 											<Button
@@ -243,6 +253,18 @@ function TableProducersSimple() {
 											</Button>
 										</TooltipTrigger>
 										<TooltipContent>Editar</TooltipContent>
+									</Tooltip>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												size='icon-sm'
+												variant='destructive'
+												onClick={() => setDeleteItem(item)}
+											>
+												<Trash2Icon />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Excluir</TooltipContent>
 									</Tooltip>
 								</TableCell>
 							</TableRow>
@@ -270,6 +292,14 @@ function TableProducersSimple() {
 						onOpenChange={(next) => !next && setEditItem(null)}
 					/>
 				))}
+			{!!deleteItem && (
+				<DialogProducerDelete
+					id={deleteItem.id}
+					kind={deleteItem.typeOfProduction ? 'partner' : 'producer'}
+					open
+					onOpenChange={(next) => !next && setDeleteItem(null)}
+				/>
+			)}
 		</>
 	);
 }

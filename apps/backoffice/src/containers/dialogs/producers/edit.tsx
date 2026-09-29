@@ -5,7 +5,6 @@ import { maskPhone } from '@segwise/core/masks';
 import {
 	SchemaProducerAreaOfActivity,
 	SchemaProducerPartnerUpdate,
-	SchemaProducerStartOfProductionPayment,
 	SchemaProducerTypeOfPayment,
 } from '@segwise/core/schemas';
 import {
@@ -41,6 +40,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { ProducerPaymentDays } from '@/containers/forms/producers/payment-days';
 import { useProducersUpdate } from '@/libraries/hooks/producers/use-producers-update';
 
 function DialogProducerPartnerEdit({
@@ -54,7 +54,7 @@ function DialogProducerPartnerEdit({
 }) {
 	const { mutate, isPending } = useProducersUpdate(producer.id);
 
-	const { control, handleSubmit } = useForm({
+	const { control, watch, handleSubmit } = useForm({
 		mode: 'all',
 		criteriaMode: 'all',
 		reValidateMode: 'onChange',
@@ -211,30 +211,17 @@ function DialogProducerPartnerEdit({
 						render={({ field, fieldState }) => (
 							<Field data-invalid={fieldState.invalid} className='col-span-1'>
 								<FieldLabel htmlFor='startOfPayment'>
-									Dia de Pagamento:
+									{watch('typeOfPayment') === 'bi_weekly'
+										? 'Dias de Pagamento:'
+										: 'Dia de Pagamento:'}
 								</FieldLabel>
-								<Select
-									{...field}
-									value={field.value ? String(field.value) : ''}
-									onValueChange={(value) => field.onChange(Number(value))}
-								>
-									<SelectTrigger
-										id='startOfPayment'
-										aria-invalid={fieldState.invalid}
-									>
-										<SelectValue placeholder='Selecionar' />
-									</SelectTrigger>
-									<SelectContent>
-										{SchemaProducerStartOfProductionPayment.values
-											.values()
-											.toArray()
-											.map((item) => (
-												<SelectItem key={item} value={String(item)}>
-													Dia {item}
-												</SelectItem>
-											))}
-									</SelectContent>
-								</Select>
+								<ProducerPaymentDays
+									id='startOfPayment'
+									typeOfPayment={watch('typeOfPayment')}
+									value={field.value}
+									onChange={field.onChange}
+									invalid={fieldState.invalid}
+								/>
 								{fieldState.invalid && (
 									<FieldError errors={[fieldState.error]} />
 								)}
