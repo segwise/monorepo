@@ -27,6 +27,7 @@ type MarketingContact = {
 	phone: string | null;
 	sentCount: number;
 	lastSentAt: string | null;
+	deliveredAt: string | null;
 	openedAt: string | null;
 	clickedAt: string | null;
 	openCount: number;
