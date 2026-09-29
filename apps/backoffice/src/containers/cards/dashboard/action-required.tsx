@@ -13,12 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ActionRequiredKind } from '@/hooks/analytics/use-action-required';
 import { useActionRequired } from '@/hooks/analytics/use-action-required';
+import { cn } from '@/libraries/utils';
 
 const KIND_ICON: Record<ActionRequiredKind, typeof AlertTriangleIcon> = {
 	'quote-stalled': ClockIcon,
 	'policy-expiring': CalendarClockIcon,
-	'claim-stalled': AlertTriangleIcon,
-	'proposal-pending-approval': FileCheckIcon,
+	'quote-awaiting-customer': FileCheckIcon,
+	'payment-overdue': AlertTriangleIcon,
 };
 
 function CardActionRequired() {
@@ -53,7 +54,14 @@ function CardActionRequired() {
 									<div className='flex size-9 items-center justify-center rounded-full bg-muted'>
 										<Icon className='size-4.5 text-muted-foreground' />
 									</div>
-									<span className='text-sm font-medium'>{group.title}</span>
+									<span
+										className={cn(
+											'text-sm font-medium',
+											!group.count && 'text-muted-foreground',
+										)}
+									>
+										{group.title}
+									</span>
 								</div>
 								<div className='flex flex-row items-center gap-x-1'>
 									<span className='text-sm font-semibold tabular-nums'>

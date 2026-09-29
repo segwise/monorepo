@@ -1,6 +1,11 @@
 'use client';
 
-import { ArrowDownIcon, ArrowUpIcon, HandCoinsIcon } from 'lucide-react';
+import {
+	AlertTriangleIcon,
+	ArrowDownIcon,
+	ArrowUpIcon,
+	HandCoinsIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import {
 	Card,
@@ -11,7 +16,6 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFinancialSummary } from '@/hooks/analytics/use-financial-summary';
-import { usePeriodFilter } from './period-filter';
 
 const currency = (value: number) =>
 	new Intl.NumberFormat('pt-BR', {
@@ -21,8 +25,7 @@ const currency = (value: number) =>
 	}).format(value);
 
 function CardFinancialSummary() {
-	const { resolved } = usePeriodFilter();
-	const { data, isPending } = useFinancialSummary(resolved);
+	const { data, isPending } = useFinancialSummary();
 
 	return (
 		<Card>
@@ -37,7 +40,7 @@ function CardFinancialSummary() {
 					</Link>
 				</CardAction>
 			</CardHeader>
-			<CardContent className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+			<CardContent className='grid grid-cols-1 md:grid-cols-4 gap-4'>
 				<div className='flex flex-row items-center gap-x-3'>
 					<div className='flex size-10 items-center justify-center rounded-full bg-muted'>
 						<ArrowUpIcon className='size-4.5 text-active' />
@@ -85,6 +88,23 @@ function CardFinancialSummary() {
 						) : (
 							<span className='text-lg font-semibold'>
 								{currency(data?.pendingCommissionFromInsurers ?? 0)}
+							</span>
+						)}
+					</div>
+				</div>
+				<div className='flex flex-row items-center gap-x-3'>
+					<div className='flex size-10 items-center justify-center rounded-full bg-muted'>
+						<AlertTriangleIcon className='size-4.5 text-destructive' />
+					</div>
+					<div>
+						<span className='block text-xs text-muted-foreground/70 font-medium'>
+							Recebimentos em atraso
+						</span>
+						{isPending ? (
+							<Skeleton className='w-24 h-6 rounded mt-1' />
+						) : (
+							<span className='text-lg font-semibold'>
+								{currency(data?.overdueReceivable ?? 0)}
 							</span>
 						)}
 					</div>

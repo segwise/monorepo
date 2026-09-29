@@ -9,7 +9,9 @@ function CardConversionFunnel() {
 	const { resolved } = usePeriodFilter();
 	const { data, isPending } = useConversionFunnel(resolved);
 
-	const max = data ? Math.max(...data.stages.map((stage) => stage.value)) : 1;
+	const max = data
+		? Math.max(1, ...data.stages.map((stage) => stage.value))
+		: 1;
 
 	return (
 		<Card>
@@ -26,7 +28,7 @@ function CardConversionFunnel() {
 						const widthPercent = Math.max((stage.value / max) * 100, 12);
 						const opacity = Math.max(1 - index * 0.2, 0.3);
 						const previous = data.stages[index - 1];
-						const dropRate = previous
+						const dropRate = previous?.value
 							? (previous.value - stage.value) / previous.value
 							: 0;
 
@@ -37,10 +39,10 @@ function CardConversionFunnel() {
 									<div className='flex flex-row items-center gap-x-2'>
 										{index > 0 && (
 											<span className='text-xs text-muted-foreground/70'>
-												-
+												{dropRate < 0 ? '+' : '-'}
 												{new Intl.NumberFormat('pt-BR', {
 													style: 'percent',
-												}).format(dropRate)}
+												}).format(Math.abs(dropRate))}
 											</span>
 										)}
 										<span className='text-sm font-semibold tabular-nums'>

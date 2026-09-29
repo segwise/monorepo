@@ -1,6 +1,7 @@
-import { faker } from '@faker-js/faker';
 import { useQuery } from '@tanstack/react-query';
 import type { ResolvedPeriod } from '@/containers/cards/dashboard/period-filter';
+import { api } from '@/libraries/api';
+import { periodKey, periodParams } from './period-params';
 
 interface ProducerRankingItem {
 	id: string;
@@ -16,32 +17,16 @@ interface ProducersRankingResponse {
 
 const useProducersRanking = (period: ResolvedPeriod, limit = 5) =>
 	useQuery({
-		queryKey: [
-			'analytics',
-			'producers-ranking',
-			period.preset,
-			period.current.from.toISOString(),
-			limit,
-		],
-		queryFn: async (): Promise<ProducersRankingResponse> => {
-			await new Promise((resolve) => setTimeout(resolve, 300));
+		queryKey: ['analytics', 'producers-ranking', ...periodKey(period), limit],
+		queryFn: async ({ signal }) => {
+			const { from, to } = periodParams(period);
 
-			const items: Array<ProducerRankingItem> = Array.from(
-				{ length: limit },
-				() => ({
-					id: faker.string.uuid(),
-					name: faker.person.fullName(),
-					avatarUrl: faker.image.avatarGitHub(),
-					policiesClosed: faker.number.int({ min: 3, max: 40 }),
-					commissionGenerated: faker.number.float({
-						min: 1500,
-						max: 25000,
-						fractionDigits: 2,
-					}),
-				}),
-			).sort((a, b) => b.commissionGenerated - a.commissionGenerated);
-
-			return { items };
+			return (
+				await api.get<ProducersRankingResponse>(
+					'/analytics/dashboard/producers-ranking',
+					{ params: { from, to, limit }, signal },
+				)
+			).data;
 		},
 	});
 

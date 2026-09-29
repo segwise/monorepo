@@ -1,6 +1,7 @@
-import { faker } from '@faker-js/faker';
 import { useQuery } from '@tanstack/react-query';
 import type { ResolvedPeriod } from '@/containers/cards/dashboard/period-filter';
+import { api } from '@/libraries/api';
+import { periodKey, periodParams } from './period-params';
 import type { InsuranceMetricKind } from './use-insurance-metrics';
 
 interface NextPeriodProjectionResponse {
@@ -11,14 +12,6 @@ interface NextPeriodProjectionResponse {
 	growthRate: number;
 }
 
-const METRIC_RANGE: Record<InsuranceMetricKind, { min: number; max: number }> =
-	{
-		'policies-count': { min: 1, max: 25 },
-		'net-premium': { min: 2000, max: 18000 },
-		'quotes-count': { min: 3, max: 60 },
-		commission: { min: 300, max: 3500 },
-	};
-
 const PERIOD_LABEL: Record<ResolvedPeriod['preset'], string> = {
 	'7d': 'Próximos 7 dias',
 	'30d': 'Próximos 30 dias',
@@ -27,49 +20,30 @@ const PERIOD_LABEL: Record<ResolvedPeriod['preset'], string> = {
 	year: 'Próximo período',
 };
 
-/**
- * MOCK PROVISÓRIO. Projeta o próximo período equivalente ao selecionado no
- * filtro global (ex: se o usuário está vendo "últimos 30 dias", projeta os
- * próximos 30 dias). Cálculo real ainda a definir — hoje é só um run-rate
- * fake pra ter dado visual.
- */
+// Projeta um período do mesmo tamanho do selecionado no filtro, usando a
+// média diária dos últimos 90 dias.
 const useNextPeriodProjection = (
 	kind: InsuranceMetricKind,
 	period: ResolvedPeriod,
 ) =>
 	useQuery({
-		queryKey: ['analytics', 'next-period-projection', kind, period.preset],
-		queryFn: async (): Promise<NextPeriodProjectionResponse> => {
-			await new Promise((resolve) => setTimeout(resolve, 300));
+		queryKey: [
+			'analytics',
+			'next-period-projection',
+			kind,
+			...periodKey(period),
+		],
+		queryFn: async ({ signal }): Promise<NextPeriodProjectionResponse> => {
+			const { from, to } = periodParams(period);
 
-			const { min, max } = METRIC_RANGE[kind];
-			const dayCount = Math.max(
-				1,
-				Math.round(
-					(period.current.to.getTime() - period.current.from.getTime()) /
-						86_400_000,
-				),
-			);
+			const data = (
+				await api.get<Omit<NextPeriodProjectionResponse, 'periodLabel'>>(
+					'/analytics/dashboard/next-period-projection',
+					{ params: { kind, from, to }, signal },
+				)
+			).data;
 
-			const currentPeriodValue = faker.number.float({
-				min: min * dayCount * 0.6,
-				max: max * dayCount * 0.6,
-				fractionDigits: 0,
-			});
-			const growthRate = faker.number.float({
-				min: -0.08,
-				max: 0.18,
-				fractionDigits: 3,
-			});
-			const projectedValue = currentPeriodValue * (1 + growthRate);
-
-			return {
-				kind,
-				periodLabel: PERIOD_LABEL[period.preset],
-				projectedValue,
-				currentPeriodValue,
-				growthRate,
-			};
+			return { ...data, periodLabel: PERIOD_LABEL[period.preset] };
 		},
 	});
 

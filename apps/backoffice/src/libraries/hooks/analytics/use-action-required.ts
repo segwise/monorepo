@@ -1,11 +1,11 @@
-import { faker } from '@faker-js/faker';
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/libraries/api';
 
 type ActionRequiredKind =
 	| 'quote-stalled'
+	| 'quote-awaiting-customer'
 	| 'policy-expiring'
-	| 'claim-stalled'
-	| 'proposal-pending-approval';
+	| 'payment-overdue';
 
 interface ActionRequiredItem {
 	id: string;
@@ -28,59 +28,16 @@ interface ActionRequiredResponse {
 	totalCount: number;
 }
 
-const GROUP_META: Record<ActionRequiredKind, { title: string; href: string }> =
-	{
-		'quote-stalled': {
-			title: 'Cotações paradas',
-			href: '/quotes?filter=stalled',
-		},
-		'policy-expiring': {
-			title: 'Apólices vencendo',
-			href: '/policies?filter=expiring',
-		},
-		'claim-stalled': {
-			title: 'Sinistros sem movimentação',
-			href: '/claims?filter=stalled',
-		},
-		'proposal-pending-approval': {
-			title: 'Propostas aguardando aprovação',
-			href: '/proposals?filter=pending-approval',
-		},
-	};
-
-function generateMockActionRequired(): ActionRequiredResponse {
-	const groups = (Object.keys(GROUP_META) as Array<ActionRequiredKind>).map(
-		(kind) => {
-			const meta = GROUP_META[kind];
-			const count = faker.number.int({ min: 0, max: 12 });
-			const items: Array<ActionRequiredItem> = Array.from(
-				{ length: Math.min(count, 5) },
-				() => ({
-					id: faker.string.uuid(),
-					kind,
-					label: faker.company.name(),
-					daysOpen: faker.number.int({ min: 1, max: 45 }),
-					href: meta.href,
-				}),
-			);
-
-			return { kind, title: meta.title, count, href: meta.href, items };
-		},
-	);
-
-	return {
-		groups,
-		totalCount: groups.reduce((acc, group) => acc + group.count, 0),
-	};
-}
-
 const useActionRequired = () =>
 	useQuery({
 		queryKey: ['analytics', 'action-required'],
-		queryFn: async (): Promise<ActionRequiredResponse> => {
-			await new Promise((resolve) => setTimeout(resolve, 300));
-			return generateMockActionRequired();
-		},
+		queryFn: async ({ signal }) =>
+			(
+				await api.get<ActionRequiredResponse>(
+					'/analytics/dashboard/action-required',
+					{ signal },
+				)
+			).data,
 	});
 
 export { useActionRequired };

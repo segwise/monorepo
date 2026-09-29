@@ -8,47 +8,39 @@ import {
 	ChartTooltip,
 	ChartTooltipContent,
 } from '@/components/ui/chart';
+import type { InsuranceDistributionItem } from '@/hooks/analytics/use-insurance-distribution';
 
-export const description = 'A donut chart with text';
+// Cada fatia é a cor de destaque com opacidade decrescente.
+const OPACITIES = [100, 80, 60, 40, 25, 15];
 
-const chartData = [
-	{ browser: 'chrome', visitors: 275, fill: 'var(--color-chrome)' },
-	{ browser: 'safari', visitors: 200, fill: 'var(--color-safari)' },
-	{ browser: 'firefox', visitors: 287, fill: 'var(--color-firefox)' },
-	{ browser: 'edge', visitors: 173, fill: 'var(--color-edge)' },
-	{ browser: 'other', visitors: 190, fill: 'var(--color-other)' },
-];
-
-const chartConfig = {
-	visitors: {
-		label: 'Seguros',
-	},
-	chrome: {
-		label: 'Chrome',
-		color: 'var(--active)',
-	},
-	safari: {
-		label: 'Safari',
-		color: 'color-mix(in srgb, var(--active) 80%, transparent)',
-	},
-	firefox: {
-		label: 'Firefox',
-		color: 'color-mix(in srgb, var(--active) 60%, transparent)',
-	},
-	edge: {
-		label: 'Edge',
-		color: 'color-mix(in srgb, var(--active) 40%, transparent)',
-	},
-	other: {
-		label: 'Other',
-		color: 'color-mix(in srgb, var(--active) 20%, transparent)',
-	},
-} satisfies ChartConfig;
-
-function ChartInsuranceThroughInsuranceCompanies() {
+function ChartInsuranceThroughInsuranceCompanies({
+	items,
+	total,
+}: {
+	items: Array<InsuranceDistributionItem>;
+	total: number;
+}) {
 	const [activeIndex, setActiveIndex] = useState<number>(-1);
 
-	const totalVisitors = chartData.reduce((acc, curr) => acc + curr.visitors, 0);
+	const chartData = items.map((item, index) => ({
+		key: `company-${index}`,
+		name: item.name,
+		total: item.total,
+		fill: `var(--color-company-${index})`,
+	}));
+
+	const chartConfig = {
+		total: { label: 'Seguros' },
+		...Object.fromEntries(
+			chartData.map((item, index) => [
+				item.key,
+				{
+					label: item.name,
+					color: `color-mix(in srgb, var(--active) ${OPACITIES[index] ?? 15}%, transparent)`,
+				},
+			]),
+		),
+	} satisfies ChartConfig;
 
 	function renderActiveShape({
 		cx,
@@ -82,12 +74,12 @@ function ChartInsuranceThroughInsuranceCompanies() {
 			<PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
 				<ChartTooltip
 					cursor={false}
-					content={<ChartTooltipContent className='dark' />}
+					content={<ChartTooltipContent className='dark' nameKey='key' />}
 				/>
 				<Pie
 					data={chartData}
-					dataKey='visitors'
-					nameKey='browser'
+					dataKey='total'
+					nameKey='key'
 					cx='50%'
 					cy='100%'
 					innerRadius='65%'
@@ -116,14 +108,14 @@ function ChartInsuranceThroughInsuranceCompanies() {
 											y={(viewBox.cy || 0) - 40}
 											className='fill-foreground text-3xl font-bold'
 										>
-											{totalVisitors.toLocaleString('pt-BR')}
+											{total.toLocaleString('pt-BR')}
 										</tspan>
 										<tspan
 											x={viewBox.cx}
 											y={(viewBox.cy || 0) - 15}
 											className='fill-muted-foreground'
 										>
-											Total de seguros
+											Apólices no período
 										</tspan>
 									</text>
 								);
