@@ -2656,7 +2656,7 @@ function InsuranceDataPreview({
 			{data.renewal && data.latestProposal && (
 				<Fragment>
 					<div className='text-sm'>
-						Apólice anterior: {/* @ts-expect-error */}
+						Proposta anterior: {/* @ts-expect-error */}
 						<b>{data.latestProposal}</b>
 					</div>
 					<Separator className='bg-primary/20 my-2' />

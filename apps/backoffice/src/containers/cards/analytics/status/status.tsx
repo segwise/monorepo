@@ -13,7 +13,7 @@ import { useAnalyticsStatus } from '@/libraries/hooks/analytics/use-status-analy
 import { useSearchParams as useSearchParamsNuqs } from '@/libraries/search-params/safes';
 import { CardHeaderHome } from '../../header-home';
 
-type Type = 'quotes' | 'proposals' | 'policies';
+type Type = 'quotes' | 'proposals';
 
 type Status = QuoteStatus | SafeStatus;
 

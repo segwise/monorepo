@@ -113,9 +113,6 @@ const useEndorsementVehicleConductor = () =>
 					queryKey: ['endorsements', id],
 				}),
 				client.refetchQueries({
-					queryKey: ['policies', 'simple'],
-				}),
-				client.refetchQueries({
 					queryKey: ['proposals', 'simple'],
 				}),
 			]);

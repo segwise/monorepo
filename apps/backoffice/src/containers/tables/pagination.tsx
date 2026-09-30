@@ -21,7 +21,6 @@ import { useSearchParams as useSearchParamsSafes } from '@/libraries/search-para
 const queryKeys = {
 	quotes: ['quotes', 'simple'],
 	proposals: ['proposals', 'simple'],
-	policies: ['policies', 'simple'],
 	'payments-cash-flow': ['payments', 'simple', 'cash-flow'],
 	producers: ['producers', 'simple'],
 } as const;
@@ -39,7 +38,7 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 	const [searchParams, setSearchParams] =
 		type === 'quotes'
 			? [searchParamsQuotes, setSearchParamsQuotes]
-			: type === 'proposals' || type === 'policies'
+			: type === 'proposals'
 				? [searchParamsSafes, setSearchParamsSafes]
 				: type === 'payments-cash-flow'
 					? [searchParamsPayments, setSearchParamsPayments]
@@ -59,8 +58,6 @@ function TablePagination({ type }: { type: keyof typeof queryKeys }) {
 		const {
 			// @ts-expect-error
 			basisOfAnalysis: _basisOfAnalysis,
-			// @ts-expect-error
-			effectived: _effectived,
 			// "status" sai sempre daqui: nos produtores é só a aba
 			// Ativos/Pendentes da página (não vai pra API, ver
 			// TableProducersSimple); nas outras telas onde é um filtro real

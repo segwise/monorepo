@@ -115,7 +115,7 @@ function ChartInsuranceThroughInsuranceCompanies({
 											y={(viewBox.cy || 0) - 15}
 											className='fill-muted-foreground'
 										>
-											Apólices no período
+											Propostas no período
 										</tspan>
 									</text>
 								);

@@ -44,7 +44,7 @@ function CardProducersRanking() {
 					<TableHeader className='[&_tr]:border-b-0 [&_tr]:[&_th]:h-6 [&_tr]:text-xs [&_tr]:[&_th]:text-muted-foreground/70 [&_tr]:[&_th]:p-0'>
 						<TableRow>
 							<TableHead className='text-left'>Produtor</TableHead>
-							<TableHead className='text-center'>Apólices</TableHead>
+							<TableHead className='text-center'>Propostas</TableHead>
 							<TableHead className='text-right'>Comissão</TableHead>
 						</TableRow>
 					</TableHeader>

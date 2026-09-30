@@ -8,7 +8,7 @@ import {
 } from '@segwise/core/schemas';
 import { translateProducerType } from '@segwise/core/translate';
 import type { ProducerPublicRegister } from '@segwise/core/types';
-import { capitalizeFirstLetters, generateReferral } from '@segwise/core/utils';
+import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { isCPF } from '@segwise/core/valids';
 import { SendIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -192,15 +192,10 @@ function FormProducerPublicRegister({ slug }: { slug: string }) {
 					<Field data-invalid={fieldState.invalid} className='col-span-full'>
 						<FieldSet className='flex flex-row items-center justify-between'>
 							<FieldLabel htmlFor='referral'>Código de Indicação:</FieldLabel>
-							<Button
-								type='button'
-								variant='link'
-								size='sm'
-								className='text-xs'
-								onClick={() => field.onChange(generateReferral())}
-							>
-								Gerar Código Aleatório
-							</Button>
+							<div className='text-right text-xs leading-tight text-muted-foreground'>
+								<span className='block'>Exemplo:</span>
+								<span className='block font-medium uppercase'>XCAR</span>
+							</div>
 						</FieldSet>
 						<Input
 							{...field}

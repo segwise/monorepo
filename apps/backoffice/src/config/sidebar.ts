@@ -2,7 +2,6 @@ import {
 	BanknoteArrowUpIcon,
 	BriefcaseBusinessIcon,
 	Building2Icon,
-	FileChartColumnIcon,
 	FileJsonIcon,
 	FileTextIcon,
 	FileUserIcon,
@@ -166,11 +165,6 @@ const sidebar: Array<{
 							title: 'Propostas',
 							pathname: '/proposals',
 							icon: FileJsonIcon,
-						},
-						{
-							title: 'Apólices',
-							pathname: '/policies',
-							icon: FileChartColumnIcon,
 						},
 						{
 							title: 'Sinistros',

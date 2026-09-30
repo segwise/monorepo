@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { CardOverview } from '@/cards/overview-card';
 import { CardActionRequired } from '@/containers/cards/dashboard/action-required';
+import { CardCanceled } from '@/containers/cards/dashboard/canceled';
 import { CardConversionFunnel } from '@/containers/cards/dashboard/conversion-funnel';
 import { CardFinancialSummary } from '@/containers/cards/dashboard/financial-summary';
 import { CardInsuranceComparisonCommission } from '@/containers/cards/dashboard/insurance-comparison-commission';
@@ -67,6 +68,8 @@ function DashboardPage() {
 				</div>
 
 				<CardInsuranceThroughInsuranceCompanies />
+
+				<CardCanceled />
 			</main>
 		</PeriodFilterProvider>
 	);

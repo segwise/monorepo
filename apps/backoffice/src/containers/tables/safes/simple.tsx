@@ -63,11 +63,10 @@ import { useVehiclesManufacturers } from '@/libraries/hooks/vehicles/use-vehicle
 import { useSearchParams } from '@/libraries/search-params/safes';
 import { cn } from '@/libraries/utils';
 
-function TableSafesSimple({ type }: { type: 'proposals' | 'policies' }) {
+function TableSafesSimple() {
 	const [searchParams] = useSearchParams();
 
 	const { data, isPending, isSuccess } = useSafesSimple({
-		effectived: type === 'policies',
 		cursor: searchParams.cursor,
 		insuranceCompanies: searchParams.insuranceCompanies,
 		limit: searchParams.limit,

@@ -9,7 +9,7 @@ export async function generateMetadata(
 	const renewal = searchParams?.renewal === 'true';
 
 	return {
-		title: renewal ? 'Ajuste Geral' : 'Renovação de Apólice',
+		title: renewal ? 'Ajuste Geral' : 'Renovação de Proposta',
 	};
 }
 

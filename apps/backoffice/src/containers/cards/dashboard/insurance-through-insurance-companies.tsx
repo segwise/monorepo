@@ -25,18 +25,18 @@ function CardInsuranceThroughInsuranceCompanies() {
 	return (
 		<Card className='pb-3 md:pb-4'>
 			<CardHeader className='z-1'>
-				<CardTitle>Apólices por Seguradora</CardTitle>
+				<CardTitle>Propostas por Seguradora</CardTitle>
 			</CardHeader>
 			<CardContent>
 				{isPending && <Skeleton className='h-64 w-full rounded-lg' />}
 				{!isPending && !hasData && (
 					<div className='flex flex-col items-center justify-center gap-y-1 py-12 text-center'>
 						<span className='text-sm font-medium'>
-							Nenhuma apólice emitida no período
+							Nenhuma proposta no período
 						</span>
 						<span className='text-xs text-muted-foreground/70'>
-							Assim que houver apólices emitidas, a distribuição por seguradora
-							aparece aqui.
+							Assim que houver propostas no período, a distribuição por
+							seguradora aparece aqui.
 						</span>
 					</div>
 				)}

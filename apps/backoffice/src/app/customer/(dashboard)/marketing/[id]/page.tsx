@@ -6,9 +6,11 @@ import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { endOfDay, format, parse, startOfDay } from 'date-fns';
 import {
 	FilterIcon,
+	Loader2Icon,
 	MailOpenIcon,
 	MousePointerClickIcon,
 	PlusIcon,
+	PrinterIcon,
 	SendIcon,
 	Trash2Icon,
 } from 'lucide-react';
@@ -18,6 +20,7 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
 	Table,
@@ -50,6 +53,7 @@ import {
 	useMarketingContactRemove,
 	useMarketingContactSend,
 	useMarketingContacts,
+	useMarketingContactsPrint,
 } from '@/libraries/hooks/marketing/use-marketing';
 import { useContactSearchParams } from '@/libraries/search-params/marketing';
 import { cn } from '@/libraries/utils';
@@ -100,6 +104,7 @@ function MarketingContactsPage() {
 	const remove = useMarketingContactRemove(id);
 	const sendOne = useMarketingContactSend(id);
 	const sendAll = useMarketingCampaignSend(id);
+	const print = useMarketingContactsPrint(id);
 
 	const [confirmSendAll, setConfirmSendAll] = useState(false);
 	const [adding, setAdding] = useState(false);
@@ -125,6 +130,8 @@ function MarketingContactsPage() {
 			(!term ||
 				contact.name.toLowerCase().includes(term) ||
 				contact.email.toLowerCase().includes(term) ||
+				contact.city?.toLowerCase().includes(term) ||
+				contact.state?.toLowerCase() === term ||
 				(!!termDigits && !!contact.phone?.includes(termDigits))) &&
 			(!searchParams.status || statusOf(contact) === searchParams.status) &&
 			isWithinRange(
@@ -133,6 +140,16 @@ function MarketingContactsPage() {
 				searchParams.to,
 			),
 	);
+
+	// Cidade/UF do contato cadastrado mais recentemente na campanha.
+	const lastLocation =
+		[...(data || [])]
+			.filter((contact) => contact.city && contact.state)
+			.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+			.map((contact) => ({
+				city: contact.city as string,
+				state: contact.state as string,
+			}))[0] ?? null;
 
 	const pendingToSend = allContacts.filter(
 		(contact) => !receivedRecently(contact),
@@ -156,6 +173,18 @@ function MarketingContactsPage() {
 					</div>
 				</div>
 				<div className='flex flex-row items-center gap-x-2'>
+					<Button
+						variant='outline'
+						disabled={!contacts.length || print.isPending}
+						onClick={() =>
+							print.mutate(
+								contacts.map((contact) => contact.id),
+								{ onError: (error) => toast.error(error.message) },
+							)
+						}
+					>
+						<PrinterIcon /> Imprimir
+					</Button>
 					<Button
 						variant='outline'
 						disabled={!pendingToSend}
@@ -228,6 +257,12 @@ function MarketingContactsPage() {
 										<span className='block text-xs text-muted-foreground truncate max-w-56'>
 											{contact.email}
 										</span>
+										{contact.city && (
+											<span className='block text-xs text-muted-foreground/70 truncate max-w-56'>
+												{contact.city}
+												{contact.state ? ` - ${contact.state}` : ''}
+											</span>
+										)}
 									</TableCell>
 									<TableCell className='text-left w-60 text-xs font-medium'>
 										{contact.phone ? maskPhone(contact.phone) : '-'}
@@ -315,12 +350,32 @@ function MarketingContactsPage() {
 					</Table>
 				</CardContent>
 			</Card>
-			<DialogMarketingContact
-				campaignId={id}
-				campaignName={campaign?.name}
-				open={adding}
-				onOpenChange={setAdding}
-			/>
+			{adding && (
+				<DialogMarketingContact
+					campaignId={id}
+					campaignName={campaign?.name}
+					lastLocation={lastLocation}
+					open
+					onOpenChange={(next) => !next && setAdding(false)}
+				/>
+			)}
+			<Dialog open={print.isPending} onOpenChange={() => {}}>
+				<DialogContent
+					className='max-w-sm [&>button]:hidden'
+					onEscapeKeyDown={(event) => event.preventDefault()}
+					onInteractOutside={(event) => event.preventDefault()}
+				>
+					<div className='flex flex-col items-center gap-y-3 py-4 text-center'>
+						<Loader2Icon className='size-8 animate-spin text-primary' />
+						<div>
+							<p className='font-semibold'>Gerando PDF</p>
+							<p className='text-sm text-muted-foreground'>
+								Isso pode levar alguns instantes...
+							</p>
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
 			<DialogMarketingConfirm
 				open={confirmSendAll}
 				onOpenChange={setConfirmSendAll}

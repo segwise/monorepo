@@ -7,20 +7,14 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/libraries/api';
 import type { SearchParamsProps } from '@/libraries/search-params/safes';
 
-const useSafesSimple = ({
-	effectived,
-	...props
-}: Omit<SearchParamsProps, 'basisOfAnalysis'>) =>
+const useSafesSimple = (props: Omit<SearchParamsProps, 'basisOfAnalysis'>) =>
 	useQuery({
-		queryKey: effectived
-			? ['policies', 'simple', props]
-			: ['proposals', 'simple', props],
+		queryKey: ['proposals', 'simple', props],
 		queryFn: async ({ signal }) =>
 			(
 				await api.get<ResponseDataCursor<SafeSimple>>('/safes/simple', {
 					params: {
 						...props,
-						effectived,
 						isExternal: false,
 					},
 					signal,

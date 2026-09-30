@@ -13,9 +13,6 @@ const useSafesDeleteById = (id: string) =>
 					ctx.client.invalidateQueries({
 						queryKey: ['proposals'],
 					}),
-					ctx.client.invalidateQueries({
-						queryKey: ['policies'],
-					}),
 				]);
 			}, 150);
 		},

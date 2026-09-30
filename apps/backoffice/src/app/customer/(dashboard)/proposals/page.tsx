@@ -43,7 +43,6 @@ function ProposalsPage() {
 
 	function printProposals() {
 		printList({
-			effectived: false,
 			search: searchParams.search,
 			producers: searchParams.producers,
 			insuranceCompanies: searchParams.insuranceCompanies,
@@ -110,7 +109,7 @@ function ProposalsPage() {
 			<div className='space-y-3'>
 				<Card className='p-0 overflow-hidden'>
 					<CardContent className='p-0'>
-						<TableSafesSimple type='proposals' />
+						<TableSafesSimple />
 					</CardContent>
 				</Card>
 				<TablePagination type='proposals' />

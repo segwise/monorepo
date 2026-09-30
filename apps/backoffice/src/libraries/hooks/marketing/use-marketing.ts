@@ -149,6 +149,27 @@ const useMarketingContactSend = (campaignId: string) =>
 		},
 	});
 
+const useMarketingContactsPrint = (campaignId: string) =>
+	useMutation<Blob, Error, Array<string>>({
+		mutationKey: ['marketing', 'contacts', 'print', campaignId],
+		mutationFn: async (ids) => {
+			try {
+				return (
+					await api.post(
+						`/marketing/campaigns/${campaignId}/contacts/print`,
+						{ ids },
+						{ responseType: 'blob' },
+					)
+				).data;
+			} catch (error) {
+				throw toError(error, 'Falha ao gerar o PDF');
+			}
+		},
+		onSuccess(data) {
+			window.open(URL.createObjectURL(data), '_blank');
+		},
+	});
+
 const useMarketingContactRemove = (campaignId: string) =>
 	useMutation<ResponseDefault, Error, string>({
 		mutationKey: ['marketing', 'contacts', 'remove', campaignId],
@@ -177,5 +198,6 @@ export {
 	useMarketingContacts,
 	useMarketingContactAdd,
 	useMarketingContactSend,
+	useMarketingContactsPrint,
 	useMarketingContactRemove,
 };

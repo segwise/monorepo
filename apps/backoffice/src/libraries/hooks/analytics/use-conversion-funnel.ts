@@ -4,7 +4,7 @@ import { api } from '@/libraries/api';
 import { periodKey, periodParams } from './period-params';
 
 interface ConversionFunnelStage {
-	stage: 'quotes' | 'answered' | 'confirmed' | 'policies';
+	stage: 'quotes' | 'answered' | 'confirmed' | 'proposals';
 	label: string;
 	value: number;
 }

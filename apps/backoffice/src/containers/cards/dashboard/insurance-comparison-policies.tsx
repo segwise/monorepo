@@ -6,7 +6,7 @@ function CardInsuranceComparisonPolicies() {
 	return (
 		<CardInsuranceComparisonBase
 			kind='policies-count'
-			title='Apólices Emitidas'
+			title='Propostas'
 			valueFormatter={(value) => new Intl.NumberFormat('pt-BR').format(value)}
 		/>
 	);

@@ -7,7 +7,7 @@ import { useAnalyticsStatusCount } from '@/libraries/hooks/analytics/use-status-
 import { useSearchParams as useSearchParamsNuqs } from '@/libraries/search-params/safes';
 import { CardHeaderHome } from '../../header-home';
 
-type Type = 'quotes' | 'proposals' | 'policies';
+type Type = 'quotes' | 'proposals';
 
 interface CardAnalyticsStatusCountProps {
 	title: string;

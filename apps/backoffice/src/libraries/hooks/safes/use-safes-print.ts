@@ -25,9 +25,7 @@ const useSafesPrintById = (id?: string) =>
 type SafesPrintListProps = Omit<
 	SearchParamsProps,
 	'cursor' | 'limit' | 'basisOfAnalysis'
-> & {
-	effectived?: boolean;
-};
+>;
 
 const useSafesPrintList = () =>
 	useMutation<Blob, Error, SafesPrintListProps>({

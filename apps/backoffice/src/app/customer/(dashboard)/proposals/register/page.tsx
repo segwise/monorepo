@@ -3,7 +3,7 @@ import { connection } from 'next/server';
 import { FormProposalRegister } from '@/containers/forms/proposals/register';
 
 export const metadata: Metadata = {
-	title: 'Cadastrar Apólice',
+	title: 'Cadastrar Proposta',
 };
 
 async function ProposalsRegisterPage() {

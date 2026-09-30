@@ -13,7 +13,7 @@ function CardKpiAverageTicket() {
 		<CardHeaderHome
 			isPending={isPending}
 			icon={TicketIcon}
-			title='Média de Fechamentos'
+			title='Ticket Médio'
 			value={
 				data
 					? new Intl.NumberFormat('pt-BR', {

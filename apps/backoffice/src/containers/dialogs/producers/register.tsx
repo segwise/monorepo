@@ -12,7 +12,7 @@ import {
 	translateProducerTypeOfPayment,
 } from '@segwise/core/translate';
 import type { ProducerRegister } from '@segwise/core/types';
-import { capitalizeFirstLetters, generateReferral } from '@segwise/core/utils';
+import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { isCPF } from '@segwise/core/valids';
 import { SaveIcon, XCircleIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -349,14 +349,10 @@ function DialogProducerPartnerRegister({ children }: React.PropsWithChildren) {
 										<FieldLabel htmlFor='referral'>
 											Código de Indicação:{' '}
 										</FieldLabel>
-										<Button
-											variant='link'
-											size='sm'
-											className='text-xs'
-											onClick={() => field.onChange(generateReferral())}
-										>
-											Gerar Código Aleatório
-										</Button>
+										<div className='text-right text-xs leading-tight text-muted-foreground'>
+											<span className='block'>Exemplo:</span>
+											<span className='block font-medium uppercase'>XCAR</span>
+										</div>
 									</FieldSet>
 									<Input
 										{...field}

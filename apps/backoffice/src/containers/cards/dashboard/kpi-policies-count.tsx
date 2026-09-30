@@ -13,7 +13,7 @@ function CardKpiPoliciesCount() {
 		<CardHeaderHome
 			isPending={isPending}
 			icon={FileTextIcon}
-			title='Apólices Emitidas'
+			title='Propostas'
 			value={
 				data
 					? new Intl.NumberFormat('pt-BR').format(data.comparison.current)

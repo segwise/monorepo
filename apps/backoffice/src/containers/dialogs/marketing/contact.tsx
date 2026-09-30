@@ -2,7 +2,10 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { maskPhone } from '@segwise/core/masks';
-import { SchemaMarketingContact } from '@segwise/core/schemas';
+import {
+	BRAZILIAN_STATES,
+	SchemaMarketingContact,
+} from '@segwise/core/schemas';
 import type { MarketingContactInput } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { SaveIcon, XCircleIcon } from 'lucide-react';
@@ -20,23 +23,34 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useMarketingContactAdd } from '@/libraries/hooks/marketing/use-marketing';
 
 function DialogMarketingContact({
 	campaignId,
 	campaignName,
+	lastLocation,
 	open,
 	onOpenChange,
 }: {
 	campaignId: string;
 	campaignName?: string;
+	// Cidade/UF do último contato cadastrado na campanha: só isso persiste
+	// entre aberturas; o resto do formulário começa sempre vazio.
+	lastLocation?: { city: string; state: string } | null;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
 	const { mutate, isPending } = useMarketingContactAdd(campaignId);
 
-	const { control, handleSubmit, reset } = useForm<
+	const { control, handleSubmit } = useForm<
 		MarketingContactInput,
 		unknown,
 		MarketingContactInput
@@ -45,7 +59,13 @@ function DialogMarketingContact({
 		criteriaMode: 'all',
 		reValidateMode: 'onChange',
 		resolver: zodResolver(SchemaMarketingContact) as never,
-		defaultValues: { name: '', email: '', phone: '' },
+		defaultValues: {
+			name: '',
+			email: '',
+			phone: '',
+			city: lastLocation?.city ?? '',
+			state: (lastLocation?.state ?? '') as MarketingContactInput['state'],
+		},
 	});
 
 	function onSubmit(props: MarketingContactInput) {
@@ -53,7 +73,6 @@ function DialogMarketingContact({
 			onSuccess() {
 				toast.success('CONTATO ADICIONADO COM SUCESSO!');
 
-				reset();
 				onOpenChange(false);
 			},
 			onError(error) {
@@ -139,6 +158,56 @@ function DialogMarketingContact({
 							</Field>
 						)}
 					/>
+					<div className='grid grid-cols-[1fr_7rem] gap-3'>
+						<Controller
+							control={control}
+							name='city'
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel htmlFor='city'>Cidade:</FieldLabel>
+									<Input
+										{...field}
+										id='city'
+										aria-invalid={fieldState.invalid}
+										placeholder='Ex.: Recife'
+										onChange={({ target: { value } }) =>
+											field.onChange(capitalizeFirstLetters(value))
+										}
+									/>
+									{fieldState.invalid && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+						<Controller
+							control={control}
+							name='state'
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel htmlFor='state'>Estado:</FieldLabel>
+									<Select
+										value={field.value || ''}
+										onValueChange={field.onChange}
+									>
+										<SelectTrigger id='state' aria-invalid={fieldState.invalid}>
+											<SelectValue placeholder='UF' />
+										</SelectTrigger>
+										<SelectContent>
+											{BRAZILIAN_STATES.map((item) => (
+												<SelectItem key={item.uf} value={item.uf}>
+													{item.uf} - {item.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									{fieldState.invalid && (
+										<FieldError errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+					</div>
 				</form>
 				<Separator />
 				<DialogFooter>

@@ -42,6 +42,10 @@ function CardYearlyProjection() {
 						<span className='block text-xs text-muted-foreground/70 mt-1'>
 							Acumulado deste ano: {currency(data.currentYearAccumulated)}
 						</span>
+						<span className='block text-xs text-muted-foreground/70'>
+							Base: últimos 12 meses com o crescimento anual aplicado (limite de
+							±30%).
+						</span>
 					</>
 				)}
 			</CardContent>

@@ -162,7 +162,7 @@ function DialogSafeEndorsementById({
 					<DialogHeader>
 						<DialogTitle>Endossos do Seguro</DialogTitle>
 						<DialogDescription>
-							Aqui estão os endossos gerados da apólice
+							Aqui estão os endossos gerados da proposta
 						</DialogDescription>
 					</DialogHeader>
 					<Separator />
@@ -173,7 +173,7 @@ function DialogSafeEndorsementById({
 							))}
 						{!isPending && !data?.length && (
 							<div className='bg-muted px-4 py-6 rounded-md border border-border text-sm text-muted-foreground font-normal'>
-								Não há endosso para a apólice vigente
+								Não há endosso para a proposta vigente
 							</div>
 						)}
 						{!isPending &&
@@ -661,7 +661,7 @@ function DialogSafeEndorsementDetails({
 		if (idProp) {
 			if (extracted.safeId && extracted.safeId !== idProp) {
 				toast.error(
-					'O documento enviado pertence a outro seguro e não corresponde à apólice atual.'.toUpperCase(),
+					'O documento enviado pertence a outro seguro e não corresponde à proposta atual.'.toUpperCase(),
 				);
 
 				return;
@@ -773,7 +773,7 @@ function DialogSafeEndorsementDetails({
 				<DialogHeader>
 					<DialogTitle>Novo Endosso</DialogTitle>
 					<DialogDescription>
-						Adicione um novo registro de endosso para a apólice
+						Adicione um novo registro de endosso para a proposta
 					</DialogDescription>
 				</DialogHeader>
 				<Separator />
@@ -846,7 +846,7 @@ function DialogSafeEndorsementDetails({
 									{!resolvedId && (
 										<FieldDescription className='text-xs'>
 											Nenhum seguro identificado ainda — envie um PDF de endosso
-											para a IA localizar a apólice.
+											para a IA localizar a proposta.
 										</FieldDescription>
 									)}
 									{type === 'vehicle_conductor' && (
