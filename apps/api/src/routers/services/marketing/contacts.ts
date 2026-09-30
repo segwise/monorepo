@@ -80,6 +80,9 @@ function registerRoutersServicesMarketingContacts(server: Server) {
 				name: contact.name,
 				email: contact.email,
 				phone: contact.phone,
+				city: contact.city,
+				state: contact.state,
+				createdAt: contact.createdAt.toISOString(),
 				sentCount: contact.deliveries.length,
 				lastSentAt: latest?.sentAt.toISOString() ?? null,
 				deliveredAt: latestOf('deliveredAt')?.toISOString() ?? null,
@@ -107,7 +110,7 @@ function registerRoutersServicesMarketingContacts(server: Server) {
 				return ctx.json({ message: 'Campanha não encontrada' }, 404);
 			}
 
-			const { name, email, phone } = ctx.req.valid('json');
+			const { name, email, phone, city, state } = ctx.req.valid('json');
 
 			const exists = await ctx.database.marketingContact.findUnique({
 				where: {
@@ -126,6 +129,8 @@ function registerRoutersServicesMarketingContacts(server: Server) {
 					name,
 					email: email.toLowerCase(),
 					phone: phone || null,
+					city: city.trim(),
+					state,
 				},
 			});
 

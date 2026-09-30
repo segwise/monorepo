@@ -2,6 +2,7 @@ import type { Server } from '@/@types/server';
 import { requireSession } from '@/server/middlewares/session';
 import { registerRoutersServicesMarketingCampaigns } from './campaigns';
 import { registerRoutersServicesMarketingContacts } from './contacts';
+import { registerRoutersServicesMarketingPrintContacts } from './print-contacts';
 import { registerRoutersServicesMarketingQueues } from './queues';
 
 function registerRoutersServicesMarketing(server: Server) {
@@ -11,6 +12,7 @@ function registerRoutersServicesMarketing(server: Server) {
 
 	registerRoutersServicesMarketingCampaigns(base);
 	registerRoutersServicesMarketingContacts(base);
+	registerRoutersServicesMarketingPrintContacts(base);
 	registerRoutersServicesMarketingQueues(base);
 }
 

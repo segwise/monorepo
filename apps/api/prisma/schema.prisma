@@ -1091,6 +1091,8 @@ model MarketingContact {
   name  String
   email String
   phone String?
+  city  String?
+  state String? @db.VarChar(2)
 
   deliveries MarketingDelivery[] @relation("marketing_contact_to_delivery")
 
