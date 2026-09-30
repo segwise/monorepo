@@ -2,6 +2,7 @@ import type { Server } from '@/@types/server';
 
 import { registerRoutersServicesUtilsAcceptInvitation } from './accept-invitation';
 import { registerRoutersServicesUtilsApplicationReferral } from './application-referral';
+import { registerRoutersServicesUtilsCities } from './cities';
 import { registerRoutersServicesUtilsFipe } from './fipe';
 import { registerRoutersServicesUtilsInsuranceCompanies } from './insurance-companies';
 import { registerRoutersServicesUtilsProducers } from './producers';
@@ -14,6 +15,7 @@ function registerRoutersServicesUtils(server: Server) {
 	registerRoutersServicesUtilsProducers(server);
 	registerRoutersServicesUtilsInsuranceCompanies(server);
 	registerRoutersServicesUtilsFipe(server);
+	registerRoutersServicesUtilsCities(server);
 }
 
 export { registerRoutersServicesUtils };

@@ -21,6 +21,7 @@ const htmlText = `
           <div>
             <span class='text-lg font-extrabold uppercase'>{{campaignName}}</span>
             <span class='block text-xs'>{{brokerName}} · Lista de contatos</span>
+            {{#if locationLabel}}<span class='block text-xs font-bold'>{{locationLabel}}</span>{{/if}}
           </div>
           <div class='text-right text-xs leading-relaxed border-l border-black pl-1.5'>
             <div><b>Emitido em:</b> {{issuedAt}}</div>
@@ -83,11 +84,23 @@ function registerRoutersServicesMarketingPrintContacts(server: Server) {
 	// para caber numa URL). A ordem dos ids é a ordem da impressão.
 	server.post(
 		'/campaigns/:id/contacts/print',
-		zValidator('json', z.object({ ids: z.array(z.uuid()).min(1).max(20000) })),
+		zValidator(
+			'json',
+			z.object({
+				ids: z.array(z.uuid()).min(1).max(20000),
+				// Filtro de local aplicado na tela: vai no cabeçalho da impressão.
+				filters: z
+					.object({
+						state: z.string().length(2).toUpperCase().optional(),
+						city: z.string().trim().max(120).optional(),
+					})
+					.optional(),
+			}),
+		),
 		async (ctx) => {
 			const brokerId = ctx.session.brokerId;
 			const id = ctx.req.param('id') as string;
-			const { ids } = ctx.req.valid('json');
+			const { ids, filters } = ctx.req.valid('json');
 
 			const campaign = brokerId
 				? await ctx.database.marketingCampaign.findFirst({
@@ -123,6 +136,12 @@ function registerRoutersServicesMarketingPrintContacts(server: Server) {
 				brokerName: campaign.broker.name,
 				issuedAt: format(new Date(), 'dd/MM/yyyy HH:mm'),
 				total: rows.length,
+				locationLabel: [
+					filters?.state && `Estado: ${filters.state}`,
+					filters?.state && filters.city && `Cidade: ${filters.city}`,
+				]
+					.filter(Boolean)
+					.join(' · '),
 				rows,
 			});
 
