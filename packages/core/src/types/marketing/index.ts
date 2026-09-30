@@ -25,6 +25,9 @@ type MarketingContact = {
 	name: string;
 	email: string;
 	phone: string | null;
+	city: string | null;
+	state: string | null;
+	createdAt: string;
 	sentCount: number;
 	lastSentAt: string | null;
 	deliveredAt: string | null;
