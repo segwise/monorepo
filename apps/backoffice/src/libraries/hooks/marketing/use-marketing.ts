@@ -150,14 +150,27 @@ const useMarketingContactSend = (campaignId: string) =>
 	});
 
 const useMarketingContactsPrint = (campaignId: string) =>
-	useMutation<Blob, Error, Array<string>>({
+	useMutation<
+		Blob,
+		Error,
+		{
+			ids: Array<string>;
+			filters: { state?: string | null; city?: string | null };
+		}
+	>({
 		mutationKey: ['marketing', 'contacts', 'print', campaignId],
-		mutationFn: async (ids) => {
+		mutationFn: async ({ ids, filters }) => {
 			try {
 				return (
 					await api.post(
 						`/marketing/campaigns/${campaignId}/contacts/print`,
-						{ ids },
+						{
+							ids,
+							filters: {
+								...(filters.state && { state: filters.state }),
+								...(filters.city && { city: filters.city }),
+							},
+						},
 						{ responseType: 'blob' },
 					)
 				).data;

@@ -133,6 +133,9 @@ function MarketingContactsPage() {
 				contact.city?.toLowerCase().includes(term) ||
 				contact.state?.toLowerCase() === term ||
 				(!!termDigits && !!contact.phone?.includes(termDigits))) &&
+			(!searchParams.state || contact.state === searchParams.state) &&
+			(!searchParams.city ||
+				contact.city?.toLowerCase() === searchParams.city.toLowerCase()) &&
 			(!searchParams.status || statusOf(contact) === searchParams.status) &&
 			isWithinRange(
 				statusDateOf(contact, searchParams.status || 'all'),
@@ -178,7 +181,13 @@ function MarketingContactsPage() {
 						disabled={!contacts.length || print.isPending}
 						onClick={() =>
 							print.mutate(
-								contacts.map((contact) => contact.id),
+								{
+									ids: contacts.map((contact) => contact.id),
+									filters: {
+										state: searchParams.state,
+										city: searchParams.city,
+									},
+								},
 								{ onError: (error) => toast.error(error.message) },
 							)
 						}
@@ -204,7 +213,7 @@ function MarketingContactsPage() {
 					value={searchParams.search || ''}
 					onChange={(search) => setSearchParams({ search })}
 				/>
-				<MarketingContactFilters>
+				<MarketingContactFilters contacts={allContacts}>
 					<Button variant='outline' className='dark:bg-primary max-sm:flex-1'>
 						<FilterIcon /> Filtrar <MarketingContactFiltersCount />
 					</Button>

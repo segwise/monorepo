@@ -1,5 +1,6 @@
 'use client';
 
+import type { MarketingContact } from '@segwise/core/types';
 import { format, isSameDay, parse } from 'date-fns';
 import { CalendarIcon, SaveIcon, XCircleIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -12,6 +13,13 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
 	Sheet,
@@ -32,17 +40,24 @@ import { FilterBadge } from './filter-badge';
 
 type Status = (typeof CONTACT_STATUSES)[number] | 'all';
 
-function MarketingContactFilters({ children }: React.PropsWithChildren) {
+function MarketingContactFilters({
+	contacts,
+	children,
+}: React.PropsWithChildren<{ contacts: Array<MarketingContact> }>) {
 	const [open, setOpen] = useState<boolean>(false);
 	const [searchParams, setSearchParams] = useContactSearchParams();
 
 	const defaults = {
 		status: (searchParams.status || 'all') as Status,
+		state: searchParams.state || 'all',
+		city: searchParams.city || 'all',
 		from: searchParams.from || '',
 		to: searchParams.to || '',
 	};
 
 	const [status, setStatus] = useState<Status>(defaults.status);
+	const [state, setState] = useState<string>(defaults.state);
+	const [city, setCity] = useState<string>(defaults.city);
 	const [from, setFrom] = useState<string>(defaults.from);
 	const [to, setTo] = useState<string>(defaults.to);
 
@@ -55,6 +70,8 @@ function MarketingContactFilters({ children }: React.PropsWithChildren) {
 
 	function onReset() {
 		setStatus(defaults.status);
+		setState(defaults.state);
+		setCity(defaults.city);
 		setFrom(defaults.from);
 		setTo(defaults.to);
 	}
@@ -65,6 +82,26 @@ function MarketingContactFilters({ children }: React.PropsWithChildren) {
 		if (!next) {
 			onReset();
 		}
+	}
+
+	// Só oferece estados e cidades que existem nos contatos da campanha; a
+	// cidade depende do estado escolhido.
+	const states = [
+		...new Set(contacts.map((contact) => contact.state).filter(Boolean)),
+	].sort() as Array<string>;
+
+	const cities = [
+		...new Set(
+			contacts
+				.filter((contact) => contact.state === state)
+				.map((contact) => contact.city)
+				.filter(Boolean),
+		),
+	].sort((a, b) => (a as string).localeCompare(b as string)) as Array<string>;
+
+	function onChangeState(next: string) {
+		setState(next);
+		setCity('all');
 	}
 
 	function onChangeStatus(next: Status) {
@@ -80,6 +117,8 @@ function MarketingContactFilters({ children }: React.PropsWithChildren) {
 	function onApply() {
 		setSearchParams({
 			status: status === 'all' ? null : status,
+			state: state === 'all' ? null : state,
+			city: state === 'all' || city === 'all' ? null : city,
 			from: from || null,
 			to: to || null,
 		});
@@ -88,7 +127,13 @@ function MarketingContactFilters({ children }: React.PropsWithChildren) {
 	}
 
 	function onClear() {
-		setSearchParams({ status: null, from: null, to: null });
+		setSearchParams({
+			status: null,
+			state: null,
+			city: null,
+			from: null,
+			to: null,
+		});
 		setOpen(false);
 	}
 
@@ -127,6 +172,40 @@ function MarketingContactFilters({ children }: React.PropsWithChildren) {
 							))}
 						</div>
 					</Field>
+					<Field>
+						<FieldLabel>Estado</FieldLabel>
+						<Select value={state} onValueChange={onChangeState}>
+							<SelectTrigger>
+								<SelectValue placeholder='Todos' />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value='all'>Todos</SelectItem>
+								{states.map((uf) => (
+									<SelectItem key={uf} value={uf}>
+										{uf}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</Field>
+					{state !== 'all' && (
+						<Field>
+							<FieldLabel>Cidade</FieldLabel>
+							<Select value={city} onValueChange={setCity}>
+								<SelectTrigger>
+									<SelectValue placeholder='Todas' />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value='all'>Todas</SelectItem>
+									{cities.map((name) => (
+										<SelectItem key={name} value={name}>
+											{name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</Field>
+					)}
 					{status !== 'never' && (
 						<Field>
 							<FieldLabel>{STATUS_DATE_LABEL[status]}</FieldLabel>
@@ -211,6 +290,7 @@ function MarketingContactFiltersCount() {
 
 	const count = [
 		searchParams.status,
+		searchParams.state,
 		searchParams.from || searchParams.to,
 	].filter(Boolean).length;
 

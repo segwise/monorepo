@@ -13,6 +13,14 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
+	Combobox,
+	ComboboxContent,
+	ComboboxEmpty,
+	ComboboxInput,
+	ComboboxItem,
+	ComboboxList,
+} from '@/components/ui/combobox';
+import {
 	Dialog,
 	DialogClose,
 	DialogContent,
@@ -32,6 +40,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useMarketingContactAdd } from '@/libraries/hooks/marketing/use-marketing';
+import { useCities } from '@/libraries/hooks/use-cities';
 
 function DialogMarketingContact({
 	campaignId,
@@ -50,7 +59,7 @@ function DialogMarketingContact({
 }) {
 	const { mutate, isPending } = useMarketingContactAdd(campaignId);
 
-	const { control, handleSubmit } = useForm<
+	const { control, handleSubmit, setValue, watch } = useForm<
 		MarketingContactInput,
 		unknown,
 		MarketingContactInput
@@ -67,6 +76,14 @@ function DialogMarketingContact({
 			state: (lastLocation?.state ?? '') as MarketingContactInput['state'],
 		},
 	});
+
+	const state = watch('state');
+
+	const {
+		data: cities = [],
+		isLoading: isLoadingCities,
+		isError: citiesError,
+	} = useCities(state);
 
 	function onSubmit(props: MarketingContactInput) {
 		mutate(props, {
@@ -158,56 +175,95 @@ function DialogMarketingContact({
 							</Field>
 						)}
 					/>
-					<div className='grid grid-cols-[1fr_7rem] gap-3'>
-						<Controller
-							control={control}
-							name='city'
-							render={({ field, fieldState }) => (
-								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel htmlFor='city'>Cidade:</FieldLabel>
+					<Controller
+						control={control}
+						name='state'
+						render={({ field, fieldState }) => (
+							<Field data-invalid={fieldState.invalid}>
+								<FieldLabel htmlFor='state'>Estado:</FieldLabel>
+								<Select
+									value={field.value || ''}
+									onValueChange={(value) => {
+										field.onChange(value);
+
+										if (value !== field.value) {
+											setValue('city', '', { shouldValidate: false });
+										}
+									}}
+								>
+									<SelectTrigger id='state' aria-invalid={fieldState.invalid}>
+										<SelectValue placeholder='Selecionar o estado' />
+									</SelectTrigger>
+									<SelectContent>
+										{BRAZILIAN_STATES.map((item) => (
+											<SelectItem key={item.uf} value={item.uf}>
+												{item.uf} - {item.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								{fieldState.invalid && (
+									<FieldError errors={[fieldState.error]} />
+								)}
+							</Field>
+						)}
+					/>
+					<Controller
+						control={control}
+						name='city'
+						render={({ field, fieldState }) => (
+							<Field data-invalid={fieldState.invalid}>
+								<FieldLabel htmlFor='city'>Cidade:</FieldLabel>
+								{citiesError ? (
 									<Input
 										{...field}
 										id='city'
 										aria-invalid={fieldState.invalid}
-										placeholder='Ex.: Recife'
+										placeholder='Não foi possível carregar, digite a cidade'
 										onChange={({ target: { value } }) =>
 											field.onChange(capitalizeFirstLetters(value))
 										}
 									/>
-									{fieldState.invalid && (
-										<FieldError errors={[fieldState.error]} />
-									)}
-								</Field>
-							)}
-						/>
-						<Controller
-							control={control}
-							name='state'
-							render={({ field, fieldState }) => (
-								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel htmlFor='state'>Estado:</FieldLabel>
-									<Select
-										value={field.value || ''}
-										onValueChange={field.onChange}
+								) : (
+									<Combobox
+										value={
+											field.value
+												? { value: field.value, label: field.value }
+												: null
+										}
+										items={cities.map((city) => ({ value: city, label: city }))}
+										disabled={!state}
+										onValueChange={(item) => field.onChange(item?.value ?? '')}
 									>
-										<SelectTrigger id='state' aria-invalid={fieldState.invalid}>
-											<SelectValue placeholder='UF' />
-										</SelectTrigger>
-										<SelectContent>
-											{BRAZILIAN_STATES.map((item) => (
-												<SelectItem key={item.uf} value={item.uf}>
-													{item.uf} - {item.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									{fieldState.invalid && (
-										<FieldError errors={[fieldState.error]} />
-									)}
-								</Field>
-							)}
-						/>
-					</div>
+										<ComboboxInput
+											id='city'
+											aria-invalid={fieldState.invalid}
+											placeholder={
+												!state
+													? 'Escolha o estado primeiro'
+													: isLoadingCities
+														? 'Carregando cidades...'
+														: 'Pesquisar cidade'
+											}
+										/>
+										<ComboboxContent>
+											<ComboboxEmpty>Nenhuma cidade encontrada!</ComboboxEmpty>
+											<ComboboxList>
+												{(item: { value: string; label: string }) => (
+													<ComboboxItem key={item.value} value={item}>
+														{item.label}
+													</ComboboxItem>
+												)}
+											</ComboboxList>
+										</ComboboxContent>
+									</Combobox>
+								)}
+								{fieldState.invalid && (
+									<FieldError errors={[fieldState.error]} />
+								)}
+							</Field>
+						)}
+					/>
 				</form>
 				<Separator />
 				<DialogFooter>

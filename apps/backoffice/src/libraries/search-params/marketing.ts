@@ -23,6 +23,8 @@ const useContactSearchParams = () =>
 	useQueryStates({
 		search: parseAsString,
 		status: parseAsStringEnum([...CONTACT_STATUSES]),
+		state: parseAsString,
+		city: parseAsString,
 		from: parseAsString,
 		to: parseAsString,
 	});
