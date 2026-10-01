@@ -7,6 +7,8 @@ const SchemaPlate = z
 	.refine(isPlate, 'Placa inválida')
 	.trim()
 	.toLowerCase()
-	.transform((value) => value.replace('-', ''));
+	.transform((value) => value.replace('-', ''))
+	.transform((value) => value.replace(' ', ''))
+	.transform((value) => (isPlate(value) ? value : null));
 
 export { SchemaPlate };
