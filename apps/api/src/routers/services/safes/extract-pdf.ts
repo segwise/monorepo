@@ -9,30 +9,20 @@ import {
 	SchemaModality,
 	SchemaName,
 	SchemaPhone,
-	SchemaPlate,
 	SchemaPostalCode,
 	SchemaVehicleUsage,
 } from '@segwise/core';
 import { format } from 'date-fns';
-import OpenAI from 'openai';
-import { PDFParse } from 'pdf-parse';
 import { z } from 'zod';
 import type { Server } from '@/@types/server';
 import { documentByCNPJ } from '@/functions/document/by-cnpj';
 import { documentByCPF } from '@/functions/document/by-cpf';
-
-const AI_BASE_URL = process.env.AI_BASE_URL as string;
-const AI_MODEL = process.env.AI_MODEL as string;
-const AI_API_KEY = process.env.AI_API_KEY as string;
-
-const MAX_RETRIES = 3;
-const REQUEST_TIMEOUT_MS = 30_000;
-
-const clientOpenAI = new OpenAI({
-	baseURL: AI_BASE_URL,
-	apiKey: AI_API_KEY,
-	timeout: REQUEST_TIMEOUT_MS,
-});
+import {
+	askJson,
+	runPdfExtraction,
+	SchemaPlateLenient,
+	visionInstructions,
+} from '@/libraries/ai/pdf-extraction';
 
 const SchemaDataExtract = z
 	.object({
@@ -67,7 +57,7 @@ const SchemaDataExtract = z
 			.strict(),
 		vehicle: z
 			.object({
-				plate: SchemaPlate.nullish(),
+				plate: SchemaPlateLenient,
 				model: z.string(),
 				year: z.number(),
 				usage: SchemaVehicleUsage,
@@ -93,56 +83,33 @@ const SchemaDataExtract = z
 
 type DataExtract = z.infer<typeof SchemaDataExtract>;
 
-async function extractTextToPDF(buffer: ArrayBuffer): Promise<string> {
-	const parser = new PDFParse({ data: Buffer.from(buffer) });
+type InsuranceCompanyRow = { id: string; name: string; cnpj: string };
 
-	const result = await parser.getText();
-
-	const text = result.text;
-
-	if (text.length === 0) {
-		throw new Error(
-			'PDF não retornou texto extraível — pode ser um scan/imagem. Necessário OCR.',
-		);
-	}
-
-	return text;
-}
-
-function sanitizeText(text: string): string {
-	return (
-		text
-			// biome-ignore lint/suspicious/noControlCharactersInRegex: regex
-			.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-			.replace(/\r\n/g, '\n')
-			.replace(/\n{3,}/g, '\n\n')
-	);
-}
-
-function chunkText(text: string, maxChars = 24_000): string {
-	const clean = sanitizeText(text);
-
-	if (clean.length <= maxChars) {
-		return clean;
-	}
-
-	return clean.slice(0, maxChars);
-}
+// O modelo não devolve id/nome/CNPJ da seguradora (UUID e texto longo custam
+// muitos tokens de saída, e saída é o que mais pesa no tempo): devolve só o
+// índice dela na lista enviada, e id, nome e CNPJ vêm do banco.
+const SchemaModelOutput = SchemaDataExtract.omit({
+	insuranceCompany: true,
+}).extend({
+	insuranceCompany: z.number('Seguradora inválida').int().min(1),
+});
 
 function mountPrompt(
 	text: string,
 	{
 		database: { insuranceCompanies },
+		imagesCount,
 	}: {
 		database: {
 			insuranceCompanies: Array<{
-				id: string;
+				i: number;
 				name: string;
 			}>;
 		};
+		imagesCount: number;
 	},
 ): string {
-	return `Extraia os seguintes dados do texto abaixo, extraído de um PDF.
+	return `Extraia os seguintes dados do documento abaixo (texto extraído de um PDF).${visionInstructions(imagesCount)}
 
 		Responda APENAS com um objeto JSON no formato exato abaixo, sem texto adicional, sem markdown, sem \`\`\`:
 
@@ -150,11 +117,7 @@ function mountPrompt(
 			"latestProposal": "string ou null, identificação da proposta anterior, é o código da proposta anterior caso seja renovação"
 			"renewal": "boolean, informação se a proposta ou apólice é uma renovação ou um seguro novo. Baseado se tem uma apólice anterior ou não"
 			"modality": "string, tipo de seguro, enum (vehicle, motorcycle, truck, health, residence, business, condominium, travel, professional, construction)",
-			"insuranceCompany": {
-				"id": "string, uuid da seguradora no banco de dados informado em 'Dados do meu banco de dados / Seguradoras'"
-				"name": "string, nome da seguradora no banco de dados informado em 'Dados do meu banco de dados / Seguradoras'",
-				"cnpj": "string, cnpj da seguradora"
-			},
+			"insuranceCompany": "number, o índice (campo 'i') da seguradora do documento na lista de 'Dados do meu banco de dados / Seguradoras'. Responda somente o número",
 			"insured": {
 				"name": "string, nome do (proponente / segurado) cuidado para não ser o do condutor, pois podem ser diferentes",
 				"registration": "string, cpf ou cnpj do (proponente / segurado) cuidado para não ser o do condutor, pois podem ser diferentes",
@@ -190,7 +153,8 @@ function mountPrompt(
 		- Na utilização do veículo que for particular, considerar como lazer e ida e volta ao trabalho
 		- O valor da frânquia nunca pode somar de outros serviços, o valor deve ser sempre somente da frânquia base do seguro, e nunca somar nada, caso tenha dificuldade de saber qual é, normalmente é usado o termo "básico" ou "básica" na cobertura contratada, e normalmente é o primeiro da lista de coberturas. Tome muito cuidado, pois alguns documentos tem o prêmio da cobertura e a frânquia um do lado da outra, verifique a ordem usando o header da cobertura ou a listagem para garantir o valor correto
 		- Tenha muito cuidado com o valor da frânquia, nunca confunda com o valor do prêmio da frânquia, veja que em alguns casos que possa ficar confuso, a frânquia poderá está na mesma descrição do valor informando "X porcento da obrigatória", tenha cuidado, porquê normalmente a frânquia é maior que o prêmio líquido da frânquia, porquê não pode confundir o valor do prêmio da frânquia, com o valor da frânquia
-		- O ID e o Nome da seguradora você vai ver os dados em 'Dados do meu banco de dados / Seguradoras' pra popular esses parâmetros do "insuranceCompany" baseado no meu banco de dados 
+		- A seguradora deve ser uma das listadas em 'Dados do meu banco de dados / Seguradoras'; responda o índice ('i') dela em "insuranceCompany"
+		- Responda o JSON minificado, em uma única linha, sem indentação nem quebras de linha entre os campos
 
 		Informações adicionais:
 		- Em alguns caso o CEP de Pernoite pode está cortado no conteúdo, pode estar com 5 digitos e o restante cortado, aí para situações assim deve verificar o cep do segurado e esse cep de pernoite para ver se são semelhantes ou não, caso seja semelhante com os mesmo 5 dígitos iniciais iguais, considerar que é o mesmo do seguro. Caso não considere o CEP de Pernoite com os 5 dígitos, e adicione no final dele "000"
@@ -209,124 +173,105 @@ function mountPrompt(
 	`;
 }
 
-async function extractToAI(
-	text: string,
-	insuranceCompanies: Array<{
-		id: string;
-		name: string;
-	}>,
+async function askModel(
+	{
+		model,
+		text,
+		images,
+	}: { model: string; text: string; images: Array<string> },
+	insuranceCompanies: Array<InsuranceCompanyRow>,
 ): Promise<DataExtract> {
-	const textChunk = chunkText(text);
+	const prompt = mountPrompt(text, {
+		database: {
+			insuranceCompanies: insuranceCompanies.map((company, index) => ({
+				i: index + 1,
+				name: company.name,
+			})),
+		},
+		imagesCount: images.length,
+	});
 
-	let lastError: unknown;
+	const parsed = await askJson({ model, prompt, images });
 
-	for (let retry = 1; retry <= MAX_RETRIES; retry++) {
-		try {
-			const content = mountPrompt(textChunk, {
-				database: { insuranceCompanies },
-			});
+	console.log(parsed);
 
-			const response = await clientOpenAI.chat.completions.create({
-				model: AI_MODEL,
-				max_tokens: 4096,
-				messages: [
-					{
-						role: 'system',
-						content:
-							'Você é um extrator de dados cirúrgico e preciso. Responda APENAS com um objeto JSON válido que segue exatamente o schema pedido, sem markdown, sem texto fora do JSON.',
-					},
-					{
-						role: 'user',
-						content,
-					},
-				],
-			});
+	const { insuranceCompany: index, ...rest } = SchemaModelOutput.parse(parsed);
 
-			const textResult = response.choices[0]?.message.content;
+	const company = insuranceCompanies[index - 1];
 
-			if (!textResult) {
-				throw new Error('Modelo retornou resposta vazia.');
-			}
-
-			const jsonClear = textResult
-				.trim()
-				.replace(/^```json\s*/i, '')
-				.replace(/^```\s*/i, '')
-				.replace(/```\s*$/i, '');
-
-			const parsed = JSON.parse(jsonClear);
-
-			const valid = SchemaDataExtract.parse(parsed);
-
-			const [isBirthInsured, isBirthDriver, insuredIsTheDriver] = [
-				!!valid.insured.birth,
-				!!valid.vehicle.driver?.birth,
-				valid.insured.registration === valid.vehicle.driver?.cpf,
-			];
-
-			const responseValid = valid;
-
-			if (!isBirthInsured || !isBirthDriver) {
-				if (!isBirthInsured) {
-					let document = null;
-
-					if (isCPF(valid.insured.registration)) {
-						document = await documentByCPF(valid.insured.registration);
-					} else {
-						document = await documentByCNPJ(valid.insured.registration);
-					}
-
-					const birth = document.birth;
-
-					responseValid.insured.birth = format(birth, 'dd/MM/yyyy');
-				}
-
-				if (!isBirthInsured && !insuredIsTheDriver) {
-					let document = null;
-
-					if (isCPF(valid.vehicle.driver?.cpf ?? '')) {
-						document = await documentByCPF(valid.vehicle.driver?.cpf ?? '');
-					} else {
-						document = await documentByCNPJ(valid.vehicle.driver?.cpf ?? '');
-					}
-
-					const birth = document.birth;
-
-					if (responseValid.vehicle.driver) {
-						responseValid.vehicle.driver.birth = format(birth, 'dd/MM/yyyy');
-					}
-				} else {
-					if (responseValid.vehicle.driver) {
-						responseValid.vehicle.driver.birth = responseValid.insured.birth;
-					}
-				}
-			}
-
-			return responseValid;
-		} catch (error) {
-			lastError = error;
-
-			if (retry < MAX_RETRIES) {
-				await new Promise((r) => setTimeout(r, 1000 * retry));
-			}
-		}
+	if (!company) {
+		throw new z.ZodError([
+			{
+				code: 'custom',
+				path: ['insuranceCompany'],
+				message: 'Seguradora não encontrada na lista',
+				input: index,
+			},
+		]);
 	}
 
-	throw new Error(
-		`Falha ao extrair dados válidos após ${MAX_RETRIES} tentativas. Último erro: ${lastError}`,
-	);
+	return SchemaDataExtract.parse({ ...rest, insuranceCompany: company });
+}
+
+// Quando o documento não traz a data de nascimento, busca pelo CPF/CNPJ. As
+// consultas são independentes: rodam em paralelo e, se uma falhar, o campo fica
+// nulo (o usuário preenche) em vez de derrubar a extração inteira.
+async function completeBirths(valid: DataExtract): Promise<DataExtract> {
+	const lookup = async (registration: string) => {
+		try {
+			const document = isCPF(registration)
+				? await documentByCPF(registration)
+				: await documentByCNPJ(registration);
+
+			return format(document.birth, 'dd/MM/yyyy');
+		} catch (error) {
+			console.warn(
+				'[extract-pdf] consulta de nascimento falhou:',
+				error instanceof Error ? error.message : error,
+			);
+
+			return null;
+		}
+	};
+
+	const driver = valid.vehicle.driver;
+	const driverIsInsured = !!driver && valid.insured.registration === driver.cpf;
+	const needsDriverLookup = !!driver && !driver.birth && !driverIsInsured;
+
+	const [insuredBirth, driverBirth] = await Promise.all([
+		valid.insured.birth
+			? Promise.resolve(valid.insured.birth)
+			: lookup(valid.insured.registration),
+		needsDriverLookup && driver ? lookup(driver.cpf) : Promise.resolve(null),
+	]);
+
+	valid.insured.birth = insuredBirth ?? null;
+
+	if (driver) {
+		driver.birth = driverIsInsured
+			? valid.insured.birth
+			: (driver.birth ?? driverBirth ?? null);
+	}
+
+	return valid;
 }
 
 async function extractData(
 	path: ArrayBuffer,
-	insuranceCompanies: Array<{
-		id: string;
-		name: string;
-	}>,
+	insuranceCompanies: Array<InsuranceCompanyRow>,
 ) {
-	const textToPDF = await extractTextToPDF(path);
+	const extracted = await runPdfExtraction({
+		label: 'extract-pdf',
+		buffer: path,
+		ask: (input) => askModel(input, insuranceCompanies),
+	});
 
-	const data = await extractToAI(textToPDF, insuranceCompanies);
+	const lookupStarted = performance.now();
+	const data = await completeBirths(extracted);
+
+	console.log(
+		`[extract-pdf] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+	);
 
 	return data;
 }
@@ -348,7 +293,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 
 				const hash = Bun.hash(buffer).toString(16);
 
-				const cached = await ctx.cache.get(`pdf-extract:${hash}`);
+				const cached = await ctx.cache.get(`pdf-extract:v3:${hash}`);
 
 				if (cached) {
 					return ctx.json(JSON.parse(cached), 200);
@@ -360,12 +305,14 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 						select: {
 							id: true,
 							name: true,
+							cnpj: true,
 						},
+						orderBy: { name: 'asc' },
 					}),
 				);
 
 				await ctx.cache.set(
-					`pdf-extract:${hash}`,
+					`pdf-extract:v3:${hash}`,
 					JSON.stringify(data),
 					'EX',
 					60 * 60 * 24 * 1,
