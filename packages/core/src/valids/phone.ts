@@ -1,13 +1,21 @@
 import { maskNumber } from '../masks/number';
 
+// DDI só existe quando o número tem mais dígitos que o máximo nacional (DDD +
+// 9 dígitos = 11). Número com DDD 55 (RS) sem DDI também começa com "55".
+function withoutCountryCode(digits: string) {
+	return digits.startsWith('55') && digits.length > 11
+		? digits.slice(2)
+		: digits;
+}
+
+// Celular no formato antigo, de 8 dígitos começando com 9 (ex.: 81 99861630),
+// ao qual falta o 9 extra depois do DDD.
+function isLegacyMobile(local: string) {
+	return local.length === 10 && /^9[0-9]{7}$/.test(local.slice(2));
+}
+
 function isPhone(phone: string) {
-	const apenasNumeros = maskNumber(phone);
-
-	let numeroSemDDI = apenasNumeros;
-
-	if (numeroSemDDI.startsWith('55')) {
-		numeroSemDDI = numeroSemDDI.slice(2);
-	}
+	const numeroSemDDI = withoutCountryCode(maskNumber(phone));
 
 	if (numeroSemDDI.length < 10 || numeroSemDDI.length > 11) {
 		return false;
@@ -26,10 +34,27 @@ function isPhone(phone: string) {
 	}
 
 	if (numero.length === 8) {
-		return /^[2-8][0-9]{7}$/.test(numero);
+		// 2-8: fixo; 9: celular antigo (ver isLegacyMobile)
+		return /^[2-9][0-9]{7}$/.test(numero);
 	}
 
 	return false;
 }
 
-export { isPhone };
+// Só dígitos; celular antigo ganha o 9 depois do DDD; celular (11 dígitos) ganha
+// o DDI 55. Fixo mantém como veio.
+function normalizePhone(phone: string) {
+	const digits = maskNumber(phone);
+	const hasCountryCode = digits.startsWith('55') && digits.length > 11;
+	const local = hasCountryCode ? digits.slice(2) : digits;
+
+	const fixed = isLegacyMobile(local)
+		? `${local.slice(0, 2)}9${local.slice(2)}`
+		: local;
+
+	const result = hasCountryCode ? `55${fixed}` : fixed;
+
+	return result.length === 11 ? `55${result}` : result;
+}
+
+export { isPhone, normalizePhone };
