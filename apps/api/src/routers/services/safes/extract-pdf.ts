@@ -141,23 +141,25 @@ function mountPrompt(
 			"requestedAt": "string no formato DD/MM/AAAA, data de início da vigência da proposta ou apólice",
 			"expirationAt": "string no formato DD/MM/AAAA, data do final da vigência da proposta ou apólice",
 			"award": "number, valor da proposta ou apólice, pode estar como (prêmio líquido, valor líquido ou líquido) mas sempre "líquido", veja que em alguns casos existe o prêmio total ou prêmio líquido total, mas não é esse, é exatamente o prêmio líquido, não o total. Normalmente é o valor do prêmio sem impostos ou juro",
-			"installments": "number, número de parcelas que será paga a apólice ou proposta",
+			"installments": "number, número de parcelas que será paga a apólice ou proposta; pagamento à vista é 1",
 			"franchise": "number, valor da frânquia da apólice ou proposta"
 		}
 
 		Regras:
+		- "modality" é o tipo do bem segurado: carro, utilitário, táxi ou veículo de aplicativo = "vehicle"; moto = "motorcycle"; caminhão = "truck". A finalidade (táxi, aplicativo, entregas...) vai em "vehicle.usage", nunca em "modality".
+		- Se o condutor principal for o próprio segurado (o documento diz "o segurado", "o próprio" ou não indica outro condutor), preencha "driver" com os mesmos dados do segurado (nome, cpf e data de nascimento). Use "driver" null somente se o seguro não for de veículo.
 		- Se algum campo não for encontrado, use null.
 		- Todo resultado que é especificado como tipo "number" deve ser um número puro (ex: 1500.50), nunca string.
 		- Não invente dados que não estão no texto.
 		- Nenhum campo pode ter mais de um dado, é sempre um único dado, nunca dois dados no mesmo campo separado por "ou", ",", ou algum outro tipo de separador
-		- Na utilização do veículo que for particular, considerar como lazer e ida e volta ao trabalho
+		- Na utilização do veículo que for particular, considerar como lazer e ida e volta ao trabalho; se o documento disser somente "lazer" (sem trabalho), use leisure
 		- O valor da frânquia nunca pode somar de outros serviços, o valor deve ser sempre somente da frânquia base do seguro, e nunca somar nada, caso tenha dificuldade de saber qual é, normalmente é usado o termo "básico" ou "básica" na cobertura contratada, e normalmente é o primeiro da lista de coberturas. Tome muito cuidado, pois alguns documentos tem o prêmio da cobertura e a frânquia um do lado da outra, verifique a ordem usando o header da cobertura ou a listagem para garantir o valor correto
 		- Tenha muito cuidado com o valor da frânquia, nunca confunda com o valor do prêmio da frânquia, veja que em alguns casos que possa ficar confuso, a frânquia poderá está na mesma descrição do valor informando "X porcento da obrigatória", tenha cuidado, porquê normalmente a frânquia é maior que o prêmio líquido da frânquia, porquê não pode confundir o valor do prêmio da frânquia, com o valor da frânquia
 		- A seguradora deve ser uma das listadas em 'Dados do meu banco de dados / Seguradoras'; responda o índice ('i') dela em "insuranceCompany"
 		- Responda o JSON minificado, em uma única linha, sem indentação nem quebras de linha entre os campos
 
 		Informações adicionais:
-		- Em alguns caso o CEP de Pernoite pode está cortado no conteúdo, pode estar com 5 digitos e o restante cortado, aí para situações assim deve verificar o cep do segurado e esse cep de pernoite para ver se são semelhantes ou não, caso seja semelhante com os mesmo 5 dígitos iniciais iguais, considerar que é o mesmo do seguro. Caso não considere o CEP de Pernoite com os 5 dígitos, e adicione no final dele "000"
+		- O CEP de pernoite pode vir cortado (com menos de 8 dígitos, ex.: 5 dígitos). Primeiro procure no documento o CEP residencial do segurado: se os dígitos que vieram forem o início desse CEP, use o CEP residencial completo do segurado. Só se não houver CEP do segurado para comparar (ou ele não começar igual), complete o CEP de pernoite com zeros à direita até 8 dígitos (ex.: 50030 vira 50030000)
 		- Existe algumas seguradoras que são do mesmo grupo, a onde é referenciado o CNPJ do grupo, mas a proposta pode ser de outras segurada, então veja realmente qual é a segurada quando for nesses casos não pelo rodapé, mas sim pelo cabeçalho ou conteúdo interno como site ou nome do tipo de seguro, pode conseguir achar como em algum lugar "NOME DA SEGURADO seguro (auto, residencial, residencia, etc...)"
 		- Quando identificar como seguradora yellum, verifica se tem em algum lugar como aliro seguro, pois pode ser que seja da aliro e não da yellum pois são do mesmo grupo, mas marcas diferentes que respondem pelo mesmo grupo, então informe seguradora como aliro
 		- Quando identificar como seguradora porto, verifica se tem em algum lugar como azul seguro, pois pode ser que seja da azul e não da porto pois são do mesmo grupo, mas marcas diferentes que respondem pelo mesmo grupo, então informe seguradora como azul

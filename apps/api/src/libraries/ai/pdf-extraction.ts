@@ -8,8 +8,12 @@ const AI_BASE_URL = process.env.AI_BASE_URL as string;
 const AI_API_KEY = process.env.AI_API_KEY as string;
 // Modelo das etapas só com texto (o caminho rápido, que atende quase tudo).
 const AI_MODEL = process.env.AI_MODEL as string;
-// Modelo das etapas com imagem: precisa ter visão. Padrão: o mesmo AI_MODEL.
-const AI_MODEL_VISION = (process.env.AI_MODEL_VISION || AI_MODEL) as string;
+// Modelo mais forte para quando a 1ª tentativa falha (etapas `text-full` e
+// `vision`). Padrão: o mesmo AI_MODEL.
+const AI_MODEL_FALLBACK = (process.env.AI_MODEL_FALLBACK || AI_MODEL) as string;
+// Modelo da etapa com imagem: precisa ter visão. Padrão: AI_MODEL_FALLBACK.
+const AI_MODEL_VISION = (process.env.AI_MODEL_VISION ||
+	AI_MODEL_FALLBACK) as string;
 
 // 'fallback' (padrão): começa só com texto e usa as imagens se não bastar.
 // 'always': sempre texto + imagens. 'off': nunca usa imagens.
@@ -179,7 +183,7 @@ async function askJson({
 	);
 }
 
-type Step = { name: string; text: string; vision: boolean };
+type Step = { name: string; text: string; vision: boolean; model: string };
 
 // Orquestra a extração de um PDF, da etapa mais rápida para a mais completa:
 // 1. `text-fast`: texto das primeiras páginas;
@@ -229,18 +233,51 @@ async function runPdfExtraction<T>({
 	// passa para a próxima etapa.
 	const steps: Array<Step> =
 		VISION_MODE === 'always'
-			? [{ name: 'vision', text: fullText, vision: true }]
+			? [
+					{
+						name: 'vision',
+						text: fullText,
+						vision: true,
+						model: AI_MODEL_VISION,
+					},
+				]
 			: !hasText
 				? VISION_MODE === 'off'
 					? []
-					: [{ name: 'vision', text: fullText, vision: true }]
+					: [
+							{
+								name: 'vision',
+								text: fullText,
+								vision: true,
+								model: AI_MODEL_VISION,
+							},
+						]
 				: [
-						{ name: 'text-fast', text: fastText, vision: false },
+						{
+							name: 'text-fast',
+							text: fastText,
+							vision: false,
+							model: AI_MODEL,
+						},
 						...(hasMorePages
-							? [{ name: 'text-full', text: fullText, vision: false }]
+							? [
+									{
+										name: 'text-full',
+										text: fullText,
+										vision: false,
+										model: AI_MODEL_FALLBACK,
+									},
+								]
 							: []),
 						...(VISION_MODE === 'fallback'
-							? [{ name: 'vision', text: fullText, vision: true }]
+							? [
+									{
+										name: 'vision',
+										text: fullText,
+										vision: true,
+										model: AI_MODEL_VISION,
+									},
+								]
 							: []),
 					];
 
@@ -271,7 +308,7 @@ async function runPdfExtraction<T>({
 				const modelStarted = performance.now();
 
 				const data = await ask({
-					model: step.vision ? AI_MODEL_VISION : AI_MODEL,
+					model: step.model,
 					text: chunkText(step.text),
 					images: stepImages,
 				});
