@@ -270,7 +270,7 @@ function DialogMarketingCampaign({
 										<SelectTrigger id='dayOfMonth'>
 											<SelectValue placeholder='Selecionar' />
 										</SelectTrigger>
-										<SelectContent>
+										<SelectContent className='max-h-64'>
 											{DAYS.map((day) => (
 												<SelectItem key={day} value={String(day)}>
 													Dia {day}
@@ -298,7 +298,7 @@ function DialogMarketingCampaign({
 									<SelectTrigger id='hour'>
 										<SelectValue />
 									</SelectTrigger>
-									<SelectContent>
+									<SelectContent className='max-h-64'>
 										{HOURS.map((hour) => (
 											<SelectItem key={hour} value={String(hour)}>
 												{String(hour).padStart(2, '0')}:00

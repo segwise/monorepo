@@ -25,7 +25,7 @@ const useProducersPendingRenewById = (id: string) =>
 		},
 		async onSuccess(_data, _variables, _result, ctx) {
 			await ctx.client.invalidateQueries({
-				queryKey: ['producers', 'pending'],
+				queryKey: ['producers'],
 			});
 		},
 	});

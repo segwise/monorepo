@@ -9,7 +9,7 @@ const useProducersPendingDeleteById = (id: string) =>
 			(await api.delete<ResponseDefault>(`/producers/pending/${id}`)).data,
 		async onSuccess(_data, _variables, _result, ctx) {
 			await ctx.client.invalidateQueries({
-				queryKey: ['producers', 'pending'],
+				queryKey: ['producers'],
 			});
 		},
 	});

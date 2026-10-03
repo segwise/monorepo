@@ -10,7 +10,12 @@ const useSearchParams = () =>
 		cursor: parseAsString,
 		search: parseAsString,
 		limit: parseAsInteger,
-		status: parseAsStringEnum(['active', 'pending'] as const),
+		status: parseAsStringEnum([
+			'all',
+			'active',
+			'suspended',
+			'pending',
+		] as const),
 		from: parseAsString,
 		to: parseAsString,
 		kind: parseAsStringEnum(['all', 'partner', 'producer'] as const),

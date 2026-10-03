@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/sheet';
 import { useSearchParams } from '@/libraries/search-params/producers';
 
-type Status = 'active' | 'pending';
+type Status = 'all' | 'active' | 'suspended' | 'pending';
 type Kind = ProducerPendingKind | 'all';
 
 function TableProducersSheetFilters({ children }: React.PropsWithChildren) {
@@ -35,7 +35,7 @@ function TableProducersSheetFilters({ children }: React.PropsWithChildren) {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const defaults = {
-		status: (searchParams.status || 'active') as Status,
+		status: (searchParams.status || 'all') as Status,
 		kind: (searchParams.kind || 'all') as Kind,
 		from: searchParams.from || '',
 		to: searchParams.to || '',
@@ -68,9 +68,21 @@ function TableProducersSheetFilters({ children }: React.PropsWithChildren) {
 		}
 	}
 
+	function clearSearchParams() {
+		setSearchParams({
+			status: null,
+			kind: null,
+			from: null,
+			to: null,
+			cursor: null,
+		});
+
+		setOpen(false);
+	}
+
 	function applySearchParams() {
 		setSearchParams({
-			status: status === 'active' ? null : status,
+			status: status === 'all' ? null : status,
 			kind: kind === 'all' ? null : kind,
 			from: from || null,
 			to: to || null,
@@ -97,21 +109,24 @@ function TableProducersSheetFilters({ children }: React.PropsWithChildren) {
 				<div className='px-4 space-y-3 overflow-auto'>
 					<Field>
 						<FieldLabel>Status</FieldLabel>
-						<div className='space-x-1.5'>
-							<Badge
-								variant={status === 'active' ? 'active' : 'default'}
-								className='w-fit px-2 cursor-pointer hover:bg-muted-foreground/20 data-[variant=active]:hover:bg-active/80'
-								onClick={() => setStatus('active')}
-							>
-								Ativos
-							</Badge>
-							<Badge
-								variant={status === 'pending' ? 'active' : 'default'}
-								className='w-fit px-2 cursor-pointer hover:bg-muted-foreground/20 data-[variant=active]:hover:bg-active/80'
-								onClick={() => setStatus('pending')}
-							>
-								Pendentes
-							</Badge>
+						<div className='flex flex-wrap gap-1.5'>
+							{(
+								[
+									['all', 'Todos'],
+									['active', 'Ativos'],
+									['suspended', 'Suspensos'],
+									['pending', 'Pendentes'],
+								] as const
+							).map(([value, label]) => (
+								<Badge
+									key={value}
+									variant={status === value ? 'active' : 'default'}
+									className='w-fit px-2 cursor-pointer hover:bg-muted-foreground/20 data-[variant=active]:hover:bg-active/80'
+									onClick={() => setStatus(value)}
+								>
+									{label}
+								</Badge>
+							))}
 						</div>
 					</Field>
 					<Field>
@@ -142,7 +157,11 @@ function TableProducersSheetFilters({ children }: React.PropsWithChildren) {
 					</Field>
 					<Field>
 						<FieldLabel>
-							{status === 'pending' ? 'Data do convite' : 'Data de início'}
+							{status === 'pending'
+								? 'Data do convite'
+								: status === 'all'
+									? 'Data de início ou convite'
+									: 'Data de início'}
 						</FieldLabel>
 						<Popover>
 							<PopoverTrigger asChild>
@@ -203,6 +222,9 @@ function TableProducersSheetFilters({ children }: React.PropsWithChildren) {
 					<Button onClick={applySearchParams}>
 						Aplicar <SaveIcon />
 					</Button>
+					<Button variant='outline' onClick={clearSearchParams}>
+						Limpar filtros
+					</Button>
 					<SheetClose asChild>
 						<Button variant='destructive'>
 							Fechar <XCircleIcon />
@@ -218,7 +240,7 @@ function TableProducersSheetFiltersCount() {
 	const [searchParams] = useSearchParams();
 
 	const count = [
-		searchParams.status === 'pending',
+		!!searchParams.status && searchParams.status !== 'all',
 		!!searchParams.kind && searchParams.kind !== 'all',
 		!!searchParams.from || !!searchParams.to,
 	].filter(Boolean).length;
@@ -237,4 +259,43 @@ function TableProducersSheetFiltersCount() {
 	);
 }
 
-export { TableProducersSheetFilters, TableProducersSheetFiltersCount };
+// "Limpar tudo" na barra de busca, como nas propostas: só aparece com filtro ativo.
+function TableProducersClearFilters() {
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const isActive =
+		(!!searchParams.status && searchParams.status !== 'all') ||
+		(!!searchParams.kind && searchParams.kind !== 'all') ||
+		!!searchParams.from ||
+		!!searchParams.to;
+
+	if (!isActive) {
+		return;
+	}
+
+	return (
+		<Button
+			variant='link'
+			size='sm'
+			className='text-xs [&_svg]:size-3 text-destructive'
+			onClick={() =>
+				setSearchParams({
+					status: null,
+					kind: null,
+					from: null,
+					to: null,
+					cursor: null,
+				})
+			}
+		>
+			<XCircleIcon />
+			Limpar tudo
+		</Button>
+	);
+}
+
+export {
+	TableProducersClearFilters,
+	TableProducersSheetFilters,
+	TableProducersSheetFiltersCount,
+};

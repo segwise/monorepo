@@ -1,4 +1,8 @@
-import type { ProducerSimple, ResponseDataCursor } from '@segwise/core/types';
+import type {
+	ProducerListItem,
+	ProducerSimple,
+	ResponseDataCursor,
+} from '@segwise/core/types';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/libraries/api';
 import type { SearchParamsProps } from '@/libraries/search-params/producers';
@@ -27,10 +31,13 @@ const useProducersSimple = (
 		queryKey: ['producers', 'simple', props],
 		queryFn: async ({ signal }) =>
 			(
-				await api.get<ResponseDataCursor<ProducerSimple>>('/producers/simple', {
-					params: props,
-					signal,
-				})
+				await api.get<ResponseDataCursor<ProducerListItem>>(
+					'/producers/simple',
+					{
+						params: props,
+						signal,
+					},
+				)
 			).data,
 		enabled,
 	});

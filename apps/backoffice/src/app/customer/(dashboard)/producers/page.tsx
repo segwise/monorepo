@@ -16,24 +16,19 @@ import { DialogProducerRegisterInternal } from '@/containers/dialogs/producers/r
 import { ButtonCopyProducerPublicLink } from '@/containers/producers/button-copy-public-link';
 import { TablePagination } from '@/containers/tables/pagination';
 import {
+	TableProducersClearFilters,
 	TableProducersSheetFilters,
 	TableProducersSheetFiltersCount,
 } from '@/containers/tables/producers/filters/sheet';
-import { TableProducersPending } from '@/containers/tables/producers/pending';
 import { TableProducersSimple } from '@/containers/tables/producers/simple';
-import { useSearchParams } from '@/libraries/search-params/producers';
 
 function ProducersPage() {
-	const [searchParams] = useSearchParams();
-
-	const status = searchParams.status || 'active';
-	const kind = searchParams.kind || 'all';
-
 	return (
 		<main className='grid grid-cols-1 gap-6 max-sm:gap-3 mt-1'>
 			<div className='flex flex-row max-sm:flex-col max-sm:space-y-2 sm:items-center sm:justify-between'>
 				<div className='flex flex-row items-center justify-start gap-x-2 max-sm:w-full'>
 					<InputSearch className='max-sm:w-full' />
+					<TableProducersClearFilters />
 				</div>
 				<div className='flex flex-row items-center sm:justify-end gap-x-2 max-sm:flex-wrap'>
 					<TableProducersSheetFilters>
@@ -70,17 +65,10 @@ function ProducersPage() {
 			<div className='space-y-3'>
 				<Card className='p-0 overflow-hidden'>
 					<CardContent className='p-0'>
-						{status === 'active' && <TableProducersSimple />}
-						{status === 'pending' && (
-							<TableProducersPending
-								kind={kind}
-								from={searchParams.from}
-								to={searchParams.to}
-							/>
-						)}
+						<TableProducersSimple />
 					</CardContent>
 				</Card>
-				{status === 'active' && <TablePagination type='producers' />}
+				<TablePagination type='producers' />
 			</div>
 		</main>
 	);
