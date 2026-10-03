@@ -5,6 +5,7 @@ import type {
 import { useMutation } from '@tanstack/react-query';
 import { XiorError } from 'xior';
 import { api } from '@/libraries/api';
+import { invalidateProducers } from './invalidate-producers';
 
 const useProducersUpdate = (id: string) =>
 	useMutation<ResponseDefault, Error, ProducerPartnerUpdate>({
@@ -24,6 +25,9 @@ const useProducersUpdate = (id: string) =>
 
 				throw new Error(message);
 			}
+		},
+		async onSuccess(_data, _variables, _result, ctx) {
+			await invalidateProducers(ctx.client);
 		},
 	});
 

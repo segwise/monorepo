@@ -2,6 +2,7 @@ import type { ResponseDefault } from '@segwise/core/types';
 import { useMutation } from '@tanstack/react-query';
 import { XiorError } from 'xior';
 import { api } from '@/libraries/api';
+import { invalidateProducers } from './invalidate-producers';
 
 const useProducersPendingRenewById = (id: string) =>
 	useMutation<ResponseDefault, Error>({
@@ -24,9 +25,7 @@ const useProducersPendingRenewById = (id: string) =>
 			}
 		},
 		async onSuccess(_data, _variables, _result, ctx) {
-			await ctx.client.invalidateQueries({
-				queryKey: ['producers'],
-			});
+			await invalidateProducers(ctx.client);
 		},
 	});
 

@@ -75,15 +75,10 @@ function DialogProducerPartnerEdit({
 
 	function onSubmit(props: ProducerPartnerUpdate) {
 		mutate(props, {
-			onSuccess(_data, _variables, _mutate, ctx) {
+			onSuccess() {
 				toast.success('PARCEIRO ATUALIZADO COM SUCESSO!');
 
 				onOpenChange(false);
-
-				ctx.client.invalidateQueries({ queryKey: ['producers', 'simple'] });
-				ctx.client.invalidateQueries({
-					queryKey: ['producers', 'simple', 'full'],
-				});
 			},
 			onError(error) {
 				toast.error(error.message || 'Falha ao atualizar registro');

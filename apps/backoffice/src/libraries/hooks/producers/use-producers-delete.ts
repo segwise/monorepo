@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/libraries/api';
+import { invalidateProducers } from './invalidate-producers';
 
 type ResponseDelete = { action: 'deleted' | 'suspended'; message: string };
 
@@ -9,7 +10,7 @@ const useProducersDeleteById = (id: string) =>
 		mutationFn: async () =>
 			(await api.delete<ResponseDelete>(`/producers/${id}`)).data,
 		async onSuccess(_data, _variables, _result, ctx) {
-			await ctx.client.invalidateQueries({ queryKey: ['producers'] });
+			await invalidateProducers(ctx.client);
 		},
 	});
 

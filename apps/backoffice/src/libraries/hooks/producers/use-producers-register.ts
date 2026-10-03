@@ -2,6 +2,7 @@ import type { ProducerRegister, ResponseDefault } from '@segwise/core/types';
 import { useMutation } from '@tanstack/react-query';
 import { XiorError } from 'xior';
 import { api } from '@/libraries/api';
+import { invalidateProducers } from './invalidate-producers';
 
 const useProducersRegister = () =>
 	useMutation<ResponseDefault, Error, ProducerRegister>({
@@ -20,6 +21,9 @@ const useProducersRegister = () =>
 
 				throw new Error(message);
 			}
+		},
+		async onSuccess(_data, _variables, _result, ctx) {
+			await invalidateProducers(ctx.client);
 		},
 	});
 

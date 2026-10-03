@@ -67,16 +67,8 @@ function DialogProducerRegisterInternal({ children }: React.PropsWithChildren) {
 
 	function onSubmit(props: ProducerRegisterInternal) {
 		mutate(props, {
-			async onSuccess(_data, _variables, _mutate, ctx) {
+			async onSuccess() {
 				toast.success('CADASTRADO COM SUCESSO!');
-
-				await Promise.all([
-					ctx.client.invalidateQueries({ queryKey: ['producers', 'simple'] }),
-					ctx.client.invalidateQueries({
-						queryKey: ['producers', 'simple', 'full'],
-					}),
-					ctx.client.invalidateQueries({ queryKey: ['producers', 'pending'] }),
-				]);
 
 				setOpen(false);
 			},
