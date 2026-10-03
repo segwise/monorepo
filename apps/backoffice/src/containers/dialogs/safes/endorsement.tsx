@@ -34,7 +34,7 @@ import {
 	XCircleIcon,
 } from 'lucide-react';
 import type React from 'react';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { withMask } from 'use-mask-input';
@@ -92,6 +92,9 @@ interface DialogSafeEndorsementDetailsProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }
+
+const plateKey = (value?: string | null) =>
+	(value ?? '').replace(/[^a-z0-9]/gi, '').toLowerCase();
 
 function commissionFromAmountAndPercentage(
 	amount: unknown,
@@ -423,20 +426,16 @@ function DialogSafeEndorsementDetails({
 			amount: 0,
 			percentage: endorsementPercentage?.percentage || 0,
 		},
-		...(vehicleConductorQuery && {
-			values: {
-				driver: maskCPF(vehicleConductorQuery.driver.cpf),
-				plate: vehicleConductorQuery.vehicle.plate
-					? maskPlate(vehicleConductorQuery.vehicle.plate)
-					: null,
-				model: capitalizeFirstLetters(vehicleConductorQuery.vehicle.model),
-				modelYear: vehicleConductorQuery.vehicle.modelYear,
-				franchise: 0,
-				amount: 0,
-				percentage: endorsementPercentage?.percentage || 0,
-			},
-		}),
 	});
+
+	// De onde vêm os dados do formulário. O PDF extraído sempre vence a consulta
+	// do seguro atual e a consulta da placa, que chegam depois e sobrescreveriam
+	// modelo, ano, franquia e valor do endosso.
+	const pdfRef = useRef<{
+		applied: boolean;
+		plate: string | null;
+		percentage: boolean;
+	}>({ applied: false, plate: null, percentage: false });
 
 	const formAddress = useForm({
 		mode: 'all',
@@ -446,10 +445,6 @@ function DialogSafeEndorsementDetails({
 		defaultValues: {
 			postalCode: '',
 			amount: 0,
-			percentage: endorsementPercentage?.percentage || 0,
-		},
-		// @ts-expect-error
-		values: {
 			percentage: endorsementPercentage?.percentage || 0,
 		},
 	});
@@ -462,10 +457,6 @@ function DialogSafeEndorsementDetails({
 		defaultValues: {
 			franchise: 0,
 			amount: 0,
-			percentage: endorsementPercentage?.percentage || 0,
-		},
-		// @ts-expect-error
-		values: {
 			percentage: endorsementPercentage?.percentage || 0,
 		},
 	});
@@ -484,6 +475,49 @@ function DialogSafeEndorsementDetails({
 		control: formVehicleConductor.control,
 		name: 'plate',
 	});
+
+	// Pré-preenche com os dados atuais do seguro só enquanto não houver PDF.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: só reage à chegada da consulta
+	useEffect(() => {
+		if (!vehicleConductorQuery || pdfRef.current.applied) {
+			return;
+		}
+
+		formVehicleConductor.reset({
+			driver: maskCPF(vehicleConductorQuery.driver.cpf),
+			plate: vehicleConductorQuery.vehicle.plate
+				? maskPlate(vehicleConductorQuery.vehicle.plate)
+				: null,
+			model: capitalizeFirstLetters(vehicleConductorQuery.vehicle.model),
+			modelYear: vehicleConductorQuery.vehicle.modelYear,
+			franchise: 0,
+			amount: 0,
+			percentage: endorsementPercentage?.percentage || 0,
+		});
+	}, [vehicleConductorQuery]);
+
+	// Percentual padrão da corretora: só entra se o PDF não trouxe um e o campo
+	// ainda não foi preenchido.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: só reage à chegada da consulta
+	useEffect(() => {
+		const percentage = endorsementPercentage?.percentage;
+
+		if (percentage == null || pdfRef.current.percentage) {
+			return;
+		}
+
+		if (!Number(formVehicleConductor.getValues('percentage'))) {
+			formVehicleConductor.setValue('percentage', percentage);
+		}
+
+		if (!Number(formAddress.getValues('percentage'))) {
+			formAddress.setValue('percentage', percentage);
+		}
+
+		if (!Number(formFranchise.getValues('percentage'))) {
+			formFranchise.setValue('percentage', percentage);
+		}
+	}, [endorsementPercentage]);
 
 	const driver = useWatch({
 		control: formVehicleConductor.control,
@@ -672,8 +706,17 @@ function DialogSafeEndorsementDetails({
 
 		setType(extracted.type);
 
+		pdfRef.current = {
+			applied: true,
+			plate: null,
+			percentage:
+				'percentage' in extracted.data && extracted.data.percentage != null,
+		};
+
 		if (extracted.type === 'vehicle_conductor') {
 			const parsedData = extracted.data;
+
+			pdfRef.current.plate = plateKey(parsedData.plate) || null;
 
 			setNotPlate(!parsedData.plate);
 
@@ -742,13 +785,18 @@ function DialogSafeEndorsementDetails({
 
 	useEffect(() => {
 		if (plateResponse) {
+			// A placa é a do PDF: modelo e ano extraídos do documento valem.
+			if (pdfRef.current.plate && pdfRef.current.plate === plateKey(plate)) {
+				return;
+			}
+
 			formVehicleConductor.setValue(
 				'model',
 				capitalizeFirstLetters(plateResponse.model),
 			);
 			formVehicleConductor.setValue('modelYear', plateResponse.modelYear);
 		}
-	}, [formVehicleConductor, plateResponse]);
+	}, [formVehicleConductor, plateResponse, plate]);
 
 	useEffect(() => {
 		if (plateResponseIsError) {
@@ -764,6 +812,7 @@ function DialogSafeEndorsementDetails({
 			setNotPlate(false);
 			setResolvedId(idProp ?? null);
 			setFormUnlocked(false);
+			pdfRef.current = { applied: false, plate: null, percentage: false };
 		}
 	}
 
@@ -886,6 +935,12 @@ function DialogSafeEndorsementDetails({
 																		placeholder='AAA-0000 ou AAA0A00'
 																		onChange={({ target: { value } }) => {
 																			field.onChange(maskPlate(value));
+
+																			if (
+																				plateKey(value) !== pdfRef.current.plate
+																			) {
+																				pdfRef.current.plate = null;
+																			}
 
 																			if (!isPlate(value)) {
 																				formVehicleConductor.setValue(
