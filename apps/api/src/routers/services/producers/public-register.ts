@@ -1,11 +1,12 @@
 import { zValidator } from '@hono/zod-validator';
-import { isCNPJ, isCPF, SchemaProducerPublicRegister } from '@segwise/core';
+import { SchemaProducerPublicRegister } from '@segwise/core';
 import { XiorError } from 'xior';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { selectPrisma as selectPrismaBrokerPublic } from '@/db-adapters/broker/public';
 import { serializer as serializerBrokerPublic } from '@/db-serializers/broker/public';
 import { buildAcceptInvitationUrl } from '@/functions/hostname/build-accept-invitation-url';
+import { findOrCreateProducerUser } from '@/functions/producers/find-or-create-producer-user';
 import { Role, TypeOfProductionPayment } from '@/generated/prisma/enums';
 import { InvitePartnerEmail } from '../../../templates/invite-partner';
 
@@ -118,39 +119,16 @@ function registerRoutersServicesProducersPublicRegister(server: Server) {
 					throw new Error('Código de indicação já está em uso. Escolha outro.');
 				}
 
-				const isUser = await ctx.database.user.findFirst({
-					where: {
-						OR: [{ cpf: cpfOrCnpj }, { cnpj: cpfOrCnpj }],
-					},
-					select: { id: true },
+				const { userId, created } = await findOrCreateProducerUser(ctx, {
+					name,
+					email,
+					phone,
+					cpfOrCnpj,
 				});
 
-				let userId: string;
-
-				if (isUser) {
-					userId = isUser.id;
-				} else {
-					const { user } = await ctx.auth.api.createUser({
-						body: {
-							name,
-							email,
-							password: Bun.randomUUIDv7(),
-							// @ts-expect-error
-							role: Role.customer,
-							...(isCPF(cpfOrCnpj) && { cpf: cpfOrCnpj }),
-							...(isCNPJ(cpfOrCnpj) && { cnpj: cpfOrCnpj }),
-							phone,
-						},
-					});
-
-					userId = user.id;
-					createdUserId = user.id;
+				if (created) {
+					createdUserId = userId;
 				}
-
-				await ctx.database.user.update({
-					where: { id: userId },
-					data: { pix },
-				});
 
 				const isMember = await ctx.database.member.findUnique({
 					where: {
@@ -164,6 +142,11 @@ function registerRoutersServicesProducersPublicRegister(server: Server) {
 				if (isMember) {
 					throw new Error('Você já está cadastrado nesta corretora');
 				}
+
+				await ctx.database.user.update({
+					where: { id: userId },
+					data: { pix },
+				});
 
 				const invitation = await ctx.database.invitation.create({
 					data: {
@@ -186,12 +169,24 @@ function registerRoutersServicesProducersPublicRegister(server: Server) {
 
 				const url = buildAcceptInvitationUrl(ctx.environment, invitation.id);
 
-				await ctx.email.emails.send({
+				const { error: sendError } = await ctx.email.emails.send({
 					from: 'Segwise <invite@emails.xcarcorretora.com.br>',
 					to: email,
 					subject: 'Aceitar convite de produção',
 					react: InvitePartnerEmail({ company: broker.name, url }),
 				});
+
+				// Sem e-mail o convite não serve: não deixa pendente um convite que
+				// ninguém recebeu (o cadastro pode ser refeito).
+				if (sendError) {
+					await ctx.database.invitation.delete({
+						where: { id: invitation.id },
+					});
+
+					throw new Error(
+						'Não foi possível enviar o e-mail de confirmação. Tente novamente.',
+					);
+				}
 
 				return ctx.json(
 					{

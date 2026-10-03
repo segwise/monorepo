@@ -1,7 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
-import { isCNPJ, isCPF, SchemaProducerRegisterInternal } from '@segwise/core';
+import { SchemaProducerRegisterInternal } from '@segwise/core';
 import { XiorError } from 'xior';
 import type { Server } from '@/@types/server';
+import { findOrCreateProducerUser } from '@/functions/producers/find-or-create-producer-user';
 import { generateUniqueReferral } from '@/functions/producers/generate-unique-referral';
 import { Role } from '@/generated/prisma/enums';
 
@@ -34,39 +35,16 @@ function registerRoutersServicesProducersRegisterInternal(server: Server) {
 			let createdUserId: string | null = null;
 
 			try {
-				const isUser = await ctx.database.user.findFirst({
-					where: {
-						OR: [{ cpf: cpfOrCnpj }, { cnpj: cpfOrCnpj }],
-					},
-					select: { id: true },
+				const { userId, created } = await findOrCreateProducerUser(ctx, {
+					name,
+					email,
+					phone,
+					cpfOrCnpj,
 				});
 
-				let userId: string;
-
-				if (!isUser) {
-					const { user } = await ctx.auth.api.createUser({
-						body: {
-							name,
-							email,
-							password: Bun.randomUUIDv7(),
-							// @ts-expect-error
-							role: Role.customer,
-							...(isCPF(cpfOrCnpj) && { cpf: cpfOrCnpj }),
-							...(isCNPJ(cpfOrCnpj) && { cnpj: cpfOrCnpj }),
-							phone,
-						},
-					});
-
-					userId = user.id;
-					createdUserId = user.id;
-				} else {
-					userId = isUser.id;
+				if (created) {
+					createdUserId = userId;
 				}
-
-				await ctx.database.user.update({
-					where: { id: userId },
-					data: { pix },
-				});
 
 				const isMember = await ctx.database.member.findUnique({
 					where: {
@@ -80,6 +58,11 @@ function registerRoutersServicesProducersRegisterInternal(server: Server) {
 				if (isMember) {
 					throw new Error('Usuário já vinculado a corretora');
 				}
+
+				await ctx.database.user.update({
+					where: { id: userId },
+					data: { pix },
+				});
 
 				const referral = await generateUniqueReferral(ctx);
 
