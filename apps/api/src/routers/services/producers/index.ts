@@ -2,7 +2,6 @@ import type { Server } from '@/@types/server.d';
 
 import { registerRoutersServicesProducersById } from '@/routers/services/producers/[id]';
 import { registerRoutersServicesProducersSimpleListining } from '@/routers/services/producers/listinig';
-import { registerRoutersServicesProducersPending } from '@/routers/services/producers/pending';
 import { registerRoutersServicesProducersPendingDelete } from '@/routers/services/producers/pending-delete';
 import { registerRoutersServicesProducersPendingRenew } from '@/routers/services/producers/pending-renew';
 import { registerRoutersServicesProducersPublicLink } from '@/routers/services/producers/public-link';
@@ -19,7 +18,6 @@ function registerRoutersServicesProducers(server: Server) {
 	registerRoutersServicesProducersRegisterInternal(base);
 	registerRoutersServicesProducersPublicRegister(base);
 	registerRoutersServicesProducersPublicLink(base);
-	registerRoutersServicesProducersPending(base);
 	registerRoutersServicesProducersPendingDelete(base);
 	registerRoutersServicesProducersPendingRenew(base);
 }
