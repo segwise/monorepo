@@ -213,15 +213,25 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 
 				const hash = Bun.hash(buffer).toString(16);
 
-				const cached = await ctx.cache.get(
-					`endorsement-pdf-extract:v2:${hash}`,
-				);
+				// O cache guarda só o que foi lido do PDF (a chave é o arquivo). O seguro
+				// ao qual o endosso se refere é resolvido a cada requisição: o mesmo PDF
+				// pode ser enviado para outro seguro e não pode herdar o id do primeiro.
+				const cacheKey = `endorsement-pdf-extract:v3:${hash}`;
 
-				if (cached) {
-					return ctx.json(JSON.parse(cached), 200);
+				const cached = await ctx.cache.get(cacheKey);
+
+				const extracted = cached
+					? (JSON.parse(cached) as DataExtractEndorsement)
+					: await extractDataEndorsement(buffer);
+
+				if (!cached) {
+					await ctx.cache.set(
+						cacheKey,
+						JSON.stringify(extracted),
+						'EX',
+						60 * 60 * 24 * 1,
+					);
 				}
-
-				const extracted = await extractDataEndorsement(buffer);
 
 				const safeId =
 					id ?? (await findSafeByLookup(ctx.database, extracted.lookup));
@@ -230,20 +240,14 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 					throw new Error('Não foi encontrada apólice referente ao endosso');
 				}
 
-				const response = {
-					safeId,
-					type: extracted.type,
-					data: extracted.data,
-				};
-
-				await ctx.cache.set(
-					`endorsement-pdf-extract:v2:${hash}`,
-					JSON.stringify(response),
-					'EX',
-					60 * 60 * 24 * 1,
+				return ctx.json(
+					{
+						safeId,
+						type: extracted.type,
+						data: extracted.data,
+					},
+					200,
 				);
-
-				return ctx.json(response, 200);
 			} catch (error) {
 				let message = 'Falha ao extrair dados do documento';
 
