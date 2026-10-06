@@ -1,5 +1,5 @@
 import z from 'zod';
-import { defaultFilterDate } from '../../../utils/default-filter-date';
+import { getDefaultFilterDate } from '../../../utils/default-filter-date';
 import { transformArray } from '../../../utils/transform-array';
 import { SchemaQuoteStatus } from '../../quotes/status';
 import { SchemaModality } from '../../utils';
@@ -46,7 +46,7 @@ const SchemaSearchParamsQuoteSimple = z
 			.transform(transformArray)
 			.nullish(),
 		requestedAt: SchemaDateRange.or(parseJsonQuery(SchemaDateRange)).default(
-			defaultFilterDate,
+			getDefaultFilterDate,
 		),
 		ids: z
 			.uuidv7('ID do seguro inválido')
