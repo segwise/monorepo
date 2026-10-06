@@ -3,14 +3,123 @@ import { maskNumber, SchemaDateString, SchemaPostalCode } from '@segwise/core';
 import { z } from 'zod';
 import type { Database } from '@/@types/database';
 import type { Server } from '@/@types/server';
-import type { Prisma } from '@/generated/prisma/client';
 import {
 	askJson,
 	runPdfExtraction,
 	SchemaPlateLenient,
 	visionInstructions,
 } from '@/libraries/ai/pdf-extraction';
-import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
+
+/**
+ * ============================================================================
+ * Helpers
+ * ============================================================================
+ */
+
+function parseBrazilianNumber(value: unknown): unknown {
+	if (typeof value === 'number') {
+		return value;
+	}
+
+	if (typeof value !== 'string') {
+		return value;
+	}
+
+	let normalized = value
+		.trim()
+		.replace(/\s/g, '')
+		.replace(/R\$/gi, '')
+		.replace(/%/g, '');
+
+	if (!normalized) {
+		return value;
+	}
+
+	const hasComma = normalized.includes(',');
+
+	if (hasComma) {
+		normalized = normalized.replace(/\./g, '').replace(',', '.');
+	}
+
+	const parsed = Number(normalized);
+
+	return Number.isFinite(parsed) ? parsed : value;
+}
+
+function normalizePlate(value: string | null | undefined): string | null {
+	if (!value) {
+		return null;
+	}
+
+	const text = value.trim().toUpperCase();
+
+	if (
+		!text ||
+		text === '-' ||
+		text === 'A AVISAR' ||
+		text === 'AVISAR' ||
+		text === 'SEM PLACA' ||
+		text === 'S/ PLACA' ||
+		text === 'S/PLACA'
+	) {
+		return null;
+	}
+
+	const normalized = text.replace(/[^A-Z0-9]/g, '');
+
+	/**
+	 * Evita um erro muito comum em PDFs:
+	 * o texto linearizado pode colocar o chassi abaixo do label "Placa".
+	 *
+	 * Placa brasileira atual/antiga = 7 caracteres.
+	 * Chassi geralmente = 17 caracteres.
+	 */
+	if (normalized.length !== 7) {
+		return null;
+	}
+
+	return normalized;
+}
+
+function numericValuesFromText(text: string): number[] {
+	const matches =
+		text.match(/-?\d+(?:\.\d{3})*(?:,\d+)?|-?\d+(?:\.\d+)?/g) ?? [];
+
+	return matches
+		.map((value) => parseBrazilianNumber(value))
+		.filter(
+			(value): value is number =>
+				typeof value === 'number' && Number.isFinite(value),
+		);
+}
+
+function evidenceContainsValue(
+	evidence: string | null | undefined,
+	value: number,
+	tolerance = 0.02,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	const absolute = Math.abs(value);
+
+	return numericValuesFromText(evidence).some(
+		(candidate) => Math.abs(Math.abs(candidate) - absolute) <= tolerance,
+	);
+}
+
+function errorMessage(error: unknown): string {
+	return error instanceof Error
+		? error.message
+		: 'Falha desconhecida na validação';
+}
+
+/**
+ * ============================================================================
+ * Schemas finais da API
+ * ============================================================================
+ */
 
 const SchemaLookup = z
 	.object({
@@ -20,37 +129,38 @@ const SchemaLookup = z
 	})
 	.strict();
 
-/**
- * Metadados internos utilizados para aumentar a confiabilidade
- * da extração financeira.
- *
- * Estes campos não precisam ser enviados ao frontend.
- */
-const SchemaFinancialExtraction = z
-	.object({
-		amount: z.number('Valor do endosso inválido').nullable(),
-		percentage: z.number('Percentual de comissão inválido').nullish(),
-		amountDirection: z.enum(['charge', 'refund', 'neutral']).nullable(),
-		amountEvidence: z.string().nullable(),
-		amountLabel: z.string().nullable(),
-	})
-	.strict();
-
 const SchemaDataExtractVehicleConductor = z
 	.object({
 		type: z.literal('vehicle_conductor'),
 		lookup: SchemaLookup,
 		data: z
 			.object({
+				/**
+				 * Esses campos são nullable porque um endosso pode alterar
+				 * apenas veículo OU apenas condutor.
+				 *
+				 * Não devemos obrigar a IA a inventar os dados que não aparecem.
+				 */
 				driver: z
 					.string('CPF do condutor inválido')
-					.min(1, 'CPF do condutor inválido'),
+					.min(1, 'CPF do condutor inválido')
+					.nullish(),
+
 				plate: SchemaPlateLenient,
-				model: z.string('Modelo do veículo inválido'),
+
+				model: z.string('Modelo do veículo inválido').nullish(),
+
 				modelYear: z.union([z.string(), z.number()]).nullish(),
-				franchise: z.number('Valor da frânquia inválido'),
+
+				franchise: z
+					.number('Valor da frânquia inválido')
+					.nonnegative()
+					.nullish(),
+
+				amount: z.number('Valor do endosso inválido'),
+
+				percentage: z.number('Percentual de comissão inválido').nullish(),
 			})
-			.merge(SchemaFinancialExtraction)
 			.strict(),
 	})
 	.strict();
@@ -62,8 +172,11 @@ const SchemaDataExtractAddress = z
 		data: z
 			.object({
 				postalCode: SchemaPostalCode,
+
+				amount: z.number('Valor do endosso inválido'),
+
+				percentage: z.number('Percentual de comissão inválido').nullish(),
 			})
-			.merge(SchemaFinancialExtraction)
 			.strict(),
 	})
 	.strict();
@@ -74,9 +187,12 @@ const SchemaDataExtractFranchise = z
 		lookup: SchemaLookup,
 		data: z
 			.object({
-				franchise: z.number('Valor da frânquia inválido'),
+				franchise: z.number('Valor da frânquia inválido').nonnegative(),
+
+				amount: z.number('Valor do endosso inválido'),
+
+				percentage: z.number('Percentual de comissão inválido').nullish(),
 			})
-			.merge(SchemaFinancialExtraction)
 			.strict(),
 	})
 	.strict();
@@ -102,346 +218,582 @@ const SchemaDataExtractEndorsement = z.discriminatedUnion('type', [
 
 type DataExtractEndorsement = z.infer<typeof SchemaDataExtractEndorsement>;
 
+/**
+ * ============================================================================
+ * Schema que a IA pode devolver
+ *
+ * É deliberadamente mais permissivo do que o schema final.
+ * ============================================================================
+ */
+
+const SchemaModelMoney = z.preprocess(
+	parseBrazilianNumber,
+	z.number().finite(),
+);
+
+const SchemaModelMoneyNullable = SchemaModelMoney.nullable();
+
+const SchemaModelPercentage = z.preprocess(
+	parseBrazilianNumber,
+	z.number().finite(),
+);
+
+const SchemaModelPercentageNullable = SchemaModelPercentage.nullable();
+
+const SchemaModelLookup = z
+	.object({
+		plate: z.string().nullable(),
+		insuredRegistration: z.string().nullable(),
+		insuredName: z.string().nullable(),
+	})
+	.strict();
+
+const SchemaModelFinancial = z
+	.object({
+		amount: SchemaModelMoneyNullable,
+
+		/**
+		 * charge:
+		 * segurado paga valor adicional.
+		 *
+		 * refund:
+		 * segurado recebe crédito/restituição.
+		 *
+		 * neutral:
+		 * nenhuma movimentação financeira.
+		 */
+		amountDirection: z.enum(['charge', 'refund', 'neutral']).nullable(),
+
+		amountLabel: z.string().nullable(),
+
+		amountEvidence: z.string().nullable(),
+
+		percentage: SchemaModelPercentageNullable,
+
+		percentageEvidence: z.string().nullable(),
+	})
+	.strict();
+
+const SchemaModelVehicleConductor = z
+	.object({
+		type: z.literal('vehicle_conductor'),
+
+		typeEvidence: z.string().nullable(),
+
+		lookup: SchemaModelLookup,
+
+		data: z
+			.object({
+				driver: z.string().nullable(),
+
+				plate: z.string().nullable(),
+
+				model: z.string().nullable(),
+
+				modelYear: z.union([z.string(), z.number()]).nullable(),
+
+				franchise: SchemaModelMoneyNullable,
+			})
+			.merge(SchemaModelFinancial)
+			.strict(),
+	})
+	.strict();
+
+const SchemaModelAddress = z
+	.object({
+		type: z.literal('address'),
+
+		typeEvidence: z.string().nullable(),
+
+		lookup: SchemaModelLookup,
+
+		data: z
+			.object({
+				postalCode: z.string().nullable(),
+			})
+			.merge(SchemaModelFinancial)
+			.strict(),
+	})
+	.strict();
+
+const SchemaModelFranchise = z
+	.object({
+		type: z.literal('franchise'),
+
+		typeEvidence: z.string().nullable(),
+
+		lookup: SchemaModelLookup,
+
+		data: z
+			.object({
+				franchise: SchemaModelMoneyNullable,
+			})
+			.merge(SchemaModelFinancial)
+			.strict(),
+	})
+	.strict();
+
+const SchemaModelCancellation = z
+	.object({
+		type: z.literal('cancellation'),
+
+		typeEvidence: z.string().nullable(),
+
+		lookup: SchemaModelLookup,
+
+		data: z
+			.object({
+				effectivedAt: z.string().nullable(),
+			})
+			.strict(),
+	})
+	.strict();
+
+const SchemaModelUnknown = z
+	.object({
+		type: z.literal('unknown'),
+
+		typeEvidence: z.string().nullable(),
+
+		lookup: SchemaModelLookup,
+
+		data: z
+			.object({
+				reason: z.string(),
+			})
+			.strict(),
+	})
+	.strict();
+
+const SchemaModelOutput = z.discriminatedUnion('type', [
+	SchemaModelVehicleConductor,
+	SchemaModelAddress,
+	SchemaModelFranchise,
+	SchemaModelCancellation,
+	SchemaModelUnknown,
+]);
+
+type ModelOutput = z.infer<typeof SchemaModelOutput>;
+
+/**
+ * ============================================================================
+ * Prompt
+ * ============================================================================
+ */
+
 function mountPrompt(text: string, imagesCount: number): string {
 	return `
-Extraia os dados do endosso de seguro presente no documento abaixo.
+Extraia os dados do ENDOSSO DE SEGURO presente no documento.
 
-O documento pode ser de QUALQUER seguradora e o layout, os nomes dos campos,
-a organização das páginas e a terminologia podem variar.
+O documento pode ser de QUALQUER seguradora e pode possuir qualquer layout.
+Os nomes dos campos, tabelas, títulos e organização das páginas podem variar.
+
 ${visionInstructions(imagesCount)}
+
+IMPORTANTE SOBRE O PDF
+
+O texto foi extraído automaticamente de um PDF.
+
+A extração textual pode:
+- inverter colunas;
+- colocar valores abaixo do label errado;
+- perder alinhamento;
+- misturar tabelas;
+- colocar chassi abaixo do campo "Placa";
+- misturar franquia com prêmio;
+- misturar parcelas da apólice original com parcelas do endosso.
+
+Quando imagens das páginas estiverem disponíveis, use a estrutura VISUAL da
+página para determinar qual valor pertence a qual campo.
+
+Quando a disposição visual da página contradizer o texto linearizado,
+prefira a estrutura visual da página.
 
 Analise TODO o documento antes de responder.
 
-IMPORTANTE:
-- O texto foi extraído de um PDF e pode perder tabelas, colunas, alinhamento,
-  hierarquia visual e associação entre rótulos e valores.
-- Quando imagens das páginas forem fornecidas, utilize também a informação
-  visual para entender tabelas, campos, títulos, valores e relações que possam
-  ter sido perdidas na extração textual.
-- Não assuma que um valor próximo de um determinado texto pertence àquele
-  campo sem considerar o contexto visual e semântico.
-- Nunca invente informações.
+Nunca invente dados.
 
 TIPO DO ENDOSSO
 
-Primeiro identifique exatamente um dos seguintes tipos:
+Identifique exatamente um destes tipos:
 
-- "vehicle_conductor":
-  alteração de veículo e/ou condutor, incluindo troca de veículo, placa,
-  modelo ou condutor principal.
+1. "vehicle_conductor"
 
-- "address":
-  alteração de endereço ou CEP de pernoite do veículo.
+Use quando a finalidade principal do endosso for:
+- substituição de veículo;
+- alteração de veículo;
+- troca de placa;
+- troca de modelo;
+- alteração do principal condutor;
+- inclusão/substituição de condutor.
 
-- "franchise":
-  alteração de franquia.
+2. "address"
 
-- "cancellation":
-  cancelamento da apólice, seguro ou proposta.
+Use quando a finalidade principal for:
+- alteração de CEP de pernoite;
+- alteração de local de risco;
+- alteração de endereço relacionado ao risco.
 
-Se o documento utilizar outra terminologia, determine o tipo pelo significado
-da alteração realizada, e não apenas pelo título utilizado pela seguradora.
+3. "franchise"
+
+Use SOMENTE quando a finalidade principal do endosso for alterar a franquia.
+
+A simples presença de uma franquia no documento NÃO significa que o endosso
+é do tipo "franchise".
+
+Documentos de substituição de veículo normalmente também mostram a franquia,
+mas continuam sendo "vehicle_conductor".
+
+4. "cancellation"
+
+Use quando a finalidade principal for:
+- cancelamento;
+- rescisão;
+- encerramento da apólice/seguro.
+
+5. "unknown"
+
+Use "unknown" quando:
+- não for possível determinar com segurança;
+- o endosso for de outro tipo;
+- for alteração somente de cobertura;
+- alteração somente de importância segurada;
+- alteração somente de forma de pagamento;
+- ou qualquer operação não enquadrada com segurança nos quatro tipos acima.
+
+NUNCA escolha um dos quatro tipos apenas para evitar retornar "unknown".
+
+"typeEvidence" deve conter um trecho CURTO do documento que ajude a justificar
+a classificação.
+
+Não explique seu raciocínio. Apenas transcreva a evidência.
 
 LOOKUP
 
-Todos os tipos possuem "lookup", utilizado para identificar o seguro ao qual
-o endosso pertence:
+"lookup" serve para identificar o seguro ao qual o endosso pertence.
 
 {
-  "plate": "string ou null",
-  "insuredRegistration": "string ou null",
-  "insuredName": "string ou null"
+	"plate": string | null,
+	"insuredRegistration": string | null,
+	"insuredName": string | null
 }
 
-Regras do lookup:
+Regras:
 
-- "plate":
-  placa do veículo segurado relacionado ao endosso.
-  Se houver placa anterior e nova placa, utilize preferencialmente a placa
-  que permita identificar a apólice/seguro existente.
-  Se existir apenas uma placa no documento, utilize-a.
-  Se constar "A AVISAR", "SEM PLACA" ou equivalente, use null.
+- insuredRegistration:
+  CPF/CNPJ do SEGURADO, nunca do corretor, titular do cartão, condutor ou terceiro.
 
-- "insuredRegistration":
-  CPF ou CNPJ do segurado.
-  Retorne somente um CPF ou CNPJ.
-  Não utilize CPF de corretor, condutor ou terceiro como CPF do segurado.
+- insuredName:
+  nome/razão social do SEGURADO.
 
-- "insuredName":
-  nome ou razão social do segurado.
-  Não utilize nome do corretor, condutor ou terceiro como nome do segurado,
-  exceto quando também forem explicitamente o segurado.
+- plate:
+  placa relacionada ao seguro.
+
+CUIDADO COM PLACA E CHASSI:
+
+- Placa brasileira normalmente possui 7 caracteres alfanuméricos.
+- Chassi normalmente possui 17 caracteres.
+- NUNCA use o chassi como placa.
+- "-", "A AVISAR", "SEM PLACA" e equivalentes => null.
+
+Em endosso de substituição de veículo, se o documento apresentar claramente
+placa anterior e placa nova:
+- lookup.plate = placa anterior;
+- data.plate = placa nova.
+
+Se houver somente uma placa no documento e não for possível determinar que
+ela é a anterior, use essa placa em lookup.plate também.
 
 VALOR FINANCEIRO DO ENDOSSO
 
-Para todos os tipos que possuem "amount", determine o EFEITO FINANCEIRO TOTAL
-DO ENDOSSO para o segurado.
+"amount" representa o EFEITO FINANCEIRO TOTAL FINAL DO ENDOSSO.
 
-O campo "amount" NÃO representa:
-- valor da franquia;
-- limite de indenização;
-- importância segurada;
-- valor FIPE;
-- valor individual de uma cobertura;
-- prêmio individual de uma cobertura;
-- IOF isoladamente;
-- juros isoladamente;
-- comissão;
-- percentual;
-- desconto isoladamente;
-- valor de serviço;
-- valor de assistência;
-- valor de acessórios.
+Isto é diferente do prêmio líquido.
 
-Procure o valor FINAL da operação de endosso.
+Quando houver um total final incluindo:
+- IOF;
+- juros;
+- encargos;
 
-As seguradoras podem utilizar nomes diferentes, por exemplo:
+use o TOTAL FINAL.
 
-- preço total;
-- prêmio total;
-- prêmio do endosso;
-- valor do endosso;
-- total do endosso;
-- prêmio adicional;
-- adicional a pagar;
-- diferença de prêmio;
-- valor a pagar;
-- saldo a pagar;
-- total a pagar;
-- prêmio a restituir;
-- valor a restituir;
-- devolução;
-- restituição;
-- crédito;
-- estorno;
-- prêmio líquido;
-- prêmio emitido;
-- prêmio final.
+Exemplos de labels possíveis:
 
-Esses nomes são exemplos e NÃO constituem uma lista fechada.
-Interprete o significado financeiro do campo no contexto do documento.
+- Preço Total
+- Prêmio Total
+- Prêmio Total do Endosso
+- Valor Total
+- Valor Total do Endosso
+- Total a Pagar
+- Prêmio Adicional
+- Adicional a Pagar
+- Diferença de Prêmio
+- Saldo a Pagar
+- Valor a Restituir
+- Prêmio a Restituir
+- Restituição
+- Crédito
+- Estorno
 
-REGRA DE PRIORIDADE DO VALOR
+A lista acima NÃO é fechada.
 
-Quando houver mais de um valor financeiro:
+Interprete semanticamente o documento.
 
-1. Prefira o valor explicitamente identificado como TOTAL ou FINAL
-   da operação/endosso.
+PRIORIDADE FINANCEIRA
 
-2. Se houver um valor líquido e outro valor total incluindo impostos,
-   IOF, encargos ou juros, utilize o TOTAL FINAL.
+Se houver:
 
-3. Se o documento apresentar separadamente:
-   - prêmio líquido;
-   - IOF;
-   - juros;
-   - encargos;
-   - parcelas;
-   - total;
+Prêmio Líquido Total: R$ 374,29
+Juros: R$ 0,00
+IOF: R$ 27,62
+Prêmio Total: R$ 401,91
 
-   utilize o TOTAL explicitamente informado.
+retorne:
 
-4. NÃO some manualmente componentes quando o documento já apresentar
-   um total final.
+"amount": 401.91
+"amountDirection": "charge"
 
-5. NÃO utilize o valor de uma parcela quando existir um valor total
-   explicitamente informado.
+Se houver:
 
-6. Se houver somente parcelas e nenhum total explícito, determine o total
-   apenas quando o documento deixar inequivocamente claro a quantidade e
-   o valor das parcelas.
+Preço Líquido: R$ 36,57
+IOF: R$ 2,70
+Preço Total: R$ 39,27
 
-7. Se existirem valores anterior e posterior do seguro, não escolha
-   simplesmente o maior ou o mais recente. Procure o valor que represente
-   especificamente o efeito financeiro do ENDOSSO.
-
-8. Se houver valor a pagar pelo segurado:
-   - amountDirection = "charge"
-   - amount deve ser positivo.
-
-9. Se houver restituição, devolução ou crédito ao segurado:
-   - amountDirection = "refund"
-   - amount deve ser NEGATIVO.
-
-   Exemplo:
-   R$ 125,40 a restituir
-   =>
-   "amount": -125.40
-
-10. Se o documento afirmar explicitamente que não existe cobrança nem
-    restituição:
-    - amountDirection = "neutral"
-    - amount = 0
-
-11. Se não for possível determinar o valor com segurança:
-    - amount = null
-    - amountDirection = null
-
-Nunca use 0 apenas porque o valor não foi encontrado.
-
-EVIDÊNCIA DO VALOR
-
-Para todo tipo que possuir "amount", também retorne:
-
-- "amountLabel":
-  o nome/rótulo associado ao valor escolhido no documento.
-  Exemplo: "Preço Total", "Prêmio do Endosso", "Valor a Restituir".
-  Se não houver um rótulo identificável, use null.
-
-- "amountEvidence":
-  um trecho curto do próprio documento que justifique o valor escolhido.
-  Não explique seu raciocínio.
-  Apenas transcreva o menor trecho suficiente para identificar o valor.
-
-Exemplo:
-
-Documento:
-"Preço Líquido R$ 36,57"
-"IOF R$ 2,70"
-"Preço Total (impostos inclusos) R$ 39,27"
-
-Resultado:
+retorne:
 
 "amount": 39.27
 "amountDirection": "charge"
-"amountLabel": "Preço Total (impostos inclusos)"
-"amountEvidence": "Preço Total (impostos inclusos) R$ 39,27"
 
-Outro exemplo:
+NÃO use como amount:
+- franquia;
+- LMI;
+- limite de indenização;
+- FIPE;
+- preço individual de cobertura;
+- prêmio individual de cobertura;
+- IOF isoladamente;
+- juros isoladamente;
+- valor de assistência;
+- valor de vidro;
+- valor de parcela quando existir um total explícito;
+- comissão;
+- percentual;
+- valor original da apólice.
 
-Documento:
-"Prêmio a restituir ao segurado: R$ 150,00"
+RESTITUIÇÃO
 
-Resultado:
+Se o segurado tiver valor a RECEBER:
 
-"amount": -150
 "amountDirection": "refund"
-"amountLabel": "Prêmio a restituir ao segurado"
-"amountEvidence": "Prêmio a restituir ao segurado: R$ 150,00"
 
-PERCENTUAL DE COMISSÃO
+e "amount" deve representar o valor monetário correspondente.
 
-"percentage" representa exclusivamente o percentual de comissão referente
-ao endosso.
+Exemplo:
 
-- Retorne somente o número.
-- Exemplo: 15% => 15
-- Não confunda com percentual FIPE, desconto, franquia, bônus ou outro
-  percentual.
-- Se não estiver informado, use null.
+Prêmio a restituir: R$ 150,00
+
+=>
+
+"amount": 150.00
+"amountDirection": "refund"
+
+O sistema fará a normalização do sinal posteriormente.
+
+SEM MOVIMENTAÇÃO FINANCEIRA
+
+Somente use:
+
+"amount": 0
+"amountDirection": "neutral"
+
+quando o documento indicar explicitamente que não existe cobrança nem
+restituição.
+
+Se NÃO encontrar o valor financeiro:
+- amount = null
+- amountDirection = null
+
+Nunca use 0 para representar "não encontrado".
+
+EVIDÊNCIA FINANCEIRA
+
+"amountLabel":
+label associado ao valor escolhido.
+
+"amountEvidence":
+menor trecho do documento que contenha o valor escolhido.
+
+Exemplo:
+
+"amountLabel": "Prêmio Total"
+"amountEvidence": "Prêmio Total R$ 401,91"
+
+Não escreva explicações.
+
+COMISSÃO
+
+"percentage" representa EXCLUSIVAMENTE percentual de comissão do corretor
+referente ao endosso.
+
+Somente preencha quando estiver explicitamente relacionado a:
+- comissão;
+- comissão do corretor;
+- percentual de comissão;
+- perc. comissão.
+
+NÃO confunda comissão com:
+- % FIPE;
+- fator de ajuste;
+- desconto;
+- franquia reduzida;
+- percentual da franquia;
+- participação;
+- bônus;
+- percentual de cobertura.
+
+Na dúvida:
+
+"percentage": null
+"percentageEvidence": null
+
+Se preencher percentage, "percentageEvidence" deve conter o trecho que mostra
+explicitamente a comissão.
 
 FRANQUIA
 
-"franchise" representa a franquia principal do seguro/casco.
+Quando houver campo "franchise", retorne somente a FRANQUIA PRINCIPAL DO CASCO.
 
-Não confunda com:
-- franquia de vidro;
+Pode aparecer como:
+- franquia básica;
+- franquia obrigatória;
+- participação obrigatória;
+- 25% da básica;
+- 50% da obrigatória;
+- franquia compreensiva.
+
+NÃO use:
 - franquia de para-brisa;
+- franquia de vidro lateral;
 - franquia de farol;
 - franquia de lanterna;
 - franquia de retrovisor;
 - franquia de assistência;
-- valores de participação de serviços específicos.
+- franquia de serviço específico.
 
-Se houver uma franquia principal/compreensiva/casco e diversas franquias
-de serviços, utilize a franquia principal.
-
-FORMATO POR TIPO
+FORMATO DE SAÍDA
 
 vehicle_conductor:
 
 {
-  "type": "vehicle_conductor",
-  "lookup": {
-    "plate": "string ou null",
-    "insuredRegistration": "string ou null",
-    "insuredName": "string ou null"
-  },
-  "data": {
-    "driver": "string",
-    "plate": "string ou null",
-    "model": "string",
-    "modelYear": "string ou number ou null",
-    "franchise": "number",
-    "amount": "number ou null",
-    "percentage": "number ou null",
-    "amountDirection": "charge, refund, neutral ou null",
-    "amountEvidence": "string ou null",
-    "amountLabel": "string ou null"
-  }
+	"type": "vehicle_conductor",
+	"typeEvidence": "string ou null",
+	"lookup": {
+		"plate": "string ou null",
+		"insuredRegistration": "string ou null",
+		"insuredName": "string ou null"
+	},
+	"data": {
+		"driver": "string ou null, CPF do principal condutor após o endosso",
+		"plate": "string ou null, placa resultante após o endosso",
+		"model": "string ou null, modelo resultante após o endosso",
+		"modelYear": "string, number ou null",
+		"franchise": "number ou null",
+		"amount": "number ou null",
+		"amountDirection": "charge, refund, neutral ou null",
+		"amountLabel": "string ou null",
+		"amountEvidence": "string ou null",
+		"percentage": "number ou null",
+		"percentageEvidence": "string ou null"
+	}
 }
 
 address:
 
 {
-  "type": "address",
-  "lookup": {
-    "plate": "string ou null",
-    "insuredRegistration": "string ou null",
-    "insuredName": "string ou null"
-  },
-  "data": {
-    "postalCode": "string",
-    "amount": "number ou null",
-    "percentage": "number ou null",
-    "amountDirection": "charge, refund, neutral ou null",
-    "amountEvidence": "string ou null",
-    "amountLabel": "string ou null"
-  }
+	"type": "address",
+	"typeEvidence": "string ou null",
+	"lookup": {
+		"plate": "string ou null",
+		"insuredRegistration": "string ou null",
+		"insuredName": "string ou null"
+	},
+	"data": {
+		"postalCode": "string ou null",
+		"amount": "number ou null",
+		"amountDirection": "charge, refund, neutral ou null",
+		"amountLabel": "string ou null",
+		"amountEvidence": "string ou null",
+		"percentage": "number ou null",
+		"percentageEvidence": "string ou null"
+	}
 }
 
 franchise:
 
 {
-  "type": "franchise",
-  "lookup": {
-    "plate": "string ou null",
-    "insuredRegistration": "string ou null",
-    "insuredName": "string ou null"
-  },
-  "data": {
-    "franchise": "number",
-    "amount": "number ou null",
-    "percentage": "number ou null",
-    "amountDirection": "charge, refund, neutral ou null",
-    "amountEvidence": "string ou null",
-    "amountLabel": "string ou null"
-  }
+	"type": "franchise",
+	"typeEvidence": "string ou null",
+	"lookup": {
+		"plate": "string ou null",
+		"insuredRegistration": "string ou null",
+		"insuredName": "string ou null"
+	},
+	"data": {
+		"franchise": "number ou null",
+		"amount": "number ou null",
+		"amountDirection": "charge, refund, neutral ou null",
+		"amountLabel": "string ou null",
+		"amountEvidence": "string ou null",
+		"percentage": "number ou null",
+		"percentageEvidence": "string ou null"
+	}
 }
 
 cancellation:
 
 {
-  "type": "cancellation",
-  "lookup": {
-    "plate": "string ou null",
-    "insuredRegistration": "string ou null",
-    "insuredName": "string ou null"
-  },
-  "data": {
-    "effectivedAt": "DD/MM/AAAA"
-  }
+	"type": "cancellation",
+	"typeEvidence": "string ou null",
+	"lookup": {
+		"plate": "string ou null",
+		"insuredRegistration": "string ou null",
+		"insuredName": "string ou null"
+	},
+	"data": {
+		"effectivedAt": "DD/MM/AAAA ou null"
+	}
+}
+
+unknown:
+
+{
+	"type": "unknown",
+	"typeEvidence": "string ou null",
+	"lookup": {
+		"plate": "string ou null",
+		"insuredRegistration": "string ou null",
+		"insuredName": "string ou null"
+	},
+	"data": {
+		"reason": "string"
+	}
 }
 
 REGRAS GERAIS
 
-- Responda APENAS com JSON.
-- Responda em uma única linha minificada.
-- Não utilize markdown.
-- Não utilize \`\`\`.
-- Não adicione comentários.
-- Não adicione campos diferentes dos especificados.
-- Todo campo "number" deve ser JSON number, nunca string.
-- Converta valores brasileiros corretamente:
-  R$ 1.234,56 => 1234.56
-  R$ 39,27 => 39.27
-- Cada campo deve conter somente um dado.
-- Nunca retorne dois valores separados por vírgula, "/", "ou" etc.
-- Não invente informações ausentes.
-- Utilize null somente nos campos que permitem null.
-- Analise o documento inteiro antes de escolher valores.
-- Quando texto e imagem parecerem conflitantes por causa da extração do PDF,
-  utilize o contexto visual da página para determinar a associação correta.
+- Responda APENAS JSON válido.
+- JSON minificado em uma única linha.
+- Sem markdown.
+- Sem \`\`\`.
+- Sem comentários.
+- Não adicione campos.
+- Valores monetários devem ser number.
+- R$ 1.234,56 => 1234.56
+- R$ -150,40 => -150.40
+- Percentual 15% => 15
+- Não invente dados.
+- Analise o documento inteiro.
+- Use as imagens para confirmar tabelas e campos quando disponíveis.
 
 Texto extraído do documento:
 
@@ -451,154 +803,400 @@ ${text}
 `;
 }
 
+function mountRetryPrompt(
+	basePrompt: string,
+	previous: unknown,
+	reason: string,
+): string {
+	return `
+${basePrompt}
+
+ATENÇÃO: A EXTRAÇÃO ANTERIOR FOI CONSIDERADA INCONSISTENTE.
+
+Motivo:
+${reason}
+
+Resposta anterior:
+${JSON.stringify(previous)}
+
+Revise TODO o documento novamente, principalmente tabelas, cabeçalhos,
+totais financeiros, franquia, placa/chassi e finalidade real do endosso.
+
+Retorne novamente SOMENTE o JSON completo corrigido.
+`;
+}
+
+/**
+ * ============================================================================
+ * Normalização/validação
+ * ============================================================================
+ */
+
+function normalizeLookup(
+	lookup: ModelOutput['lookup'],
+): z.infer<typeof SchemaLookup> {
+	return SchemaLookup.parse({
+		plate: normalizePlate(lookup.plate),
+		insuredRegistration: lookup.insuredRegistration,
+		insuredName: lookup.insuredName,
+	});
+}
+
+function normalizeFinancialData(data: z.infer<typeof SchemaModelFinancial>): {
+	amount: number;
+	percentage: number | null;
+} {
+	if (data.amount === null) {
+		throw new Error(
+			'Não foi possível determinar com segurança o valor financeiro do endosso',
+		);
+	}
+
+	if (!data.amountEvidence) {
+		throw new Error('Valor do endosso identificado sem evidência no documento');
+	}
+
+	if (!evidenceContainsValue(data.amountEvidence, data.amount)) {
+		throw new Error('A evidência informada não confirma o valor do endosso');
+	}
+
+	let direction = data.amountDirection;
+
+	if (!direction) {
+		if (data.amount > 0) {
+			direction = 'charge';
+		} else if (data.amount < 0) {
+			direction = 'refund';
+		} else {
+			direction = 'neutral';
+		}
+	}
+
+	let amount: number;
+
+	switch (direction) {
+		case 'charge': {
+			amount = Math.abs(data.amount);
+			break;
+		}
+
+		case 'refund': {
+			/**
+			 * Convenção interna:
+			 * restituição/crédito = valor negativo.
+			 */
+			amount = -Math.abs(data.amount);
+			break;
+		}
+
+		case 'neutral': {
+			if (Math.abs(data.amount) > 0.01) {
+				throw new Error(
+					'Endosso identificado como financeiramente neutro, mas contém valor diferente de zero',
+				);
+			}
+
+			amount = 0;
+			break;
+		}
+	}
+
+	let percentage: number | null = data.percentage;
+
+	/**
+	 * Comissão é um campo com enorme possibilidade de falso positivo.
+	 *
+	 * Se a IA não conseguir apontar o trecho que contém explicitamente
+	 * o percentual, descartamos a comissão em vez de inventar.
+	 */
+	if (percentage !== null) {
+		if (
+			!data.percentageEvidence ||
+			!evidenceContainsValue(data.percentageEvidence, percentage, 0.001)
+		) {
+			percentage = null;
+		}
+	}
+
+	return {
+		amount,
+		percentage,
+	};
+}
+
+function finalizeModelOutput(raw: ModelOutput): DataExtractEndorsement {
+	if (raw.type === 'unknown') {
+		throw new Error(
+			`Tipo de endosso não suportado ou não identificado com segurança: ${raw.data.reason}`,
+		);
+	}
+
+	const lookup = normalizeLookup(raw.lookup);
+
+	switch (raw.type) {
+		case 'vehicle_conductor': {
+			const financial = normalizeFinancialData(raw.data);
+
+			return SchemaDataExtractVehicleConductor.parse({
+				type: raw.type,
+				lookup,
+				data: {
+					driver: raw.data.driver,
+					plate: normalizePlate(raw.data.plate),
+					model: raw.data.model,
+					modelYear: raw.data.modelYear,
+					franchise: raw.data.franchise,
+					...financial,
+				},
+			});
+		}
+
+		case 'address': {
+			if (!raw.data.postalCode) {
+				throw new Error('Endosso de endereço sem novo CEP identificado');
+			}
+
+			const financial = normalizeFinancialData(raw.data);
+
+			return SchemaDataExtractAddress.parse({
+				type: raw.type,
+				lookup,
+				data: {
+					postalCode: raw.data.postalCode,
+					...financial,
+				},
+			});
+		}
+
+		case 'franchise': {
+			if (raw.data.franchise === null) {
+				throw new Error(
+					'Endosso de franquia sem o novo valor da franquia identificado',
+				);
+			}
+
+			const financial = normalizeFinancialData(raw.data);
+
+			return SchemaDataExtractFranchise.parse({
+				type: raw.type,
+				lookup,
+				data: {
+					franchise: raw.data.franchise,
+					...financial,
+				},
+			});
+		}
+
+		case 'cancellation': {
+			if (!raw.data.effectivedAt) {
+				throw new Error(
+					'Endosso de cancelamento sem data de efetivação identificada',
+				);
+			}
+
+			return SchemaDataExtractCancellation.parse({
+				type: raw.type,
+				lookup,
+				data: {
+					effectivedAt: raw.data.effectivedAt,
+				},
+			});
+		}
+	}
+}
+
+/**
+ * ============================================================================
+ * IA
+ * ============================================================================
+ */
+
+async function askModel({
+	model,
+	text,
+	images,
+}: {
+	model: string;
+	text: string;
+	images: Array<string>;
+}): Promise<DataExtractEndorsement> {
+	const prompt = mountPrompt(text, images.length);
+
+	let previous: unknown;
+
+	try {
+		previous = await askJson({
+			model,
+			prompt,
+			images,
+		});
+
+		const parsed = SchemaModelOutput.parse(previous);
+
+		return finalizeModelOutput(parsed);
+	} catch (firstError) {
+		const reason = errorMessage(firstError);
+
+		console.warn(
+			'[extract-endorsement] primeira extração inconsistente:',
+			reason,
+		);
+
+		/**
+		 * Retry somente quando a primeira extração falhou.
+		 *
+		 * Não dobramos o custo/latência dos documentos que já foram
+		 * interpretados corretamente na primeira tentativa.
+		 */
+		const retried = await askJson({
+			model,
+			prompt: mountRetryPrompt(prompt, previous, reason),
+			images,
+		});
+
+		const parsed = SchemaModelOutput.parse(retried);
+
+		return finalizeModelOutput(parsed);
+	}
+}
+
 async function extractDataEndorsement(path: ArrayBuffer) {
 	return await runPdfExtraction({
 		label: 'extract-endorsement',
 		buffer: path,
-		ask: async ({ model, text, images }) =>
-			SchemaDataExtractEndorsement.parse(
-				await askJson({
-					model,
-					prompt: mountPrompt(text, images.length),
-					images,
-				}),
-			),
+		ask: askModel,
 	});
 }
+
+/**
+ * ============================================================================
+ * Busca do seguro
+ * ============================================================================
+ */
 
 async function findSafeByLookup(
 	database: Database,
 	lookup: DataExtractEndorsement['lookup'],
 ): Promise<string | null> {
-	if (!lookup.plate) {
-		throw new Error(
-			'Endosso sem placa da apólice atual, deve ser feito manualmente',
-		);
-	}
-
-	const plateSanitized = lookup.plate.replace('-', '').toLowerCase();
-
-	const insuredRegistrationSanitized = lookup.insuredRegistration
+	const insuredRegistration = lookup.insuredRegistration
 		? maskNumber(lookup.insuredRegistration)
 		: null;
 
-	const where: Prisma.SafeWhereInput = {
-		safeVehicle: {
-			OR: [
-				{
-					plate: plateSanitized,
+	if (lookup.plate) {
+		const plate = lookup.plate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+		const safe = await database.safe.findFirst({
+			where: {
+				safeVehicle: {
+					OR: [
+						{
+							plate,
+						},
+						{
+							vehicle: {
+								OR: [
+									{
+										plate,
+									},
+									{
+										plateAlternative: plate,
+									},
+								],
+							},
+						},
+					],
 				},
-				{
-					vehicle: {
+				...(insuredRegistration && {
+					insured: {
 						OR: [
 							{
-								plate: plateSanitized,
+								cpf: insuredRegistration,
 							},
 							{
-								plateAlternative: plateSanitized,
+								cnpj: insuredRegistration,
 							},
 						],
 					},
-				},
-			],
-		},
-		...(insuredRegistrationSanitized && {
-			insured: {
-				OR: [
-					{
-						cpf: insuredRegistrationSanitized,
-					},
-					{
-						cnpj: insuredRegistrationSanitized,
-					},
-				],
+				}),
 			},
-		}),
-	};
+			select: {
+				id: true,
+			},
+		});
 
-	// Prefere a proposta real: o produtor de teste (oculto na listagem) pode ter
-	// a mesma placa/segurado, e o endosso não deve cair nele por engano.
-	const safe =
-		(await database.safe.findFirst({
+		if (safe) {
+			return safe.id;
+		}
+	}
+
+	/**
+	 * Fallback importante para substituição de veículo:
+	 *
+	 * a única placa encontrada no documento pode ser a placa NOVA,
+	 * que ainda não existe no cadastro atual.
+	 *
+	 * CPF/CNPJ só é utilizado automaticamente quando existir exatamente
+	 * um seguro candidato, evitando vincular o endosso ao carro errado
+	 * quando o segurado possuir múltiplas apólices.
+	 */
+	if (insuredRegistration) {
+		const candidates = await database.safe.findMany({
 			where: {
-				...where,
-				OR: [
-					{ producerId: null },
-					{ producerId: { not: EXCLUDED_PRODUCER_ID } },
-				],
+				insured: {
+					OR: [
+						{
+							cpf: insuredRegistration,
+						},
+						{
+							cnpj: insuredRegistration,
+						},
+					],
+				},
 			},
-			orderBy: { requestedAt: 'desc' },
-		})) ?? (await database.safe.findFirst({ where }));
+			select: {
+				id: true,
+			},
+			take: 2,
+		});
 
-	return safe?.id ?? null;
+		if (candidates.length === 1) {
+			return candidates[0]?.id ?? null;
+		}
+	}
+
+	return null;
 }
 
 /**
- * Remove metadados utilizados somente para validação/debug da extração
- * antes de devolver os dados para o consumidor da API.
+ * ============================================================================
+ * Router
+ * ============================================================================
  */
-function sanitizeExtractedData(extracted: DataExtractEndorsement) {
-	if (extracted.type === 'cancellation') {
-		return extracted.data;
-	}
-
-	const {
-		amountEvidence: _amountEvidence,
-		amountLabel: _amountLabel,
-		amountDirection: _amountDirection,
-		...data
-	} = extracted.data;
-
-	return data;
-}
-
-function validateFinancialExtraction(extracted: DataExtractEndorsement): void {
-	if (extracted.type === 'cancellation') {
-		return;
-	}
-
-	const { amount, amountDirection, amountEvidence } = extracted.data;
-
-	if (amount === null) {
-		return;
-	}
-
-	if (amount > 0 && amountDirection !== 'charge') {
-		throw new Error('Inconsistência na identificação do valor do endosso');
-	}
-
-	if (amount < 0 && amountDirection !== 'refund') {
-		throw new Error(
-			'Inconsistência na identificação da restituição do endosso',
-		);
-	}
-
-	if (amount === 0 && amountDirection !== 'neutral') {
-		throw new Error(
-			'Inconsistência na identificação do valor neutro do endosso',
-		);
-	}
-
-	if (!amountEvidence) {
-		throw new Error('Não foi possível confirmar a origem do valor do endosso');
-	}
-}
 
 function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 	server.post(
 		'/extract-pdf',
+
 		zValidator(
 			'form',
 			z.object({
 				file: z.file('Arquivo inválido'),
 			}),
 		),
+
 		zValidator(
 			'query',
 			z.object({
+				/**
+				 * Opcional.
+				 *
+				 * Se vier do frontend, tem prioridade.
+				 * Caso contrário tentamos localizar pelo próprio PDF.
+				 */
 				id: z.uuidv7('ID do seguro inválido').optional(),
 			}),
 		),
+
 		async (ctx) => {
 			try {
 				const { file } = ctx.req.valid('form');
@@ -609,18 +1207,32 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const hash = Bun.hash(buffer).toString(16);
 
 				/**
-				 * Incrementar a versão sempre que houver alteração relevante
-				 * na estratégia/schema de extração.
+				 * Nova versão porque:
+				 * - amount passou a representar total final;
+				 * - há validação de evidência;
+				 * - restituição tem sinal negativo;
+				 * - classificação ganhou unknown;
+				 * - regras de placa/chassi foram alteradas.
 				 */
-				const cacheKey = `endorsement-pdf-extract:v4:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v6:${hash}`;
 
 				const cached = await ctx.cache.get(cacheKey);
 
-				const extracted = cached
-					? SchemaDataExtractEndorsement.parse(JSON.parse(cached))
-					: await extractDataEndorsement(buffer);
+				let extracted: DataExtractEndorsement;
 
-				validateFinancialExtraction(extracted);
+				if (cached) {
+					try {
+						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
+					} catch {
+						/**
+						 * Cache de schema inválido nunca deve impedir
+						 * uma nova tentativa de extração.
+						 */
+						extracted = await extractDataEndorsement(buffer);
+					}
+				} else {
+					extracted = await extractDataEndorsement(buffer);
+				}
 
 				if (!cached) {
 					await ctx.cache.set(
@@ -635,23 +1247,24 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 					id ?? (await findSafeByLookup(ctx.database, extracted.lookup));
 
 				if (!safeId) {
-					throw new Error('Não foi encontrada apólice referente ao endosso');
+					throw new Error(
+						'Não foi encontrada apólice referente ao endosso; selecione o seguro manualmente',
+					);
 				}
 
 				return ctx.json(
 					{
 						safeId,
 						type: extracted.type,
-						data: sanitizeExtractedData(extracted),
+						data: extracted.data,
 					},
 					200,
 				);
 			} catch (error) {
-				let message = 'Falha ao extrair dados do documento';
-
-				if (error instanceof Error) {
-					message = error.message;
-				}
+				const message =
+					error instanceof Error
+						? error.message
+						: 'Falha ao extrair dados do documento';
 
 				return ctx.json(
 					{

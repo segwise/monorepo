@@ -5,6 +5,10 @@ import { selectPrisma } from '@/db-adapters/quote/simple';
 import { serializer } from '@/db-serializers/quote/simple';
 import { timestampRange } from '@/functions/date/timestamp-range';
 import { type Prisma, Role } from '@/generated/prisma/client';
+import {
+	EXCLUDED_PRODUCER_ID,
+	notTestProducer,
+} from '@/libraries/dashboard/metrics';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 
 function registerRoutersServicesQuotesSimpleListining(server: Server) {
@@ -66,21 +70,18 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				}),
 				...(!!producers?.length && {
 					producerId: {
-						in: producers,
+						in: producers.filter((id) => id !== EXCLUDED_PRODUCER_ID),
 					},
 				}),
-				...(!producers?.length && {
-					OR: [
-						{
-							producerId: {
-								not: '019f249d-8880-7000-b962-aace743e68e2',
-							},
-						},
-						{
-							producerId: null,
-						},
-					],
-				}),
+				// AND: não pode ser `OR` direto, que colidiria com o `OR` da busca.
+				AND: [
+					{
+						OR: [
+							{ producerId: { not: EXCLUDED_PRODUCER_ID } },
+							{ producerId: null },
+						],
+					},
+				],
 				...(!!insuranceCompanies?.length && {
 					insuranceCompanyId: {
 						in: insuranceCompanies,
@@ -264,6 +265,7 @@ function registerRoutersServicesQuotesSimpleListining(server: Server) {
 				quoteVehicle: {
 					plate: plate.replace('-', '').toLowerCase(),
 				},
+				AND: [notTestProducer],
 			};
 
 			const quote = await ctx.database.quote.findFirst({

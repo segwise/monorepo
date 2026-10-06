@@ -6,6 +6,7 @@ import { selectPrisma } from '@/db-adapters/payment/simple';
 import { serializer } from '@/db-serializers/payment/simple';
 import { timestampRange } from '@/functions/date/timestamp-range';
 import type { Prisma } from '@/generated/prisma/client';
+import { paymentNotTestProducer } from '@/libraries/dashboard/metrics';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 
 function registerRoutersServicesPaymentsCashFlowSimpleListining(
@@ -32,6 +33,7 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 			const pageMargins = 2;
 
 			const where: Prisma.PaymentWhereInput = {
+				...paymentNotTestProducer,
 				...(!!brokerId && {
 					OR: [
 						{

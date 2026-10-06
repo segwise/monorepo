@@ -5,6 +5,7 @@ import { fromZonedTime } from 'date-fns-tz';
 import type { Server } from '@/@types/server.d';
 import { Prisma } from '@/generated/prisma/client';
 import { Role, StatusInvitation } from '@/generated/prisma/enums';
+import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 import { selectPrisma } from '@/libraries/database/adapters/producer/simple';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 import { serializer } from '@/libraries/database/serializers/producer/simple';
@@ -63,6 +64,7 @@ function buildProducersCte({
 			JOIN "users" u ON u."id" = m."user_id"
 			WHERE m."broker_id" = ${brokerId}::uuid
 				AND m."role" = 'producer'::"Role"
+				AND u."id" <> ${EXCLUDED_PRODUCER_ID}::uuid
 				AND u."role" = 'customer'::"Role"
 				${status === 'active' ? Prisma.sql`AND m."status" = 'active'::"StatusMember"` : Prisma.empty}
 				${status === 'suspended' ? Prisma.sql`AND m."status" = 'suspended'::"StatusMember"` : Prisma.empty}
@@ -313,6 +315,8 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 		const [producers, invitations] = await Promise.all([
 			ctx.database.user.findMany({
 				where: {
+					// O produtor de teste só aparece no painel dele.
+					id: { not: EXCLUDED_PRODUCER_ID },
 					...(!!brokerId && {
 						role: Role.customer,
 						members: {

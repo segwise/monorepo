@@ -2,6 +2,7 @@ import { zValidator } from '@hono/zod-validator';
 import { SchemaMarketplaceSignIn } from '@segwise/core';
 import type { Server } from '@/@types/server';
 import { StatusSafe } from '@/generated/prisma/enums';
+import { notTestProducer } from '@/libraries/dashboard/metrics';
 
 function registerRoutersServicesMarketplaceAuth(server: Server) {
 	server.get(
@@ -20,6 +21,7 @@ function registerRoutersServicesMarketplaceAuth(server: Server) {
 						brokerId: company,
 					}),
 					status: StatusSafe.active,
+					AND: [notTestProducer],
 				},
 				select: {
 					insuredId: true,

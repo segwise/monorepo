@@ -8,6 +8,7 @@ import z from 'zod';
 import type { Server } from '@/@types/server';
 import { expirationRange } from '@/functions/date/expiration-range';
 import { type Prisma, Role } from '@/generated/prisma/client';
+import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 
 function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 	const base = server.basePath('/status');
@@ -87,7 +88,7 @@ function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 				}),
 				...(!!producers?.length && {
 					producerId: {
-						in: producers,
+						in: producers.filter((id) => id !== EXCLUDED_PRODUCER_ID),
 					},
 				}),
 				...(!!insuranceCompanies?.length && {
@@ -134,17 +135,15 @@ function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 				});
 			}
 
-			if (!producers?.length) {
-				where.AND = where.AND ?? [];
+			where.AND = where.AND ?? [];
 
-				// @ts-expect-error
-				where.AND.push({
-					OR: [
-						{ producerId: { not: '019f249d-8880-7000-b962-aace743e68e2' } },
-						{ producerId: null },
-					],
-				});
-			}
+			// @ts-expect-error
+			where.AND.push({
+				OR: [
+					{ producerId: { not: EXCLUDED_PRODUCER_ID } },
+					{ producerId: null },
+				],
+			});
 
 			const [current, before] = await ctx.database.$transaction([
 				ctx.database.safe.count({

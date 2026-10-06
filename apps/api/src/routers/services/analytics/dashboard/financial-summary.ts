@@ -1,5 +1,6 @@
 import { addDays } from 'date-fns';
 import type { Server } from '@/@types/server';
+import { paymentNotTestProducer } from '@/libraries/dashboard/metrics';
 import { requireBrokerId } from './query';
 
 function registerRoutersServicesAnalyticsDashboardFinancialSummary(
@@ -17,6 +18,7 @@ function registerRoutersServicesAnalyticsDashboardFinancialSummary(
 			[
 				sum({
 					where: {
+						...paymentNotTestProducer,
 						receiver: { brokerId },
 						status: 'waiting',
 						expiration: { gte: now, lte: next30Days },
@@ -24,6 +26,7 @@ function registerRoutersServicesAnalyticsDashboardFinancialSummary(
 				}),
 				sum({
 					where: {
+						...paymentNotTestProducer,
 						payer: { brokerId },
 						status: 'waiting',
 						expiration: { gte: now, lte: next30Days },
@@ -31,6 +34,7 @@ function registerRoutersServicesAnalyticsDashboardFinancialSummary(
 				}),
 				sum({
 					where: {
+						...paymentNotTestProducer,
 						receiver: { brokerId },
 						payer: { insuranceCompanyId: { not: null } },
 						status: 'waiting',
@@ -38,6 +42,7 @@ function registerRoutersServicesAnalyticsDashboardFinancialSummary(
 				}),
 				sum({
 					where: {
+						...paymentNotTestProducer,
 						receiver: { brokerId },
 						status: 'waiting',
 						expiration: { lt: now },

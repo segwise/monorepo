@@ -9,6 +9,7 @@ import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
 import { serializer } from '@/db-serializers/safe/simple';
 import { type Prisma, StatusSafe } from '@/generated/prisma/client';
+import { notTestProducer } from '@/libraries/dashboard/metrics';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 import { buildSafeSimpleWhere } from './build-safe-simple-where';
 
@@ -178,6 +179,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 				expiration: {
 					gte: new Date(),
 				},
+				AND: [notTestProducer],
 			};
 
 			const [safes, count] = await ctx.database.$transaction([
@@ -237,6 +239,7 @@ function registerRoutersServicesSafesSimpleListining(server: Server) {
 						},
 					],
 				},
+				AND: [notTestProducer],
 			};
 
 			const safe = await ctx.database.safe.findFirst({

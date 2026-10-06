@@ -14,6 +14,28 @@ type MetricKind =
 
 type MetricPoint = { date: string; value: number };
 
+// O produtor de teste só aparece no painel dele: nenhuma consulta do painel da
+// corretora (propostas, cotações, dashboard, financeiro) considera o que é dele.
+const notTestProducer: {
+	OR: Array<Prisma.SafeWhereInput & Prisma.QuoteWhereInput>;
+} = {
+	OR: [{ producerId: null }, { producerId: { not: EXCLUDED_PRODUCER_ID } }],
+};
+
+// Pagamentos em que o produtor de teste é pagador ou recebedor. Não usa `NOT`:
+// com `user_id` nulo (corretora, seguradora) o SQL `NOT (NULL)` descartaria a
+// linha e sumiria com todos os pagamentos.
+const notTestUser = {
+	OR: [{ userId: null }, { userId: { not: EXCLUDED_PRODUCER_ID } }],
+};
+
+const paymentNotTestProducer: Prisma.PaymentWhereInput = {
+	AND: [
+		{ OR: [{ payerId: null }, { payer: notTestUser }] },
+		{ OR: [{ receiverId: null }, { receiver: notTestUser }] },
+	],
+};
+
 // Produção = proposta. Tudo no sistema é proposta; uma apólice só existe se
 // foi cadastrada como tal ou confirmada manualmente (effectivedAt), e mesmo
 // assim conta como qualquer outra proposta aqui.
@@ -58,7 +80,11 @@ function quotesWhere(
 	brokerId: string,
 	range: DayRange,
 ): Prisma.QuoteWhereInput {
-	return { brokerId, requestedAt: { gte: range.tsFrom, lte: range.tsTo } };
+	return {
+		brokerId,
+		requestedAt: { gte: range.tsFrom, lte: range.tsTo },
+		AND: [notTestProducer],
+	};
 }
 
 async function metricSeries(
@@ -85,6 +111,7 @@ async function metricSeries(
 			WHERE broker_id = ${brokerId}::uuid
 				AND requested_at >= ${range.tsFrom}
 				AND requested_at <= ${range.tsTo}
+				AND (producer_id IS NULL OR producer_id <> ${EXCLUDED_PRODUCER_ID}::uuid)
 			GROUP BY 1
 		`);
 
@@ -161,6 +188,8 @@ function cappedTotal(months: number[]) {
 
 export {
 	EXCLUDED_PRODUCER_ID,
+	notTestProducer,
+	paymentNotTestProducer,
 	cappedTotal,
 	median,
 	monthlyTotals,

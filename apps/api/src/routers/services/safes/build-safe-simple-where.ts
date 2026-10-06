@@ -6,6 +6,7 @@ import type z from 'zod';
 import type { Context } from '@/@types/server';
 import { expirationRange } from '@/functions/date/expiration-range';
 import { type Prisma, Role } from '@/generated/prisma/client';
+import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 
 type SafeSimpleQuery = z.infer<typeof SchemaSearchParamsSafeSimple> & {
 	isExternal?: boolean | null;
@@ -109,14 +110,11 @@ async function buildSafeSimpleWhere(
 		}
 	}
 
-	if (!producers?.length) {
-		andConditions.push({
-			OR: [
-				{ producerId: { not: '019f249d-8880-7000-b962-aace743e68e2' } },
-				{ producerId: null },
-			],
-		});
-	}
+	// O produtor de teste só aparece no painel dele: nunca nas consultas daqui,
+	// mesmo que o filtro de produtores o inclua.
+	andConditions.push({
+		OR: [{ producerId: { not: EXCLUDED_PRODUCER_ID } }, { producerId: null }],
+	});
 
 	// Usado só para exibição (ex.: cabeçalho da impressão) — a data/hora
 	// efetivamente aplicada no filtro de vigência, já considerando o default
@@ -162,7 +160,9 @@ async function buildSafeSimpleWhere(
 				}),
 			}),
 		...(!!renewal && { renewal }),
-		...(!!producers?.length && { producerId: { in: producers } }),
+		...(!!producers?.length && {
+			producerId: { in: producers.filter((id) => id !== EXCLUDED_PRODUCER_ID) },
+		}),
 		...(!!insuranceCompanies?.length && {
 			insuranceCompanyId: { in: insuranceCompanies },
 		}),

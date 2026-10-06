@@ -1,7 +1,10 @@
 import { addDays, differenceInCalendarDays, subDays } from 'date-fns';
 import type { Server } from '@/@types/server';
 import type { Prisma } from '@/generated/prisma/client';
-import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
+import {
+	notTestProducer,
+	paymentNotTestProducer,
+} from '@/libraries/dashboard/metrics';
 import { dayKey } from '@/libraries/dashboard/range';
 import { requireBrokerId } from './query';
 
@@ -23,15 +26,9 @@ function registerRoutersServicesAnalyticsDashboardActionRequired(
 		// não o dia UTC (à noite no Brasil o dia UTC já é o seguinte).
 		const today = new Date(`${dayKey(now, ctx.timezone)}T00:00:00.000Z`);
 
-		// Mesmo critério do resto do dashboard: o produtor de teste não conta.
-		const notTestProducer = [
-			{ producerId: null },
-			{ producerId: { not: EXCLUDED_PRODUCER_ID } },
-		];
-
 		const stalledQuotes: Prisma.QuoteWhereInput = {
 			brokerId,
-			AND: [{ OR: notTestProducer }],
+			AND: [notTestProducer],
 			status: { in: ['waiting', 'quoting'] },
 			statusAt: {
 				lt: subDays(now, STALLED_QUOTE_DAYS),
@@ -41,7 +38,7 @@ function registerRoutersServicesAnalyticsDashboardActionRequired(
 
 		const awaitingCustomer: Prisma.QuoteWhereInput = {
 			brokerId,
-			AND: [{ OR: notTestProducer }],
+			AND: [notTestProducer],
 			status: 'sent',
 			statusAt: {
 				lt: subDays(now, AWAITING_CUSTOMER_DAYS),
@@ -59,12 +56,13 @@ function registerRoutersServicesAnalyticsDashboardActionRequired(
 			successorSafe: null,
 			AND: [
 				{ OR: [{ isExternal: false }, { isExternal: null }] },
-				{ OR: notTestProducer },
+				notTestProducer,
 			],
 		};
 
 		const overduePayments: Prisma.PaymentWhereInput = {
 			receiver: { brokerId },
+			...paymentNotTestProducer,
 			status: 'waiting',
 			expiration: { lt: now },
 		};

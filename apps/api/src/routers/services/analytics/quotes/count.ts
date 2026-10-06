@@ -8,6 +8,7 @@ import z from 'zod';
 import type { Server } from '@/@types/server';
 import { timestampRange } from '@/functions/date/timestamp-range';
 import { type Prisma, Role } from '@/generated/prisma/client';
+import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 
 function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 	const base = server.basePath('/count');
@@ -88,21 +89,18 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 				}),
 				...(!!producers?.length && {
 					producerId: {
-						in: producers,
+						in: producers.filter((id) => id !== EXCLUDED_PRODUCER_ID),
 					},
 				}),
-				...(!producers?.length && {
-					OR: [
-						{
-							producerId: {
-								not: '019f249d-8880-7000-b962-aace743e68e2',
-							},
-						},
-						{
-							producerId: null,
-						},
-					],
-				}),
+				// AND: não pode ser `OR` direto, que colidiria com o `OR` da busca.
+				AND: [
+					{
+						OR: [
+							{ producerId: { not: EXCLUDED_PRODUCER_ID } },
+							{ producerId: null },
+						],
+					},
+				],
 				...(!!insuranceCompanies?.length && {
 					insuranceCompanyId: {
 						in: insuranceCompanies,

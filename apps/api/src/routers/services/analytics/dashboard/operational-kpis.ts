@@ -2,7 +2,12 @@ import { zValidator } from '@hono/zod-validator';
 import type { Database } from '@/@types/database';
 import type { Server } from '@/@types/server';
 import { Prisma } from '@/generated/prisma/client';
-import { productionWhere, quotesWhere } from '@/libraries/dashboard/metrics';
+import {
+	EXCLUDED_PRODUCER_ID,
+	paymentNotTestProducer,
+	productionWhere,
+	quotesWhere,
+} from '@/libraries/dashboard/metrics';
 import { type DayRange, percentChange } from '@/libraries/dashboard/range';
 import { periodRanges, requireBrokerId, SchemaDashboardPeriod } from './query';
 
@@ -22,6 +27,7 @@ async function kpisOf(database: Database, brokerId: string, range: DayRange) {
 				AND requested_at >= ${range.tsFrom}
 				AND requested_at <= ${range.tsTo}
 				AND status = 'confirmed'
+				AND (producer_id IS NULL OR producer_id <> ${EXCLUDED_PRODUCER_ID}::uuid)
 		`),
 		database.safe.aggregate({
 			where: productionWhere(database, brokerId, range),
@@ -33,6 +39,7 @@ async function kpisOf(database: Database, brokerId: string, range: DayRange) {
 			where: {
 				receiver: { brokerId },
 				payer: { insuranceCompanyId: { not: null } },
+				...paymentNotTestProducer,
 				status: { not: 'canceled' },
 				expiration: { gte: range.tsFrom, lte: range.tsTo },
 			},

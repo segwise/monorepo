@@ -2,6 +2,7 @@ import type { SchemaQuoteRegister } from '@segwise/core';
 import type z from 'zod';
 import type { Server } from '@/@types/server.d';
 import type { VehicleExchange, VehicleUsage } from '@/generated/prisma/enums';
+import { notTestProducer } from '@/libraries/dashboard/metrics';
 
 function registerRoutersServicesQuotesByPlate(server: Server) {
 	const base = server.basePath(
@@ -13,6 +14,7 @@ function registerRoutersServicesQuotesByPlate(server: Server) {
 
 		const quote = await ctx.database.quote.findFirst({
 			where: {
+				AND: [notTestProducer],
 				quoteVehicle: {
 					vehicle: {
 						OR: [
