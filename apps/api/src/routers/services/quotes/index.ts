@@ -8,7 +8,8 @@ import { registerRoutersServicesQuotesByPlate } from './[plate]';
 function registerRoutersServicesQuotes(server: Server) {
 	const base = server.basePath('/quotes');
 
-	base.use('/simple', requireSession);
+	// Só a listagem (GET): o POST /simple é o pedido de cotação do app, sem login.
+	base.get('/simple', requireSession);
 
 	registerRoutersServicesQuotesById(base);
 	registerRoutersServicesQuotesByPlate(base);

@@ -12,8 +12,8 @@ import { requireSession } from '@/server/middlewares/session';
 function registerRoutersServicesProducers(server: Server) {
 	const base = server.basePath('/producers');
 
-	base.use('/simple', requireSession);
-	base.use('/simple/full', requireSession);
+	base.get('/simple', requireSession);
+	base.get('/simple/full', requireSession);
 
 	registerRoutersServicesProducersById(base);
 	registerRoutersServicesProducersSimpleListining(base);

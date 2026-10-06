@@ -9,8 +9,24 @@ import { registerRoutersServicesSafesPrint } from './print';
 function registerRoutersServicesSafes(server: Server) {
 	const base = server.basePath('/safes');
 
-	// Seguros nunca são públicos: sem sessão a listagem caía na corretora principal.
-	base.use(requireSession);
+	// Seguros não são públicos: sem sessão a listagem caía na corretora principal.
+	// Exceções, usadas pelo app do segurado sem login: consulta por CPF +
+	// nascimento, consulta por placa e listagem de `ids` específicos (UUIDs
+	// guardados no aparelho).
+	base.use(async (ctx, next) => {
+		const path = ctx.req.path;
+		const isPublic =
+			ctx.req.method === 'GET' &&
+			(path.endsWith('/simple/registration') ||
+				/\/simple\/plate\/[^/]+$/.test(path) ||
+				(path.endsWith('/simple') && ctx.req.queries('ids')?.length));
+
+		if (isPublic) {
+			return await next();
+		}
+
+		return await requireSession(ctx, next);
+	});
 
 	registerRoutersServicesSafesById(base);
 	registerRoutersServicesSafesRegister(base);
