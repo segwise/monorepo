@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { toDayRangeParam } from '@/functions/date/day-range';
 import { api } from '@/libraries/api';
 import type { SearchParamsProps } from '@/libraries/search-params/safes';
 
@@ -33,7 +34,11 @@ const useSafesPrintList = () =>
 		mutationFn: async (props) =>
 			(
 				await api.get('/safes/print', {
-					params: { ...props, isExternal: false },
+					params: {
+						...props,
+						effectivedAt: toDayRangeParam(props.effectivedAt),
+						isExternal: false,
+					},
 					responseType: 'blob',
 				})
 			).data,

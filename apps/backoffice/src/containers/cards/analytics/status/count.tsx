@@ -76,7 +76,7 @@ function CardAnalyticsStatusCountList() {
 			<div className='flex flex-row items-center justify-center pr-3'>
 				<div className='flex flex-row items-center justify-start gap-x-1 text-xs text-muted-foreground font-medium'>
 					<FileTextIcon className='size-3' />
-					Do ano anterior:{' '}
+					Atuais:{' '}
 					<span className='text-sm font-bold text-foreground'>{current}</span>
 				</div>
 			</div>
@@ -85,7 +85,7 @@ function CardAnalyticsStatusCountList() {
 					<div className='flex flex-row items-center justify-center pr-3'>
 						<div className='flex flex-row items-center justify-start gap-x-1 text-xs text-muted-foreground font-medium'>
 							<FileTextIcon className='size-3' />
-							Renovadas ou novas (ano seguinte):{' '}
+							Emitidas:{' '}
 							<span className='text-sm font-bold text-foreground'>{next}</span>
 						</div>
 					</div>
