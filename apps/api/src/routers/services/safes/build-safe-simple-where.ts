@@ -4,6 +4,7 @@ import { endOfDay, startOfDay, subYears } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import type z from 'zod';
 import type { Context } from '@/@types/server';
+import { expirationRange } from '@/functions/date/expiration-range';
 import { type Prisma, Role } from '@/generated/prisma/client';
 
 type SafeSimpleQuery = z.infer<typeof SchemaSearchParamsSafeSimple> & {
@@ -142,10 +143,7 @@ async function buildSafeSimpleWhere(
 		...(!search &&
 			!ids?.length && {
 				...(!!effectivedAt && {
-					expiration: {
-						gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-						lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-					},
+					expiration: expirationRange(effectivedAt),
 				}),
 				...(!effectivedAt && {
 					expiration: {

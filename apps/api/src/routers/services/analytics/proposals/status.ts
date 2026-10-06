@@ -3,10 +3,10 @@ import {
 	SchemaBasisOfAnalysis,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core';
-import { endOfDay, startOfDay, subMonths, subYears } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { subMonths, subYears } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
+import { expirationRange } from '@/functions/date/expiration-range';
 import { type Prisma, Role } from '@/generated/prisma/client';
 
 function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
@@ -81,10 +81,7 @@ function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 							},
 						},
 					}),
-				expiration: {
-					gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-					lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-				},
+				expiration: expirationRange(effectivedAt),
 				...(!!renewal && {
 					renewal,
 				}),
@@ -166,16 +163,16 @@ function registerRoutersServicesAnalyticsProposalsStatus(server: Server) {
 				ctx.database.safe.count({
 					where: {
 						...where,
-						expiration: {
-							gte:
+						expiration: expirationRange({
+							start:
 								basisOfAnalysis === 'year'
 									? subYears(effectivedAt.start, 1)
 									: subMonths(effectivedAt.start, 1),
-							lte:
+							end:
 								basisOfAnalysis === 'year'
 									? subYears(effectivedAt.end, 1)
 									: subMonths(effectivedAt.end, 1),
-						},
+						}),
 					},
 				}),
 			]);

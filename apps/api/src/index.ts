@@ -1,3 +1,4 @@
+import '@/libraries/force-utc';
 import '@/libraries/marketing/worker';
 import { gracefulShutdown } from '@/libraries/shutdown';
 import { registerRouters } from '@/routers';
