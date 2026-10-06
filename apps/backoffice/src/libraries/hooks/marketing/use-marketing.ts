@@ -6,7 +6,7 @@ import type {
 	MarketingTemplateOption,
 	ResponseDefault,
 } from '@segwise/core/types';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { XiorError } from 'xior';
 import { api } from '@/libraries/api';
 
@@ -30,12 +30,14 @@ const useMarketingTemplates = () =>
 		staleTime: Number.POSITIVE_INFINITY,
 	});
 
-const useMarketingCampaigns = () =>
+const useMarketingCampaigns = (search?: string | null) =>
 	useQuery({
-		queryKey: ['marketing', 'campaigns'],
+		queryKey: ['marketing', 'campaigns', { search: search || null }],
+		placeholderData: keepPreviousData,
 		queryFn: async ({ signal }) =>
 			(
 				await api.get<Array<MarketingCampaign>>('/marketing/campaigns', {
+					params: { ...(search && { search }) },
 					signal,
 				})
 			).data,
@@ -94,14 +96,15 @@ const useMarketingCampaignSend = (id: string) =>
 		},
 	});
 
-const useMarketingContacts = (campaignId: string) =>
+const useMarketingContacts = (campaignId: string, search?: string | null) =>
 	useQuery({
-		queryKey: ['marketing', 'contacts', campaignId],
+		queryKey: ['marketing', 'contacts', campaignId, { search: search || null }],
+		placeholderData: keepPreviousData,
 		queryFn: async ({ signal }) =>
 			(
 				await api.get<Array<MarketingContact>>(
 					`/marketing/campaigns/${campaignId}/contacts`,
-					{ signal },
+					{ params: { ...(search && { search }) }, signal },
 				)
 			).data,
 	});

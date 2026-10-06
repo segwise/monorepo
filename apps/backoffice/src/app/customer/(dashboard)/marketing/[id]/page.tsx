@@ -99,8 +99,10 @@ function formatDate(date: string | null) {
 function MarketingContactsPage() {
 	const { id } = useParams<{ id: string }>();
 
+	const [searchParams, setSearchParams] = useContactSearchParams();
+
 	const { data: campaigns } = useMarketingCampaigns();
-	const { data, isPending } = useMarketingContacts(id);
+	const { data, isPending } = useMarketingContacts(id, searchParams.search);
 	const remove = useMarketingContactRemove(id);
 	const sendOne = useMarketingContactSend(id);
 	const sendAll = useMarketingCampaignSend(id);
@@ -112,8 +114,6 @@ function MarketingContactsPage() {
 
 	const campaign = campaigns?.find((item) => item.id === id);
 
-	const [searchParams, setSearchParams] = useContactSearchParams();
-
 	// Quem clicou aparece primeiro, depois quem abriu: são os contatos para ligar.
 	const allContacts = [...(data || [])].sort(
 		(a, b) =>
@@ -122,17 +122,8 @@ function MarketingContactsPage() {
 			a.name.localeCompare(b.name),
 	);
 
-	const term = (searchParams.search || '').trim().toLowerCase();
-	const termDigits = term.replace(/\D/g, '');
-
 	const contacts = allContacts.filter(
 		(contact) =>
-			(!term ||
-				contact.name.toLowerCase().includes(term) ||
-				contact.email.toLowerCase().includes(term) ||
-				contact.city?.toLowerCase().includes(term) ||
-				contact.state?.toLowerCase() === term ||
-				(!!termDigits && !!contact.phone?.includes(termDigits))) &&
 			(!searchParams.state || contact.state === searchParams.state) &&
 			(!searchParams.city ||
 				contact.city?.toLowerCase() === searchParams.city.toLowerCase()) &&

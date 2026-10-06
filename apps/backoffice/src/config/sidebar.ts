@@ -258,7 +258,6 @@ const sidebar: Array<{
 							title: 'Usuários',
 							pathname: '/configurations/users',
 							icon: Users2Icon,
-							disabled: true,
 						},
 					],
 				},

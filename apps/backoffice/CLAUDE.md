@@ -71,6 +71,15 @@ controlam quais paths não exigem sessão. Uma página pública nova sempre
 precisa entrar em um desses dois — senão o proxy redireciona para
 `/sign-in`.
 
+## Busca em listagens
+
+Busca só é aplicada com Enter ou clique na lupa (nunca a cada tecla). Use
+`components/input-search.tsx` (dados da API) ou `containers/marketing/search.tsx`
+(`MarketingSearch`, listas filtradas no cliente). O termo é enviado como `?search=` ao backend (busca sempre no
+servidor via `parseSearch` do backend, com índice; nunca filtrando o que já foi
+carregado). Detalhes em
+[`../docs/CONVENTIONS.md`](../docs/CONVENTIONS.md).
+
 ## Integração com o backend
 
 `src/libraries/api.ts` é o único ponto de saída HTTP. Toda chamada nova à

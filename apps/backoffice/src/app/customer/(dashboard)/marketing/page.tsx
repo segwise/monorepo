@@ -146,7 +146,8 @@ function CampaignActions({
 }
 
 function MarketingPage() {
-	const { data, isPending } = useMarketingCampaigns();
+	const [searchParams, setSearchParams] = useCampaignSearchParams();
+	const { data, isPending } = useMarketingCampaigns(searchParams.search);
 	const { data: templates = [] } = useMarketingTemplates();
 
 	const [dialog, setDialog] = useState<{
@@ -154,13 +155,8 @@ function MarketingPage() {
 		campaign: MarketingCampaign | null;
 	}>({ open: false, campaign: null });
 
-	const [searchParams, setSearchParams] = useCampaignSearchParams();
-
-	const term = (searchParams.search || '').trim().toLowerCase();
-
 	const campaigns = (data || []).filter(
 		(campaign) =>
-			(!term || campaign.name.toLowerCase().includes(term)) &&
 			(!searchParams.status ||
 				campaign.active === (searchParams.status === 'active')) &&
 			(!searchParams.frequency ||

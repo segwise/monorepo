@@ -100,7 +100,7 @@ function TableSafesSimple() {
 						<TableHead className='text-center w-30' />
 						<TableHead className='text-center w-40'>Tipo</TableHead>
 						<TableHead className='text-right flex-1'>Comissão</TableHead>
-						<TableHead className='text-right w-30'>Ações</TableHead>
+						<TableHead className='text-right'>Ações</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -147,7 +147,7 @@ function TableSafesSimple() {
 										</div>
 									</div>
 								</TableCell>
-								<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+								<TableCell className='justify-end flex flex-row gap-x-2'>
 									<Skeleton className='size-9 rounded-sm' />
 								</TableCell>
 							</TableRow>
@@ -513,7 +513,7 @@ function TableSafesSimple() {
 										</div>
 									)}
 								</TableCell>
-								<TableCell className='flex flex-row justify-end gap-x-2 w-30'>
+								<TableCell className='flex flex-row justify-end gap-x-2'>
 									<DropdownMenu>
 										<DropdownMenuTrigger>
 											<Button variant='outline' size='icon-sm'>

@@ -389,7 +389,7 @@ function TableProducersSimple() {
 								<TableCell className='w-40'>
 									<Skeleton className='w-20 h-4 rounded-full mx-auto' />
 								</TableCell>
-								<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+								<TableCell className='justify-end flex flex-row gap-x-2'>
 									<Skeleton className='size-9 rounded-sm' />
 									<Skeleton className='size-9 rounded-sm' />
 									<Skeleton className='size-9 rounded-sm' />
