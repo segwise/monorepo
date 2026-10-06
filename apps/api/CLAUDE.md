@@ -23,7 +23,7 @@ bun run dev              # bun --bun run --watch src/index.ts
 bun run start             # bun --bun run src/index.ts
 
 bun run db:generate       # prisma generate
-bun run db:migrate:dev    # prisma migrate dev
+bun run db:migrate:dev    # prisma migrate dev (⚠️ usa o DATABASE_URL do .env = banco REMOTO; ver "Migrations")
 bun run db:migrate:reset  # prisma migrate reset  (⚠️ destrutivo — confirmar com o usuário)
 bun run db:deploy         # prisma migrate deploy (produção)
 bun run db:seed           # prisma db seed
@@ -31,6 +31,35 @@ bun run db:seed           # prisma db seed
 bun run auth:generate     # @better-auth/cli generate --config src/services/auth/index.ts
 bun run auth:migrate      # @better-auth/cli migrate --config src/services/auth/index.ts
 ```
+
+## Migrations (⚠️ leia antes de mexer em `prisma/`)
+
+O `.env` do backend aponta para o banco **remoto/produção**. Nunca rode
+`prisma migrate dev|deploy|reset` direto contra ele. Existe um banco de
+desenvolvimento **local** (Postgres nativo em `localhost:5432`, sempre disponível) só para
+isso; a migration em produção é feita **pelo deploy** (o usuário sobe e o deploy aplica).
+
+Fluxo ao alterar `prisma/schema.prisma`:
+
+```
+bun run db:status:local          # estado do banco local (migrations pendentes)
+bun run db:migrate:local -- --name nome_da_mudanca   # cria + aplica a migration no banco LOCAL
+bun run db:generate              # regenera o client (não toca em banco)
+bun run db:local -- <qualquer comando do prisma>     # ex.: migrate deploy, migrate reset, studio
+```
+
+- Os scripts `db:*:local` usam `scripts/db-local.ts`, que lê a URL de
+  `backend/.env.dev-migrate` (**não versionado**, ignorado pelo git; tem a senha, não copie
+  para arquivos versionados) e **recusa rodar se o host não for local**.
+- Se o `.env.dev-migrate` não existir, peça ao usuário (formato:
+  `DATABASE_URL=postgresql://postgres:<senha>@localhost:5432/postgres`).
+- Aviso de perda de dados (ex.: trocar tipo de coluna, drop) ou `migrate reset`, mesmo no
+  banco local: pare e confirme com o usuário, e escreva a migration SQL à mão se o dado
+  importar em produção (o Prisma propõe drop + recreate).
+- Migration só de dados (backfill) vai em `prisma/migrations/<timestamp>_nome/migration.sql`
+  e roda igual: no local primeiro, em produção pelo deploy.
+- Para testar fluxos de ponta a ponta sem tocar em nenhum banco real, suba Postgres/Redis
+  descartáveis em Docker (portas altas, nomes próprios) e apague no fim.
 
 Sem testes automatizados.
 

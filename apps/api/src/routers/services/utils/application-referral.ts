@@ -16,6 +16,7 @@ import {
 	extractIp,
 	findMatch,
 } from '@/functions/fingerprint/generate';
+import { resolveProducerByReferral } from '@/functions/producers/resolve-producer-by-referral';
 
 function registerRoutersServicesUtilsApplicationReferral(server: Server) {
 	const base = server.basePath('/application');
@@ -54,9 +55,10 @@ function registerRoutersServicesUtilsApplicationReferral(server: Server) {
 				return ctx.redirect(FALLBACK_URL, 302);
 			}
 
-			const partner = await ctx.database.member.findUnique({
-				where: { referral },
-			});
+			const resolved = await resolveProducerByReferral(ctx, referral);
+			const partner = resolved
+				? { id: resolved.memberId ?? resolved.userId }
+				: null;
 
 			if (!partner) {
 				return ctx.redirect(FALLBACK_URL, 302);

@@ -4,7 +4,7 @@ import type { ProducerListItem } from '@segwise/core/types';
 import { endOfDay, startOfDay } from 'date-fns';
 import type { Server } from '@/@types/server.d';
 import { Prisma } from '@/generated/prisma/client';
-import { Role } from '@/generated/prisma/enums';
+import { Role, StatusInvitation } from '@/generated/prisma/enums';
 import { selectPrisma } from '@/libraries/database/adapters/producer/simple';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 import { serializer } from '@/libraries/database/serializers/producer/simple';
@@ -302,33 +302,94 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 		},
 	);
 
+	// Seletores (cotação, proposta e filtros): quem já é membro e também quem ainda
+	// não confirmou o e-mail, que já pode receber cotações e propostas.
 	server.get('/simple/full', async (ctx) => {
 		const brokerId = ctx.session.brokerId;
 
-		const producers = await ctx.database.user.findMany({
-			where: {
-				...(!!brokerId && {
-					role: Role.customer,
-					members: {
-						some: {
+		const [producers, invitations] = await Promise.all([
+			ctx.database.user.findMany({
+				where: {
+					...(!!brokerId && {
+						role: Role.customer,
+						members: {
+							some: {
+								brokerId,
+								role: Role.producer,
+							},
+						},
+					}),
+				},
+				select: selectPrisma,
+			}),
+			brokerId
+				? ctx.database.invitation.findMany({
+						where: {
 							brokerId,
 							role: Role.producer,
+							status: StatusInvitation.pending,
 						},
+						select: {
+							email: true,
+							referral: true,
+							typeOfProduction: true,
+							percentageOfProduction: true,
+							typeOfProductionPayment: true,
+							startOfProductionPayment: true,
+							createdAt: true,
+						},
+					})
+				: [],
+		]);
+
+		const invitedUsers = invitations.length
+			? await ctx.database.user.findMany({
+					where: {
+						email: { in: invitations.map((item) => item.email) },
+						role: Role.customer,
 					},
-				}),
-			},
-			select: selectPrisma,
-			orderBy: {
-				name: 'asc',
-			},
-		});
+					select: selectPrisma,
+				})
+			: [];
+
+		const invitationByEmail = new Map(
+			invitations.map((item) => [item.email, item]),
+		);
+
+		const memberIds = new Set(producers.map((user) => user.id));
+
+		const pending = invitedUsers
+			.filter((user) => !memberIds.has(user.id))
+			.map((user) => {
+				const invitation = invitationByEmail.get(user.email);
+
+				// Ainda sem Member: o convite faz o papel dele na serialização.
+				return {
+					...user,
+					members: invitation
+						? [
+								{
+									referral: invitation.referral,
+									typeOfProduction: invitation.typeOfProduction,
+									typeOfProductionPayment: invitation.typeOfProductionPayment,
+									percentageOfProduction: invitation.percentageOfProduction,
+									startOfProductionPayment: invitation.startOfProductionPayment,
+									status: 'active' as const,
+									createdAt: invitation.createdAt,
+								},
+							]
+						: [],
+				};
+			});
 
 		return ctx.json(
-			producers.map((props) =>
-				serializer(props, {
-					storage: ctx.storage.images,
-				}),
-			),
+			[...producers, ...pending]
+				.sort((a, b) => a.name.localeCompare(b.name))
+				.map((props) =>
+					serializer(props, {
+						storage: ctx.storage.images,
+					}),
+				),
 			200,
 		);
 	});

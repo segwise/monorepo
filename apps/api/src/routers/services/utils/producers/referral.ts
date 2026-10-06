@@ -1,6 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaProducerReferral } from '@segwise/core';
 import type { Server } from '@/@types/server';
+import { resolveProducerByReferral } from '@/functions/producers/resolve-producer-by-referral';
 
 function registerRoutersServicesUtilsProducersReferral(server: Server) {
 	server.get(
@@ -9,15 +10,7 @@ function registerRoutersServicesUtilsProducersReferral(server: Server) {
 		async (ctx) => {
 			const { referral } = ctx.req.valid('param');
 
-			const producer = await ctx.database.member.findUnique({
-				where: {
-					referral,
-				},
-				select: {
-					referral: true,
-					userId: true,
-				},
-			});
+			const producer = await resolveProducerByReferral(ctx, referral);
 
 			if (!producer) {
 				return ctx.json(
@@ -31,7 +24,7 @@ function registerRoutersServicesUtilsProducersReferral(server: Server) {
 			return ctx.json(
 				{
 					userId: producer.userId,
-					referral: producer.referral,
+					referral,
 				},
 				200,
 			);

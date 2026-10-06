@@ -8,6 +8,7 @@ import {
 import { endOfDay, endOfMonth } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
+import { resolveProducerByReferral } from '@/functions/producers/resolve-producer-by-referral';
 import { vehicleByPlate } from '@/functions/vehicle/by-plate';
 import { ModalityInsurance } from '@/generated/prisma/enums';
 
@@ -46,15 +47,7 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 			let brokerId = null;
 
 			const referralResponse = referral
-				? await ctx.database.member.findUnique({
-						where: {
-							referral,
-						},
-						select: {
-							userId: true,
-							brokerId: true,
-						},
-					})
+				? await resolveProducerByReferral(ctx, referral)
 				: null;
 
 			if (referralResponse?.brokerId) {
@@ -327,15 +320,7 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 			let brokerId = null;
 
 			const referralResponse = referral
-				? await ctx.database.member.findUnique({
-						where: {
-							referral,
-						},
-						select: {
-							userId: true,
-							brokerId: true,
-						},
-					})
+				? await resolveProducerByReferral(ctx, referral)
 				: null;
 
 			if (referralResponse?.brokerId) {
