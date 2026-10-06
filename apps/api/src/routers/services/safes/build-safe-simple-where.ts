@@ -79,8 +79,17 @@ async function buildSafeSimpleWhere(
 				insured: { phone: { contains: maskNumber(search) } },
 			});
 		} else if (isPlate(search)) {
+			// Placas ficam gravadas em minúsculas (o front envia em maiúsculas) e o
+			// mesmo veículo pode ter a placa antiga e a Mercosul: casa as duas.
+			const plate = search.replaceAll('-', '').toLowerCase();
+
 			andConditions.push({
-				safeVehicle: { plate: search.replaceAll('-', '') },
+				safeVehicle: {
+					OR: [
+						{ plate },
+						{ vehicle: { OR: [{ plate }, { plateAlternative: plate }] } },
+					],
+				},
 			});
 		} else {
 			andConditions.push({

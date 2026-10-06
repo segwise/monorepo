@@ -399,6 +399,7 @@ model SafeVehicle {
 
   @@unique([vehicleWithoutPlateId])
   @@unique([safeId])
+  @@index([plate])
   @@map("safe_vehicles")
 }
 
