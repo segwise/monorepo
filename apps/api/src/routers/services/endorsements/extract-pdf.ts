@@ -3,12 +3,14 @@ import { maskNumber, SchemaDateString, SchemaPostalCode } from '@segwise/core';
 import { z } from 'zod';
 import type { Database } from '@/@types/database';
 import type { Server } from '@/@types/server';
+import type { Prisma } from '@/generated/prisma/client';
 import {
 	askJson,
 	runPdfExtraction,
 	SchemaPlateLenient,
 	visionInstructions,
 } from '@/libraries/ai/pdf-extraction';
+import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 
 const SchemaLookup = z
 	.object({
@@ -480,41 +482,53 @@ async function findSafeByLookup(
 		? maskNumber(lookup.insuredRegistration)
 		: null;
 
-	const safe = await database.safe.findFirst({
-		where: {
-			safeVehicle: {
+	const where: Prisma.SafeWhereInput = {
+		safeVehicle: {
+			OR: [
+				{
+					plate: plateSanitized,
+				},
+				{
+					vehicle: {
+						OR: [
+							{
+								plate: plateSanitized,
+							},
+							{
+								plateAlternative: plateSanitized,
+							},
+						],
+					},
+				},
+			],
+		},
+		...(insuredRegistrationSanitized && {
+			insured: {
 				OR: [
 					{
-						plate: plateSanitized,
+						cpf: insuredRegistrationSanitized,
 					},
 					{
-						vehicle: {
-							OR: [
-								{
-									plate: plateSanitized,
-								},
-								{
-									plateAlternative: plateSanitized,
-								},
-							],
-						},
+						cnpj: insuredRegistrationSanitized,
 					},
 				],
 			},
-			...(insuredRegistrationSanitized && {
-				insured: {
-					OR: [
-						{
-							cpf: insuredRegistrationSanitized,
-						},
-						{
-							cnpj: insuredRegistrationSanitized,
-						},
-					],
-				},
-			}),
-		},
-	});
+		}),
+	};
+
+	// Prefere a proposta real: o produtor de teste (oculto na listagem) pode ter
+	// a mesma placa/segurado, e o endosso não deve cair nele por engano.
+	const safe =
+		(await database.safe.findFirst({
+			where: {
+				...where,
+				OR: [
+					{ producerId: null },
+					{ producerId: { not: EXCLUDED_PRODUCER_ID } },
+				],
+			},
+			orderBy: { requestedAt: 'desc' },
+		})) ?? (await database.safe.findFirst({ where }));
 
 	return safe?.id ?? null;
 }
