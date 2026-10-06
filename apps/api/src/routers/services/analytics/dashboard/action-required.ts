@@ -1,11 +1,7 @@
-import {
-	addDays,
-	differenceInCalendarDays,
-	startOfDay,
-	subDays,
-} from 'date-fns';
+import { addDays, differenceInCalendarDays, subDays } from 'date-fns';
 import type { Server } from '@/@types/server';
 import type { Prisma } from '@/generated/prisma/client';
+import { dayKey } from '@/libraries/dashboard/range';
 import { requireBrokerId } from './query';
 
 const STALLED_QUOTE_DAYS = 2;
@@ -22,7 +18,9 @@ function registerRoutersServicesAnalyticsDashboardActionRequired(
 	server.get('/action-required', async (ctx) => {
 		const brokerId = requireBrokerId(ctx);
 		const now = new Date();
-		const today = startOfDay(now);
+		// Colunas `date` ficam em UTC 00:00: "hoje" é o dia do usuário (X-timezone),
+		// não o dia UTC (à noite no Brasil o dia UTC já é o seguinte).
+		const today = new Date(`${dayKey(now, ctx.timezone)}T00:00:00.000Z`);
 
 		const stalledQuotes: Prisma.QuoteWhereInput = {
 			brokerId,
