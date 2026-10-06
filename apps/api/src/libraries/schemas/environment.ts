@@ -4,6 +4,7 @@ const SchemaEnvironment = z.object({
 	NODE_ENV: z.enum(['development', 'preview', 'production']),
 	PORT: z.coerce.number('PORT inválido').default(3000),
 	APPLICATION_URL: z.url('APPLICATION_URL inválida'),
+	CUSTOMER_PORTAL_URL: z.url('CUSTOMER_PORTAL_URL inválida').optional(),
 	DATABASE_URL: z.url('DATABASE_URL inválido'),
 	CACHE_URL: z.url('CACHE_URL inválido'),
 	QUEUE_URL: z.url('QUEUE_URL inválido'),

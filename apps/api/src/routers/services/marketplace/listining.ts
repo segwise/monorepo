@@ -21,7 +21,8 @@ function registerRoutersServicesMarketplaceListining(server: Server) {
 			const where: Prisma.MarketplaceVehicleWhereInput = {
 				...(!!search && {
 					model: {
-						search: search.replaceAll(' ', '&'),
+						contains: search.trim(),
+						mode: 'insensitive',
 					},
 				}),
 				...(state && {
@@ -292,7 +293,8 @@ function registerRoutersServicesMarketplaceListining(server: Server) {
 				insuredId,
 				...(!!search && {
 					model: {
-						search: search.replaceAll(' ', '&'),
+						contains: search.trim(),
+						mode: 'insensitive',
 					},
 				}),
 				...(state && {

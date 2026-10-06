@@ -7,7 +7,13 @@ const sessionMiddleware: MiddlewareHandler = async (ctx, next) => {
 		headers: ctx.req.raw.headers,
 	});
 
-	if (session) {
+	// Vínculo suspenso ou excluído = sem acesso: a requisição segue como se não houvesse
+	// sessão (rotas protegidas respondem 401), sem esperar a sessão expirar.
+	// @ts-expect-error
+	const brokerStatus = session?.session.brokerStatus as string | undefined;
+	const suspended = !!brokerStatus && brokerStatus !== 'active';
+
+	if (session && !suspended) {
 		ctx.session = {
 			...session.session,
 			// @ts-expect-error

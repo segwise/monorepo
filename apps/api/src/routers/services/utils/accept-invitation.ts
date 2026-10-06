@@ -2,6 +2,7 @@ import { zValidator } from '@hono/zod-validator';
 import { SchemaPassword } from '@segwise/core';
 import z from 'zod';
 import type { Server } from '@/@types/server';
+import { buildCustomerPortalUrl } from '@/functions/hostname/build-customer-portal-url';
 import { buildProducerPortalUrl } from '@/functions/hostname/build-producer-portal-url';
 import { responseReplaceSession } from '@/functions/response/replace-session';
 import { Role } from '@/generated/prisma/enums';
@@ -48,12 +49,13 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 				return ctx.redirect(url.toJSON(), 301);
 			}
 
-			return ctx.json(
-				{
-					message: 'Condição não programada',
-				},
-				200,
+			const url = new URL(
+				buildCustomerPortalUrl(ctx.environment, '/accept-invitation'),
 			);
+
+			url.searchParams.set('token', token);
+
+			return ctx.redirect(url.toJSON(), 301);
 		},
 	);
 

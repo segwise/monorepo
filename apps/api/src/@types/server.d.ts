@@ -31,6 +31,7 @@ type Variables = {
 		role: Role;
 		brokerId?: string | null;
 		brokerRole?: Role | null;
+		brokerStatus?: 'active' | 'suspended' | 'deleted' | null;
 	};
 	browser: Awaited<typeof acquirePage>;
 	transfeera: Xior;

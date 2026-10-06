@@ -35,8 +35,13 @@ function registerRoutersServicesMarketingCampaigns(server: Server) {
 	server.get('/campaigns', async (ctx) => {
 		const brokerId = requireBroker(ctx.session.brokerId);
 
+		const search = ctx.req.query('search')?.trim();
+
 		const campaigns = await ctx.database.marketingCampaign.findMany({
-			where: { brokerId },
+			where: {
+				brokerId,
+				...(search && { name: { contains: search, mode: 'insensitive' } }),
+			},
 			orderBy: { createdAt: 'desc' },
 			include: { _count: { select: { contacts: true } } },
 		});

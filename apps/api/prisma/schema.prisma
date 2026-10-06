@@ -849,6 +849,8 @@ enum StatusSafe {
 enum StatusMember {
   active
   suspended
+  // Exclusão lógica: sem acesso, dados mantidos; cadastrar o mesmo e-mail de novo restaura.
+  deleted
 }
 
 enum MaritalStatus {

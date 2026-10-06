@@ -51,12 +51,14 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 											OR: [
 												{
 													name: {
-														search: search.replaceAll(' ', '&'),
+														contains: search.trim(),
+														mode: 'insensitive',
 													},
 												},
 												{
 													fantasy: {
-														search: search.replaceAll(' ', '&'),
+														contains: search.trim(),
+														mode: 'insensitive',
 													},
 												},
 											],
@@ -65,7 +67,8 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 									{
 										user: {
 											name: {
-												search: search.replaceAll(' ', '&'),
+												contains: search.trim(),
+												mode: 'insensitive',
 											},
 										},
 									},
@@ -74,13 +77,14 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 											OR: [
 												{
 													name: {
-														search: search.replaceAll(' ', '&'),
+														contains: search.trim(),
+														mode: 'insensitive',
 													},
 												},
 												// {
 												// 	fantasy: {
 												//
-												// 		search: search.replaceAll(' ', '&'),
+												// 		contains: search.trim(), mode: 'insensitive',
 												// 	},
 												// },
 											],
@@ -97,12 +101,14 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 											OR: [
 												{
 													name: {
-														search: search.replaceAll(' ', '&'),
+														contains: search.trim(),
+														mode: 'insensitive',
 													},
 												},
 												{
 													fantasy: {
-														search: search.replaceAll(' ', '&'),
+														contains: search.trim(),
+														mode: 'insensitive',
 													},
 												},
 											],
@@ -111,7 +117,8 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 									{
 										user: {
 											name: {
-												search: search.replaceAll(' ', '&'),
+												contains: search.trim(),
+												mode: 'insensitive',
 											},
 										},
 									},
@@ -120,13 +127,14 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 											OR: [
 												{
 													name: {
-														search: search.replaceAll(' ', '&'),
+														contains: search.trim(),
+														mode: 'insensitive',
 													},
 												},
 												// {
 												// 	fantasy: {
 												//
-												// 		search: search.replaceAll(' ', '&'),
+												// 		contains: search.trim(), mode: 'insensitive',
 												// 	},
 												// },
 											],

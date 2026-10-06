@@ -17,7 +17,8 @@ function registerRoutersServicesUtilsInsuranceCompaniesListining(
 			const where: Prisma.InsuranceCompanyWhereInput = {
 				...(!!search && {
 					name: {
-						search: search.replaceAll(' ', '&'),
+						contains: search.trim(),
+						mode: 'insensitive',
 					},
 				}),
 			};

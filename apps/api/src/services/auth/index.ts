@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { APIError } from 'better-auth/api';
 import {
 	admin,
 	createAccessControl,
@@ -338,11 +339,14 @@ const auth = betterAuth({
 						},
 						select: {
 							role: true,
+							status: true,
 						},
 					})
 					.then((member) => {
 						// @ts-expect-error
 						session.brokerRole = member?.role;
+						// @ts-expect-error
+						session.brokerStatus = member?.status;
 					});
 			}
 
@@ -376,6 +380,25 @@ const auth = betterAuth({
 						return {
 							data: session,
 						};
+					}
+
+					const member = await database.member.findUnique({
+						where: {
+							brokerId_userId: {
+								brokerId: broker.id,
+								userId: session.userId,
+							},
+						},
+						select: { status: true },
+					});
+
+					if (member?.status === 'suspended' || member?.status === 'deleted') {
+						throw new APIError('FORBIDDEN', {
+							message:
+								member.status === 'deleted'
+									? 'Acesso encerrado. Fale com o administrador da corretora.'
+									: 'Acesso suspenso. Fale com o administrador da corretora.',
+						});
 					}
 
 					return {

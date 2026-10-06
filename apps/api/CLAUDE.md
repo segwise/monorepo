@@ -171,3 +171,11 @@ roda como usuário não-root, tem `entrypoint.sh`. `docker-compose.yml` sobe
 `dokploy-network`. `bun run deploy` só faz push (Dokploy redeploya a partir
 do git) — não rodar sem confirmação explícita do usuário, e nunca rodar
 `db:migrate:reset` ou `db:deploy` contra produção sem confirmação.
+
+## Busca em listagens
+
+Todo `?search=` usa `parseSearch` (`src/functions/search/parse-search.ts`): CPF/CNPJ/celular por dígitos, e-mail por prefixo, texto com `contains` + `insensitive`, atendido por índice GIN trigram (`pg_trgm`). Nunca o `search` full-text do Prisma (não indexável). Campo novo pesquisável em tabela grande precisa de índice trigram (uma migration por índice, `CREATE INDEX CONCURRENTLY`). Ver `docs/CONVENTIONS.md`.
+
+## Performance e índices
+
+Toda consulta nova/alterada deve ter índice adequado (btree, composto ou GIN para full-text), validado com `EXPLAIN ANALYZE` no banco local, sem travar o banco (`CREATE INDEX CONCURRENTLY` em tabelas grandes) e sem carregar tudo para filtrar no cliente. Regra completa em `docs/CONVENTIONS.md`.

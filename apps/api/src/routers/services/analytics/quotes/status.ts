@@ -79,14 +79,16 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 						{
 							insured: {
 								name: {
-									search: search.replaceAll(' ', '&'),
+									contains: search.trim(),
+									mode: 'insensitive',
 								},
 							},
 						},
 						{
 							temporaryInsured: {
 								name: {
-									search: search.replaceAll(' ', '&'),
+									contains: search.trim(),
+									mode: 'insensitive',
 								},
 							},
 						},

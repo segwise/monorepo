@@ -110,12 +110,12 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 					OR: [
 						{
 							insured: {
-								name: { search: search.replaceAll(' ', '&') },
+								name: { contains: search.trim(), mode: 'insensitive' },
 							},
 						},
 						{
 							temporaryInsured: {
-								name: { search: search.replaceAll(' ', '&') },
+								name: { contains: search.trim(), mode: 'insensitive' },
 							},
 						},
 					],

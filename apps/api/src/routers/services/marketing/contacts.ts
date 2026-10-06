@@ -4,6 +4,10 @@ import type { MarketingContact } from '@segwise/core/types';
 import type { Context } from 'hono';
 import type { AppBindings, Server } from '@/@types/server.d';
 import {
+	type ParsedSearch,
+	parseSearch,
+} from '@/functions/search/parse-search';
+import {
 	countEligibleContacts,
 	RESEND_WINDOW_DAYS,
 } from '@/libraries/marketing/eligibility';
@@ -20,6 +24,22 @@ async function findCampaign(ctx: Context<AppBindings>, id: string) {
 		where: { id, brokerId },
 		select: { id: true },
 	});
+}
+
+function contactSearchConditions(parsed: ParsedSearch, term: string) {
+	if (parsed.kind === 'phone' || parsed.kind === 'document') {
+		return [{ phone: { contains: parsed.digits } }];
+	}
+
+	if (parsed.kind === 'email') {
+		return [{ email: { startsWith: parsed.email } }];
+	}
+
+	return [
+		{ name: { contains: parsed.text, mode: 'insensitive' as const } },
+		{ city: { contains: parsed.text, mode: 'insensitive' as const } },
+		{ state: { equals: term, mode: 'insensitive' as const } },
+	];
 }
 
 function registerRoutersServicesMarketingContacts(server: Server) {
@@ -61,8 +81,14 @@ function registerRoutersServicesMarketingContacts(server: Server) {
 			return ctx.json({ message: 'Campanha não encontrada' }, 404);
 		}
 
+		const search = ctx.req.query('search')?.trim();
+		const parsed = search ? parseSearch(search) : null;
+
 		const contacts = await ctx.database.marketingContact.findMany({
-			where: { campaignId: id },
+			where: {
+				campaignId: id,
+				...(parsed && { OR: contactSearchConditions(parsed, search ?? '') }),
+			},
 			orderBy: { name: 'asc' },
 			include: { deliveries: { orderBy: { sentAt: 'desc' } } },
 		});

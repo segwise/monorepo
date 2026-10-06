@@ -16,9 +16,17 @@ import {
 interface InvitePartnerEmailProps {
 	company: string;
 	url: string;
+	// Convite da equipe da corretora: saudação e papel; sem eles o texto é o de parceiro.
+	name?: string | null;
+	roleLabel?: string;
 }
 
-function InvitePartnerEmail({ company, url }: InvitePartnerEmailProps) {
+function InvitePartnerEmail({
+	company,
+	url,
+	name,
+	roleLabel,
+}: InvitePartnerEmailProps) {
 	const year = new Date().getFullYear();
 
 	return (
@@ -31,11 +39,19 @@ function InvitePartnerEmail({ company, url }: InvitePartnerEmailProps) {
 						<Text style={headerText}>Segwise</Text>
 					</Section>
 					<Section style={content}>
-						<Heading style={greeting}>Olá, NOVO PARCEIRO.</Heading>
+						<Heading style={greeting}>
+							Olá, {name ? name.toUpperCase() : 'NOVO PARCEIRO'}.
+						</Heading>
 						<Text style={paragraph}>
 							Você foi convidado(a) para fazer parte da plataforma da{' '}
 							<strong>Segwise</strong> em nome da organização{' '}
-							<strong>{company.toUpperCase()}</strong>.
+							<strong>{company.toUpperCase()}</strong>
+							{roleLabel ? (
+								<>
+									, com o perfil de <strong>{roleLabel}</strong>
+								</>
+							) : null}
+							.
 						</Text>
 						<Text style={paragraph}>
 							Nossa plataforma foi desenvolvida para simplificar a gestão de
