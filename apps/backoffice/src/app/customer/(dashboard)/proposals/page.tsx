@@ -23,7 +23,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { CardAnalyticsStatusCountList } from '@/containers/cards/analytics/status/count';
 import { DialogSafeEndorsementDetails } from '@/containers/dialogs/safes/endorsement';
-import { FilterBasisOfAnalysis } from '@/containers/tables/filter-base-of-analytics';
 import { TablePagination } from '@/containers/tables/pagination';
 import {
 	TableSafesHeaderFilters,
@@ -102,9 +101,8 @@ function ProposalsPage() {
 				</div>
 			</div>
 			<Separator />
-			<div className='flex flex-row items-center justify-between gap-x-3'>
-				<FilterBasisOfAnalysis />
-				<CardAnalyticsStatusCountList title='Total Geral' type='proposals' />
+			<div className='flex flex-row items-center justify-end gap-x-3'>
+				<CardAnalyticsStatusCountList />
 			</div>
 			<div className='space-y-3'>
 				<Card className='p-0 overflow-hidden'>

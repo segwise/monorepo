@@ -50,4 +50,30 @@ const useAnalyticsStatusCount = (
 			).data,
 	});
 
-export { useAnalyticsStatus, useAnalyticsStatusCount };
+// Propostas: `current` = vencem no período filtrado (o mesmo total da tabela);
+// `next` = o mesmo período um ano depois (renovadas ou emitidas para o ano
+// seguinte), ou null quando há busca por texto (sem período).
+const useAnalyticsProposalsPeriod = ({
+	cursor: _cursor,
+	limit: _limit,
+	...props
+}: Record<string, unknown>) =>
+	useQuery({
+		queryKey: ['proposals', 'analytics', 'count', props],
+		queryFn: async ({ signal }) =>
+			(
+				await api.get<{ current: number; next: number | null }>(
+					'/analytics/proposals/count',
+					{
+						params: props,
+						signal,
+					},
+				)
+			).data,
+	});
+
+export {
+	useAnalyticsProposalsPeriod,
+	useAnalyticsStatus,
+	useAnalyticsStatusCount,
+};
