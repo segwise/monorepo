@@ -14,19 +14,19 @@ const SchemaStaffRole = z.enum(
 	'Perfil inválido',
 );
 
-// CPF é opcional ao cadastrar (a equipe atual foi criada sem) e obrigatório ao editar.
+// CPF e celular são obrigatórios tanto ao cadastrar quanto ao editar.
 const SchemaUserRegister = z.object({
 	name: SchemaName,
 	email: SchemaEmail,
-	cpf: SchemaCPF.nullish().or(z.literal('')),
-	phone: SchemaPhone.nullish().or(z.literal('')),
+	cpf: SchemaCPF,
+	phone: SchemaPhone,
 	role: SchemaStaffRole,
 });
 
 const SchemaUserUpdate = z.object({
 	name: SchemaName,
 	cpf: SchemaCPF,
-	phone: SchemaPhone.nullish().or(z.literal('')),
+	phone: SchemaPhone,
 	role: SchemaStaffRole,
 });
 
