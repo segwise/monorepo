@@ -329,7 +329,7 @@ function TableProducersSimple() {
 						</TooltipContent>
 					</Tooltip>
 				</TableCell>
-				<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+				<TableCell className='justify-end flex flex-row gap-x-2'>
 					{isExpired && <ButtonPendingRenew id={id} />}
 					<Tooltip>
 						<TooltipTrigger asChild>
