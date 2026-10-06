@@ -140,8 +140,8 @@ function TableSafesSheetFilters({ children }: React.PropsWithChildren) {
 						isSameDay(effectivedAt.to as Date, defaultFilterDate.end)
 					? null
 					: {
-							start: effectivedAt.from as Date,
-							end: effectivedAt.to as Date,
+							start: startOfDay(effectivedAt.from as Date),
+							end: startOfDay(effectivedAt.to as Date),
 						},
 			producers: producers.length ? producers : null,
 			insuranceCompanies: insuranceCompanies.length ? insuranceCompanies : null,

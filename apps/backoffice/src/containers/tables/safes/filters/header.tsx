@@ -13,6 +13,7 @@ import {
 	format,
 	isSameDay,
 	parseISO,
+	startOfDay,
 	startOfMonth,
 	startOfToday,
 } from 'date-fns';
@@ -224,16 +225,16 @@ function FilterEffectivedAt() {
 				: !!date.from && !!date.to && isSameDay(date.from, date.to)
 					? {
 							effectivedAt: {
-								start: date.from,
-								end: endOfDay(date.from),
+								start: startOfDay(date.from),
+								end: startOfDay(date.from),
 							},
 						}
 					: {
 							...(!!date?.from &&
 								!!date.to && {
 									effectivedAt: {
-										start: date.from,
-										end: date.to,
+										start: startOfDay(date.from),
+										end: startOfDay(date.to),
 									},
 								}),
 							...(!!date?.from &&
