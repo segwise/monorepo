@@ -227,7 +227,7 @@ function TableProducersSimple() {
 						{status === 'suspended' ? 'Suspenso' : 'Ativo'}
 					</Badge>
 				</TableCell>
-				<TableCell className='justify-end flex flex-row gap-x-2 w-30'>
+				<TableCell className='justify-end flex flex-row gap-x-2'>
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<Button
@@ -359,7 +359,7 @@ function TableProducersSimple() {
 						<TableHead className='text-center w-40'>Tipo</TableHead>
 						<TableHead className='text-center w-40'>Desde / Convite</TableHead>
 						<TableHead className='text-center w-40'>Status</TableHead>
-						<TableHead className='text-right w-30'>Ações</TableHead>
+						<TableHead className='text-right'>Ações</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
