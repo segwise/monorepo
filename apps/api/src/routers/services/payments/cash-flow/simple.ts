@@ -1,9 +1,10 @@
 import { zValidator } from '@hono/zod-validator';
-import { defaultFilterDate } from '@segwise/core';
+import { getDefaultFilterDate } from '@segwise/core';
 import { SchemaSearchParamsPaymentSimple } from '@segwise/core/schemas';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/payment/simple';
 import { serializer } from '@/db-serializers/payment/simple';
+import { timestampRange } from '@/functions/date/timestamp-range';
 import type { Prisma } from '@/generated/prisma/client';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 
@@ -18,7 +19,7 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 				...props,
 				...(!props.expiration &&
 					!props.paidAt && {
-						expiration: defaultFilterDate,
+						expiration: getDefaultFilterDate(),
 					}),
 			})),
 		),
@@ -156,16 +157,10 @@ function registerRoutersServicesPaymentsCashFlowSimpleListining(
 					},
 				}),
 				...(expiration && {
-					expiration: {
-						gte: expiration.start,
-						lte: expiration.end,
-					},
+					expiration: timestampRange(expiration, ctx.timezone),
 				}),
 				...(paidAt && {
-					paidAt: {
-						gte: paidAt.start,
-						lte: paidAt.end,
-					},
+					paidAt: timestampRange(paidAt, ctx.timezone),
 				}),
 			};
 

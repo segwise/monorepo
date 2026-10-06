@@ -1,7 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsProducerSimple } from '@segwise/core';
 import type { ProducerListItem } from '@segwise/core/types';
-import { endOfDay, startOfDay } from 'date-fns';
+import { fromZonedTime } from 'date-fns-tz';
 import type { Server } from '@/@types/server.d';
 import { Prisma } from '@/generated/prisma/client';
 import { Role, StatusInvitation } from '@/generated/prisma/enums';
@@ -16,6 +16,7 @@ type Filters = {
 	status?: 'all' | 'active' | 'suspended' | 'pending' | null;
 	from?: string | null;
 	to?: string | null;
+	timezone: string;
 };
 
 // Listagem única: quem já é membro da corretora (ativo ou suspenso) e quem ainda
@@ -29,6 +30,7 @@ function buildProducersCte({
 	status,
 	from,
 	to,
+	timezone,
 }: Filters) {
 	const like = search
 		? `%${search.replace(/[\\%_]/g, (char) => `\\${char}`)}%`
@@ -44,11 +46,11 @@ function buildProducersCte({
 	const sinceFilter = (column: Prisma.Sql) =>
 		Prisma.sql`${
 			from
-				? Prisma.sql`AND ${column} >= ${startOfDay(new Date(`${from}T00:00:00`))}`
+				? Prisma.sql`AND ${column} >= ${fromZonedTime(`${from}T00:00:00.000`, timezone)}`
 				: Prisma.empty
 		} ${
 			to
-				? Prisma.sql`AND ${column} <= ${endOfDay(new Date(`${to}T00:00:00`))}`
+				? Prisma.sql`AND ${column} <= ${fromZonedTime(`${to}T23:59:59.999`, timezone)}`
 				: Prisma.empty
 		}`;
 
@@ -113,6 +115,7 @@ function registerRoutersServicesProducersSimpleListining(server: Server) {
 				status,
 				from,
 				to,
+				timezone: ctx.timezone,
 			});
 
 			const db = ctx.database;
