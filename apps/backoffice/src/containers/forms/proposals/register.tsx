@@ -2356,6 +2356,11 @@ function DialogGetDocument({
 				{
 					method: 'POST',
 					body: formData,
+					credentials: 'include',
+					headers: {
+						'X-Client-App': process.env.NEXT_PUBLIC_ROLE_SYSTEM as string,
+						'X-timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+					},
 				},
 			);
 
