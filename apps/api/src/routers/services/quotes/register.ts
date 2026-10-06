@@ -1,15 +1,9 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaQuoteRegister } from '@segwise/core';
-import {
-	differenceInYears,
-	isSameDay,
-	setHours,
-	setMilliseconds,
-	setMinutes,
-	setSeconds,
-	startOfDay,
-} from 'date-fns';
+import { differenceInYears, setMilliseconds } from 'date-fns';
+import { fromZonedTime } from 'date-fns-tz';
 import type { Server } from '@/@types/server';
+import { dayKey } from '@/libraries/dashboard/range';
 
 function registerRoutersServicesQuotesRegister(server: Server) {
 	server.post('/', zValidator('json', SchemaQuoteRegister), async (ctx) => {
@@ -36,6 +30,15 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 			insuranceCompany,
 			expiration,
 		} = ctx.req.valid('json');
+
+		// Cotação é `timestamptz` exibido/filtrado no fuso do usuário: o dia
+		// escolhido vale no fuso dele (não em UTC). Hoje = agora; outro dia = início
+		// desse dia no fuso do usuário (um 00:00 UTC cairia no dia anterior no Brasil).
+		const requestedDay = dayKey(requestedAt, ctx.timezone);
+		const quoteRequestedAt =
+			requestedDay === dayKey(new Date(), ctx.timezone)
+				? setMilliseconds(new Date(), 0)
+				: fromZonedTime(`${requestedDay}T00:00:00.000`, ctx.timezone);
 
 		await ctx.database.$transaction(async (transaction) => {
 			const temporaryInsured = await transaction.temporaryInsured.upsert({
@@ -117,18 +120,7 @@ function registerRoutersServicesQuotesRegister(server: Server) {
 							expiration,
 						}),
 					status,
-					requestedAt: isSameDay(new Date(), requestedAt)
-						? setMilliseconds(
-								setSeconds(
-									setMinutes(
-										setHours(requestedAt, new Date().getHours()),
-										new Date().getMinutes(),
-									),
-									new Date().getSeconds(),
-								),
-								0,
-							)
-						: startOfDay(requestedAt),
+					requestedAt: quoteRequestedAt,
 					temporaryInsured: {
 						connect: {
 							id: temporaryInsured.id,

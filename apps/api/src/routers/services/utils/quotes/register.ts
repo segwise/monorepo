@@ -5,12 +5,21 @@ import {
 	SchemaQuoteSimpleCustomRegister,
 	SchemaQuoteSimpleRegister,
 } from '@segwise/core';
-import { endOfDay, endOfMonth } from 'date-fns';
+import { endOfDay } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { resolveProducerByReferral } from '@/functions/producers/resolve-producer-by-referral';
 import { vehicleByPlate } from '@/functions/vehicle/by-plate';
 import { ModalityInsurance } from '@/generated/prisma/enums';
+import { dayKey } from '@/libraries/dashboard/range';
+
+// Último dia do mês corrente no fuso do usuário, como data (UTC 00:00, coluna
+// `date`): à noite do último dia o mês em UTC já é o seguinte.
+function lastDayOfCurrentMonth(timezone: string) {
+	const [year, month] = dayKey(new Date(), timezone).split('-').map(Number);
+
+	return new Date(Date.UTC(year as number, month as number, 0));
+}
 
 function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 	server.post(
@@ -265,7 +274,7 @@ function registerRoutersServicesUtilsQuotesRegister(server: Server) {
 											expiration: endOfDay(expiration),
 										}
 									: {
-											expiration: endOfMonth(new Date()),
+											expiration: lastDayOfCurrentMonth(ctx.timezone),
 										}),
 								franchise,
 							},

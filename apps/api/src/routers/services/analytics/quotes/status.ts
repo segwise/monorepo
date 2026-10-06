@@ -3,9 +3,10 @@ import {
 	SchemaBasisOfAnalysis,
 	SchemaSearchParamsQuoteSimple,
 } from '@segwise/core';
-import { endOfDay, startOfDay, subMonths, subYears } from 'date-fns';
+import { subMonths, subYears } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
+import { timestampRange } from '@/functions/date/timestamp-range';
 import { type Prisma, Role } from '@/generated/prisma/client';
 
 function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
@@ -128,6 +129,11 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 				}),
 			};
 
+			const dayRange =
+				typeof requestedAt === 'string'
+					? { start: new Date(requestedAt), end: new Date(requestedAt) }
+					: (requestedAt as { start: Date; end: Date });
+
 			const [current, before] = await ctx.database.$transaction([
 				ctx.database.quote.count({
 					where: {
@@ -136,16 +142,7 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 							in: status,
 						},
 						...(!!requestedAt && {
-							requestedAt: {
-								...(typeof requestedAt === 'string' && {
-									gte: startOfDay(requestedAt),
-									lte: endOfDay(requestedAt),
-								}),
-								...(typeof requestedAt === 'object' && {
-									gte: startOfDay(requestedAt.start),
-									lte: endOfDay(requestedAt.end),
-								}),
-							},
+							requestedAt: timestampRange(dayRange, ctx.timezone),
 						}),
 					},
 				}),
@@ -156,28 +153,19 @@ function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {
 							in: status,
 						},
 						...(!!requestedAt && {
-							requestedAt: {
-								...(typeof requestedAt === 'string' && {
-									gte:
+							requestedAt: timestampRange(
+								{
+									start:
 										basisOfAnalysis === 'year'
-											? subYears(startOfDay(requestedAt), 1)
-											: subMonths(startOfDay(requestedAt), 1),
-									lte:
+											? subYears(dayRange.start, 1)
+											: subMonths(dayRange.start, 1),
+									end:
 										basisOfAnalysis === 'year'
-											? subYears(endOfDay(requestedAt), 1)
-											: subMonths(endOfDay(requestedAt), 1),
-								}),
-								...(typeof requestedAt === 'object' && {
-									gte:
-										basisOfAnalysis === 'year'
-											? subYears(startOfDay(requestedAt.start), 1)
-											: subMonths(startOfDay(requestedAt.start), 1),
-									lte:
-										basisOfAnalysis === 'year'
-											? subYears(endOfDay(requestedAt.end), 1)
-											: subMonths(endOfDay(requestedAt.end), 1),
-								}),
-							},
+											? subYears(dayRange.end, 1)
+											: subMonths(dayRange.end, 1),
+								},
+								ctx.timezone,
+							),
 						}),
 					},
 				}),

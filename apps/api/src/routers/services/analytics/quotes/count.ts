@@ -6,6 +6,7 @@ import {
 import { subMonths, subYears } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
+import { timestampRange } from '@/functions/date/timestamp-range';
 import { type Prisma, Role } from '@/generated/prisma/client';
 
 function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
@@ -123,25 +124,25 @@ function registerRoutersServicesAnalyticsQuotesCount(server: Server) {
 				ctx.database.quote.count({
 					where: {
 						...where,
-						requestedAt: {
-							gte: requestedAt.start,
-							lte: requestedAt.end,
-						},
+						requestedAt: timestampRange(requestedAt, ctx.timezone),
 					},
 				}),
 				ctx.database.quote.count({
 					where: {
 						...where,
-						requestedAt: {
-							gte:
-								basisOfAnalysis === 'year'
-									? subYears(requestedAt.start, 1)
-									: subMonths(requestedAt.start, 1),
-							lte:
-								basisOfAnalysis === 'year'
-									? subYears(requestedAt.end, 1)
-									: subMonths(requestedAt.end, 1),
-						},
+						requestedAt: timestampRange(
+							{
+								start:
+									basisOfAnalysis === 'year'
+										? subYears(requestedAt.start, 1)
+										: subMonths(requestedAt.start, 1),
+								end:
+									basisOfAnalysis === 'year'
+										? subYears(requestedAt.end, 1)
+										: subMonths(requestedAt.end, 1),
+							},
+							ctx.timezone,
+						),
 					},
 				}),
 			]);
