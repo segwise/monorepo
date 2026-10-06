@@ -91,10 +91,23 @@ function registerRoutersServicesSafesRegister(server: Server) {
 						lte: endOfDay(requestedAt),
 					},
 				},
+				select: {
+					id: true,
+					requestedAt: true,
+					insured: { select: { name: true } },
+					insuranceCompany: { select: { name: true, fantasy: true } },
+				},
 			});
 
 			if (isSafe) {
-				throw new Error('Dados já registrados anteriormente');
+				// Diz QUAL proposta conflita (segurado, seguradora e início) para o
+				// usuário conseguir localizar e conferir, em vez de só "já registrado".
+				const company =
+					isSafe.insuranceCompany?.fantasy || isSafe.insuranceCompany?.name;
+
+				throw new Error(
+					`Já existe uma proposta para a placa ${vehicle.plate.toUpperCase()} (segurado ${isSafe.insured?.name ?? 'sem nome'}${company ? `, ${company}` : ''}) com início em ${isSafe.requestedAt.toISOString().slice(0, 10).split('-').reverse().join('/')}`,
+				);
 			}
 		}
 
