@@ -1,5 +1,4 @@
 import type { Server } from '@/@types/server.d';
-
 import { registerRoutersServicesProducersById } from '@/routers/services/producers/[id]';
 import { registerRoutersServicesProducersSimpleListining } from '@/routers/services/producers/listinig';
 import { registerRoutersServicesProducersPendingDelete } from '@/routers/services/producers/pending-delete';
@@ -8,9 +7,13 @@ import { registerRoutersServicesProducersPublicLink } from '@/routers/services/p
 import { registerRoutersServicesProducersPublicRegister } from '@/routers/services/producers/public-register';
 import { registerRoutersServicesProducersRegister } from '@/routers/services/producers/register';
 import { registerRoutersServicesProducersRegisterInternal } from '@/routers/services/producers/register-internal';
+import { requireSession } from '@/server/middlewares/session';
 
 function registerRoutersServicesProducers(server: Server) {
 	const base = server.basePath('/producers');
+
+	base.use('/simple', requireSession);
+	base.use('/simple/full', requireSession);
 
 	registerRoutersServicesProducersById(base);
 	registerRoutersServicesProducersSimpleListining(base);
