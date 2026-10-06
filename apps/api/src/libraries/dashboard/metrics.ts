@@ -1,6 +1,6 @@
 import type { Database } from '@/@types/database';
-import type { Prisma } from '@/generated/prisma/client';
-import { type DayRange, dayKey } from './range';
+import { Prisma } from '@/generated/prisma/client';
+import type { DayRange } from './range';
 
 // Mesmo produtor ignorado pelas contagens de apólices em analytics/policies
 // (ver count.ts): fica fora dos números do dashboard para bater com o resto.
@@ -73,31 +73,42 @@ async function metricSeries(
 	const add = (key: string, value: number) =>
 		totals.set(key, (totals.get(key) ?? 0) + value);
 
+	// A soma é feita no banco (GROUP BY): trazer as linhas para somar em JS
+	// pesava a memória e a rede quando o período é o ano inteiro.
 	if (kind === 'quotes-count') {
-		const quotes = await database.quote.findMany({
-			where: quotesWhere(brokerId, range),
-			select: { requestedAt: true },
-		});
+		const rows = await database.$queryRaw<
+			Array<{ day: string; total: number }>
+		>(Prisma.sql`
+			SELECT to_char(requested_at AT TIME ZONE ${timezone}, 'YYYY-MM-DD') AS day,
+				count(*)::int AS total
+			FROM quotes
+			WHERE broker_id = ${brokerId}::uuid
+				AND requested_at >= ${range.tsFrom}
+				AND requested_at <= ${range.tsTo}
+			GROUP BY 1
+		`);
 
-		for (const quote of quotes) {
-			add(dayKey(quote.requestedAt, timezone), 1);
+		for (const row of rows) {
+			add(row.day, row.total);
 		}
 	} else {
-		const safes = await database.safe.findMany({
+		// requestedAt é gravado em 00:00 UTC: agrupar pelo próprio valor é agrupar
+		// por dia.
+		const rows = await database.safe.groupBy({
+			by: ['requestedAt'],
 			where: productionWhere(database, brokerId, range),
-			select: { requestedAt: true, award: true, commissionGross: true },
+			_count: { _all: true },
+			_sum: { award: true, commissionGross: true },
 		});
 
-		for (const safe of safes) {
-			const key = safe.requestedAt.toISOString().slice(0, 10);
-
+		for (const row of rows) {
 			add(
-				key,
+				row.requestedAt.toISOString().slice(0, 10),
 				kind === 'policies-count'
-					? 1
+					? row._count._all
 					: kind === 'net-premium'
-						? (safe.award?.toNumber() ?? 0)
-						: (safe.commissionGross?.toNumber() ?? 0),
+						? (row._sum.award?.toNumber() ?? 0)
+						: (row._sum.commissionGross?.toNumber() ?? 0),
 			);
 		}
 	}

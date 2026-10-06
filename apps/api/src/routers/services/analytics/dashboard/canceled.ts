@@ -49,22 +49,38 @@ const select = {
 	},
 } satisfies Prisma.SafeSelect;
 
-async function canceledIn(
+// Contagem e prêmio vêm de um aggregate no banco; as linhas completas (com
+// joins) só são buscadas para os itens exibidos.
+async function canceledTotals(
 	database: Database,
 	brokerId: string,
 	range: DayRange,
 ) {
+	const total = await database.safe.aggregate({
+		where: canceledWhere(brokerId, range),
+		_count: { _all: true },
+		_sum: { award: true },
+	});
+
+	return {
+		count: total._count._all,
+		premium: total._sum.award?.toNumber() ?? 0,
+	};
+}
+
+async function canceledItems(
+	database: Database,
+	brokerId: string,
+	range: DayRange,
+	limit: number,
+) {
 	return await database.safe.findMany({
 		where: canceledWhere(brokerId, range),
 		orderBy: { canceledAt: 'desc' },
+		take: limit,
 		select,
 	});
 }
-
-const totalOf = (rows: Awaited<ReturnType<typeof canceledIn>>) => ({
-	count: rows.length,
-	premium: rows.reduce((sum, row) => sum + (row.award?.toNumber() ?? 0), 0),
-});
 
 function registerRoutersServicesAnalyticsDashboardCanceled(server: Server) {
 	server.get(
@@ -80,13 +96,11 @@ function registerRoutersServicesAnalyticsDashboardCanceled(server: Server) {
 			const { limit, ...period } = ctx.req.valid('query');
 			const { current, reference } = periodRanges(period, ctx.timezone);
 
-			const [currentRows, referenceRows] = await Promise.all([
-				canceledIn(ctx.database, brokerId, current),
-				canceledIn(ctx.database, brokerId, reference),
+			const [now, before, currentRows] = await Promise.all([
+				canceledTotals(ctx.database, brokerId, current),
+				canceledTotals(ctx.database, brokerId, reference),
+				canceledItems(ctx.database, brokerId, current, limit),
 			]);
-
-			const now = totalOf(currentRows);
-			const before = totalOf(referenceRows);
 
 			return ctx.json(
 				{
@@ -100,7 +114,7 @@ function registerRoutersServicesAnalyticsDashboardCanceled(server: Server) {
 						reference: before.premium,
 						percent: percentChange(now.premium, before.premium),
 					},
-					items: currentRows.slice(0, limit).map((safe) => {
+					items: currentRows.map((safe) => {
 						const byEndorsement = safe.endorsements.length > 0;
 
 						return {

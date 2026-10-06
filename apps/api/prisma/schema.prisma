@@ -239,6 +239,8 @@ model Quote {
   @@index([status])
   @@index([modality])
   @@index([id, requestedAt])
+  @@index([brokerId, requestedAt])
+  @@index([brokerId, status, statusAt])
   @@map("quotes")
 }
 
@@ -319,6 +321,8 @@ model Safe {
   @@unique([externalId])
   @@unique([previousSafeId])
   @@index([brokerId, canceledAt])
+  @@index([brokerId, requestedAt])
+  @@index([brokerId, status, expiration])
   @@map("safes")
 }
 
@@ -694,6 +698,8 @@ model Payment {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  @@index([receiverId, status, expiration])
+  @@index([payerId, status, expiration])
   @@map("payments")
 }
 
