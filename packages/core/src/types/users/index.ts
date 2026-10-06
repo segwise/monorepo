@@ -17,12 +17,14 @@ type UserListItem = {
 	origin: 'active' | 'pending';
 	name: string | null;
 	email: string;
+	cpf: string | null;
 	phone: string | null;
 	role: StaffRole;
-	status: 'active' | 'suspended' | 'pending';
+	// `deleted` = excluído (lógico): sem acesso, dados mantidos, restaurável
+	// cadastrando o mesmo e-mail de novo.
+	status: 'active' | 'suspended' | 'deleted' | 'pending';
 	createdAt: string;
 	expiresAt: string | null;
-	isSelf: boolean;
 	canManage: boolean;
 };
 

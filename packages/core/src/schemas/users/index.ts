@@ -1,6 +1,6 @@
 import z from 'zod';
 import { STAFF_ROLES } from '../../utils/user-roles';
-import { SchemaEmail, SchemaName, SchemaPhone } from '../utils';
+import { SchemaCPF, SchemaEmail, SchemaName, SchemaPhone } from '../utils';
 
 // Dono não se cadastra por aqui: a corretora tem um só e ele não se transfere.
 const SchemaStaffRole = z.enum(
@@ -14,15 +14,18 @@ const SchemaStaffRole = z.enum(
 	'Perfil inválido',
 );
 
+// CPF é opcional ao cadastrar (a equipe atual foi criada sem) e obrigatório ao editar.
 const SchemaUserRegister = z.object({
 	name: SchemaName,
 	email: SchemaEmail,
+	cpf: SchemaCPF.nullish().or(z.literal('')),
 	phone: SchemaPhone.nullish().or(z.literal('')),
 	role: SchemaStaffRole,
 });
 
 const SchemaUserUpdate = z.object({
 	name: SchemaName,
+	cpf: SchemaCPF,
 	phone: SchemaPhone.nullish().or(z.literal('')),
 	role: SchemaStaffRole,
 });
