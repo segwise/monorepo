@@ -27,7 +27,8 @@ function friendlyAuthError(error: unknown): Error {
 }
 
 // Usado pelos três cadastros de produtor/parceiro (interno, admin e link público).
-// - Reaproveita o usuário que já existe por CPF/CNPJ ou por e-mail.
+// - Reaproveita o usuário que já existe por CPF/CNPJ ou por e-mail (sem nunca
+//   atribuir o CPF/CNPJ digitado a uma conta de equipe só pelo e-mail).
 // - O convite é enviado para o e-mail do usuário (o aceite procura o usuário por
 //   esse e-mail), então um CPF/CNPJ já cadastrado com outro e-mail é recusado.
 // - CPF/CNPJ e celular são gravados explicitamente: o `createUser` do
@@ -46,37 +47,72 @@ async function findOrCreateProducerUser(
 		throw new Error('CPF ou CNPJ inválido');
 	}
 
-	const existing = await ctx.database.user.findFirst({
-		where: { OR: [{ cpf: cpfOrCnpj }, { cnpj: cpfOrCnpj }, { email }] },
-		select: { id: true, email: true, cpf: true, cnpj: true, phone: true },
-	});
+	const [byDocument, byEmail] = await Promise.all([
+		ctx.database.user.findFirst({
+			where: { OR: [{ cpf: cpfOrCnpj }, { cnpj: cpfOrCnpj }] },
+			select: { id: true, email: true, cpf: true, cnpj: true, phone: true },
+		}),
+		ctx.database.user.findUnique({
+			where: { email },
+			select: {
+				id: true,
+				email: true,
+				cpf: true,
+				cnpj: true,
+				phone: true,
+				members: { select: { role: true } },
+			},
+		}),
+	]);
 
-	if (existing) {
-		const sameDocument =
-			existing.cpf === cpfOrCnpj || existing.cnpj === cpfOrCnpj;
+	if (byDocument && byEmail && byDocument.id !== byEmail.id) {
+		throw new Error(
+			`Este CPF/CNPJ pertence a outro usuário (${byDocument.email}) e o e-mail informado a ${byEmail.email}. Confira os dados.`,
+		);
+	}
 
-		if (existing.email !== email) {
+	if (byDocument) {
+		if (byDocument.email !== email) {
 			throw new Error(
-				`Este CPF/CNPJ já está cadastrado com o e-mail ${existing.email}. Use o mesmo e-mail.`,
+				`Este CPF/CNPJ já está cadastrado com o e-mail ${byDocument.email}. Use o mesmo e-mail.`,
 			);
 		}
 
-		if (!sameDocument && (existing.cpf || existing.cnpj)) {
-			throw new Error('Este e-mail já está cadastrado para outro CPF/CNPJ');
-		}
-
-		// Cadastro antigo sem documento/celular: completa o que faltar.
-		if (!sameDocument || !existing.phone) {
+		if (!byDocument.phone) {
 			await ctx.database.user.update({
-				where: { id: existing.id },
-				data: {
-					...(!sameDocument && document),
-					...(!existing.phone && { phone }),
-				},
+				where: { id: byDocument.id },
+				data: { phone },
 			});
 		}
 
-		return { userId: existing.id, created: false };
+		return { userId: byDocument.id, created: false };
+	}
+
+	if (byEmail) {
+		if (byEmail.cpf || byEmail.cnpj) {
+			throw new Error('Este e-mail já está cadastrado para outro CPF/CNPJ');
+		}
+
+		// O CPF/CNPJ informado nunca é gravado numa conta que já é de outra
+		// pessoa só porque o e-mail bateu: equipe da corretora (dono, admin...)
+		// não é completada por este fluxo. Só completa cadastros de produtor
+		// antigos, feitos quando o CPF/CNPJ ainda não era gravado.
+		const isStaff = byEmail.members.some(
+			(member) => member.role !== Role.producer,
+		);
+
+		if (isStaff) {
+			throw new Error(
+				'Este e-mail pertence a um usuário da equipe da corretora. Use o e-mail do produtor.',
+			);
+		}
+
+		await ctx.database.user.update({
+			where: { id: byEmail.id },
+			data: { ...document, ...(!byEmail.phone && { phone }) },
+		});
+
+		return { userId: byEmail.id, created: false };
 	}
 
 	let userId: string;
