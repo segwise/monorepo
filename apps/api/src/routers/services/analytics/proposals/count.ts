@@ -3,18 +3,37 @@ import {
 	SchemaBasisOfAnalysis,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core';
-import {
-	addMonths,
-	addYears,
-	endOfDay,
-	endOfMonth,
-	startOfDay,
-	subYears,
-} from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { addYears } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
-import { type Prisma, Role } from '@/generated/prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
+import { buildSafeSimpleWhere } from '@/routers/services/safes/build-safe-simple-where';
+
+// Mesmo filtro da listagem de propostas (buildSafeSimpleWhere), então
+// `current` é exatamente o total da tabela: propostas cujo FIM DE VIGÊNCIA cai
+// no período filtrado (a listagem pagina por vigência, não por cadastro).
+// `next` é o mesmo período um ano depois: o que foi renovado ou emitido para
+// o ano seguinte. Com busca por texto não existe período, então `next` é null.
+function shiftOneYear(
+	expiration: Prisma.SafeWhereInput['expiration'],
+): Prisma.SafeWhereInput['expiration'] | null {
+	if (!expiration || expiration instanceof Date) {
+		return null;
+	}
+
+	const { gte, gt, lt, lte } = expiration as Prisma.DateTimeFilter;
+
+	if (!(lt || lte)) {
+		return null;
+	}
+
+	return {
+		...(gte && { gte: addYears(gte as Date, 1) }),
+		...(gt && { gt: addYears(gt as Date, 1) }),
+		...(lt && { lt: addYears(lt as Date, 1) }),
+		...(lte && { lte: addYears(lte as Date, 1) }),
+	};
+}
 
 function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 	const base = server.basePath('/count');
@@ -28,7 +47,8 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 					...SchemaSearchParamsSafeSimple.shape,
 				})
 				.extend({
-					basisOfAnalysis: SchemaBasisOfAnalysis.default('year'),
+					// Legado: a análise é sempre anual; aceito só para links antigos.
+					basisOfAnalysis: SchemaBasisOfAnalysis.optional(),
 				})
 				.pick({
 					basisOfAnalysis: true,
@@ -44,184 +64,24 @@ function registerRoutersServicesAnalyticsProposalsCount(server: Server) {
 				.strict(),
 		),
 		async (ctx) => {
-			const brokerId = ctx.session.brokerId;
+			const { basisOfAnalysis: _legacy, ...query } = ctx.req.valid('query');
 
-			const {
-				basisOfAnalysis,
-				search,
-				producers,
-				insuranceCompanies,
-				brokers,
-				effectivedAt,
-				modality,
-				status,
-				renewal,
-			} = ctx.req.valid('query');
+			const { where } = await buildSafeSimpleWhere({ ...query, limit: 1 }, ctx);
 
-			const where: Prisma.SafeWhereInput = {
-				...(!!brokerId && {
-					brokerId,
-				}),
-				...(ctx?.session?.role !== Role.customer &&
-					!!brokers?.length && {
-						broker: {
-							id: {
-								in: brokers,
-							},
-						},
-					}),
-				...(!!renewal && {
-					renewal,
-				}),
-				...(!!producers?.length && {
-					producerId: {
-						in: producers,
-					},
-				}),
-				...(!!insuranceCompanies?.length && {
-					insuranceCompanyId: {
-						in: insuranceCompanies,
-					},
-				}),
-				...(!!modality && {
-					modality: {
-						in: modality,
-					},
-				}),
-				...(!!status && {
-					status: {
-						in: status,
-					},
-				}),
-			};
+			const nextExpiration = query.search
+				? null
+				: shiftOneYear(where.expiration);
 
-			where.AND = where.AND ?? [];
-
-			// @ts-expect-error
-			where.AND.push({
-				OR: [{ isExternal: false }, { isExternal: null }],
-			});
-
-			if (search) {
-				where.AND = where.AND ?? [];
-
-				// @ts-expect-error
-				where.AND.push({
-					OR: [
-						{
-							insured: {
-								name: { contains: search.trim(), mode: 'insensitive' },
-							},
-						},
-						{
-							temporaryInsured: {
-								name: { contains: search.trim(), mode: 'insensitive' },
-							},
-						},
-					],
-				});
-			}
-
-			if (!producers?.length) {
-				where.AND = where.AND ?? [];
-
-				// @ts-expect-error
-				where.AND.push({
-					OR: [
-						{ producerId: { not: '019f249d-8880-7000-b962-aace743e68e2' } },
-						{ producerId: null },
-					],
-				});
-			}
-
-			const [current, after] = await ctx.database.$transaction([
-				ctx.database.safe.count({
-					where: {
-						...where,
-						...(!!search && {
-							expiration: {
-								gte: subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
-							},
-						}),
-						...(!search &&
-							effectivedAt && {
-								expiration: {
-									gte: startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-									lt: endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-								},
-							}),
-						...(!search &&
-							!effectivedAt && {
-								expiration: {
-									gte: startOfDay(toZonedTime(new Date(), 'UTC')),
-									lt: endOfDay(toZonedTime(endOfMonth(new Date()), 'UTC')),
-								},
-							}),
-					},
-				}),
-				ctx.database.safe.count({
-					where: {
-						...where,
-						...(!!search && {
-							expiration: {
-								gte:
-									basisOfAnalysis === 'year'
-										? addYears(
-												subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
-												1,
-											)
-										: addMonths(
-												subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
-												1,
-											),
-								lte:
-									basisOfAnalysis === 'year'
-										? addYears(
-												subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
-												2,
-											)
-										: addMonths(
-												subYears(startOfDay(toZonedTime(new Date(), 'UTC')), 1),
-												2,
-											),
-							},
-						}),
-						...(!search &&
-							effectivedAt && {
-								expiration: {
-									gte:
-										basisOfAnalysis === 'year'
-											? addYears(
-													startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-													1,
-												)
-											: addMonths(
-													startOfDay(toZonedTime(effectivedAt.start, 'UTC')),
-													1,
-												),
-									lt:
-										basisOfAnalysis === 'year'
-											? addYears(
-													endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-													1,
-												)
-											: addMonths(
-													endOfDay(toZonedTime(effectivedAt.end, 'UTC')),
-													1,
-												),
-								},
-							}),
-					},
-				}),
+			const [current, next] = await Promise.all([
+				ctx.database.safe.count({ where }),
+				nextExpiration
+					? ctx.database.safe.count({
+							where: { ...where, expiration: nextExpiration },
+						})
+					: Promise.resolve(null),
 			]);
 
-			return ctx.json(
-				{
-					current,
-					after,
-				},
-				200,
-			);
+			return ctx.json({ current, next }, 200);
 		},
 	);
 }
