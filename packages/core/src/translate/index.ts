@@ -3,5 +3,6 @@ export * from './producer';
 export * from './profession';
 export * from './quote';
 export * from './safe';
+export * from './users';
 export * from './utils';
 export * from './vehicle';

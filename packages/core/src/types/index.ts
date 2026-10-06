@@ -10,5 +10,6 @@ export * from './producers';
 export * from './quotes';
 export * from './safes';
 export * from './search-params';
+export * from './users';
 export * from './utils';
 export * from './vehicles';

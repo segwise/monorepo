@@ -9,4 +9,5 @@ export * from './profile';
 export * from './quotes';
 export * from './safes';
 export * from './search-params';
+export * from './users';
 export * from './utils';

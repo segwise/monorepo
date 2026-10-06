@@ -7,3 +7,4 @@ export * from './generate-referral';
 export * from './get-numeric-value';
 export * from './professions';
 export * from './transform-array';
+export * from './user-roles';
