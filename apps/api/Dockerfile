@@ -64,6 +64,7 @@ RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser
 USER appuser
 
 ENV NODE_ENV=production
+ENV TZ=UTC
 ENV PORT=3000
 
 EXPOSE 3000
