@@ -23,6 +23,7 @@ import {
 import type { Server } from '@/@types/server';
 import { MethodPayment, StatusPayment } from '@/generated/prisma/enums';
 import { Decimal } from '@/generated/prisma/internal/prismaNamespace';
+import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 
 function registerRoutersServicesSafesRegister(server: Server) {
 	server.post('/', zValidator('json', SchemaSafeRegister), async (ctx) => {
@@ -55,6 +56,12 @@ function registerRoutersServicesSafesRegister(server: Server) {
 			const isSafe = await ctx.database.safe.findFirst({
 				where: {
 					insuranceCompanyId: insuranceCompany,
+					// Propostas do produtor de teste não aparecem na listagem; bloquear
+					// o cadastro por uma proposta que o usuário não enxerga confunde.
+					OR: [
+						{ producerId: null },
+						{ producerId: { not: EXCLUDED_PRODUCER_ID } },
+					],
 					insured: {
 						OR: [
 							{
