@@ -46,7 +46,7 @@ import {
 	UserIcon,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -109,6 +109,7 @@ function FormQuoteRegister() {
 	const [theInsuredPartyIsTheDriver, setTheInsuredPartyIsTheDriver] =
 		useState<boolean>(false);
 
+	const isSubmitting = useRef(false);
 	const { mutate, isPending } = useQuotesRegister();
 
 	const {
@@ -174,7 +175,17 @@ function FormQuoteRegister() {
 	const isRenewal = watch('renewal');
 
 	function onSubmit(props: QuoteRegister) {
+		// Trava síncrona contra duplo envio (o `isPending` só muda no próximo render).
+		if (isSubmitting.current) {
+			return;
+		}
+
+		isSubmitting.current = true;
+
 		mutate(props, {
+			onSettled() {
+				isSubmitting.current = false;
+			},
 			onSuccess(data) {
 				toast.success((data.message || 'Cadastrado com sucesso').toUpperCase());
 

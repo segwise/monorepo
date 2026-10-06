@@ -72,6 +72,7 @@ import {
 	Fragment,
 	useCallback,
 	useEffect,
+	useRef,
 	useState,
 } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -176,6 +177,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 	const { data: safe } = useSafesById(id);
 
+	const isSubmitting = useRef(false);
 	const { mutate, isPending: isMutation } = useSafesRegister();
 	const { mutate: update, isPending: isUpdation } = useSafesUpdate(id);
 
@@ -504,7 +506,19 @@ function FormProposalRegister({ id }: { id?: string }) {
 	}
 
 	function onSubmit(props: SafeRegister) {
+		// Trava síncrona: o `isPending` só muda no próximo render, e um duplo
+		// clique (ou Enter + clique) enviava duas vezes: a segunda recebia
+		// "já registrado" pela proposta que a primeira acabara de criar.
+		if (isSubmitting.current) {
+			return;
+		}
+
+		isSubmitting.current = true;
+
 		(!id ? mutate : !!id && renewal ? mutate : update)(props, {
+			onSettled() {
+				isSubmitting.current = false;
+			},
 			onSuccess(data) {
 				toast.success(
 					(
