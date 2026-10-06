@@ -147,8 +147,8 @@ function TableQuotesSheetFilters({ children }: React.PropsWithChildren) {
 						isSameDay(requestedAt.to as Date, defaultFilterDate.end)
 					? null
 					: {
-							start: requestedAt.from as Date,
-							end: requestedAt.to as Date,
+							start: startOfDay(requestedAt.from as Date),
+							end: startOfDay(requestedAt.to as Date),
 						},
 			producers: producers.length ? producers : null,
 			insuranceCompanies: insuranceCompanies.length ? insuranceCompanies : null,

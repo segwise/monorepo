@@ -1,5 +1,6 @@
 import type { QuoteSimple, ResponseDataCursor } from '@segwise/core/types';
 import { useQuery } from '@tanstack/react-query';
+import { toDayRangeParam } from '@/functions/date/day-range';
 import { api } from '@/libraries/api';
 import type { SearchParamsProps } from '@/libraries/search-params/quotes';
 
@@ -9,7 +10,10 @@ const useQuotesSimple = (props: Omit<SearchParamsProps, 'basisOfAnalysis'>) =>
 		queryFn: async ({ signal }) =>
 			(
 				await api.get<ResponseDataCursor<QuoteSimple>>('/quotes/simple', {
-					params: props,
+					params: {
+						...props,
+						requestedAt: toDayRangeParam(props.requestedAt),
+					},
 					signal,
 				})
 			).data,

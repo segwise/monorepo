@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpIcon, FileTextIcon } from 'lucide-react';
+import { FileTextIcon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -76,7 +76,7 @@ function CardAnalyticsStatusCountList() {
 			<div className='flex flex-row items-center justify-center pr-3'>
 				<div className='flex flex-row items-center justify-start gap-x-1 text-xs text-muted-foreground font-medium'>
 					<FileTextIcon className='size-3' />
-					Atuais:{' '}
+					Total:{' '}
 					<span className='text-sm font-bold text-foreground'>{current}</span>
 				</div>
 			</div>
@@ -85,7 +85,7 @@ function CardAnalyticsStatusCountList() {
 					<div className='flex flex-row items-center justify-center pr-3'>
 						<div className='flex flex-row items-center justify-start gap-x-1 text-xs text-muted-foreground font-medium'>
 							<FileTextIcon className='size-3' />
-							Emitidas:{' '}
+							Emitidas / Renovadas:{' '}
 							<span className='text-sm font-bold text-foreground'>{next}</span>
 						</div>
 					</div>
@@ -98,7 +98,11 @@ function CardAnalyticsStatusCountList() {
 									: 'success'
 						}
 					>
-						<ArrowUpIcon />{' '}
+						{percent > 0 ? (
+							<TrendingUpIcon />
+						) : percent < 0 ? (
+							<TrendingDownIcon />
+						) : null}
 						{new Intl.NumberFormat('pt-BR', { style: 'percent' }).format(
 							percent,
 						)}
