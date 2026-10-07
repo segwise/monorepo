@@ -35,9 +35,7 @@ function parseBrazilianNumber(value: unknown): unknown {
 		return value;
 	}
 
-	const hasComma = normalized.includes(',');
-
-	if (hasComma) {
+	if (normalized.includes(',')) {
 		normalized = normalized.replace(/\./g, '').replace(',', '.');
 	}
 
@@ -68,11 +66,10 @@ function normalizePlate(value: string | null | undefined): string | null {
 	const normalized = text.replace(/[^A-Z0-9]/g, '');
 
 	/**
-	 * Evita um erro muito comum em PDFs:
-	 * o texto linearizado pode colocar o chassi abaixo do label "Placa".
+	 * Placas brasileiras possuem 7 caracteres.
 	 *
-	 * Placa brasileira atual/antiga = 7 caracteres.
-	 * Chassi geralmente = 17 caracteres.
+	 * Essa validação também evita um erro frequente da extração textual:
+	 * interpretar um chassi de 17 caracteres como se fosse a placa.
 	 */
 	if (normalized.length !== 7) {
 		return null;
@@ -102,10 +99,10 @@ function evidenceContainsValue(
 		return false;
 	}
 
-	const absolute = Math.abs(value);
+	const absoluteValue = Math.abs(value);
 
 	return numericValuesFromText(evidence).some(
-		(candidate) => Math.abs(Math.abs(candidate) - absolute) <= tolerance,
+		(candidate) => Math.abs(Math.abs(candidate) - absoluteValue) <= tolerance,
 	);
 }
 
@@ -117,7 +114,7 @@ function errorMessage(error: unknown): string {
 
 /**
  * ============================================================================
- * Schemas finais da API
+ * Schemas finais
  * ============================================================================
  */
 
@@ -129,17 +126,25 @@ const SchemaLookup = z
 	})
 	.strict();
 
+const SchemaPercentage = z
+	.number('Percentual de comissão inválido')
+	.min(0, 'Percentual de comissão inválido')
+	.max(100, 'Percentual de comissão inválido')
+	.nullish();
+
 const SchemaDataExtractVehicleConductor = z
 	.object({
 		type: z.literal('vehicle_conductor'),
+
 		lookup: SchemaLookup,
+
 		data: z
 			.object({
 				/**
-				 * Esses campos são nullable porque um endosso pode alterar
-				 * apenas veículo OU apenas condutor.
+				 * Um endosso de vehicle_conductor pode alterar apenas o
+				 * veículo ou apenas o condutor.
 				 *
-				 * Não devemos obrigar a IA a inventar os dados que não aparecem.
+				 * Por isso esses dados não são artificialmente obrigatórios.
 				 */
 				driver: z
 					.string('CPF do condutor inválido')
@@ -154,12 +159,19 @@ const SchemaDataExtractVehicleConductor = z
 
 				franchise: z
 					.number('Valor da frânquia inválido')
-					.nonnegative()
+					.nonnegative('Valor da frânquia inválido')
 					.nullish(),
 
+				/**
+				 * Convenção financeira:
+				 *
+				 * positivo = segurado deve pagar
+				 * negativo = segurado receberá restituição/crédito
+				 * zero     = sem movimentação financeira
+				 */
 				amount: z.number('Valor do endosso inválido'),
 
-				percentage: z.number('Percentual de comissão inválido').nullish(),
+				percentage: SchemaPercentage,
 			})
 			.strict(),
 	})
@@ -168,14 +180,16 @@ const SchemaDataExtractVehicleConductor = z
 const SchemaDataExtractAddress = z
 	.object({
 		type: z.literal('address'),
+
 		lookup: SchemaLookup,
+
 		data: z
 			.object({
 				postalCode: SchemaPostalCode,
 
 				amount: z.number('Valor do endosso inválido'),
 
-				percentage: z.number('Percentual de comissão inválido').nullish(),
+				percentage: SchemaPercentage,
 			})
 			.strict(),
 	})
@@ -184,14 +198,18 @@ const SchemaDataExtractAddress = z
 const SchemaDataExtractFranchise = z
 	.object({
 		type: z.literal('franchise'),
+
 		lookup: SchemaLookup,
+
 		data: z
 			.object({
-				franchise: z.number('Valor da frânquia inválido').nonnegative(),
+				franchise: z
+					.number('Valor da frânquia inválido')
+					.nonnegative('Valor da frânquia inválido'),
 
 				amount: z.number('Valor do endosso inválido'),
 
-				percentage: z.number('Percentual de comissão inválido').nullish(),
+				percentage: SchemaPercentage,
 			})
 			.strict(),
 	})
@@ -200,7 +218,9 @@ const SchemaDataExtractFranchise = z
 const SchemaDataExtractCancellation = z
 	.object({
 		type: z.literal('cancellation'),
+
 		lookup: SchemaLookup,
+
 		data: z
 			.object({
 				effectivedAt: SchemaDateString,
@@ -220,9 +240,12 @@ type DataExtractEndorsement = z.infer<typeof SchemaDataExtractEndorsement>;
 
 /**
  * ============================================================================
- * Schema que a IA pode devolver
+ * Schemas da resposta bruta da IA
  *
- * É deliberadamente mais permissivo do que o schema final.
+ * São intencionalmente mais permissivos.
+ *
+ * Depois fazemos validação/normalização em TypeScript e somente então
+ * construímos SchemaDataExtractEndorsement.
  * ============================================================================
  */
 
@@ -235,7 +258,7 @@ const SchemaModelMoneyNullable = SchemaModelMoney.nullable();
 
 const SchemaModelPercentage = z.preprocess(
 	parseBrazilianNumber,
-	z.number().finite(),
+	z.number().finite().min(0).max(100),
 );
 
 const SchemaModelPercentageNullable = SchemaModelPercentage.nullable();
@@ -252,16 +275,6 @@ const SchemaModelFinancial = z
 	.object({
 		amount: SchemaModelMoneyNullable,
 
-		/**
-		 * charge:
-		 * segurado paga valor adicional.
-		 *
-		 * refund:
-		 * segurado recebe crédito/restituição.
-		 *
-		 * neutral:
-		 * nenhuma movimentação financeira.
-		 */
 		amountDirection: z.enum(['charge', 'refund', 'neutral']).nullable(),
 
 		amountLabel: z.string().nullable(),
@@ -383,16 +396,17 @@ type ModelOutput = z.infer<typeof SchemaModelOutput>;
 
 function mountPrompt(text: string, imagesCount: number): string {
 	return `
-Extraia os dados do ENDOSSO DE SEGURO presente no documento.
+Extraia os dados do ENDOSSO DE SEGURO presente no documento abaixo.
 
-O documento pode ser de QUALQUER seguradora e pode possuir qualquer layout.
-Os nomes dos campos, tabelas, títulos e organização das páginas podem variar.
+O documento pode ser de QUALQUER seguradora.
+O layout, nomes dos campos, títulos, tabelas e organização das páginas podem variar.
 
 ${visionInstructions(imagesCount)}
 
 IMPORTANTE SOBRE O PDF
 
-O texto foi extraído automaticamente de um PDF.
+O texto foi extraído automaticamente de um PDF e pode apresentar perda da
+estrutura visual.
 
 A extração textual pode:
 - inverter colunas;
@@ -401,12 +415,13 @@ A extração textual pode:
 - misturar tabelas;
 - colocar chassi abaixo do campo "Placa";
 - misturar franquia com prêmio;
-- misturar parcelas da apólice original com parcelas do endosso.
+- misturar parcelas da apólice original com dados do endosso;
+- separar o cabeçalho de uma tabela dos respectivos valores.
 
-Quando imagens das páginas estiverem disponíveis, use a estrutura VISUAL da
-página para determinar qual valor pertence a qual campo.
+Quando imagens das páginas forem fornecidas, utilize também a estrutura VISUAL
+da página para decidir qual valor pertence a qual campo.
 
-Quando a disposição visual da página contradizer o texto linearizado,
+Quando o texto linearizado e a disposição visual parecerem contraditórios,
 prefira a estrutura visual da página.
 
 Analise TODO o documento antes de responder.
@@ -419,7 +434,7 @@ Identifique exatamente um destes tipos:
 
 1. "vehicle_conductor"
 
-Use quando a finalidade principal do endosso for:
+Use quando a FINALIDADE PRINCIPAL do endosso for:
 - substituição de veículo;
 - alteração de veículo;
 - troca de placa;
@@ -429,95 +444,120 @@ Use quando a finalidade principal do endosso for:
 
 2. "address"
 
-Use quando a finalidade principal for:
+Use quando a FINALIDADE PRINCIPAL for:
 - alteração de CEP de pernoite;
-- alteração de local de risco;
-- alteração de endereço relacionado ao risco.
+- alteração do local de risco;
+- alteração de endereço relacionado ao risco segurado.
 
 3. "franchise"
 
-Use SOMENTE quando a finalidade principal do endosso for alterar a franquia.
+Use SOMENTE quando a FINALIDADE PRINCIPAL for alterar a franquia.
 
 A simples presença de uma franquia no documento NÃO significa que o endosso
 é do tipo "franchise".
 
-Documentos de substituição de veículo normalmente também mostram a franquia,
-mas continuam sendo "vehicle_conductor".
+Documentos de substituição de veículo normalmente apresentam a franquia
+resultante e continuam sendo "vehicle_conductor".
 
 4. "cancellation"
 
-Use quando a finalidade principal for:
+Use quando a FINALIDADE PRINCIPAL for:
 - cancelamento;
 - rescisão;
-- encerramento da apólice/seguro.
+- encerramento da apólice;
+- encerramento do seguro.
 
 5. "unknown"
 
 Use "unknown" quando:
-- não for possível determinar com segurança;
-- o endosso for de outro tipo;
-- for alteração somente de cobertura;
+- não for possível determinar o tipo com segurança;
+- o documento representar outro tipo de endosso;
+- alteração somente de cobertura;
 - alteração somente de importância segurada;
 - alteração somente de forma de pagamento;
-- ou qualquer operação não enquadrada com segurança nos quatro tipos acima.
+- qualquer alteração não enquadrada com segurança nos quatro tipos anteriores.
 
-NUNCA escolha um dos quatro tipos apenas para evitar retornar "unknown".
+NUNCA escolha um tipo incorreto somente para evitar retornar "unknown".
 
-"typeEvidence" deve conter um trecho CURTO do documento que ajude a justificar
-a classificação.
+"typeEvidence" deve conter um trecho CURTO do próprio documento que ajude
+a justificar a classificação.
 
-Não explique seu raciocínio. Apenas transcreva a evidência.
+Não explique o raciocínio.
+Apenas transcreva a evidência.
 
 LOOKUP
 
-"lookup" serve para identificar o seguro ao qual o endosso pertence.
+"lookup" serve para ajudar a identificar o seguro ao qual o endosso pertence.
+
+Formato:
 
 {
-	"plate": string | null,
-	"insuredRegistration": string | null,
-	"insuredName": string | null
+	"plate": "string ou null",
+	"insuredRegistration": "string ou null",
+	"insuredName": "string ou null"
 }
 
 Regras:
 
-- insuredRegistration:
-  CPF/CNPJ do SEGURADO, nunca do corretor, titular do cartão, condutor ou terceiro.
+- "insuredRegistration":
+  CPF ou CNPJ do SEGURADO.
 
-- insuredName:
-  nome/razão social do SEGURADO.
+  Nunca use CPF/CNPJ:
+  - do corretor;
+  - do titular do cartão;
+  - do principal condutor quando ele não for o segurado;
+  - de terceiro.
 
-- plate:
+- "insuredName":
+  nome ou razão social do SEGURADO.
+
+- "plate":
   placa relacionada ao seguro.
 
-CUIDADO COM PLACA E CHASSI:
+PLACA E CHASSI
+
+Tenha extremo cuidado.
 
 - Placa brasileira normalmente possui 7 caracteres alfanuméricos.
 - Chassi normalmente possui 17 caracteres.
-- NUNCA use o chassi como placa.
-- "-", "A AVISAR", "SEM PLACA" e equivalentes => null.
+- NUNCA interprete um chassi como placa.
 
-Em endosso de substituição de veículo, se o documento apresentar claramente
-placa anterior e placa nova:
+Os seguintes valores significam ausência de placa:
+- "-"
+- "A AVISAR"
+- "AVISAR"
+- "SEM PLACA"
+- "S/ PLACA"
+- equivalentes.
+
+Nesses casos use null.
+
+ENDOSSO DE SUBSTITUIÇÃO
+
+Se o documento mostrar claramente placa anterior e placa nova:
+
 - lookup.plate = placa anterior;
-- data.plate = placa nova.
+- data.plate = placa nova/resultante.
 
-Se houver somente uma placa no documento e não for possível determinar que
-ela é a anterior, use essa placa em lookup.plate também.
+Se houver somente uma placa no documento e não for possível determinar
+com segurança que ela seja a placa anterior, utilize essa placa em
+lookup.plate e também utilize a placa resultante em data.plate quando
+ela representar o veículo após o endosso.
 
 VALOR FINANCEIRO DO ENDOSSO
 
 "amount" representa o EFEITO FINANCEIRO TOTAL FINAL DO ENDOSSO.
 
-Isto é diferente do prêmio líquido.
+Ele NÃO representa apenas o prêmio líquido.
 
-Quando houver um total final incluindo:
+Quando existir um valor final incluindo:
 - IOF;
 - juros;
 - encargos;
 
-use o TOTAL FINAL.
+utilize o TOTAL FINAL.
 
-Exemplos de labels possíveis:
+As seguradoras podem utilizar rótulos diferentes, por exemplo:
 
 - Preço Total
 - Prêmio Total
@@ -535,69 +575,76 @@ Exemplos de labels possíveis:
 - Crédito
 - Estorno
 
-A lista acima NÃO é fechada.
+Esses rótulos são apenas exemplos.
+A lista NÃO é fechada.
 
-Interprete semanticamente o documento.
+Interprete semanticamente a operação.
 
-PRIORIDADE FINANCEIRA
-
-Se houver:
+EXEMPLO 1
 
 Prêmio Líquido Total: R$ 374,29
 Juros: R$ 0,00
 IOF: R$ 27,62
 Prêmio Total: R$ 401,91
 
-retorne:
+Resultado:
 
 "amount": 401.91
 "amountDirection": "charge"
+"amountLabel": "Prêmio Total"
+"amountEvidence": "Prêmio Total R$ 401,91"
 
-Se houver:
+EXEMPLO 2
 
 Preço Líquido: R$ 36,57
 IOF: R$ 2,70
 Preço Total: R$ 39,27
 
-retorne:
+Resultado:
 
 "amount": 39.27
 "amountDirection": "charge"
+"amountLabel": "Preço Total"
+"amountEvidence": "Preço Total R$ 39,27"
 
 NÃO use como amount:
+
 - franquia;
 - LMI;
-- limite de indenização;
+- limite máximo de indenização;
 - FIPE;
-- preço individual de cobertura;
+- valor individual de cobertura;
 - prêmio individual de cobertura;
 - IOF isoladamente;
 - juros isoladamente;
-- valor de assistência;
+- encargos isoladamente;
+- assistência;
 - valor de vidro;
-- valor de parcela quando existir um total explícito;
+- valor de farol;
+- valor de parcela quando existir total explícito;
 - comissão;
 - percentual;
-- valor original da apólice.
+- valor total original da apólice anterior.
 
 RESTITUIÇÃO
 
-Se o segurado tiver valor a RECEBER:
+Quando o segurado tiver valor a RECEBER:
 
 "amountDirection": "refund"
 
-e "amount" deve representar o valor monetário correspondente.
+O valor de "amount" deve ser informado como valor absoluto positivo.
+O sistema fará a conversão para valor negativo posteriormente.
 
 Exemplo:
 
 Prêmio a restituir: R$ 150,00
 
-=>
+Resultado:
 
-"amount": 150.00
+"amount": 150
 "amountDirection": "refund"
-
-O sistema fará a normalização do sinal posteriormente.
+"amountLabel": "Prêmio a restituir"
+"amountEvidence": "Prêmio a restituir R$ 150,00"
 
 SEM MOVIMENTAÇÃO FINANCEIRA
 
@@ -609,45 +656,42 @@ Somente use:
 quando o documento indicar explicitamente que não existe cobrança nem
 restituição.
 
-Se NÃO encontrar o valor financeiro:
-- amount = null
-- amountDirection = null
+Se não for possível determinar com segurança o valor financeiro:
 
-Nunca use 0 para representar "não encontrado".
+"amount": null
+"amountDirection": null
+"amountLabel": null
+"amountEvidence": null
+
+Nunca use zero para representar valor desconhecido.
 
 EVIDÊNCIA FINANCEIRA
 
-"amountLabel":
-label associado ao valor escolhido.
+"amountEvidence" deve ser o MENOR trecho do documento suficiente para
+confirmar o valor escolhido.
 
-"amountEvidence":
-menor trecho do documento que contenha o valor escolhido.
-
-Exemplo:
-
-"amountLabel": "Prêmio Total"
-"amountEvidence": "Prêmio Total R$ 401,91"
-
-Não escreva explicações.
+Não explique.
+Não faça resumo.
+Apenas transcreva o trecho.
 
 COMISSÃO
 
-"percentage" representa EXCLUSIVAMENTE percentual de comissão do corretor
+"percentage" representa EXCLUSIVAMENTE o percentual de comissão do corretor
 referente ao endosso.
 
-Somente preencha quando estiver explicitamente relacionado a:
+Somente preencha quando estiver explicitamente associado a termos como:
 - comissão;
 - comissão do corretor;
 - percentual de comissão;
 - perc. comissão.
 
 NÃO confunda comissão com:
-- % FIPE;
+- percentual FIPE;
 - fator de ajuste;
 - desconto;
+- participação;
 - franquia reduzida;
 - percentual da franquia;
-- participação;
 - bônus;
 - percentual de cobertura.
 
@@ -656,14 +700,15 @@ Na dúvida:
 "percentage": null
 "percentageEvidence": null
 
-Se preencher percentage, "percentageEvidence" deve conter o trecho que mostra
-explicitamente a comissão.
+Quando preencher percentage, "percentageEvidence" deve conter um trecho
+do documento que mostre explicitamente o percentual de comissão.
 
 FRANQUIA
 
-Quando houver campo "franchise", retorne somente a FRANQUIA PRINCIPAL DO CASCO.
+Quando houver o campo "franchise", retorne somente a FRANQUIA PRINCIPAL
+DO CASCO.
 
-Pode aparecer como:
+Ela pode aparecer como:
 - franquia básica;
 - franquia obrigatória;
 - participação obrigatória;
@@ -673,14 +718,15 @@ Pode aparecer como:
 
 NÃO use:
 - franquia de para-brisa;
+- franquia de vidro;
 - franquia de vidro lateral;
 - franquia de farol;
 - franquia de lanterna;
 - franquia de retrovisor;
 - franquia de assistência;
-- franquia de serviço específico.
+- franquia de qualquer serviço específico.
 
-FORMATO DE SAÍDA
+FORMATO POR TIPO
 
 vehicle_conductor:
 
@@ -782,18 +828,18 @@ unknown:
 REGRAS GERAIS
 
 - Responda APENAS JSON válido.
-- JSON minificado em uma única linha.
-- Sem markdown.
-- Sem \`\`\`.
-- Sem comentários.
-- Não adicione campos.
-- Valores monetários devem ser number.
+- Responda em uma única linha minificada.
+- Não use markdown.
+- Não use \`\`\`.
+- Não escreva comentários.
+- Não adicione campos diferentes dos especificados.
+- Todo campo number deve ser JSON number.
 - R$ 1.234,56 => 1234.56
-- R$ -150,40 => -150.40
-- Percentual 15% => 15
-- Não invente dados.
-- Analise o documento inteiro.
-- Use as imagens para confirmar tabelas e campos quando disponíveis.
+- R$ 39,27 => 39.27
+- 15% => 15
+- Nunca invente informações ausentes.
+- Analise o documento inteiro antes de responder.
+- Use as imagens para confirmar tabelas e associação entre campos quando disponíveis.
 
 Texto extraído do documento:
 
@@ -813,14 +859,26 @@ ${basePrompt}
 
 ATENÇÃO: A EXTRAÇÃO ANTERIOR FOI CONSIDERADA INCONSISTENTE.
 
-Motivo:
+Motivo da inconsistência:
+
 ${reason}
 
 Resposta anterior:
+
 ${JSON.stringify(previous)}
 
-Revise TODO o documento novamente, principalmente tabelas, cabeçalhos,
-totais financeiros, franquia, placa/chassi e finalidade real do endosso.
+Revise TODO o documento novamente.
+
+Dê atenção especial a:
+- finalidade real do endosso;
+- valor total final;
+- prêmio líquido versus prêmio total;
+- IOF;
+- restituição versus cobrança;
+- franquia principal;
+- placa versus chassi;
+- segurado versus condutor;
+- segurado versus titular do cartão.
 
 Retorne novamente SOMENTE o JSON completo corrigido.
 `;
@@ -828,19 +886,9 @@ Retorne novamente SOMENTE o JSON completo corrigido.
 
 /**
  * ============================================================================
- * Normalização/validação
+ * Normalização financeira
  * ============================================================================
  */
-
-function normalizeLookup(
-	lookup: ModelOutput['lookup'],
-): z.infer<typeof SchemaLookup> {
-	return SchemaLookup.parse({
-		plate: normalizePlate(lookup.plate),
-		insuredRegistration: lookup.insuredRegistration,
-		insuredName: lookup.insuredName,
-	});
-}
 
 function normalizeFinancialData(data: z.infer<typeof SchemaModelFinancial>): {
 	amount: number;
@@ -857,11 +905,17 @@ function normalizeFinancialData(data: z.infer<typeof SchemaModelFinancial>): {
 	}
 
 	if (!evidenceContainsValue(data.amountEvidence, data.amount)) {
-		throw new Error('A evidência informada não confirma o valor do endosso');
+		throw new Error(
+			'A evidência apresentada não confirma o valor financeiro do endosso',
+		);
 	}
 
 	let direction = data.amountDirection;
 
+	/**
+	 * Tolerância para o caso do modelo omitir direction apesar de ter
+	 * encontrado corretamente o valor.
+	 */
 	if (!direction) {
 		if (data.amount > 0) {
 			direction = 'charge';
@@ -883,7 +937,8 @@ function normalizeFinancialData(data: z.infer<typeof SchemaModelFinancial>): {
 		case 'refund': {
 			/**
 			 * Convenção interna:
-			 * restituição/crédito = valor negativo.
+			 *
+			 * restituição/crédito é armazenado como valor negativo.
 			 */
 			amount = -Math.abs(data.amount);
 			break;
@@ -901,13 +956,13 @@ function normalizeFinancialData(data: z.infer<typeof SchemaModelFinancial>): {
 		}
 	}
 
-	let percentage: number | null = data.percentage;
+	let percentage = data.percentage;
 
 	/**
-	 * Comissão é um campo com enorme possibilidade de falso positivo.
+	 * Comissão possui grande possibilidade de falso positivo.
 	 *
-	 * Se a IA não conseguir apontar o trecho que contém explicitamente
-	 * o percentual, descartamos a comissão em vez de inventar.
+	 * Se o modelo não conseguir apontar um trecho que contenha
+	 * explicitamente o percentual encontrado, descartamos o valor.
 	 */
 	if (percentage !== null) {
 		if (
@@ -924,6 +979,22 @@ function normalizeFinancialData(data: z.infer<typeof SchemaModelFinancial>): {
 	};
 }
 
+/**
+ * ============================================================================
+ * Normalização da resposta da IA
+ * ============================================================================
+ */
+
+function normalizeLookup(
+	lookup: ModelOutput['lookup'],
+): z.infer<typeof SchemaLookup> {
+	return SchemaLookup.parse({
+		plate: normalizePlate(lookup.plate),
+		insuredRegistration: lookup.insuredRegistration,
+		insuredName: lookup.insuredName,
+	});
+}
+
 function finalizeModelOutput(raw: ModelOutput): DataExtractEndorsement {
 	if (raw.type === 'unknown') {
 		throw new Error(
@@ -938,32 +1009,48 @@ function finalizeModelOutput(raw: ModelOutput): DataExtractEndorsement {
 			const financial = normalizeFinancialData(raw.data);
 
 			return SchemaDataExtractVehicleConductor.parse({
-				type: raw.type,
+				type: 'vehicle_conductor',
+
 				lookup,
+
 				data: {
 					driver: raw.data.driver,
+
 					plate: normalizePlate(raw.data.plate),
+
 					model: raw.data.model,
+
 					modelYear: raw.data.modelYear,
+
 					franchise: raw.data.franchise,
-					...financial,
+
+					amount: financial.amount,
+
+					percentage: financial.percentage,
 				},
 			});
 		}
 
 		case 'address': {
 			if (!raw.data.postalCode) {
-				throw new Error('Endosso de endereço sem novo CEP identificado');
+				throw new Error(
+					'Endosso de endereço identificado sem novo CEP de pernoite',
+				);
 			}
 
 			const financial = normalizeFinancialData(raw.data);
 
 			return SchemaDataExtractAddress.parse({
-				type: raw.type,
+				type: 'address',
+
 				lookup,
+
 				data: {
 					postalCode: raw.data.postalCode,
-					...financial,
+
+					amount: financial.amount,
+
+					percentage: financial.percentage,
 				},
 			});
 		}
@@ -971,18 +1058,23 @@ function finalizeModelOutput(raw: ModelOutput): DataExtractEndorsement {
 		case 'franchise': {
 			if (raw.data.franchise === null) {
 				throw new Error(
-					'Endosso de franquia sem o novo valor da franquia identificado',
+					'Endosso de franquia identificado sem o novo valor da franquia',
 				);
 			}
 
 			const financial = normalizeFinancialData(raw.data);
 
 			return SchemaDataExtractFranchise.parse({
-				type: raw.type,
+				type: 'franchise',
+
 				lookup,
+
 				data: {
 					franchise: raw.data.franchise,
-					...financial,
+
+					amount: financial.amount,
+
+					percentage: financial.percentage,
 				},
 			});
 		}
@@ -990,13 +1082,15 @@ function finalizeModelOutput(raw: ModelOutput): DataExtractEndorsement {
 		case 'cancellation': {
 			if (!raw.data.effectivedAt) {
 				throw new Error(
-					'Endosso de cancelamento sem data de efetivação identificada',
+					'Endosso de cancelamento identificado sem data de efetivação',
 				);
 			}
 
 			return SchemaDataExtractCancellation.parse({
-				type: raw.type,
+				type: 'cancellation',
+
 				lookup,
+
 				data: {
 					effectivedAt: raw.data.effectivedAt,
 				},
@@ -1043,14 +1137,16 @@ async function askModel({
 		);
 
 		/**
-		 * Retry somente quando a primeira extração falhou.
+		 * O segundo request só acontece quando a primeira extração
+		 * realmente falhou em schema ou validação semântica.
 		 *
-		 * Não dobramos o custo/latência dos documentos que já foram
-		 * interpretados corretamente na primeira tentativa.
+		 * Assim os PDFs simples continuam usando somente uma chamada.
 		 */
 		const retried = await askJson({
 			model,
+
 			prompt: mountRetryPrompt(prompt, previous, reason),
+
 			images,
 		});
 
@@ -1063,14 +1159,16 @@ async function askModel({
 async function extractDataEndorsement(path: ArrayBuffer) {
 	return await runPdfExtraction({
 		label: 'extract-endorsement',
+
 		buffer: path,
+
 		ask: askModel,
 	});
 }
 
 /**
  * ============================================================================
- * Busca do seguro
+ * Localização do seguro
  * ============================================================================
  */
 
@@ -1082,6 +1180,12 @@ async function findSafeByLookup(
 		? maskNumber(lookup.insuredRegistration)
 		: null;
 
+	/**
+	 * Primeiro tentamos pela placa.
+	 *
+	 * Ela tende a ser o identificador mais forte quando não houve
+	 * substituição de veículo.
+	 */
 	if (lookup.plate) {
 		const plate = lookup.plate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
@@ -1092,12 +1196,14 @@ async function findSafeByLookup(
 						{
 							plate,
 						},
+
 						{
 							vehicle: {
 								OR: [
 									{
 										plate,
 									},
+
 									{
 										plateAlternative: plate,
 									},
@@ -1106,12 +1212,14 @@ async function findSafeByLookup(
 						},
 					],
 				},
+
 				...(insuredRegistration && {
 					insured: {
 						OR: [
 							{
 								cpf: insuredRegistration,
 							},
+
 							{
 								cnpj: insuredRegistration,
 							},
@@ -1119,6 +1227,7 @@ async function findSafeByLookup(
 					},
 				}),
 			},
+
 			select: {
 				id: true,
 			},
@@ -1130,14 +1239,14 @@ async function findSafeByLookup(
 	}
 
 	/**
-	 * Fallback importante para substituição de veículo:
+	 * Fallback para situações como substituição de veículo.
 	 *
-	 * a única placa encontrada no documento pode ser a placa NOVA,
-	 * que ainda não existe no cadastro atual.
+	 * Nesse caso a única placa encontrada no documento pode ser a NOVA,
+	 * que naturalmente ainda não existe no cadastro.
 	 *
-	 * CPF/CNPJ só é utilizado automaticamente quando existir exatamente
-	 * um seguro candidato, evitando vincular o endosso ao carro errado
-	 * quando o segurado possuir múltiplas apólices.
+	 * Só usamos CPF/CNPJ automaticamente quando encontramos exatamente
+	 * um único seguro, evitando escolher aleatoriamente quando a mesma
+	 * pessoa possui mais de um veículo/apólice.
 	 */
 	if (insuredRegistration) {
 		const candidates = await database.safe.findMany({
@@ -1147,15 +1256,18 @@ async function findSafeByLookup(
 						{
 							cpf: insuredRegistration,
 						},
+
 						{
 							cnpj: insuredRegistration,
 						},
 					],
 				},
 			},
+
 			select: {
 				id: true,
 			},
+
 			take: 2,
 		});
 
@@ -1188,10 +1300,10 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 			'query',
 			z.object({
 				/**
-				 * Opcional.
+				 * Quando o frontend já sabe a qual seguro o endosso
+				 * pertence, pode informar o id.
 				 *
-				 * Se vier do frontend, tem prioridade.
-				 * Caso contrário tentamos localizar pelo próprio PDF.
+				 * Caso contrário tentamos fazer o lookup pelo PDF.
 				 */
 				id: z.uuidv7('ID do seguro inválido').optional(),
 			}),
@@ -1207,34 +1319,34 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const hash = Bun.hash(buffer).toString(16);
 
 				/**
-				 * Nova versão porque:
-				 * - amount passou a representar total final;
-				 * - há validação de evidência;
-				 * - restituição tem sinal negativo;
-				 * - classificação ganhou unknown;
-				 * - regras de placa/chassi foram alteradas.
+				 * Alterar a versão sempre que regras/schema/prompt forem
+				 * modificados de forma relevante.
 				 */
 				const cacheKey = `endorsement-pdf-extract:v6:${hash}`;
 
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;
+				let shouldCache = !cached;
 
 				if (cached) {
 					try {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
-					} catch {
-						/**
-						 * Cache de schema inválido nunca deve impedir
-						 * uma nova tentativa de extração.
-						 */
+					} catch (error) {
+						console.warn(
+							'[extract-endorsement] cache incompatível, executando nova extração:',
+							error instanceof Error ? error.message : error,
+						);
+
 						extracted = await extractDataEndorsement(buffer);
+
+						shouldCache = true;
 					}
 				} else {
 					extracted = await extractDataEndorsement(buffer);
 				}
 
-				if (!cached) {
+				if (shouldCache) {
 					await ctx.cache.set(
 						cacheKey,
 						JSON.stringify(extracted),
@@ -1255,7 +1367,9 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				return ctx.json(
 					{
 						safeId,
+
 						type: extracted.type,
+
 						data: extracted.data,
 					},
 					200,
