@@ -30,6 +30,9 @@ import {
  * ============================================================================
  */
 
+const MoneyPattern =
+	'(?:R\\$\\s*)?-?\\d{1,3}(?:\\.\\d{3})*,\\d{2}|(?:R\\$\\s*)?-?\\d+,\\d{2}';
+
 function parseBrazilianNumber(value: unknown): unknown {
 	if (typeof value === 'number') {
 		return value;
@@ -56,6 +59,16 @@ function parseBrazilianNumber(value: unknown): unknown {
 	const parsed = Number(normalized);
 
 	return Number.isFinite(parsed) ? parsed : value;
+}
+
+function parseMoney(value: string | null | undefined): number | null {
+	if (!value) {
+		return null;
+	}
+
+	const parsed = parseBrazilianNumber(value);
+
+	return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : null;
 }
 
 function parseInstallments(value: unknown): unknown {
@@ -85,12 +98,12 @@ function parseInstallments(value: unknown): unknown {
 		return Number.isFinite(parsed) ? parsed : value;
 	}
 
-	const installmentMatch = normalized.match(
+	const installmentsMatch = normalized.match(
 		/\b(\d{1,2})\s*(?:parcelas?|parc\.?)\b/,
 	);
 
-	if (installmentMatch?.[1]) {
-		const parsed = Number(installmentMatch[1]);
+	if (installmentsMatch?.[1]) {
+		const parsed = Number(installmentsMatch[1]);
 
 		return Number.isFinite(parsed) ? parsed : value;
 	}
@@ -119,6 +132,13 @@ function parseYear(value: unknown): unknown {
 		return value;
 	}
 
+	/**
+	 * Quando aparecer:
+	 *
+	 * 2025 / 2026
+	 *
+	 * normalmente é fabricação / modelo.
+	 */
 	const parsed = Number(years.at(-1));
 
 	return Number.isFinite(parsed) ? parsed : value;
@@ -145,6 +165,9 @@ function normalizePlate(value: string | null | undefined): string | null {
 
 	const normalized = text.replace(/[^A-Z0-9]/g, '');
 
+	/**
+	 * Também evita interpretar chassi como placa.
+	 */
 	if (normalized.length !== 7) {
 		return null;
 	}
@@ -152,47 +175,392 @@ function normalizePlate(value: string | null | undefined): string | null {
 	return normalized;
 }
 
-function numericValuesFromText(text: string): number[] {
-	const matches =
-		text.match(/-?\d+(?:\.\d{3})*(?:,\d+)?|-?\d+(?:\.\d+)?/g) ?? [];
-
-	return matches
-		.map((value) => parseBrazilianNumber(value))
-		.filter(
-			(value): value is number =>
-				typeof value === 'number' && Number.isFinite(value),
-		);
+function normalizeSearchText(value: string): string {
+	return value
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase();
 }
 
-function evidenceContainsValue(
-	evidence: string | null | undefined,
-	value: number,
-	tolerance = 0.02,
-): boolean {
-	if (!evidence) {
-		return false;
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractMoneyNearLabels(
+	text: string,
+	labels: string[],
+	maxDistance = 120,
+): number | null {
+	for (const label of labels) {
+		const pattern = new RegExp(
+			`${escapeRegExp(label)}[\\s\\S]{0,${maxDistance}}?(${MoneyPattern})`,
+			'i',
+		);
+
+		const match = text.match(pattern);
+
+		if (!match?.[1]) {
+			continue;
+		}
+
+		const value = parseMoney(match[1]);
+
+		if (value !== null) {
+			return value;
+		}
 	}
 
-	const absoluteValue = Math.abs(value);
-
-	return numericValuesFromText(evidence).some(
-		(candidate) => Math.abs(Math.abs(candidate) - absoluteValue) <= tolerance,
-	);
+	return null;
 }
 
-function moneyAlmostEqual(a: number, b: number, tolerance = 0.05): boolean {
-	return Math.abs(a - b) <= tolerance;
-}
+function extractMoneyValues(text: string): number[] {
+	const pattern = new RegExp(`(${MoneyPattern})`, 'gi');
 
-function errorMessage(error: unknown): string {
-	return error instanceof Error
-		? error.message
-		: 'Falha desconhecida na validação';
+	return [...text.matchAll(pattern)]
+		.map((match) => parseMoney(match[1]))
+		.filter((value): value is number => value !== null);
 }
 
 /**
  * ============================================================================
- * Schema final
+ * Extração determinística financeira
+ * ============================================================================
+ */
+
+type FinancialSummary = {
+	liquid: number | null;
+	total: number | null;
+	iof: number | null;
+	interest: number | null;
+	fees: number | null;
+};
+
+function extractFinancialSummary(text: string): FinancialSummary {
+	let liquid = extractMoneyNearLabels(text, [
+		'Prêmio Líquido Total',
+		'Prêmio Liquido Total',
+		'Prêmio Líquido',
+		'Prêmio Liquido',
+		'Preço Líquido',
+		'Preco Liquido',
+		'Valor Líquido',
+		'Valor Liquido',
+	]);
+
+	let total = extractMoneyNearLabels(text, [
+		'Prêmio Total',
+		'Premio Total',
+		'Preço Total',
+		'Preco Total',
+		'Valor Total',
+	]);
+
+	let iof = extractMoneyNearLabels(text, ['IOF'], 60);
+
+	const interest = extractMoneyNearLabels(text, [
+		'Valor juros',
+		'Valor dos juros',
+		'Juros',
+	]);
+
+	let fees = extractMoneyNearLabels(text, ['Encargos', 'Encargos financeiros']);
+
+	/**
+	 * MAPFRE, por exemplo, lineariza:
+	 *
+	 * Prêmio Líquido Encargos IOF
+	 * 2.630,37 0,00 194,13 2.824,50
+	 * Prêmio Total
+	 *
+	 * O label "Prêmio Total" vem DEPOIS do valor.
+	 */
+	const mapfreStart = text.search(/Pr[eê]mio\s+L[ií]quido\s+Encargos\s+IOF/i);
+
+	if (mapfreStart >= 0) {
+		const fragment = text.slice(mapfreStart, mapfreStart + 300);
+		const values = extractMoneyValues(fragment);
+
+		if (values.length >= 4) {
+			liquid ??= values[0] ?? null;
+			fees ??= values[1] ?? null;
+			iof ??= values[2] ?? null;
+			total ??= values[3] ?? null;
+		}
+	}
+
+	/**
+	 * Layout comum:
+	 *
+	 * Valor líquido | IOF | Juros | Encargos | ... | Valor total
+	 *
+	 * O líquido continua sendo a informação principal para a corretora.
+	 */
+	const genericStart = text.search(
+		/(?:Valor|Pr[eê]mio|Pre[cç]o)\s+L[ií]quido/i,
+	);
+
+	if (genericStart >= 0 && liquid === null) {
+		const fragment = text.slice(genericStart, genericStart + 300);
+		const values = extractMoneyValues(fragment);
+
+		if (values.length) {
+			liquid = values[0] ?? null;
+		}
+	}
+
+	return {
+		liquid,
+		total,
+		iof,
+		interest,
+		fees,
+	};
+}
+
+/**
+ * ============================================================================
+ * Extração determinística de parcelas
+ * ============================================================================
+ */
+
+function extractInstallmentsFromText(text: string): number | null {
+	const patterns = [
+		/C[oó]digo\s+do\s+Plano[\s\S]{0,100}?\b(\d{1,2})\s*parc/i,
+		/\bem\s+(\d{1,2})\s+parcelas?\b/i,
+		/\b(\d{1,2})\s+parcelas?\b/i,
+		/\b(\d{1,2})\s+parc\.?\b/i,
+		/\b(\d{1,2})\s*x\b/i,
+	];
+
+	for (const pattern of patterns) {
+		const match = text.match(pattern);
+
+		if (!match?.[1]) {
+			continue;
+		}
+
+		const value = Number(match[1]);
+
+		if (Number.isInteger(value) && value > 0 && value <= 60) {
+			return value;
+		}
+	}
+
+	if (/Forma\s+de\s+pagamento[\s\S]{0,100}?(?:à vista|a vista)/i.test(text)) {
+		return 1;
+	}
+
+	return null;
+}
+
+/**
+ * ============================================================================
+ * Extração determinística do uso do veículo
+ * ============================================================================
+ */
+
+function extractVehicleUsageFromText(
+	text: string,
+): z.infer<typeof SchemaVehicleUsage> | null {
+	/**
+	 * Procuramos primeiro um CAMPO explícito.
+	 *
+	 * Isso evita interpretar frases genéricas das condições gerais.
+	 */
+	const match = text.match(
+		/(?:^|\n)\s*(?:Uso|Finalidade\s+de\s+Uso)\s*:\s*([^\n\r]+)/i,
+	);
+
+	let value = match?.[1] ?? null;
+
+	/**
+	 * Alguns layouts trazem "Categoria de Risco: Automóvel - Particular"
+	 * mas não possuem um campo separado de finalidade.
+	 */
+	if (!value) {
+		const categoryMatch = text.match(
+			/(?:Categoria\s+de\s+Risco|Categoria\s+Tarif[aá]ria)\s*:\s*([^\n\r]+)/i,
+		);
+
+		value = categoryMatch?.[1] ?? null;
+	}
+
+	if (!value) {
+		return null;
+	}
+
+	const normalized = normalizeSearchText(value);
+
+	if (
+		normalized.includes('aplicativo') ||
+		normalized.includes('uber') ||
+		/\b99\b/.test(normalized)
+	) {
+		return 'app_based_transport';
+	}
+
+	if (normalized.includes('taxi')) {
+		return 'taxi';
+	}
+
+	if (
+		normalized.includes('transporte publico') ||
+		normalized.includes('transporte de passageiros')
+	) {
+		return 'public_transportation';
+	}
+
+	if (normalized.includes('entrega') || normalized.includes('delivery')) {
+		return 'delivieries';
+	}
+
+	if (normalized.includes('turismo')) {
+		return 'tourism';
+	}
+
+	if (normalized.includes('cliente') || normalized.includes('fornecedor')) {
+		return 'client_supplier_visits';
+	}
+
+	/**
+	 * REGRA DO SEU SISTEMA:
+	 *
+	 * "PARTICULAR" significa uso pessoal que pode incluir deslocamento
+	 * cotidiano e ida/volta ao trabalho.
+	 */
+	if (normalized.includes('particular')) {
+		return 'leisure_and_work';
+	}
+
+	if (normalized.includes('trabalho') && normalized.includes('lazer')) {
+		return 'leisure_and_work';
+	}
+
+	if (normalized.includes('lazer')) {
+		return 'leisure';
+	}
+
+	return null;
+}
+
+/**
+ * ============================================================================
+ * Extração determinística da franquia principal
+ * ============================================================================
+ */
+
+function extractPrimaryFranchise(text: string): number | null {
+	/**
+	 * MAPFRE:
+	 *
+	 * Franquia(s)
+	 * Casco: Reduzida 50% 3.837,09
+	 */
+	const cascoMatch = text.match(
+		new RegExp(
+			`Casco\\s*:\\s*(?:Reduzida|Normal|B[aá]sica|Obrigat[oó]ria)[^\\n\\r]{0,100}?(${MoneyPattern})`,
+			'i',
+		),
+	);
+
+	if (cascoMatch?.[1]) {
+		const value = parseMoney(cascoMatch[1]);
+
+		if (value !== null) {
+			return value;
+		}
+	}
+
+	/**
+	 * Allianz:
+	 *
+	 * 25% da Normal 1.716,59
+	 *
+	 * Porto e outras:
+	 *
+	 * 50% da Obrigatória ...
+	 */
+	const basisBeforeValue = text.match(
+		new RegExp(
+			`\\b\\d+(?:[.,]\\d+)?\\s*%\\s+da\\s+(?:Normal|Obrigat[oó]ria|B[aá]sica)[^\\n\\r]{0,100}?(${MoneyPattern})`,
+			'i',
+		),
+	);
+
+	if (basisBeforeValue?.[1]) {
+		const value = parseMoney(basisBeforeValue[1]);
+
+		if (value !== null) {
+			return value;
+		}
+	}
+
+	/**
+	 * Alguns PDFs perdem a posição das colunas e ficam assim:
+	 *
+	 * R$ 1.973,00 (50% da ... Obrigatória)
+	 *
+	 * Aqui selecionamos o valor imediatamente associado à base da
+	 * franquia, em vez do prêmio que pode aparecer depois.
+	 */
+	const valueBeforeBasis = text.match(
+		new RegExp(
+			`(${MoneyPattern})[^\\n\\r]{0,80}?\\(\\s*\\d+(?:[.,]\\d+)?\\s*%\\s+da[\\s\\S]{0,60}?(?:Normal|Obrigat[oó]ria|B[aá]sica)`,
+			'i',
+		),
+	);
+
+	if (valueBeforeBasis?.[1]) {
+		const value = parseMoney(valueBeforeBasis[1]);
+
+		if (value !== null) {
+			return value;
+		}
+	}
+
+	/**
+	 * Seção explicitamente intitulada "Franquia(s)".
+	 *
+	 * Limitamos bastante a janela para não cair em franquias de vidro.
+	 */
+	const sectionMatch = text.match(
+		new RegExp(`Franquia\\(s\\)[\\s\\S]{0,180}?(${MoneyPattern})`, 'i'),
+	);
+
+	if (sectionMatch?.[1]) {
+		const value = parseMoney(sectionMatch[1]);
+
+		if (value !== null) {
+			return value;
+		}
+	}
+
+	/**
+	 * Allianz:
+	 *
+	 * FRANQUIA - PARTICIPAÇÃO OBRIGATÓRIA
+	 */
+	const mandatoryMatch = text.match(
+		new RegExp(
+			`FRANQUIA\\s*-\\s*PARTICIPA[CÇ][AÃ]O\\s+OBRIGAT[ÓO]RIA[\\s\\S]{0,220}?(${MoneyPattern})`,
+			'i',
+		),
+	);
+
+	if (mandatoryMatch?.[1]) {
+		const value = parseMoney(mandatoryMatch[1]);
+
+		if (value !== null) {
+			return value;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * ============================================================================
+ * Schemas
  * ============================================================================
  */
 
@@ -276,12 +644,9 @@ const SchemaDataExtract = z
 		expirationAt: SchemaDateString,
 
 		/**
-		 * Valor líquido REAL da proposta/apólice.
+		 * Prêmio/preço LÍQUIDO.
 		 *
-		 * Não inclui:
-		 * - IOF;
-		 * - juros;
-		 * - encargos financeiros.
+		 * Não inclui IOF, juros ou encargos.
 		 */
 		award: z
 			.number('Valor da proposta inválido')
@@ -311,6 +676,12 @@ type InsuranceCompanyRow = {
 /**
  * ============================================================================
  * Schema bruto da IA
+ *
+ * Mantemos pequeno para:
+ *
+ * 1. reduzir tokens de saída;
+ * 2. reduzir latência;
+ * 3. deixar valores estruturados serem corrigidos pelo código.
  * ============================================================================
  */
 
@@ -326,8 +697,6 @@ const SchemaModelInstallments = z.preprocess(
 	z.number().int().positive().max(60),
 );
 
-const SchemaModelInstallmentsNullable = SchemaModelInstallments.nullable();
-
 const SchemaModelYear = z.preprocess(
 	parseYear,
 	z.number().int().min(1900).max(2100),
@@ -341,7 +710,7 @@ const SchemaModelOutput = z
 
 		modality: SchemaModality,
 
-		insuranceCompany: z.number('Seguradora inválida').int().min(1),
+		insuranceCompany: z.number().int().min(1),
 
 		insured: z
 			.object({
@@ -389,35 +758,11 @@ const SchemaModelOutput = z
 
 		expirationAt: z.string(),
 
-		/**
-		 * Valor líquido do produto.
-		 */
 		award: SchemaModelMoneyNullable,
 
-		awardEvidence: z.string().nullable(),
-
-		/**
-		 * Campos auxiliares de pagamento.
-		 *
-		 * Não são retornados pela API.
-		 */
-		totalPremium: SchemaModelMoneyNullable,
-
-		totalPremiumEvidence: z.string().nullable(),
-
-		iof: SchemaModelMoneyNullable,
-
-		interest: SchemaModelMoneyNullable,
-
-		fees: SchemaModelMoneyNullable,
-
-		installments: SchemaModelInstallmentsNullable,
-
-		installmentsEvidence: z.string().nullable(),
+		installments: SchemaModelInstallments.nullable(),
 
 		franchise: SchemaModelMoneyNullable,
-
-		franchiseEvidence: z.string().nullable(),
 	})
 	.strict();
 
@@ -425,68 +770,40 @@ type ModelOutput = z.infer<typeof SchemaModelOutput>;
 
 /**
  * ============================================================================
- * Franquia especializada
- * ============================================================================
- */
-
-const SchemaFranchiseVerification = z
-	.object({
-		franchise: SchemaModelMoneyNullable,
-
-		coveragePremium: SchemaModelMoneyNullable,
-
-		indemnityLimit: SchemaModelMoneyNullable,
-
-		franchiseBasis: z.string().nullable(),
-
-		evidence: z.string().nullable(),
-	})
-	.strict();
-
-type FranchiseVerification = z.infer<typeof SchemaFranchiseVerification>;
-
-/**
- * ============================================================================
- * Prompt principal
+ * Prompt
  * ============================================================================
  */
 
 function mountPrompt(
 	text: string,
 	{
-		database: { insuranceCompanies },
+		insuranceCompanies,
 		imagesCount,
 	}: {
-		database: {
-			insuranceCompanies: Array<{
-				i: number;
-				name: string;
-				cnpj: string;
-			}>;
-		};
+		insuranceCompanies: Array<{
+			i: number;
+			name: string;
+			cnpj: string;
+		}>;
 
 		imagesCount: number;
 	},
 ): string {
-	return `
-Extraia os dados da PROPOSTA ou APÓLICE DE SEGURO abaixo.
+	const companies = insuranceCompanies
+		.map((company) => `${company.i}|${company.name}|${company.cnpj}`)
+		.join('\n');
 
-O documento pode ser de QUALQUER seguradora e possuir qualquer layout.
+	return `
+Extraia os dados desta PROPOSTA ou APÓLICE DE SEGURO.
 
 ${visionInstructions(imagesCount)}
 
-IMPORTANTE
+O documento pode ser de qualquer seguradora.
 
-O texto foi extraído automaticamente de um PDF e pode perder a estrutura
-das tabelas.
+O texto de PDF pode perder colunas e alinhamento.
+Quando imagens estiverem disponíveis, use-as para confirmar tabelas.
 
-Quando imagens estiverem disponíveis, utilize também a estrutura VISUAL.
-
-Quando texto e imagem parecerem contraditórios, prefira a estrutura visual.
-
-Analise TODO o documento antes de responder.
-
-FORMATO
+Responda SOMENTE JSON válido minificado:
 
 {
 	"latestProposal": "string ou null",
@@ -516,56 +833,24 @@ FORMATO
 	"requestedAt": "DD/MM/AAAA",
 	"expirationAt": "DD/MM/AAAA",
 	"award": "number ou null",
-	"awardEvidence": "string ou null",
-	"totalPremium": "number ou null",
-	"totalPremiumEvidence": "string ou null",
-	"iof": "number ou null",
-	"interest": "number ou null",
-	"fees": "number ou null",
 	"installments": "number ou null",
-	"installmentsEvidence": "string ou null",
-	"franchise": "number ou null",
-	"franchiseEvidence": "string ou null"
+	"franchise": "number ou null"
 }
 
-SEGURADORA
+REGRAS PRINCIPAIS
 
-"insuranceCompany" é o índice da empresa que efetivamente EMITE/GARANTE
-o seguro.
+SEGURADORA:
+insuranceCompany é o índice "i" da seguradora que efetivamente emite o seguro.
+Priorize razão social, CNPJ e código SUSEP.
+Não confunda banco ou corretora com seguradora.
 
-Não confunda com:
-- corretora;
-- banco;
-- distribuidor;
-- parceiro;
-- estipulante.
+${companies}
 
-Priorize:
-- CNPJ;
-- código SUSEP;
-- "seguro garantido por";
-- dados jurídicos da seguradora.
+RENOVAÇÃO:
+renewal = true quando houver renovação, apólice anterior, CI anterior ou seguradora anterior.
+latestProposal = identificação da apólice/proposta ANTERIOR, nunca a atual.
 
-Lista:
-
-${JSON.stringify(insuranceCompanies)}
-
-RENOVAÇÃO
-
-renewal = true quando houver:
-- renovação;
-- renovação congênere;
-- apólice anterior;
-- código CI;
-- seguradora anterior.
-
-latestProposal =
-identificação da proposta/apólice ANTERIOR.
-
-Nunca use número atual.
-
-MODALIDADE
-
+MODALIDADE:
 carro/utilitário => vehicle
 moto => motorcycle
 caminhão => truck
@@ -575,187 +860,91 @@ empresa => business
 condomínio => condominium
 viagem => travel
 profissional => professional
-construção => construction
+obra => construction
 
-PLACA
-
-Placa brasileira normalmente possui 7 caracteres.
+PLACA:
+placa brasileira normalmente possui 7 caracteres.
 Chassi normalmente possui 17.
+Nunca use chassi como placa.
+"-", "A AVISAR" e "SEM PLACA" => null.
 
-Nunca confunda os dois.
-
-"-", "A AVISAR", "SEM PLACA" => null.
-
-ANO
-
-Use o ano MODELO.
-
+ANO:
+use ANO MODELO.
 2025 / 2026 => 2026.
 
-VALOR DA PROPOSTA / award
+USO:
+REGRA IMPORTANTE:
+"PARTICULAR" => leisure_and_work.
 
-REGRA CRÍTICA:
+Também:
+"Lazer / ida e volta ao trabalho" => leisure_and_work
+somente "Lazer" => leisure
+Uber/99/aplicativo => app_based_transport
+Táxi => taxi
+entregas => delivieries
+visitas a clientes/fornecedores => client_supplier_visits
+turismo => tourism
 
-"award" representa o VALOR LÍQUIDO REAL DO PRODUTO NEGOCIADO.
+Não interprete "Particular" como leisure.
 
-É o prêmio/preço líquido ANTES de:
-- IOF;
-- juros;
-- encargos financeiros;
-- acréscimos decorrentes da forma de pagamento.
+PRÊMIO:
+award = prêmio/preço LÍQUIDO TOTAL do produto.
 
-Esse é o valor relevante para a corretora.
-
-Rótulos possíveis:
-
-- Prêmio Líquido
-- Prêmio Líquido Total
-- Preço Líquido
-- Valor Líquido
-- Total Líquido
-- Prêmio Líquido do Seguro
-
-"Prêmio Líquido Total" É válido.
-
-A palavra "Total" nesse rótulo representa normalmente a soma dos
-prêmios líquidos das coberturas.
-
-Não significa valor final com IOF.
-
-EXEMPLO ALLIANZ
-
-Preço Líquido: R$ 36,57
-IOF: R$ 2,70
-Preço Total: R$ 39,27
-
-Resultado:
-
-"award": 36.57
-"totalPremium": 39.27
-"iof": 2.70
-
-NUNCA use 39.27 em award neste exemplo.
-
-EXEMPLO TOKIO
-
-Prêmio Líquido Total: R$ 4.247,70
-Juros: R$ 0,00
-IOF: R$ 313,47
-Prêmio Total: R$ 4.561,17
-
-Resultado:
-
-"award": 4247.70
-"totalPremium": 4561.17
-"iof": 313.47
-"interest": 0
-
-EXEMPLO PORTO
-
-Valor líquido: R$ 1.222,11
-IOF: R$ 90,19
-Juros: R$ 0,00
-Encargos: R$ 0,00
-Valor total: R$ 1.312,30
-
-Resultado:
-
-"award": 1222.11
-"totalPremium": 1312.30
-"iof": 90.19
-"interest": 0
-"fees": 0
-
-NÃO use em award:
-- prêmio total;
-- preço total;
-- valor total com impostos;
+Não inclua:
 - IOF;
 - juros;
 - encargos;
-- valor da parcela;
-- prêmio individual de cobertura;
-- franquia;
-- LMI;
-- FIPE.
+- valor total com impostos.
 
-"awardEvidence":
-trecho contendo o valor líquido escolhido.
+Exemplos:
 
-"totalPremium":
-valor financeiro final incluindo IOF/juros/encargos.
+Preço Líquido 36,57
+IOF 2,70
+Preço Total 39,27
 
-Esse campo serve SOMENTE para validação.
+=> award = 36.57
 
-"totalPremiumEvidence":
-trecho contendo esse total.
+Prêmio Líquido 2.630,37
+IOF 194,13
+Prêmio Total 2.824,50
 
-"iof":
-IOF.
+=> award = 2630.37
 
-"interest":
-juros.
+"Prêmio Líquido Total" também é válido para award.
 
-"fees":
-encargos.
-
-PARCELAS
-
-installments = somente quantidade de parcelas.
-
+PARCELAS:
 à vista => 1
 10x => 10
-12 parcelas => 12
 12 parc => 12
+Nunca use código do plano como quantidade de parcelas.
 
-FRANQUIA
+FRANQUIA:
+franchise = franquia PRINCIPAL do casco.
 
-franchise = FRANQUIA PRINCIPAL DO CASCO.
+Exemplos:
 
-Uma tabela pode conter:
+Casco: Reduzida 50% 3.837,09
+=> franchise = 3837.09
 
 Descrição | LMI | Franquia | Valor do Prêmio
+Compreensiva | 100% | 1.973,00 | 1.071,27
 
-EXEMPLO:
+=> franchise = 1973
 
-Compreensiva | 100% | R$ 1.973,00 (50% da Obrigatória) | R$ 1.071,27
+Não confunda franquia com prêmio da cobertura.
+Não use franquia de vidro, farol, lanterna, retrovisor, roda ou pneu.
 
-CORRETO:
+CONDUTOR:
+use o principal condutor.
+Se for "Próprio Segurado", use os dados do segurado.
 
-franchise = 1973
-
-ERRADO:
-
-franchise = 1071.27
-
-Quando o texto perder a estrutura, confira a IMAGEM.
-
-Não use franquias de:
-- vidro;
-- farol;
-- lanterna;
-- retrovisor;
-- roda;
-- pneu.
-
-DATAS
-
+DATAS:
 requestedAt = início da vigência.
 expirationAt = fim da vigência.
+effectivedAt = data de emissão/efetivação apenas quando for apólice emitida.
+Proposta não emitida => null.
 
-effectivedAt:
-data de efetivação apenas quando for apólice efetivamente emitida.
-
-Proposta ainda não emitida => null.
-
-REGRAS
-
-- Apenas JSON válido.
-- Uma linha.
-- Sem markdown.
-- Todo number deve ser number.
-- R$ 1.234,56 => 1234.56
-- Não invente dados.
+Não invente dados.
 
 Texto:
 
@@ -767,208 +956,45 @@ ${text}
 
 /**
  * ============================================================================
- * Prompt especializado da franquia
+ * Enriquecimento determinístico
  * ============================================================================
  */
 
-function mountFranchiseVerificationPrompt(
+function enrichModelOutputFromText(
+	raw: ModelOutput,
 	text: string,
-	imagesCount: number,
-): string {
-	return `
-Sua única tarefa é identificar a FRANQUIA PRINCIPAL DO CASCO.
+): ModelOutput {
+	const financial = extractFinancialSummary(text);
 
-${visionInstructions(imagesCount)}
+	const installments = extractInstallmentsFromText(text);
 
-Quando imagens estiverem disponíveis, INSPECIONE VISUALMENTE a tabela.
+	const franchise = extractPrimaryFranchise(text);
 
-Diferencie:
+	const usage = extractVehicleUsageFromText(text);
 
-1. LMI
-2. Franquia
-3. Valor do Prêmio
+	return {
+		...raw,
 
-EXEMPLO:
+		/**
+		 * Texto explícito possui prioridade para campos altamente
+		 * estruturados.
+		 */
+		award: financial.liquid ?? raw.award,
 
-Descrição | LMI | Franquia | Valor do Prêmio
+		installments: installments ?? raw.installments,
 
-Compreensiva | 100% | R$ 1.973,00 (50% da Obrigatória) | R$ 1.071,27
+		franchise: franchise ?? raw.franchise,
 
-Resultado:
+		vehicle: raw.vehicle
+			? {
+					...raw.vehicle,
 
-{
-	"franchise": 1973,
-	"coveragePremium": 1071.27,
-	"indemnityLimit": null,
-	"franchiseBasis": "50% da Obrigatória",
-	"evidence": "Descrição | LMI | Franquia | Valor do Prêmio ... R$ 1.973,00 ... R$ 1.071,27"
-}
+					usage: usage ?? raw.vehicle.usage,
 
-NUNCA use 1071.27 como franquia neste exemplo.
-
-Responda apenas JSON minificado:
-
-{
-	"franchise": "number ou null",
-	"coveragePremium": "number ou null",
-	"indemnityLimit": "number ou null",
-	"franchiseBasis": "string ou null",
-	"evidence": "string ou null"
-}
-
-Texto:
-
-"""
-${text}
-"""
-`;
-}
-
-function mountFranchiseRetryPrompt(
-	basePrompt: string,
-	previous: unknown,
-	reason: string,
-): string {
-	return `
-${basePrompt}
-
-Resposta anterior inconsistente.
-
-Motivo:
-
-${reason}
-
-Resposta anterior:
-
-${JSON.stringify(previous)}
-
-Revise principalmente a posição visual das colunas:
-- Franquia
-- Valor do Prêmio
-- LMI
-
-Retorne somente o JSON corrigido.
-`;
-}
-
-function mountRetryPrompt(
-	basePrompt: string,
-	previous: unknown,
-	reason: string,
-): string {
-	return `
-${basePrompt}
-
-A extração anterior foi inconsistente.
-
-Motivo:
-
-${reason}
-
-Resposta anterior:
-
-${JSON.stringify(previous)}
-
-REGRA CRÍTICA:
-
-award deve ser sempre o valor LÍQUIDO do seguro.
-
-IOF, juros e encargos pertencem ao pagamento e NÃO entram em award.
-
-Quando houver:
-
-Preço Líquido: 36,57
-IOF: 2,70
-Preço Total: 39,27
-
-award = 36.57
-
-Revise o documento e retorne somente o JSON completo corrigido.
-`;
-}
-
-/**
- * ============================================================================
- * Validação da franquia
- * ============================================================================
- */
-
-function validateFranchiseVerification(
-	verification: FranchiseVerification,
-): void {
-	if (verification.franchise === null) {
-		return;
-	}
-
-	if (!verification.evidence) {
-		throw new Error('Franquia identificada sem evidência');
-	}
-
-	if (!evidenceContainsValue(verification.evidence, verification.franchise)) {
-		throw new Error('A evidência não confirma a franquia');
-	}
-
-	if (!/(franqui|obrigat|participa[cç][aã]o)/i.test(verification.evidence)) {
-		throw new Error('A evidência não possui contexto suficiente de franquia');
-	}
-
-	if (
-		verification.coveragePremium !== null &&
-		moneyAlmostEqual(verification.franchise, verification.coveragePremium)
-	) {
-		throw new Error(
-			'Franquia e prêmio da cobertura foram identificados com o mesmo valor',
-		);
-	}
-}
-
-async function verifyFranchise({
-	model,
-	text,
-	images,
-}: {
-	model: string;
-	text: string;
-	images: Array<string>;
-}): Promise<FranchiseVerification> {
-	const prompt = mountFranchiseVerificationPrompt(text, images.length);
-
-	let previous: unknown;
-
-	try {
-		previous = await askJson({
-			model,
-			prompt,
-			images,
-		});
-
-		const parsed = SchemaFranchiseVerification.parse(previous);
-
-		validateFranchiseVerification(parsed);
-
-		return parsed;
-	} catch (firstError) {
-		const reason = errorMessage(firstError);
-
-		console.warn(
-			'[extract-pdf] primeira verificação de franquia inconsistente:',
-			reason,
-		);
-
-		const retried = await askJson({
-			model,
-
-			prompt: mountFranchiseRetryPrompt(prompt, previous, reason),
-
-			images,
-		});
-
-		const parsed = SchemaFranchiseVerification.parse(retried);
-
-		validateFranchiseVerification(parsed);
-
-		return parsed;
-	}
+					plate: normalizePlate(raw.vehicle.plate),
+				}
+			: null,
+	};
 }
 
 /**
@@ -977,59 +1003,35 @@ async function verifyFranchise({
  * ============================================================================
  */
 
-function validateFinancialExtraction(raw: ModelOutput): void {
+function validateFinancialData(raw: ModelOutput, text: string): void {
 	if (raw.award === null) {
 		throw new Error('Não foi possível determinar o prêmio líquido da proposta');
-	}
-
-	if (!raw.awardEvidence) {
-		throw new Error('Prêmio líquido identificado sem evidência');
-	}
-
-	if (!evidenceContainsValue(raw.awardEvidence, raw.award)) {
-		throw new Error('A evidência não confirma o prêmio líquido');
 	}
 
 	if (raw.installments === null) {
 		throw new Error('Não foi possível determinar a quantidade de parcelas');
 	}
 
-	if (!raw.installmentsEvidence) {
-		throw new Error('Quantidade de parcelas identificada sem evidência');
-	}
+	const financial = extractFinancialSummary(text);
 
 	if (
-		!evidenceContainsValue(raw.installmentsEvidence, raw.installments, 0.001)
-	) {
-		throw new Error('A evidência não confirma a quantidade de parcelas');
-	}
-
-	/**
-	 * Detecta award confundido com prêmio total.
-	 */
-	if (
-		raw.totalPremium !== null &&
-		moneyAlmostEqual(raw.award, raw.totalPremium) &&
-		((raw.iof ?? 0) > 0 || (raw.interest ?? 0) > 0 || (raw.fees ?? 0) > 0)
+		financial.liquid !== null &&
+		Math.abs(financial.liquid - raw.award) > 0.05
 	) {
 		throw new Error(
-			'O prêmio líquido foi confundido com o prêmio total incluindo IOF, juros ou encargos',
+			`Prêmio líquido inconsistente: esperado ${financial.liquid}, extraído ${raw.award}`,
 		);
 	}
 
 	if (
-		raw.totalPremium !== null &&
-		raw.iof !== null &&
-		raw.interest !== null &&
-		raw.fees !== null
+		financial.total !== null &&
+		financial.liquid !== null &&
+		Math.abs(raw.award - financial.total) <= 0.05 &&
+		Math.abs(financial.total - financial.liquid) > 0.05
 	) {
-		const expected = raw.award + raw.iof + raw.interest + raw.fees;
-
-		if (!moneyAlmostEqual(expected, raw.totalPremium)) {
-			throw new Error(
-				`Valores financeiros inconsistentes: líquido ${raw.award}, IOF ${raw.iof}, juros ${raw.interest}, encargos ${raw.fees}, total ${raw.totalPremium}`,
-			);
-		}
+		throw new Error(
+			'O prêmio total com IOF/juros foi confundido com o prêmio líquido',
+		);
 	}
 }
 
@@ -1047,80 +1049,99 @@ function isVehicleModality(modality: DataExtract['modality']): boolean {
 
 function finalizeModelOutput(
 	raw: ModelOutput,
+	text: string,
 	insuranceCompanies: Array<InsuranceCompanyRow>,
 ): DataExtract {
-	validateFinancialExtraction(raw);
+	const enriched = enrichModelOutputFromText(raw, text);
 
-	if (raw.award === null || raw.installments === null) {
-		throw new Error('Informações financeiras obrigatórias ausentes');
+	validateFinancialData(enriched, text);
+
+	if (enriched.award === null) {
+		throw new Error('Prêmio líquido obrigatório não identificado');
 	}
 
-	const company = insuranceCompanies[raw.insuranceCompany - 1];
+	if (enriched.installments === null) {
+		throw new Error('Quantidade de parcelas obrigatória não identificada');
+	}
+
+	const company = insuranceCompanies[enriched.insuranceCompany - 1];
 
 	if (!company) {
-		throw new Error('Seguradora não encontrada na lista');
+		throw new Error('Seguradora não encontrada na lista informada');
 	}
 
-	const vehicleModality = isVehicleModality(raw.modality);
+	const vehicleModality = isVehicleModality(enriched.modality);
 
-	if (vehicleModality && !raw.vehicle) {
-		throw new Error('Seguro veicular identificado sem veículo');
+	if (vehicleModality && !enriched.vehicle) {
+		throw new Error('Seguro veicular identificado sem dados do veículo');
 	}
 
-	if (!vehicleModality && raw.vehicle) {
-		throw new Error('Seguro não veicular retornou veículo');
+	if (!vehicleModality && enriched.vehicle) {
+		throw new Error('Seguro não veicular retornou dados de veículo');
 	}
 
 	let vehicle: DataExtract['vehicle'] = null;
 
-	if (raw.vehicle) {
+	if (enriched.vehicle) {
 		vehicle = SchemaVehicle.parse({
-			plate: normalizePlate(raw.vehicle.plate),
+			plate: normalizePlate(enriched.vehicle.plate),
 
-			model: raw.vehicle.model,
+			model: enriched.vehicle.model,
 
-			year: raw.vehicle.year,
+			year: enriched.vehicle.year,
 
-			usage: raw.vehicle.usage,
+			usage: enriched.vehicle.usage,
 
-			overnightStayPostalCode: raw.vehicle.overnightStayPostalCode,
+			overnightStayPostalCode: enriched.vehicle.overnightStayPostalCode,
 
-			driver: raw.vehicle.driver,
+			driver: enriched.vehicle.driver,
 		});
 	}
 
-	const renewal = raw.renewal || Boolean(raw.latestProposal?.trim());
+	const renewal = enriched.renewal || Boolean(enriched.latestProposal?.trim());
 
 	return SchemaDataExtract.parse({
-		latestProposal: raw.latestProposal?.trim() || null,
+		latestProposal: enriched.latestProposal?.trim() || null,
 
 		renewal,
 
-		modality: raw.modality,
+		modality: enriched.modality,
 
 		insuranceCompany: company,
 
-		insured: raw.insured,
+		insured: enriched.insured,
 
 		vehicle,
 
-		effectivedAt: raw.effectivedAt,
+		effectivedAt: enriched.effectivedAt,
 
-		requestedAt: raw.requestedAt,
+		requestedAt: enriched.requestedAt,
 
-		expirationAt: raw.expirationAt,
+		expirationAt: enriched.expirationAt,
 
-		award: raw.award,
+		award: enriched.award,
 
-		installments: raw.installments,
+		installments: enriched.installments,
 
-		franchise: raw.franchise,
+		franchise: enriched.franchise,
 	});
 }
 
 /**
  * ============================================================================
  * IA
+ *
+ * IMPORTANTE:
+ *
+ * NÃO existe retry aqui.
+ *
+ * runPdfExtraction já controla:
+ * - tentativas;
+ * - text-full;
+ * - vision;
+ * - fallbacks.
+ *
+ * Fazer retry aqui multiplicaria exponencialmente as chamadas.
  * ============================================================================
  */
 
@@ -1137,73 +1158,26 @@ async function askModel(
 	insuranceCompanies: Array<InsuranceCompanyRow>,
 ): Promise<DataExtract> {
 	const prompt = mountPrompt(text, {
-		database: {
-			insuranceCompanies: insuranceCompanies.map((company, index) => ({
-				i: index + 1,
-				name: company.name,
-				cnpj: company.cnpj,
-			})),
-		},
+		insuranceCompanies: insuranceCompanies.map((company, index) => ({
+			i: index + 1,
+
+			name: company.name,
+
+			cnpj: company.cnpj,
+		})),
 
 		imagesCount: images.length,
 	});
 
-	let previous: unknown;
-	let parsed: ModelOutput;
+	const response = await askJson({
+		model,
+		prompt,
+		images,
+	});
 
-	try {
-		previous = await askJson({
-			model,
-			prompt,
-			images,
-		});
+	const parsed = SchemaModelOutput.parse(response);
 
-		parsed = SchemaModelOutput.parse(previous);
-
-		validateFinancialExtraction(parsed);
-	} catch (firstError) {
-		const reason = errorMessage(firstError);
-
-		console.warn('[extract-pdf] primeira extração inconsistente:', reason);
-
-		const retried = await askJson({
-			model,
-
-			prompt: mountRetryPrompt(prompt, previous, reason),
-
-			images,
-		});
-
-		parsed = SchemaModelOutput.parse(retried);
-
-		validateFinancialExtraction(parsed);
-	}
-
-	if (isVehicleModality(parsed.modality)) {
-		const verification = await verifyFranchise({
-			model,
-			text,
-			images,
-		});
-
-		parsed = {
-			...parsed,
-
-			franchise: verification.franchise,
-
-			franchiseEvidence: verification.evidence,
-		};
-	} else {
-		parsed = {
-			...parsed,
-
-			franchise: null,
-
-			franchiseEvidence: null,
-		};
-	}
-
-	return finalizeModelOutput(parsed, insuranceCompanies);
+	return finalizeModelOutput(parsed, text, insuranceCompanies);
 }
 
 /**
@@ -1311,20 +1285,22 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 
 				const buffer = await file.arrayBuffer();
 
-				// const hash = Bun.hash(buffer).toString(16);
+				const hash = Bun.hash(buffer).toString(16);
 
 				/**
-				 * v7:
+				 * v8:
 				 *
-				 * - award sempre líquido;
-				 * - IOF/juros/encargos excluídos do valor da corretora;
-				 * - total financeiro somente como validação;
-				 * - detecção automática de total confundido com líquido;
-				 * - verificação especializada da franquia.
+				 * - removido retry interno da IA;
+				 * - removida segunda chamada da franquia;
+				 * - uso PARTICULAR corrigido deterministicamente;
+				 * - franquia extraída deterministicamente quando possível;
+				 * - prêmio líquido extraído deterministicamente;
+				 * - parcelas extraídas deterministicamente;
+				 * - IA passa a ser fallback/interpretação semântica.
 				 */
-				// const cacheKey = `pdf-extract:v7:${hash}`;
+				const cacheKey = `pdf-extract:v8:${hash}`;
 
-				// const cached = await ctx.cache.get(cacheKey);
+				const cached = await ctx.cache.get(cacheKey);
 
 				let data: DataExtract | null = null;
 
@@ -1357,12 +1333,12 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 
 					data = await extractData(buffer, insuranceCompanies);
 
-					// await ctx.cache.set(
-					// 	cacheKey,
-					// 	JSON.stringify(data),
-					// 	'EX',
-					// 	60 * 60 * 24,
-					// );
+					await ctx.cache.set(
+						cacheKey,
+						JSON.stringify(data),
+						'EX',
+						60 * 60 * 24,
+					);
 				}
 
 				return ctx.json(data, 200);
