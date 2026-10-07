@@ -1311,7 +1311,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 
 				const buffer = await file.arrayBuffer();
 
-				const hash = Bun.hash(buffer).toString(16);
+				// const hash = Bun.hash(buffer).toString(16);
 
 				/**
 				 * v7:
@@ -1322,22 +1322,22 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				 * - detecção automática de total confundido com líquido;
 				 * - verificação especializada da franquia.
 				 */
-				const cacheKey = `pdf-extract:v7:${hash}`;
+				// const cacheKey = `pdf-extract:v7:${hash}`;
 
-				const cached = await ctx.cache.get(cacheKey);
+				// const cached = await ctx.cache.get(cacheKey);
 
 				let data: DataExtract | null = null;
 
-				if (cached) {
-					try {
-						data = SchemaDataExtract.parse(JSON.parse(cached));
-					} catch (error) {
-						console.warn(
-							'[extract-pdf] cache incompatível, executando nova extração:',
-							error instanceof Error ? error.message : error,
-						);
-					}
-				}
+				// if (cached) {
+				// 	try {
+				// 		data = SchemaDataExtract.parse(JSON.parse(cached));
+				// 	} catch (error) {
+				// 		console.warn(
+				// 			'[extract-pdf] cache incompatível, executando nova extração:',
+				// 			error instanceof Error ? error.message : error,
+				// 		);
+				// 	}
+				// }
 
 				if (!data) {
 					const insuranceCompanies =
@@ -1357,12 +1357,12 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 
 					data = await extractData(buffer, insuranceCompanies);
 
-					await ctx.cache.set(
-						cacheKey,
-						JSON.stringify(data),
-						'EX',
-						60 * 60 * 24,
-					);
+					// await ctx.cache.set(
+					// 	cacheKey,
+					// 	JSON.stringify(data),
+					// 	'EX',
+					// 	60 * 60 * 24,
+					// );
 				}
 
 				return ctx.json(data, 200);

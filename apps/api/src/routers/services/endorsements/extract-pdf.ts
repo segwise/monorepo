@@ -1695,7 +1695,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 
 				const buffer = await file.arrayBuffer();
 
-				const hash = Bun.hash(buffer).toString(16);
+				// const hash = Bun.hash(buffer).toString(16);
 
 				/**
 				 * v8:
@@ -1706,32 +1706,32 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				 * - validação detecta líquido confundido com total;
 				 * - verificação especializada de franquia.
 				 */
-				const cacheKey = `endorsement-pdf-extract:v8:${hash}`;
+				// const cacheKey = `endorsement-pdf-extract:v8:${hash}`;
 
-				const cached = await ctx.cache.get(cacheKey);
+				// const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement | null = null;
 
-				if (cached) {
-					try {
-						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
-					} catch (error) {
-						console.warn(
-							'[extract-endorsement] cache incompatível, executando nova extração:',
-							error instanceof Error ? error.message : error,
-						);
-					}
-				}
+				// if (cached) {
+				// 	try {
+				// 		extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
+				// 	} catch (error) {
+				// 		console.warn(
+				// 			'[extract-endorsement] cache incompatível, executando nova extração:',
+				// 			error instanceof Error ? error.message : error,
+				// 		);
+				// 	}
+				// }
 
 				if (!extracted) {
 					extracted = await extractDataEndorsement(buffer);
 
-					await ctx.cache.set(
-						cacheKey,
-						JSON.stringify(extracted),
-						'EX',
-						60 * 60 * 24,
-					);
+					// await ctx.cache.set(
+					// 	cacheKey,
+					// 	JSON.stringify(extracted),
+					// 	'EX',
+					// 	60 * 60 * 24,
+					// );
 				}
 
 				const safeId =
