@@ -268,6 +268,152 @@ function sourceContainsPhoneNear(
 	return false;
 }
 
+function compactAlphanumeric(value: string): string {
+	return value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+function evidenceShowsExplicitPlateAbsence(
+	evidence: string | null | undefined,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	const normalized = normalizeText(evidence);
+
+	if (
+		/\b(a avisar|avisar|sem placa|s placa|zero km sem placa|0 km sem placa)\b/.test(
+			normalized,
+		)
+	) {
+		return true;
+	}
+
+	return /(?:^|\b)placa\s*[:=-]?\s*-\s*(?:$|\n|\r)/i.test(evidence);
+}
+
+function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? '';
+		const normalizedLine = normalizeText(line);
+
+		if (!normalizedLine.includes('placa')) {
+			continue;
+		}
+
+		const start = Math.max(0, index - 1);
+		const end = Math.min(lines.length, index + 4);
+		const block = lines.slice(start, end).join('\n');
+		const normalizedBlock = normalizeText(block);
+
+		if (
+			/\b(a avisar|avisar|sem placa|s placa|zero km sem placa|0 km sem placa)\b/.test(
+				normalizedBlock,
+			)
+		) {
+			return true;
+		}
+
+		// Layouts tabulares (Porto/Azul/Itaú, por exemplo) podem extrair o cabeçalho
+		// "Placa Chassi Veículo..." em uma linha e os valores na linha seguinte.
+		// Quando a primeira célula da linha de valores é "-", isso é uma ausência
+		// explícita de placa, não uma falha de leitura.
+		const followingLines = lines.slice(
+			index + 1,
+			Math.min(lines.length, index + 4),
+		);
+
+		if (
+			followingLines.some((candidate) =>
+				/^\s*-\s+(?:[A-Z0-9]{8,}|\S+)/i.test(candidate),
+			)
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function sourceContainsPlateNear(sourceText: string, plate: string): boolean {
+	const expected = compactAlphanumeric(plate);
+
+	if (!expected) {
+		return false;
+	}
+
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (!normalizedLine.includes('placa')) {
+			continue;
+		}
+
+		const start = Math.max(0, index - 1);
+		const end = Math.min(lines.length, index + 4);
+		const block = compactAlphanumeric(lines.slice(start, end).join(' '));
+
+		if (block.includes(expected)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function resolveVehiclePlate(
+	vehicle: ModelOutput['vehicle'],
+	sourceText: string,
+): string | null {
+	const parsedPlate = SchemaPlateLenient.parse(vehicle.plate);
+
+	const explicitAbsence =
+		evidenceShowsExplicitPlateAbsence(vehicle.plateEvidence) ||
+		sourceShowsExplicitPlateAbsence(sourceText);
+
+	if (parsedPlate) {
+		if (explicitAbsence) {
+			throw new Error(
+				'Documento apresenta sinais conflitantes sobre a existência da placa do veículo',
+			);
+		}
+
+		const evidenceConfirms = vehicle.plateEvidence
+			? compactAlphanumeric(vehicle.plateEvidence).includes(parsedPlate)
+			: false;
+
+		if (
+			!evidenceConfirms &&
+			!sourceContainsPlateNear(sourceText, parsedPlate)
+		) {
+			throw new Error('A evidência não confirma a placa do veículo');
+		}
+
+		return parsedPlate;
+	}
+
+	// A classificação da IA não é soberana. Se ela marcou "present" mas o
+	// próprio PDF mostra "-", "SEM PLACA", "A AVISAR" etc., prevalece o
+	// documento e a placa resultante é null. O mesmo vale para status "unknown".
+	if (explicitAbsence) {
+		return null;
+	}
+
+	if (vehicle.plateStatus === 'explicitly_absent') {
+		throw new Error('Ausência de placa informada sem evidência documental');
+	}
+
+	if (vehicle.plateStatus === 'present') {
+		throw new Error('Placa informada não pôde ser validada');
+	}
+
+	throw new Error('Não foi possível determinar a placa com segurança');
+}
+
 function evidenceContainsDate(
 	evidence: string | null | undefined,
 	date: string,
@@ -1185,31 +1331,7 @@ function finalizeModelOutput(
 		throw new Error('Dados do veículo incompletos ou ambíguos');
 	}
 
-	let plate: string | null;
-
-	if (vehicle.plateStatus === 'present') {
-		plate = SchemaPlateLenient.parse(vehicle.plate);
-
-		if (!plate || !vehicle.plateEvidence) {
-			throw new Error('Placa informada não pôde ser validada');
-		}
-
-		const compactEvidence = vehicle.plateEvidence
-			.replace(/[^a-zA-Z0-9]/g, '')
-			.toLowerCase();
-
-		if (!compactEvidence.includes(plate)) {
-			throw new Error('A evidência não confirma a placa do veículo');
-		}
-	} else if (vehicle.plateStatus === 'explicitly_absent') {
-		if (!vehicle.plateEvidence) {
-			throw new Error('Ausência de placa informada sem evidência');
-		}
-
-		plate = null;
-	} else {
-		throw new Error('Não foi possível determinar a placa com segurança');
-	}
+	const plate = resolveVehiclePlate(vehicle, sourceText);
 
 	const driver = resolvePrincipalDriver({
 		vehicle,
@@ -1379,7 +1501,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v16:${hash}`;
+				const cacheKey = `pdf-extract:v17:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
