@@ -307,9 +307,51 @@ function companyEvidenceMatches(
 function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
 	const normalized = normalizeText(evidence);
 
-	return /\b(casco|compreensiva|basica|obrigatoria|participacao obrigatoria|indenizacao parcial do veiculo|franquia do veiculo|veiculo)\b/.test(
-		normalized,
-	);
+	const strongPrincipal =
+		/\b(casco|compreensiva|basica|obrigatoria|participacao obrigatoria|indenizacao parcial do veiculo|franquia do veiculo|normal|reduzida|facultativa)\b/.test(
+			normalized,
+		);
+
+	if (strongPrincipal) {
+		return true;
+	}
+
+	const accessory =
+		/\b(vidro|vidros|para brisa|parabrisa|farol|farois|lanterna|lanternas|retrovisor|retrovisores|vigia|lateral|laterais|teto solar|pneu|pneus|roda|rodas|martelinho|para choque|maquina de vidro|kit gas|assistencia)\b/.test(
+			normalized,
+		);
+
+	return !accessory && /\bfranquia\b/.test(normalized);
+}
+
+function sourceSupportsPrincipalFranchise(
+	sourceText: string,
+	value: number,
+	radius = 3,
+): boolean {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? '';
+
+		if (
+			!numericValuesFromText(line).some(
+				(candidate) => Math.abs(candidate - value) <= MONEY_TOLERANCE,
+			)
+		) {
+			continue;
+		}
+
+		const start = Math.max(0, index - radius);
+		const end = Math.min(lines.length, index + radius + 1);
+		const block = lines.slice(start, end).join(' ');
+
+		if (franchiseEvidenceLooksPrincipal(block)) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 function sum(values: number[]): number {
@@ -631,7 +673,7 @@ ${text}
 `;
 }
 
-function validateFinancial(raw: ModelOutput['financial']) {
+function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 	if (raw.award === null || raw.award <= 0) {
 		throw new Error(
 			'Não foi possível determinar o prêmio líquido com segurança',
@@ -706,7 +748,10 @@ function validateFinancial(raw: ModelOutput['financial']) {
 		throw new Error('A evidência não confirma a franquia principal');
 	}
 
-	if (!franchiseEvidenceLooksPrincipal(raw.franchiseEvidence)) {
+	if (
+		!franchiseEvidenceLooksPrincipal(raw.franchiseEvidence) &&
+		!sourceSupportsPrincipalFranchise(sourceText, raw.franchise)
+	) {
 		throw new Error(
 			'A evidência da franquia não permite confirmar que seja a franquia principal',
 		);
@@ -893,7 +938,7 @@ function finalizeModelOutput(
 		throw new Error('Apólice identificada sem data de efetivação segura');
 	}
 
-	const financial = validateFinancial(raw.financial);
+	const financial = validateFinancial(raw.financial, sourceText);
 
 	return SchemaDataExtract.parse({
 		latestProposal: raw.latestProposal,
@@ -1030,7 +1075,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v11:${hash}`;
+				const cacheKey = `pdf-extract:v12:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
