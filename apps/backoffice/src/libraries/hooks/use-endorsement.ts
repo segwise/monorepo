@@ -124,7 +124,7 @@ const useEndorsementVehicleConductorQuery = (
 	enabled: boolean = true,
 ) =>
 	useQuery({
-		queryKey: ['endorsements', 'vehicle-conductor'],
+		queryKey: ['endorsements', id, 'vehicle-conductor'],
 		queryFn: async ({ signal }) => {
 			try {
 				const { data } = await api.get<{
