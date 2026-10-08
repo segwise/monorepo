@@ -1075,7 +1075,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v12:${hash}`;
+				const cacheKey = `pdf-extract:v14:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
