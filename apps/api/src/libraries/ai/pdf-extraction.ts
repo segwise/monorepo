@@ -6,31 +6,14 @@ import { renderPdfPages } from '@/libraries/pdf/render-pages';
 
 const AI_BASE_URL = process.env.AI_BASE_URL as string;
 const AI_API_KEY = process.env.AI_API_KEY as string;
-// Modelo das etapas só com texto (o caminho rápido, que atende quase tudo).
 const AI_MODEL = process.env.AI_MODEL as string;
-// Modelo mais forte para quando a 1ª tentativa falha (etapas `text-full` e
-// `vision`). Padrão: o mesmo AI_MODEL.
-const AI_MODEL_FALLBACK = (process.env.AI_MODEL_FALLBACK || AI_MODEL) as string;
-// Modelo da etapa com imagem: precisa ter visão. Padrão: AI_MODEL_FALLBACK.
-const AI_MODEL_VISION = (process.env.AI_MODEL_VISION ||
-	AI_MODEL_FALLBACK) as string;
+const AI_MODEL_VISION = (process.env.AI_MODEL_VISION || AI_MODEL) as string;
 
-// 'fallback' (padrão): começa só com texto e usa as imagens se não bastar.
-// 'always': sempre texto + imagens. 'off': nunca usa imagens.
-const VISION_MODE = (process.env.AI_VISION_MODE ?? 'fallback') as
-	| 'fallback'
-	| 'always'
-	| 'off';
-
-// Os dados de proposta/apólice/endosso ficam em poucas páginas; o resto são
-// cláusulas gerais. A primeira tentativa envia só o texto das páginas com mais
-// dados (ver pickDataPages).
-const FAST_TEXT_PAGES = Number(process.env.AI_TEXT_PAGES ?? 3);
-
-const MAX_RETRIES = 3;
-const REQUEST_TIMEOUT_MS = 30_000;
-const MIN_TEXT_CHARS = 50;
-const MAX_TEXT_CHARS = 24_000;
+const REQUEST_TIMEOUT_MS = Number(process.env.AI_REQUEST_TIMEOUT_MS ?? 45_000);
+const MAX_TEXT_CHARS = Number(process.env.AI_MAX_TEXT_CHARS ?? 80_000);
+const MAX_COMPLETION_TOKENS = Number(
+	process.env.AI_MAX_COMPLETION_TOKENS ?? 2_200,
+);
 
 const client = new OpenAI({
 	baseURL: AI_BASE_URL,
@@ -38,8 +21,16 @@ const client = new OpenAI({
 	timeout: REQUEST_TIMEOUT_MS,
 });
 
-// Documentos às vezes trazem texto no lugar da placa (ex.: "A AVISAR" em veículo
-// zero km). Placa fora do padrão não invalida a extração: vira null.
+class AIProviderError extends Error {
+	readonly status?: number;
+
+	constructor(message: string, status?: number) {
+		super(message);
+		this.name = 'AIProviderError';
+		this.status = status;
+	}
+}
+
 const SchemaPlateLenient = z
 	.string()
 	.nullish()
@@ -52,17 +43,15 @@ const SchemaPlateLenient = z
 function sanitizeText(text: string): string {
 	return (
 		text
-			// biome-ignore lint/suspicious/noControlCharactersInRegex: regex
+			// biome-ignore lint/suspicious/noControlCharactersInRegex: regex to remove control characters
 			.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
 			.replace(/\r\n/g, '\n')
 			.replace(/\n{3,}/g, '\n\n')
-			// Menos tokens no prompt sem perder a ordem das colunas.
 			.replace(/[ \t]{3,}/g, '  ')
+			.trim()
 	);
 }
 
-// Páginas com dados (CPF, CNPJ, datas, valores em R$, CEP) pontuam alto; páginas
-// de cláusulas gerais quase não têm esses padrões.
 const DATA_PATTERNS = [
 	/\d{3}\.\d{3}\.\d{3}-\d{2}/g,
 	/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/g,
@@ -71,67 +60,109 @@ const DATA_PATTERNS = [
 	/\b\d{5}-?\d{3}\b/g,
 ];
 
-function dataScore(page: string) {
-	return DATA_PATTERNS.reduce(
+const IMPORTANT_PATTERNS = [
+	/pr[eê]mio/gi,
+	/pre[cç]o\s+l[ií]quido/gi,
+	/valor\s+l[ií]quido/gi,
+	/franquia/gi,
+	/forma\s+de\s+pagamento/gi,
+	/parcel/gi,
+	/dados\s+do\s+ve[ií]culo/gi,
+	/principal\s+condutor/gi,
+	/dados\s+do\s+(?:proponente|segurado)/gi,
+	/vig[eê]ncia/gi,
+	/endosso/gi,
+	/seguradora/gi,
+	/cnpj/gi,
+	/ap[oó]lice\s+anterior/gi,
+	/renova/gi,
+	/cong[eê]nere/gi,
+	/tipo\s+de\s+opera[cç][aã]o/gi,
+];
+
+function pageScore(page: string): number {
+	const dataScore = DATA_PATTERNS.reduce(
 		(total, pattern) => total + (page.match(pattern)?.length ?? 0),
 		0,
 	);
+
+	const semanticScore = IMPORTANT_PATTERNS.reduce(
+		(total, pattern) => total + (page.match(pattern)?.length ?? 0) * 3,
+		0,
+	);
+
+	return dataScore + semanticScore;
 }
 
-// As `count` páginas mais ricas em dados, na ordem original do documento. A
-// primeira página entra sempre (identifica seguradora e segurado).
-function pickDataPages(pages: Array<string>, count: number): Array<string> {
-	if (pages.length <= count) {
-		return pages;
+function pageBlock(text: string, index: number): string {
+	return `===== PÁGINA ${index + 1} =====\n${text}`;
+}
+
+function buildPromptText(
+	pages: Array<string>,
+	maxChars = MAX_TEXT_CHARS,
+): string {
+	if (!pages.length) {
+		return '';
 	}
 
+	const blocks = pages.map((text, index) => pageBlock(text, index));
+	const fullText = blocks.join('\n\n');
+
+	if (fullText.length <= maxChars) {
+		return fullText;
+	}
+
+	const selected = new Set<number>();
+	selected.add(0);
+	selected.add(pages.length - 1);
+
 	const ranked = pages
-		.map((text, index) => ({ index, score: dataScore(text) }))
-		.slice(1)
-		.sort((a, b) => b.score - a.score || a.index - b.index)
-		.slice(0, count - 1)
-		.map((page) => page.index);
+		.map((text, index) => ({ index, score: pageScore(text) }))
+		.sort((a, b) => b.score - a.score || a.index - b.index);
 
-	return [0, ...ranked]
+	for (const { index } of ranked) {
+		selected.add(index);
+
+		const candidate = [...selected]
+			.sort((a, b) => a - b)
+			.map((pageIndex) => blocks[pageIndex])
+			.join('\n\n');
+
+		if (candidate.length > maxChars) {
+			selected.delete(index);
+		}
+	}
+
+	const compact = [...selected]
 		.sort((a, b) => a - b)
-		.map((index) => pages[index] as string);
+		.map((index) => blocks[index])
+		.join('\n\n');
+
+	if (compact.length <= maxChars) {
+		return compact;
+	}
+
+	return compact.slice(0, maxChars);
 }
 
-function chunkText(text: string, maxChars = MAX_TEXT_CHARS): string {
-	return text.length <= maxChars ? text : text.slice(0, maxChars);
-}
-
-// Trecho de prompt que explica ao modelo como usar texto e imagens juntos.
 function visionInstructions(imagesCount: number): string {
 	if (!imagesCount) {
 		return '';
 	}
 
 	return `
-		O documento também está anexado como ${imagesCount} imagem(ns) das primeiras páginas, na ordem. Use as duas fontes juntas:
-		- O texto extraído é a fonte para os caracteres exatos (CPF, CNPJ, códigos, placa, valores).
-		- As imagens são a fonte para a estrutura: tabelas, a qual coluna ou título cada valor pertence (ex.: prêmio da cobertura x franquia), campos marcados e o layout da página. Use-as para desambiguar e para achar o que o texto não trouxe.
-		- Se o texto e a imagem divergirem em um valor, confirme visualmente na imagem qual está certo.
-		- Se o texto estiver vazio ou ilegível (documento escaneado), leia tudo pelas imagens.
+O PDF também foi renderizado em ${imagesCount} imagem(ns), na mesma ordem das páginas.
+Use TEXTO e IMAGENS em conjunto:
+- o texto extraído ajuda com caracteres exatos como CPF, CNPJ, placa, CEP, datas e valores;
+- as imagens são a principal referência para estrutura visual, tabelas, colunas, títulos, campos marcados e associação entre rótulo e valor;
+- quando a linearização do texto misturar colunas, use a imagem para decidir a associação correta;
+- quando houver divergência entre texto e imagem, confira visualmente a página e use o valor que estiver efetivamente impresso;
+- se o PDF for escaneado e o texto estiver vazio ou incompleto, leia os dados diretamente das imagens;
+- analise o documento inteiro antes de responder.
 `;
 }
 
-// Só vale tentar de novo o que pode passar sozinho: rede, timeout, 408/409/429
-// e 5xx. 400/401/403/404 (modelo inválido, chave errada) não melhoram.
-function isTransient(error: unknown) {
-	if (!(error instanceof OpenAI.APIError)) {
-		return true;
-	}
-
-	const status = error.status;
-
-	return !status || status >= 500 || [408, 409, 429].includes(status);
-}
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Uma chamada ao modelo: texto (+ imagens) em, JSON em objeto. A validação com
-// Zod fica com quem chama (um ZodError faz a extração escalar de etapa).
 async function askJson({
 	model,
 	prompt,
@@ -141,31 +172,44 @@ async function askJson({
 	prompt: string;
 	images: Array<string>;
 }): Promise<unknown> {
-	const response = await client.chat.completions.create({
-		model,
-		max_tokens: 1500,
-		temperature: 0,
-		messages: [
-			{
-				role: 'system',
-				content:
-					'Você é um extrator de dados cirúrgico e preciso. Responda APENAS com um objeto JSON válido que segue exatamente o schema pedido, sem markdown, sem texto fora do JSON.',
-			},
-			{
-				role: 'user',
-				content: [
-					{ type: 'text', text: prompt },
-					...images.map((url) => ({
-						type: 'image_url' as const,
-						image_url: { url },
-					})),
-				],
-			},
-		],
-	});
+	let response: Awaited<ReturnType<typeof client.chat.completions.create>>;
+
+	try {
+		response = await client.chat.completions.create({
+			model,
+			max_tokens: MAX_COMPLETION_TOKENS,
+			temperature: 0,
+			messages: [
+				{
+					role: 'system',
+					content:
+						'Você é um extrator de dados de seguros extremamente rigoroso. Responda APENAS com um objeto JSON válido no formato solicitado. Nunca invente dados e nunca escolha um valor quando houver ambiguidade real.',
+				},
+				{
+					role: 'user',
+					content: [
+						{ type: 'text', text: prompt },
+						...images.map((url) => ({
+							type: 'image_url' as const,
+							image_url: { url },
+						})),
+					],
+				},
+			],
+		});
+	} catch (error) {
+		if (error instanceof OpenAI.APIError) {
+			throw new AIProviderError(
+				`Falha no provedor de IA${error.status ? ` (${error.status})` : ''}: ${error.message}`,
+				error.status,
+			);
+		}
+
+		throw error;
+	}
 
 	console.log(
-		`[ai] ${model} tokens entrada=${response.usage?.prompt_tokens} saída=${response.usage?.completion_tokens} imagens=${images.length}`,
+		`[ai] ${model} tokens entrada=${response.usage?.prompt_tokens ?? 'n/a'} saída=${response.usage?.completion_tokens ?? 'n/a'} imagens=${images.length}`,
 	);
 
 	const textResult = response.choices[0]?.message.content;
@@ -174,23 +218,19 @@ async function askJson({
 		throw new Error('Modelo retornou resposta vazia.');
 	}
 
-	return JSON.parse(
-		textResult
-			.trim()
-			.replace(/^```json\s*/i, '')
-			.replace(/^```\s*/i, '')
-			.replace(/```\s*$/i, ''),
-	);
+	const normalized = textResult
+		.trim()
+		.replace(/^```json\s*/i, '')
+		.replace(/^```\s*/i, '')
+		.replace(/```\s*$/i, '');
+
+	try {
+		return JSON.parse(normalized);
+	} catch {
+		throw new Error('Modelo retornou JSON inválido.');
+	}
 }
 
-type Step = { name: string; text: string; vision: boolean; model: string };
-
-// Orquestra a extração de um PDF, da etapa mais rápida para a mais completa:
-// 1. `text-fast`: texto das primeiras páginas;
-// 2. `text-full`: texto de todas as páginas (se houver mais);
-// 3. `vision`: texto + imagens das primeiras páginas (também para PDF escaneado).
-// `ask` recebe o texto e as imagens da etapa e devolve o dado já validado; um
-// z.ZodError passa para a próxima etapa em vez de repetir o mesmo prompt.
 async function runPdfExtraction<T>({
 	label,
 	buffer,
@@ -212,11 +252,16 @@ async function runPdfExtraction<T>({
 
 	const textStarted = performance.now();
 	const parser = new PDFParse({ data: Buffer.from(buffer) });
-	let pages: Array<string>;
+	let pages: Array<string> = [];
 
 	try {
 		pages = (await parser.getText()).pages.map((page) =>
 			sanitizeText(page.text),
+		);
+	} catch (error) {
+		console.warn(
+			`[${label}] não foi possível extrair texto do PDF; seguindo com visão:`,
+			error instanceof Error ? error.message : error,
 		);
 	} finally {
 		await parser.destroy().catch(() => {});
@@ -224,155 +269,38 @@ async function runPdfExtraction<T>({
 
 	lap('text', textStarted);
 
-	const fastText = pickDataPages(pages, FAST_TEXT_PAGES).join('\n\n');
-	const fullText = pages.join('\n\n');
-	const hasText = fastText.trim().length >= MIN_TEXT_CHARS;
-	const hasMorePages = pages.length > FAST_TEXT_PAGES;
+	const promptText = buildPromptText(pages);
 
-	// Resposta inválida (ex.: dado obrigatório numa página que ficou de fora)
-	// passa para a próxima etapa.
-	const steps: Array<Step> =
-		VISION_MODE === 'always'
-			? [
-					{
-						name: 'vision',
-						text: fullText,
-						vision: true,
-						model: AI_MODEL_VISION,
-					},
-				]
-			: !hasText
-				? VISION_MODE === 'off'
-					? []
-					: [
-							{
-								name: 'vision',
-								text: fullText,
-								vision: true,
-								model: AI_MODEL_VISION,
-							},
-						]
-				: [
-						{
-							name: 'text-fast',
-							text: fastText,
-							vision: false,
-							model: AI_MODEL,
-						},
-						...(hasMorePages
-							? [
-									{
-										name: 'text-full',
-										text: fullText,
-										vision: false,
-										model: AI_MODEL_FALLBACK,
-									},
-								]
-							: []),
-						...(VISION_MODE === 'fallback'
-							? [
-									{
-										name: 'vision',
-										text: fullText,
-										vision: true,
-										model: AI_MODEL_VISION,
-									},
-								]
-							: []),
-					];
+	const renderStarted = performance.now();
+	const images = await renderPdfPages(buffer);
+	lap('render', renderStarted);
 
-	let images: Array<string> | null = null;
-	let lastError: unknown;
-	let attempts = 0;
-
-	for (const step of steps) {
-		let stepImages: Array<string> = [];
-
-		if (step.vision) {
-			const renderStarted = performance.now();
-
-			images ??= await renderPdfPages(buffer);
-			stepImages = images;
-			lap('render', renderStarted);
-
-			// Sem imagem não há o que a visão acrescente.
-			if (!stepImages.length) {
-				continue;
-			}
-		}
-
-		for (let retry = 1; retry <= MAX_RETRIES; retry++) {
-			attempts += 1;
-
-			try {
-				const modelStarted = performance.now();
-
-				const data = await ask({
-					model: step.model,
-					text: chunkText(step.text),
-					images: stepImages,
-				});
-
-				lap(`model-${step.name}`, modelStarted);
-				lap('total', startedAt);
-
-				console.log(
-					`[${label}] ok etapa=${step.name} tentativas=${attempts} ${JSON.stringify(timings)}`,
-				);
-
-				return data;
-			} catch (error) {
-				lastError = error;
-
-				// Repetir o mesmo prompt quase sempre dá o mesmo resultado.
-				if (error instanceof z.ZodError) {
-					console.warn(
-						`[${label}] resposta inválida na etapa ${step.name}: ${error.issues
-							.map((issue) => `${issue.path.join('.')} (${issue.message})`)
-							.join('; ')}`,
-					);
-
-					break;
-				}
-
-				// Erro que não passa tentando de novo (modelo inválido, chave
-				// errada, imagens recusadas): na etapa de imagem só encerra a
-				// etapa; nas de texto o mesmo erro se repetiria, então falha já.
-				if (!isTransient(error)) {
-					const status =
-						error instanceof OpenAI.APIError ? error.status : undefined;
-
-					console.warn(
-						`[${label}] erro ${status} sem retentativa na etapa ${step.name}`,
-					);
-
-					if (step.vision) {
-						break;
-					}
-
-					throw new Error(
-						`Falha ao consultar o modelo de IA (${status}): ${(error as Error).message}`,
-					);
-				}
-
-				if (retry < MAX_RETRIES) {
-					await sleep(1000 * retry);
-				}
-			}
-		}
-	}
-
-	if (!hasText && !images?.length) {
+	if (!images.length) {
 		throw new Error(
-			'PDF não retornou texto extraível nem páginas como imagem — não foi possível ler o documento.',
+			'Não foi possível renderizar as páginas do PDF para validação visual.',
 		);
 	}
 
-	console.warn(`[${label}] falhou ${JSON.stringify(timings)}`);
+	const modelStarted = performance.now();
+	const data = await ask({
+		model: AI_MODEL_VISION,
+		text: promptText,
+		images,
+	});
+	lap('model', modelStarted);
+	lap('total', startedAt);
 
-	throw new Error(
-		`Falha ao extrair dados válidos após ${attempts} tentativa(s). Último erro: ${lastError}`,
+	console.log(
+		`[${label}] ok modo=vision aiCalls=1 paginas=${images.length} charsTexto=${promptText.length} ${JSON.stringify(timings)}`,
 	);
+
+	return data;
 }
 
-export { askJson, runPdfExtraction, SchemaPlateLenient, visionInstructions };
+export {
+	AIProviderError,
+	askJson,
+	runPdfExtraction,
+	SchemaPlateLenient,
+	visionInstructions,
+};

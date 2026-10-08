@@ -6,7 +6,6 @@ import {
 	SchemaCPF,
 	SchemaCPFOrCNPJ,
 	SchemaDateString,
-	SchemaModality,
 	SchemaName,
 	SchemaPhone,
 	SchemaPostalCode,
@@ -15,38 +14,18 @@ import {
 import { format } from 'date-fns';
 import { z } from 'zod';
 import type { Server } from '@/@types/server';
-import { documentByCNPJ } from '@/functions/document/by-cnpj';
 import { documentByCPF } from '@/functions/document/by-cpf';
 import {
+	AIProviderError,
 	askJson,
 	runPdfExtraction,
 	SchemaPlateLenient,
 	visionInstructions,
 } from '@/libraries/ai/pdf-extraction';
 
-/**
- * ============================================================================
- * Tipos
- * ============================================================================
- */
+type InsuranceCompanyRow = { id: string; name: string; cnpj: string };
 
-type Modality = z.infer<typeof SchemaModality>;
-type VehicleUsage = z.infer<typeof SchemaVehicleUsage>;
-
-type InsuranceCompanyRow = {
-	id: string;
-	name: string;
-	cnpj: string;
-};
-
-/**
- * ============================================================================
- * Helpers
- * ============================================================================
- */
-
-const MoneyPattern =
-	'(?:R\\$\\s*)?-?\\d{1,3}(?:\\.\\d{3})*,\\d{2}|(?:R\\$\\s*)?-?\\d+,\\d{2}';
+const MONEY_TOLERANCE = 0.05;
 
 function parseBrazilianNumber(value: unknown): unknown {
 	if (typeof value === 'number') {
@@ -76,1116 +55,793 @@ function parseBrazilianNumber(value: unknown): unknown {
 	return Number.isFinite(parsed) ? parsed : value;
 }
 
-function parseMoney(value: string | null | undefined): number | null {
-	if (!value) {
-		return null;
-	}
-
-	const parsed = parseBrazilianNumber(value);
-
-	return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseLooseNumber(value: unknown): number | null {
+function parseInteger(value: unknown): unknown {
 	if (typeof value === 'number') {
-		return Number.isFinite(value) ? value : null;
+		return Number.isInteger(value) ? value : value;
 	}
 
 	if (typeof value !== 'string') {
-		return null;
+		return value;
 	}
 
-	const parsed = parseBrazilianNumber(value);
+	const parsed = Number(value.trim());
 
-	return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : null;
+	return Number.isInteger(parsed) ? parsed : value;
 }
 
-function parseLooseInteger(value: unknown): number | null {
-	const number = parseLooseNumber(value);
-
-	if (number === null || !Number.isInteger(number)) {
-		return null;
-	}
-
-	return number;
-}
-
-function parseInstallments(value: unknown): number | null {
-	if (typeof value === 'number') {
-		return Number.isInteger(value) && value > 0 && value <= 60 ? value : null;
-	}
-
-	if (typeof value !== 'string') {
-		return null;
-	}
-
-	const normalized = value.trim().toLowerCase();
-
-	if (
-		normalized === 'à vista' ||
-		normalized === 'a vista' ||
-		normalized === 'avista'
-	) {
-		return 1;
-	}
-
-	const timesMatch = normalized.match(/\b(\d{1,2})\s*x\b/);
-
-	if (timesMatch?.[1]) {
-		const parsed = Number(timesMatch[1]);
-
-		return Number.isInteger(parsed) && parsed > 0 && parsed <= 60
-			? parsed
-			: null;
-	}
-
-	const installmentMatch = normalized.match(
-		/\b(\d{1,2})\s*(?:parcelas?|parc\.?)\b/,
-	);
-
-	if (installmentMatch?.[1]) {
-		const parsed = Number(installmentMatch[1]);
-
-		return Number.isInteger(parsed) && parsed > 0 && parsed <= 60
-			? parsed
-			: null;
-	}
-
-	if (/^\d{1,2}$/.test(normalized)) {
-		const parsed = Number(normalized);
-
-		return Number.isInteger(parsed) && parsed > 0 && parsed <= 60
-			? parsed
-			: null;
-	}
-
-	return null;
-}
-
-function parseYear(value: unknown): number | null {
-	if (typeof value === 'number') {
-		return Number.isInteger(value) && value >= 1900 && value <= 2100
-			? value
-			: null;
-	}
-
-	if (typeof value !== 'string') {
-		return null;
-	}
-
-	const years = value.match(/\b(?:19|20)\d{2}\b/g);
-
-	if (!years?.length) {
-		return null;
-	}
-
-	/**
-	 * Ex.:
-	 *
-	 * 2025 / 2026
-	 *
-	 * fabricação / modelo
-	 */
-	const year = Number(years.at(-1));
-
-	return Number.isInteger(year) && year >= 1900 && year <= 2100 ? year : null;
-}
-
-function normalizePlate(value: string | null | undefined): string | null {
-	if (!value) {
-		return null;
-	}
-
-	const text = value.trim().toUpperCase();
-
-	if (
-		!text ||
-		text === '-' ||
-		text === 'A AVISAR' ||
-		text === 'AVISAR' ||
-		text === 'SEM PLACA' ||
-		text === 'S/ PLACA' ||
-		text === 'S/PLACA'
-	) {
-		return null;
-	}
-
-	const normalized = text.replace(/[^A-Z0-9]/g, '');
-
-	/**
-	 * Evita interpretar chassi como placa.
-	 */
-	if (normalized.length !== 7) {
-		return null;
-	}
-
-	return normalized;
-}
-
-function normalizeSearchText(value: string): string {
+function normalizeText(value: string): string {
 	return value
 		.normalize('NFD')
 		.replace(/[\u0300-\u036f]/g, '')
-		.toLowerCase();
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim();
 }
 
-function escapeRegExp(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function normalizeBrazilianPhone(value: string): string {
+	let phone = maskNumber(value);
+
+	if (phone.startsWith('00')) {
+		phone = phone.slice(2);
+	}
+
+	if (phone.length === 13 && phone.startsWith('55')) {
+		phone = phone.slice(2);
+	}
+
+	return phone;
 }
 
-function extractMoneyNearLabels(
-	text: string,
-	labels: string[],
-	maxDistance = 120,
-): number | null {
-	for (const label of labels) {
-		const pattern = new RegExp(
-			`${escapeRegExp(label)}[\\s\\S]{0,${maxDistance}}?(${MoneyPattern})`,
-			'i',
-		);
-
-		const match = text.match(pattern);
-
-		if (!match?.[1]) {
-			continue;
-		}
-
-		const value = parseMoney(match[1]);
-
-		if (value !== null) {
-			return value;
-		}
-	}
-
-	return null;
-}
-
-function extractMoneyValues(text: string): number[] {
-	const pattern = new RegExp(`(${MoneyPattern})`, 'gi');
-
-	return [...text.matchAll(pattern)]
-		.map((match) => parseMoney(match[1]))
-		.filter((value): value is number => value !== null);
-}
-
-/**
- * ============================================================================
- * Compactação do texto enviado para a IA
- *
- * Não precisamos mandar páginas inteiras de condições gerais, LGPD,
- * avisos legais etc. para o modelo.
- * ============================================================================
- */
-
-function compactDocumentText(text: string): string {
-	const lines = text.split(/\r?\n/);
-
-	if (lines.length <= 100) {
-		return text;
-	}
-
-	const keywords = [
-		'segurado',
-		'proponente',
-		'cpf',
-		'cnpj',
-		'celular',
-		'nascimento',
-		'profissao',
-		'ocupacao',
-		'vigencia',
-		'proposta',
-		'apolice',
-		'renovacao',
-		'seguro novo',
-		'veiculo',
-		'placa',
-		'chassi',
-		'ano modelo',
-		'uso:',
-		'finalidade',
-		'condutor',
-		'pernoite',
-		'franquia',
-		'premio',
-		'preco',
-		'valor liquido',
-		'iof',
-		'juros',
-		'parcel',
-		'pagamento',
-		'seguradora',
-		'susep',
-	];
-
-	const keep = new Set<number>();
-
-	/**
-	 * Cabeçalhos e dados iniciais normalmente ficam
-	 * nas primeiras linhas.
-	 */
-	for (let index = 0; index < Math.min(55, lines.length); index++) {
-		keep.add(index);
-	}
-
-	for (let index = 0; index < lines.length; index++) {
-		const normalized = normalizeSearchText(lines[index] ?? '');
-
-		if (!keywords.some((keyword) => normalized.includes(keyword))) {
-			continue;
-		}
-
-		for (let offset = -2; offset <= 3; offset++) {
-			const target = index + offset;
-
-			if (target >= 0 && target < lines.length) {
-				keep.add(target);
-			}
-		}
-	}
-
-	/**
-	 * Rodapé costuma conter a razão social real da seguradora.
-	 */
-	for (
-		let index = Math.max(0, lines.length - 25);
-		index < lines.length;
-		index++
-	) {
-		keep.add(index);
-	}
-
-	const compacted = [...keep]
-		.sort((a, b) => a - b)
-		.map((index) => lines[index])
-		.join('\n');
-
-	return compacted;
-}
-
-/**
- * ============================================================================
- * Extrações determinísticas
- * ============================================================================
- */
-
-type FinancialSummary = {
-	liquid: number | null;
-	total: number | null;
-	iof: number | null;
-	interest: number | null;
-	fees: number | null;
-};
-
-function extractFinancialSummary(text: string): FinancialSummary {
-	let liquid = extractMoneyNearLabels(text, [
-		'Prêmio Líquido Total',
-		'Prêmio Liquido Total',
-		'Prêmio Líquido',
-		'Prêmio Liquido',
-		'Preço Líquido',
-		'Preco Liquido',
-		'Valor Líquido',
-		'Valor Liquido',
-	]);
-
-	let total = extractMoneyNearLabels(text, [
-		'Prêmio Total',
-		'Premio Total',
-		'Preço Total',
-		'Preco Total',
-		'Valor Total',
-	]);
-
-	let iof = extractMoneyNearLabels(text, ['IOF'], 60);
-
-	const interest = extractMoneyNearLabels(text, [
-		'Valor dos Juros',
-		'Valor Juros',
-		'Juros',
-	]);
-
-	let fees = extractMoneyNearLabels(text, ['Encargos Financeiros', 'Encargos']);
-
-	/**
-	 * MAPFRE:
-	 *
-	 * Prêmio Líquido Encargos IOF
-	 * 2.630,37 0,00 194,13 2.824,50
-	 * Prêmio Total
-	 *
-	 * Aqui a ordem da linha é mais confiável do que procurar
-	 * números depois de cada label individualmente.
-	 */
-	const mapfreStart = text.search(/Pr[eê]mio\s+L[ií]quido\s+Encargos\s+IOF/i);
-
-	if (mapfreStart >= 0) {
-		const fragment = text.slice(mapfreStart, mapfreStart + 300);
-
-		const values = extractMoneyValues(fragment);
-
-		if (values.length >= 4) {
-			liquid = values[0] ?? null;
-
-			fees = values[1] ?? null;
-
-			iof = values[2] ?? null;
-
-			total = values[3] ?? null;
-		}
-	}
-
-	return {
-		liquid,
-		total,
-		iof,
-		interest,
-		fees,
-	};
-}
-
-function extractInstallmentsFromText(text: string): number | null {
-	const patterns = [
-		/C[oó]digo\s+do\s+Plano[\s\S]{0,120}?\b(\d{1,2})\s*parc/i,
-		/\bem\s+(\d{1,2})\s+parcelas?\b/i,
-		/\b(\d{1,2})\s+parcelas?\b/i,
-		/\b(\d{1,2})\s+parc\.?\b/i,
-		/\b(\d{1,2})\s*x\b/i,
-	];
-
-	for (const pattern of patterns) {
-		const match = text.match(pattern);
-
-		if (!match?.[1]) {
-			continue;
-		}
-
-		const value = Number(match[1]);
-
-		if (Number.isInteger(value) && value > 0 && value <= 60) {
-			return value;
-		}
-	}
-
-	if (/Forma\s+de\s+Pagamento[\s\S]{0,100}?(?:à vista|a vista)/i.test(text)) {
-		return 1;
-	}
-
-	return null;
-}
-
-function extractVehicleUsageFromText(text: string): VehicleUsage | null {
-	const match = text.match(
-		/(?:^|\n)\s*(?:Uso|Finalidade\s+de\s+Uso)\s*:\s*([^\n\r]+)/i,
-	);
-
-	if (!match?.[1]) {
-		return null;
-	}
-
-	const usage = normalizeSearchText(match[1]);
-
-	if (
-		usage.includes('aplicativo') ||
-		usage.includes('uber') ||
-		/\b99\b/.test(usage)
-	) {
-		return 'app_based_transport';
-	}
-
-	if (usage.includes('taxi')) {
-		return 'taxi';
-	}
-
-	if (usage.includes('transporte publico')) {
-		return 'public_transportation';
-	}
-
-	if (usage.includes('entrega') || usage.includes('delivery')) {
-		return 'delivieries';
-	}
-
-	if (usage.includes('turismo')) {
-		return 'tourism';
-	}
-
-	if (usage.includes('cliente') || usage.includes('fornecedor')) {
-		return 'client_supplier_visits';
-	}
-
-	/**
-	 * Regra do sistema da corretora.
-	 */
-	if (usage.includes('particular')) {
-		return 'leisure_and_work';
-	}
-
-	if (usage.includes('lazer') && usage.includes('trabalho')) {
-		return 'leisure_and_work';
-	}
-
-	if (usage.includes('lazer')) {
-		return 'leisure';
-	}
-
-	return null;
-}
-
-function extractPrimaryFranchise(text: string): number | null {
-	/**
-	 * MAPFRE:
-	 *
-	 * Casco: Reduzida 50% 3.837,09
-	 */
-	const cascoMatch = text.match(
-		new RegExp(
-			`Casco\\s*:\\s*(?:Reduzida|Normal|B[aá]sica|Obrigat[oó]ria)[^\\n\\r]{0,100}?(${MoneyPattern})`,
-			'i',
-		),
-	);
-
-	if (cascoMatch?.[1]) {
-		const value = parseMoney(cascoMatch[1]);
-
-		if (value !== null) {
-			return value;
-		}
-	}
-
-	/**
-	 * 25% da Normal ... 1.716,59
-	 * 50% da Obrigatória ... 3.837,09
-	 */
-	const basisThenValue = text.match(
-		new RegExp(
-			`\\b\\d+(?:[.,]\\d+)?\\s*%\\s+da\\s+(?:Normal|Obrigat[oó]ria|B[aá]sica)[\\s\\S]{0,100}?(${MoneyPattern})`,
-			'i',
-		),
-	);
-
-	if (basisThenValue?.[1]) {
-		const value = parseMoney(basisThenValue[1]);
-
-		if (value !== null) {
-			return value;
-		}
-	}
-
-	/**
-	 * PDF Porto pode linearizar:
-	 *
-	 * R$ 1.973,00 (50% da ... Obrigatória)
-	 */
-	const valueThenBasis = text.match(
-		new RegExp(
-			`(${MoneyPattern})[^\\n\\r]{0,80}?\\(\\s*\\d+(?:[.,]\\d+)?\\s*%\\s+da[\\s\\S]{0,60}?(?:Normal|Obrigat[oó]ria|B[aá]sica)`,
-			'i',
-		),
-	);
-
-	if (valueThenBasis?.[1]) {
-		const value = parseMoney(valueThenBasis[1]);
-
-		if (value !== null) {
-			return value;
-		}
-	}
-
-	/**
-	 * MAPFRE e outros com seção própria.
-	 */
-	const section = text.match(
-		new RegExp(`Franquia\\(s\\)[\\s\\S]{0,180}?(${MoneyPattern})`, 'i'),
-	);
-
-	if (section?.[1]) {
-		const value = parseMoney(section[1]);
-
-		if (value !== null) {
-			return value;
-		}
-	}
-
-	return null;
-}
-
-function resolveInsuranceCompanyIndex(
-	text: string,
-	companies: Array<InsuranceCompanyRow>,
-	aiIndex: unknown,
-): number | null {
-	const documentDigits = text.replace(/\D/g, '');
-
-	const matches = companies
-		.map((company, index) => ({
-			index: index + 1,
-
-			cnpj: company.cnpj.replace(/\D/g, ''),
-		}))
+function numericValuesFromText(text: string): number[] {
+	const matches =
+		text.match(/-?\d+(?:\.\d{3})*(?:,\d+)?|-?\d+(?:\.\d+)?/g) ?? [];
+
+	return matches
+		.map((value) => parseBrazilianNumber(value))
 		.filter(
-			(company) =>
-				company.cnpj.length === 14 && documentDigits.includes(company.cnpj),
+			(value): value is number =>
+				typeof value === 'number' && Number.isFinite(value),
 		);
-
-	if (matches.length === 1) {
-		return matches[0]?.index ?? null;
-	}
-
-	const parsed = parseLooseInteger(aiIndex);
-
-	if (parsed !== null && parsed >= 1 && parsed <= companies.length) {
-		return parsed;
-	}
-
-	return null;
 }
 
-function resolveModality(value: unknown, text: string): Modality | null {
-	const parsed = SchemaModality.safeParse(value);
-
-	if (parsed.success) {
-		return parsed.data;
-	}
-
-	const normalized = normalizeSearchText(text.slice(0, 5000));
-
-	if (
-		normalized.includes('motocicleta') ||
-		normalized.includes(' seguro moto')
-	) {
-		return 'motorcycle';
-	}
-
-	if (normalized.includes('caminhao')) {
-		return 'truck';
-	}
-
-	if (
-		normalized.includes('dados do veiculo') ||
-		normalized.includes('seguro auto')
-	) {
-		return 'vehicle';
-	}
-
-	return null;
-}
-
-function resolveRenewal(value: unknown, text: string): boolean {
-	if (/Tipo\s+de\s+Seguro\s*:\s*SEGURO\s+NOVO/i.test(text)) {
+function evidenceContainsValue(
+	evidence: string | null | undefined,
+	value: number,
+	tolerance = 0.02,
+): boolean {
+	if (!evidence) {
 		return false;
 	}
 
-	if (
-		/\bRENOVA[CÇ][AÃ]O\b/i.test(text) ||
-		/\bAP[ÓO]LICE\s+ANTERIOR\b/i.test(text)
-	) {
+	return numericValuesFromText(evidence).some(
+		(candidate) => Math.abs(candidate - value) <= tolerance,
+	);
+}
+
+function evidenceContainsRegistration(
+	evidence: string | null | undefined,
+	registration: string,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	return maskNumber(evidence).includes(maskNumber(registration));
+}
+
+function evidenceContainsDate(
+	evidence: string | null | undefined,
+	date: string,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	const compactEvidence = evidence.replace(/[^0-9]/g, '');
+	const compactDate = date.replace(/[^0-9]/g, '');
+
+	return compactEvidence.includes(compactDate);
+}
+
+function evidenceSupportsInstallments(
+	evidence: string | null | undefined,
+	installments: number,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	const normalized = normalizeText(evidence);
+
+	const directPatterns = [
+		new RegExp(`\\b${installments}\\s*x\\b`, 'i'),
+		new RegExp(`\\b${installments}\\s*parcel`, 'i'),
+		new RegExp(`parcelas?\\s*[:=-]?\\s*${installments}\\b`, 'i'),
+		new RegExp(
+			`numero\\s+de\\s+parcelas?\\s*[:=-]?\\s*${installments}\\b`,
+			'i',
+		),
+		new RegExp(
+			`quant(?:idade)?\\.?\\s*parcelas?\\s*[:=-]?\\s*${installments}\\b`,
+			'i',
+		),
+	];
+
+	if (directPatterns.some((pattern) => pattern.test(normalized))) {
 		return true;
 	}
 
-	return value === true;
+	const split = evidence.match(/\b(\d{1,2})\s*\+\s*(\d{1,2})\b/);
+
+	if (split) {
+		const first = Number(split[1]);
+		const second = Number(split[2]);
+
+		if (first + second === installments) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
-/**
- * ============================================================================
- * Schema final
- * ============================================================================
- */
+function companyEvidenceMatches(
+	companyName: string,
+	evidence: string,
+): boolean {
+	const company = normalizeText(companyName);
+	const source = normalizeText(evidence);
 
-const SchemaVehicle = z
-	.object({
-		plate: SchemaPlateLenient,
+	const stopWords = new Set([
+		'seguro',
+		'seguros',
+		'seguradora',
+		'companhia',
+		'cia',
+		'brasil',
+		'gerais',
+		'geral',
+		'participacoes',
+		'participacao',
+		'servicos',
+		'tecnicos',
+		'administrativos',
+		'corretagem',
+		'de',
+		'da',
+		'do',
+		'das',
+		'dos',
+		'e',
+		's',
+		'a',
+		'sa',
+	]);
 
-		model: z.string('Modelo do veículo inválido'),
+	const tokens = company
+		.split(' ')
+		.filter((token) => token && !stopWords.has(token));
 
-		year: z.number('Ano do veículo inválido').int().min(1900).max(2100),
+	return tokens.some((token) => source.includes(token));
+}
 
-		usage: SchemaVehicleUsage,
+function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
+	const normalized = normalizeText(evidence);
 
-		overnightStayPostalCode: SchemaPostalCode,
+	return /\b(casco|compreensiva|basica|obrigatoria|participacao obrigatoria|indenizacao parcial do veiculo|franquia do veiculo|veiculo)\b/.test(
+		normalized,
+	);
+}
 
-		driver: z
-			.object({
-				name: SchemaName,
+function sum(values: number[]): number {
+	return values.reduce((total, value) => total + value, 0);
+}
 
-				cpf: SchemaCPF,
+function assertClose(actual: number, expected: number, message: string): void {
+	if (Math.abs(actual - expected) > MONEY_TOLERANCE) {
+		throw new Error(message);
+	}
+}
 
-				birth: SchemaDateString.nullish(),
-			})
-			.strict()
-			.nullish(),
-	})
-	.strict();
+const SchemaSupportedModality = z.enum(['vehicle', 'motorcycle']);
+
+const SchemaMobilePhone = z
+	.string('Celular inválido')
+	.transform(normalizeBrazilianPhone)
+	.refine(
+		(value) => value.length === 11 && value[2] === '9',
+		'Celular inválido',
+	)
+	.pipe(SchemaPhone);
 
 const SchemaDataExtract = z
 	.object({
-		latestProposal: z.string().min(1).toLowerCase().nullish(),
-
-		renewal: z.boolean(),
-
-		modality: SchemaModality,
-
+		latestProposal: z
+			.string('Código da proposta anterior inválido')
+			.trim()
+			.min(1, 'Código da proposta anterior inválido')
+			.toLowerCase()
+			.nullable(),
+		renewal: z.boolean('Status de renovação inválido'),
+		modality: SchemaSupportedModality,
 		insuranceCompany: z
 			.object({
-				id: z.uuidv7(),
-
+				id: z.uuidv7('ID da seguradora inválida'),
 				name: SchemaName,
-
 				cnpj: SchemaCNPJ,
 			})
 			.strict(),
-
 		insured: z
 			.object({
 				name: SchemaName,
-
 				registration: SchemaCPFOrCNPJ,
-
-				phone: z
-					.string()
-					.transform(maskNumber)
-					.transform((value) =>
-						value.slice(0, 2) === '00' ? value.slice(2) : value,
-					)
-					.pipe(SchemaPhone),
-
-				birth: SchemaDateString.nullish(),
-
-				profession: z.string().nullish(),
+				phone: SchemaMobilePhone,
+				birth: SchemaDateString.nullable(),
+				profession: z.string().trim().min(1).nullable(),
 			})
 			.strict(),
-
-		vehicle: SchemaVehicle.nullish(),
-
-		effectivedAt: SchemaDateString.nullish(),
-
+		vehicle: z
+			.object({
+				plate: SchemaPlateLenient,
+				model: z.string('Modelo do veículo inválido').trim().min(1),
+				year: z
+					.number('Ano do modelo inválido')
+					.int('Ano do modelo inválido')
+					.min(1900, 'Ano do modelo inválido')
+					.max(2100, 'Ano do modelo inválido'),
+				usage: SchemaVehicleUsage,
+				overnightStayPostalCode: SchemaPostalCode,
+				driver: z
+					.object({
+						name: SchemaName,
+						cpf: SchemaCPF,
+						birth: SchemaDateString.nullable(),
+					})
+					.strict(),
+			})
+			.strict(),
+		effectivedAt: SchemaDateString.nullable(),
 		requestedAt: SchemaDateString,
-
 		expirationAt: SchemaDateString,
-
-		/**
-		 * Sempre líquido.
-		 */
-		award: z.number().nonnegative(),
-
-		installments: z.number().int().positive().max(60),
-
-		franchise: z.number().nonnegative().nullish(),
+		award: z
+			.number('Prêmio líquido inválido')
+			.positive('Prêmio líquido inválido'),
+		installments: z
+			.number('Quantidade de parcelas inválida')
+			.int('Quantidade de parcelas inválida')
+			.min(1, 'Quantidade de parcelas inválida')
+			.max(60, 'Quantidade de parcelas inválida'),
+		franchise: z.number('Franquia inválida').positive('Franquia inválida'),
 	})
 	.strict();
 
 type DataExtract = z.infer<typeof SchemaDataExtract>;
 
-/**
- * ============================================================================
- * Schema permissivo da IA
- *
- * Não queremos fazer outra chamada só porque o Haiku:
- * - adicionou campo extra;
- * - mandou ano como string;
- * - mandou índice como string;
- * - deixou um campo null.
- * ============================================================================
- */
+const SchemaModelMoneyNullable = z.preprocess(
+	parseBrazilianNumber,
+	z.number().finite().nullable(),
+);
+
+const SchemaModelIntegerNullable = z.preprocess(
+	parseInteger,
+	z.number().int().nullable(),
+);
 
 const SchemaModelOutput = z
 	.object({
-		latestProposal: z.string().nullish(),
-
-		renewal: z.boolean().nullish(),
-
-		modality: z.string().nullish(),
-
-		insuranceCompany: z.union([z.number(), z.string()]).nullish(),
-
+		documentKind: z.enum(['proposal', 'policy', 'endorsement', 'unknown']),
+		latestProposal: z.string().nullable(),
+		renewal: z.boolean().nullable(),
+		renewalEvidence: z.string().nullable(),
+		modality: z.enum(['vehicle', 'motorcycle', 'unsupported', 'unknown']),
+		modalityEvidence: z.string().nullable(),
+		insuranceCompany: z
+			.object({
+				index: z.number().int().min(1).nullable(),
+				basis: z.enum(['commercial_brand', 'legal_issuer']).nullable(),
+				evidence: z.string().nullable(),
+			})
+			.strict(),
 		insured: z
 			.object({
-				name: z.string().nullish(),
-
-				registration: z.string().nullish(),
-
-				phone: z.string().nullish(),
-
-				birth: z.string().nullish(),
-
-				profession: z.string().nullish(),
+				name: z.string().nullable(),
+				registration: z.string().nullable(),
+				phone: z.string().nullable(),
+				birth: z.string().nullable(),
+				profession: z.string().nullable(),
+				evidence: z.string().nullable(),
+				phoneEvidence: z.string().nullable(),
 			})
-			.passthrough()
-			.nullish(),
-
+			.strict(),
 		vehicle: z
 			.object({
-				plate: z.string().nullish(),
-
-				model: z.string().nullish(),
-
-				year: z.union([z.number(), z.string()]).nullish(),
-
-				usage: z.string().nullish(),
-
-				overnightStayPostalCode: z.string().nullish(),
-
+				plate: z.string().nullable(),
+				plateStatus: z.enum(['present', 'explicitly_absent', 'unknown']),
+				plateEvidence: z.string().nullable(),
+				model: z.string().nullable(),
+				year: SchemaModelIntegerNullable,
+				usage: z
+					.enum([
+						'leisure_and_work',
+						'leisure',
+						'client_supplier_visits',
+						'app_based_transport',
+						'taxi',
+						'public_transportation',
+						'delivieries',
+						'tourism',
+					])
+					.nullable(),
+				overnightStayPostalCode: z.string().nullable(),
 				driver: z
 					.object({
-						name: z.string().nullish(),
-
-						cpf: z.string().nullish(),
-
-						birth: z.string().nullish(),
+						name: z.string().nullable(),
+						cpf: z.string().nullable(),
+						birth: z.string().nullable(),
+						evidence: z.string().nullable(),
 					})
-					.passthrough()
-					.nullish(),
+					.strict()
+					.nullable(),
 			})
-			.passthrough()
-			.nullish(),
-
-		effectivedAt: z.string().nullish(),
-
-		requestedAt: z.string().nullish(),
-
-		expirationAt: z.string().nullish(),
-
-		award: z.union([z.number(), z.string()]).nullish(),
-
-		installments: z.union([z.number(), z.string()]).nullish(),
-
-		franchise: z.union([z.number(), z.string()]).nullish(),
+			.strict(),
+		vigency: z
+			.object({
+				requestedAt: z.string().nullable(),
+				expirationAt: z.string().nullable(),
+				effectivedAt: z.string().nullable(),
+				evidence: z.string().nullable(),
+			})
+			.strict(),
+		financial: z
+			.object({
+				award: SchemaModelMoneyNullable,
+				awardComponents: z.array(
+					z.preprocess(parseBrazilianNumber, z.number().finite()),
+				),
+				awardEvidence: z.string().nullable(),
+				nonLiquidCharges: z.array(
+					z.preprocess(parseBrazilianNumber, z.number().finite().nonnegative()),
+				),
+				finalTotal: SchemaModelMoneyNullable,
+				financialEvidence: z.string().nullable(),
+				installments: SchemaModelIntegerNullable,
+				installmentsEvidence: z.string().nullable(),
+				franchise: SchemaModelMoneyNullable,
+				franchiseEvidence: z.string().nullable(),
+			})
+			.strict(),
 	})
-	.passthrough();
+	.strict();
 
 type ModelOutput = z.infer<typeof SchemaModelOutput>;
 
-/**
- * ============================================================================
- * Prompt otimizado
- * ============================================================================
- */
-
 function mountPrompt(
 	text: string,
-	{
-		insuranceCompanies,
-		imagesCount,
-		hints,
-	}: {
-		insuranceCompanies: Array<{
-			i: number;
-			name: string;
-			cnpj: string;
-		}>;
-
-		imagesCount: number;
-
-		hints: {
-			award: number | null;
-			franchise: number | null;
-			installments: number | null;
-			usage: VehicleUsage | null;
-			insuranceCompany: number | null;
-		};
-	},
+	insuranceCompanies: Array<InsuranceCompanyRow>,
+	imagesCount: number,
 ): string {
 	const companies = insuranceCompanies
-		.map((company) => `${company.i}|${company.name}|${company.cnpj}`)
+		.map((company, index) => `${index + 1}|${company.name}|${company.cnpj}`)
 		.join('\n');
 
-	return `Extraia os dados da proposta/apólice de seguro.${visionInstructions(imagesCount)}
+	return `
+Extraia os dados de uma PROPOSTA ou APÓLICE de seguro de automóvel ou motocicleta.
+Caminhão e qualquer outra modalidade estão FORA DO ESCOPO por enquanto.
 
-Responda APENAS JSON minificado:
-{"latestProposal":null,"renewal":false,"modality":"vehicle","insuranceCompany":1,"insured":{"name":"","registration":"","phone":"","birth":null,"profession":null},"vehicle":{"plate":null,"model":"","year":2026,"usage":"leisure_and_work","overnightStayPostalCode":"","driver":{"name":"","cpf":"","birth":null}},"effectivedAt":null,"requestedAt":"","expirationAt":"","award":0,"installments":1,"franchise":null}
+${visionInstructions(imagesCount)}
 
-Regras:
-- insuranceCompany = índice da seguradora que EMITE o seguro; não banco/corretora.
-- modality: carro=vehicle, moto=motorcycle, caminhão=truck.
-- latestProposal é somente proposta/apólice ANTERIOR em renovação.
-- placa tem 7 caracteres; nunca use chassi. Veículo sem placa => null.
-- year = ano MODELO.
-- Uso "PARTICULAR" => leisure_and_work.
-- Somente "LAZER" => leisure.
-- Uber/99 => app_based_transport.
-- award = prêmio/preço LÍQUIDO, SEM IOF, juros ou encargos.
-- "Prêmio Líquido Total" continua sendo líquido e é válido.
-- installments = quantidade de parcelas; "à vista" = 1.
-- franchise = franquia PRINCIPAL do casco; não prêmio da cobertura nem franquias de vidro/farol.
-- driver = principal condutor.
-- requestedAt = início da vigência; expirationAt = fim.
-- effectivedAt somente se for apólice já emitida.
-- Não invente dados.
+PRINCÍPIO DE SEGURANÇA
+- Não adivinhe.
+- Quando um campo crítico estiver ambíguo, retorne null/unknown no JSON bruto para que o sistema rejeite a extração.
+- Use a estrutura visual das páginas para diferenciar colunas de prêmio, franquia, LMI, parcelas e totais.
 
-Valores já detectados deterministicamente pelo sistema; prefira-os quando não houver conflito explícito no documento:
-award=${hints.award ?? 'null'}
-franchise=${hints.franchise ?? 'null'}
-installments=${hints.installments ?? 'null'}
-usage=${hints.usage ?? 'null'}
-insuranceCompany=${hints.insuranceCompany ?? 'null'}
+SEGURADORA ATUAL
+"insuranceCompany.index" é a MARCA/SEGURADORA COMERCIAL ATUAL do produto.
+Prioridade:
+1. marca comercial atual explicitada no cabeçalho, produto ou segmento;
+2. nome atual do produto/seguradora no corpo do documento;
+3. somente se não existir marca comercial diferente, a sociedade seguradora jurídica/emissora.
 
-Seguradoras:
-${companies}
+NUNCA use como seguradora atual algo que esteja apenas em contexto de:
+- seguradora anterior;
+- congênere;
+- cia anterior;
+- origem do bônus;
+- apólice anterior;
+- renovação de outra companhia.
 
-Documento:
-"""
-${text}
-"""`;
+Uma empresa do grupo pode emitir/garantir juridicamente um produto com outra marca comercial. Se a marca comercial tiver registro próprio na lista, escolha a marca comercial.
+"insuranceCompany.evidence" deve ser um trecho curto do documento que mostre a marca escolhida.
+"basis" = "commercial_brand" quando houver marca comercial explícita; use "legal_issuer" somente quando o emissor jurídico também representar o produto atual e não houver outra marca comercial.
+
+MODALIDADE
+- carro, utilitário, SUV, pickup leve etc. => vehicle;
+- moto/motocicleta => motorcycle;
+- caminhão, cavalo mecânico ou outra modalidade => unsupported;
+- não use finalidade de uso para decidir modalidade.
+
+SEGURADO E CONDUTOR
+- segurado/proponente não é automaticamente o condutor;
+- use o celular do segurado, nunca telefone do corretor, banco ou terceiro;
+- quando o documento disser explicitamente "Próprio Segurado" ou equivalente, copie os dados do segurado para o principal condutor;
+- se existir outro principal condutor, use os dados dele;
+- ano do veículo = ANO MODELO quando fabricação/modelo forem diferentes.
+
+PLACA
+- "plateStatus" = "present" somente quando houver placa válida impressa;
+- "explicitly_absent" somente quando o documento mostrar claramente ausência, por exemplo "-", "A AVISAR", "SEM PLACA" ou equivalente;
+- se você apenas não conseguir localizar a placa, use "unknown", não "explicitly_absent".
+
+USO DO VEÍCULO
+Mapeie para exatamente um valor:
+- particular => leisure_and_work;
+- explicitamente somente lazer => leisure;
+- visitas a clientes/fornecedores => client_supplier_visits;
+- transporte por aplicativo => app_based_transport;
+- táxi => taxi;
+- transporte público => public_transportation;
+- entregas/carga para entrega => delivieries;
+- turismo => tourism.
+Se não for possível mapear com segurança, use null.
+
+VIGÊNCIA
+- requestedAt = início da vigência;
+- expirationAt = fim da vigência;
+- effectivedAt só deve ser preenchido se o documento for efetivamente uma APÓLICE e trouxer uma data clara de emissão/efetivação aplicável;
+- um documento chamado "Proposta", mesmo que mostre status "Emitido" ou número de apólice, continua sendo proposal e effectivedAt deve ser null.
+
+PRÊMIO / AWARD
+"financial.award" = PRÊMIO/VALOR/PREÇO LÍQUIDO GLOBAL DA CONTRATAÇÃO, antes de IOF, juros, encargos, adicional de fracionamento e custos equivalentes.
+"Prêmio Líquido Total" É um rótulo válido quando representa o líquido global.
+NÃO use prêmio individual de cobertura e NÃO use o prêmio/valor total final com impostos.
+
+Se o líquido global for formado por mais de um componente explícito, some os componentes. Exemplo conceitual: líquido automóvel + líquido residencial = líquido global. Coloque cada componente em "awardComponents" e o resultado em "award".
+Se existir um único líquido global explícito, use "awardComponents": [award].
+"awardEvidence" deve conter os menores trechos que comprovem os componentes ou o líquido global.
+
+"nonLiquidCharges" deve conter somente valores que são adicionados ao líquido para formar o total final, como IOF, juros, adicional de fracionamento, custo de apólice e encargos. Não inclua valores zero.
+"finalTotal" é o total final com impostos/encargos, apenas para validação.
+"financialEvidence" deve trazer os trechos curtos usados para líquido, encargos e total.
+
+PARCELAS
+"installments" = quantidade real de parcelas.
+- à vista => 1;
+- "1+9" => 10;
+- "1+11" => 12;
+- "1+3" => 4;
+- em "2412 - CR - 12 parc", 2412 é código do plano e 12 é a quantidade.
+"installmentsEvidence" deve transcrever o trecho que comprova a quantidade.
+
+FRANQUIA
+"franchise" = franquia PRINCIPAL do risco/veículo, sempre existente neste domínio.
+Ela pode aparecer como casco, compreensiva, básica, obrigatória, reduzida, participação obrigatória, 25% da normal, 50% da obrigatória, indenização parcial do veículo ou outro nome equivalente.
+Normalmente está associada à primeira cobertura principal, mas confirme pela estrutura da tabela.
+NUNCA use franquia de vidro, para-brisa, farol, lanterna, retrovisor, roda, pneu, assistência ou outro serviço acessório.
+NUNCA confunda a franquia com o prêmio da cobertura na coluna ao lado.
+"franchiseEvidence" deve conter o trecho da cobertura/franquia principal e seu valor.
+
+RENOVAÇÃO
+- renewal=true somente com evidência de renovação/apólice anterior/congênere;
+- renewal=false quando houver "Seguro novo" ou equivalente;
+- latestProposal é SOMENTE código de proposta anterior quando isso estiver explicitamente identificado; não transforme número de apólice anterior em proposta anterior. Caso não exista proposta anterior explícita, use null.
+
+FORMATO DE SAÍDA
+Responda somente JSON minificado neste formato exato:
+{
+  "documentKind":"proposal|policy|endorsement|unknown",
+  "latestProposal":"string|null",
+  "renewal":true,
+  "renewalEvidence":"string|null",
+  "modality":"vehicle|motorcycle|unsupported|unknown",
+  "modalityEvidence":"string|null",
+  "insuranceCompany":{"index":1,"basis":"commercial_brand|legal_issuer|null","evidence":"string|null"},
+  "insured":{"name":"string|null","registration":"string|null","phone":"string|null","birth":"DD/MM/AAAA|null","profession":"string|null","evidence":"string|null","phoneEvidence":"string|null"},
+  "vehicle":{"plate":"string|null","plateStatus":"present|explicitly_absent|unknown","plateEvidence":"string|null","model":"string|null","year":2026,"usage":"leisure_and_work|leisure|client_supplier_visits|app_based_transport|taxi|public_transportation|delivieries|tourism|null","overnightStayPostalCode":"string|null","driver":{"name":"string|null","cpf":"string|null","birth":"DD/MM/AAAA|null","evidence":"string|null"}|null},
+  "vigency":{"requestedAt":"DD/MM/AAAA|null","expirationAt":"DD/MM/AAAA|null","effectivedAt":"DD/MM/AAAA|null","evidence":"string|null"},
+  "financial":{"award":1234.56,"awardComponents":[1234.56],"awardEvidence":"string|null","nonLiquidCharges":[91.23],"finalTotal":1325.79,"financialEvidence":"string|null","installments":10,"installmentsEvidence":"string|null","franchise":2500,"franchiseEvidence":"string|null"}
 }
 
-/**
- * ============================================================================
- * Conversão/finalização
- * ============================================================================
- */
+LISTA DE SEGURADORAS DO BANCO
+Cada linha é índice|nome|cnpj. Retorne somente o índice em insuranceCompany.index.
+${companies}
 
-function isVehicleModality(modality: Modality): boolean {
-	return (
-		modality === 'vehicle' || modality === 'motorcycle' || modality === 'truck'
-	);
+TEXTO EXTRAÍDO DO PDF
+"""
+${text}
+"""
+`;
+}
+
+function validateFinancial(raw: ModelOutput['financial']) {
+	if (raw.award === null || raw.award <= 0) {
+		throw new Error(
+			'Não foi possível determinar o prêmio líquido com segurança',
+		);
+	}
+
+	if (!raw.awardEvidence) {
+		throw new Error('Prêmio líquido identificado sem evidência');
+	}
+
+	if (raw.awardComponents.length) {
+		assertClose(
+			sum(raw.awardComponents),
+			raw.award,
+			'Os componentes do prêmio líquido não fecham com o prêmio líquido informado',
+		);
+
+		for (const component of raw.awardComponents) {
+			if (!evidenceContainsValue(raw.awardEvidence, component)) {
+				throw new Error(
+					'A evidência não confirma todos os componentes do prêmio líquido',
+				);
+			}
+		}
+	} else if (!evidenceContainsValue(raw.awardEvidence, raw.award)) {
+		throw new Error('A evidência não confirma o prêmio líquido');
+	}
+
+	if (raw.finalTotal !== null) {
+		if (!raw.financialEvidence) {
+			throw new Error('Total financeiro identificado sem evidência');
+		}
+
+		if (!evidenceContainsValue(raw.financialEvidence, raw.finalTotal)) {
+			throw new Error('A evidência não confirma o valor total da contratação');
+		}
+
+		for (const charge of raw.nonLiquidCharges) {
+			if (!evidenceContainsValue(raw.financialEvidence, charge)) {
+				throw new Error(
+					'A evidência não confirma todos os encargos financeiros',
+				);
+			}
+		}
+
+		assertClose(
+			raw.award + sum(raw.nonLiquidCharges),
+			raw.finalTotal,
+			'Prêmio líquido, encargos e total final são matematicamente inconsistentes',
+		);
+	}
+
+	if (raw.installments === null || raw.installments < 1) {
+		throw new Error('Não foi possível determinar a quantidade de parcelas');
+	}
+
+	if (
+		!evidenceSupportsInstallments(raw.installmentsEvidence, raw.installments)
+	) {
+		throw new Error('A evidência não confirma a quantidade de parcelas');
+	}
+
+	if (raw.franchise === null || raw.franchise <= 0) {
+		throw new Error('Não foi possível determinar a franquia principal');
+	}
+
+	if (!raw.franchiseEvidence) {
+		throw new Error('Franquia principal identificada sem evidência');
+	}
+
+	if (!evidenceContainsValue(raw.franchiseEvidence, raw.franchise)) {
+		throw new Error('A evidência não confirma a franquia principal');
+	}
+
+	if (!franchiseEvidenceLooksPrincipal(raw.franchiseEvidence)) {
+		throw new Error(
+			'A evidência da franquia não permite confirmar que seja a franquia principal',
+		);
+	}
+
+	return {
+		award: raw.award,
+		installments: raw.installments,
+		franchise: raw.franchise,
+	};
 }
 
 function finalizeModelOutput(
 	raw: ModelOutput,
-	fullText: string,
 	insuranceCompanies: Array<InsuranceCompanyRow>,
 ): DataExtract {
-	const financial = extractFinancialSummary(fullText);
-
-	const award = financial.liquid ?? parseLooseNumber(raw.award);
-
-	if (award === null) {
-		throw new Error('Não foi possível determinar o prêmio líquido');
+	if (raw.documentKind === 'endorsement') {
+		throw new Error(
+			'O documento enviado é um endosso, não uma proposta/apólice',
+		);
 	}
 
-	const installments =
-		extractInstallmentsFromText(fullText) ??
-		parseInstallments(raw.installments);
-
-	if (installments === null) {
-		throw new Error('Não foi possível determinar a quantidade de parcelas');
+	if (raw.documentKind === 'unknown') {
+		throw new Error(
+			'Não foi possível identificar o tipo do documento com segurança',
+		);
 	}
 
-	const franchise =
-		extractPrimaryFranchise(fullText) ?? parseLooseNumber(raw.franchise);
-
-	const insuranceCompanyIndex = resolveInsuranceCompanyIndex(
-		fullText,
-		insuranceCompanies,
-		raw.insuranceCompany,
-	);
-
-	if (insuranceCompanyIndex === null) {
-		throw new Error('Não foi possível identificar a seguradora');
+	if (raw.modality !== 'vehicle' && raw.modality !== 'motorcycle') {
+		throw new Error(
+			'Modalidade não suportada ou não identificada com segurança',
+		);
 	}
 
-	const insuranceCompany = insuranceCompanies[insuranceCompanyIndex - 1];
-
-	if (!insuranceCompany) {
-		throw new Error('Seguradora inválida');
+	if (!raw.modalityEvidence) {
+		throw new Error('Modalidade identificada sem evidência');
 	}
 
-	const modality = resolveModality(raw.modality, fullText);
-
-	if (!modality) {
-		throw new Error('Não foi possível identificar a modalidade do seguro');
+	if (raw.renewal === null || !raw.renewalEvidence) {
+		throw new Error(
+			'Não foi possível determinar se o seguro é novo ou renovação',
+		);
 	}
 
-	if (!raw.insured) {
-		throw new Error('Dados do segurado não identificados');
+	const companyIndex = raw.insuranceCompany.index;
+
+	if (!companyIndex || !raw.insuranceCompany.evidence) {
+		throw new Error(
+			'Não foi possível determinar a seguradora atual com segurança',
+		);
 	}
 
-	const vehicleModality = isVehicleModality(modality);
+	const company = insuranceCompanies[companyIndex - 1];
 
-	let vehicle: DataExtract['vehicle'] = null;
+	if (!company) {
+		throw new Error('Seguradora não encontrada na lista do banco de dados');
+	}
 
-	if (vehicleModality) {
-		if (!raw.vehicle) {
-			throw new Error('Dados do veículo não identificados');
+	if (!companyEvidenceMatches(company.name, raw.insuranceCompany.evidence)) {
+		throw new Error(
+			'A evidência da seguradora não confirma a marca/seguradora selecionada',
+		);
+	}
+
+	const insured = raw.insured;
+
+	if (
+		!insured.name ||
+		!insured.registration ||
+		!insured.phone ||
+		!insured.evidence ||
+		!insured.phoneEvidence
+	) {
+		throw new Error(
+			'Dados do segurado incompletos ou sem evidência suficiente',
+		);
+	}
+
+	if (!evidenceContainsRegistration(insured.evidence, insured.registration)) {
+		throw new Error('A evidência não confirma o CPF/CNPJ do segurado');
+	}
+
+	const normalizedPhone = normalizeBrazilianPhone(insured.phone);
+
+	if (!maskNumber(insured.phoneEvidence).includes(normalizedPhone)) {
+		throw new Error('A evidência não confirma o celular do segurado');
+	}
+
+	const vehicle = raw.vehicle;
+
+	if (
+		!vehicle.model ||
+		vehicle.year === null ||
+		!vehicle.usage ||
+		!vehicle.overnightStayPostalCode ||
+		!vehicle.driver
+	) {
+		throw new Error('Dados do veículo/condutor incompletos ou ambíguos');
+	}
+
+	let plate: string | null;
+
+	if (vehicle.plateStatus === 'present') {
+		plate = SchemaPlateLenient.parse(vehicle.plate);
+
+		if (!plate || !vehicle.plateEvidence) {
+			throw new Error('Placa informada não pôde ser validada');
 		}
 
-		const usageFromText = extractVehicleUsageFromText(fullText);
+		const compactEvidence = vehicle.plateEvidence
+			.replace(/[^a-zA-Z0-9]/g, '')
+			.toLowerCase();
 
-		const aiUsage = SchemaVehicleUsage.safeParse(raw.vehicle.usage);
-
-		const usage = usageFromText ?? (aiUsage.success ? aiUsage.data : null);
-
-		if (!usage) {
-			throw new Error('Uso do veículo não identificado');
+		if (!compactEvidence.includes(plate)) {
+			throw new Error('A evidência não confirma a placa do veículo');
+		}
+	} else if (vehicle.plateStatus === 'explicitly_absent') {
+		if (!vehicle.plateEvidence) {
+			throw new Error('Ausência de placa informada sem evidência');
 		}
 
-		const year = parseYear(raw.vehicle.year);
-
-		if (year === null) {
-			throw new Error('Ano modelo não identificado');
-		}
-
-		if (!raw.vehicle.model || !raw.vehicle.overnightStayPostalCode) {
-			throw new Error('Dados obrigatórios do veículo não identificados');
-		}
-
-		let driver: z.infer<typeof SchemaVehicle>['driver'] = null;
-
-		if (raw.vehicle.driver) {
-			if (raw.vehicle.driver.name && raw.vehicle.driver.cpf) {
-				driver = {
-					name: raw.vehicle.driver.name,
-
-					cpf: raw.vehicle.driver.cpf,
-
-					birth: raw.vehicle.driver.birth ?? null,
-				};
-			}
-		}
-
-		vehicle = SchemaVehicle.parse({
-			plate: normalizePlate(raw.vehicle.plate),
-
-			model: raw.vehicle.model,
-
-			year,
-
-			usage,
-
-			overnightStayPostalCode: raw.vehicle.overnightStayPostalCode,
-
-			driver,
-		});
+		plate = null;
+	} else {
+		throw new Error('Não foi possível determinar a placa com segurança');
 	}
 
-	const latestProposal = raw.latestProposal?.trim() || null;
+	const driver = vehicle.driver;
 
-	const renewal =
-		resolveRenewal(raw.renewal, fullText) || Boolean(latestProposal);
+	if (!driver.name || !driver.cpf || !driver.evidence) {
+		throw new Error('Principal condutor não identificado com segurança');
+	}
+
+	if (!evidenceContainsRegistration(driver.evidence, driver.cpf)) {
+		throw new Error('A evidência não confirma o CPF do principal condutor');
+	}
+
+	const vigency = raw.vigency;
+
+	if (!vigency.requestedAt || !vigency.expirationAt || !vigency.evidence) {
+		throw new Error('Vigência não identificada com segurança');
+	}
+
+	if (
+		!evidenceContainsDate(vigency.evidence, vigency.requestedAt) ||
+		!evidenceContainsDate(vigency.evidence, vigency.expirationAt)
+	) {
+		throw new Error('A evidência não confirma as datas de vigência');
+	}
+
+	if (raw.documentKind === 'proposal' && vigency.effectivedAt !== null) {
+		throw new Error('Proposta não deve possuir data de efetivação de apólice');
+	}
+
+	if (raw.documentKind === 'policy' && !vigency.effectivedAt) {
+		throw new Error('Apólice identificada sem data de efetivação segura');
+	}
+
+	const financial = validateFinancial(raw.financial);
 
 	return SchemaDataExtract.parse({
-		latestProposal,
-
-		renewal,
-
-		modality,
-
-		insuranceCompany,
-
+		latestProposal: raw.latestProposal,
+		renewal: raw.renewal,
+		modality: raw.modality,
+		insuranceCompany: company,
 		insured: {
-			name: raw.insured.name,
-
-			registration: raw.insured.registration,
-
-			phone: raw.insured.phone,
-
-			birth: raw.insured.birth ?? null,
-
-			profession: raw.insured.profession ?? null,
+			name: insured.name,
+			registration: insured.registration,
+			phone: insured.phone,
+			birth: insured.birth,
+			profession: insured.profession,
 		},
-
-		vehicle,
-
-		effectivedAt: raw.effectivedAt ?? null,
-
-		requestedAt: raw.requestedAt,
-
-		expirationAt: raw.expirationAt,
-
-		award,
-
-		installments,
-
-		franchise,
+		vehicle: {
+			plate,
+			model: vehicle.model,
+			year: vehicle.year,
+			usage: vehicle.usage,
+			overnightStayPostalCode: vehicle.overnightStayPostalCode,
+			driver: {
+				name: driver.name,
+				cpf: driver.cpf,
+				birth: driver.birth,
+			},
+		},
+		effectivedAt: vigency.effectivedAt,
+		requestedAt: vigency.requestedAt,
+		expirationAt: vigency.expirationAt,
+		...financial,
 	});
 }
-
-/**
- * ============================================================================
- * IA
- *
- * Uma única chamada por execução de ask().
- * O runPdfExtraction decide se realmente precisa tentar outra estratégia.
- * ============================================================================
- */
 
 async function askModel(
 	{
 		model,
 		text,
 		images,
-	}: {
-		model: string;
-		text: string;
-		images: Array<string>;
-	},
+	}: { model: string; text: string; images: Array<string> },
 	insuranceCompanies: Array<InsuranceCompanyRow>,
 ): Promise<DataExtract> {
-	const compactText = compactDocumentText(text);
-
-	const financial = extractFinancialSummary(text);
-
-	const deterministicCompany = resolveInsuranceCompanyIndex(
-		text,
-		insuranceCompanies,
-		null,
-	);
-
-	const prompt = mountPrompt(compactText, {
-		insuranceCompanies: insuranceCompanies.map((company, index) => ({
-			i: index + 1,
-
-			name: company.name,
-
-			cnpj: company.cnpj,
-		})),
-
-		imagesCount: images.length,
-
-		hints: {
-			award: financial.liquid,
-
-			franchise: extractPrimaryFranchise(text),
-
-			installments: extractInstallmentsFromText(text),
-
-			usage: extractVehicleUsageFromText(text),
-
-			insuranceCompany: deterministicCompany,
-		},
+	const parsed = await askJson({
+		model,
+		prompt: mountPrompt(text, insuranceCompanies, images.length),
+		images,
 	});
 
-	const started = performance.now();
+	const raw = SchemaModelOutput.parse(parsed);
 
-	try {
-		const response = await askJson({
-			model,
-			prompt,
-			images,
-		});
-
-		const raw = SchemaModelOutput.parse(response);
-
-		const result = finalizeModelOutput(raw, text, insuranceCompanies);
-
-		console.log(
-			`[extract-pdf] ask aceito ${Math.round(
-				performance.now() - started,
-			)}ms texto=${text.length} compactado=${compactText.length}`,
-		);
-
-		return result;
-	} catch (error) {
-		console.warn(
-			'[extract-pdf] ask rejeitado:',
-			error instanceof Error ? error.message : error,
-		);
-
-		throw error;
-	}
+	return finalizeModelOutput(raw, insuranceCompanies);
 }
 
-/**
- * ============================================================================
- * Complementação de nascimento
- * ============================================================================
- */
-
 async function completeBirths(valid: DataExtract): Promise<DataExtract> {
-	const lookup = async (registration: string): Promise<string | null> => {
+	const lookupCPF = async (registration: string) => {
 		try {
-			const document = isCPF(registration)
-				? await documentByCPF(registration)
-				: await documentByCNPJ(registration);
+			const document = await documentByCPF(registration);
 
 			return format(document.birth, 'dd/MM/yyyy');
 		} catch (error) {
@@ -1198,38 +854,40 @@ async function completeBirths(valid: DataExtract): Promise<DataExtract> {
 		}
 	};
 
-	const driver = valid.vehicle?.driver ?? null;
-
+	const insuredIsPerson = isCPF(valid.insured.registration);
 	const driverIsInsured =
-		Boolean(driver) && valid.insured.registration === driver?.cpf;
-
-	const needsDriverLookup =
-		Boolean(driver) && !driver?.birth && !driverIsInsured;
+		insuredIsPerson && valid.insured.registration === valid.vehicle.driver.cpf;
 
 	const [insuredBirth, driverBirth] = await Promise.all([
 		valid.insured.birth
 			? Promise.resolve(valid.insured.birth)
-			: lookup(valid.insured.registration),
-
-		needsDriverLookup && driver ? lookup(driver.cpf) : Promise.resolve(null),
+			: insuredIsPerson
+				? lookupCPF(valid.insured.registration)
+				: Promise.resolve(null),
+		valid.vehicle.driver.birth
+			? Promise.resolve(valid.vehicle.driver.birth)
+			: driverIsInsured && valid.insured.birth
+				? Promise.resolve(valid.insured.birth)
+				: lookupCPF(valid.vehicle.driver.cpf),
 	]);
 
 	valid.insured.birth = insuredBirth ?? null;
+	valid.vehicle.driver.birth = driverIsInsured
+		? (valid.insured.birth ?? driverBirth ?? null)
+		: (driverBirth ?? null);
 
-	if (driver) {
-		driver.birth = driverIsInsured
-			? valid.insured.birth
-			: (driver.birth ?? driverBirth ?? null);
+	if (insuredIsPerson && !valid.insured.birth) {
+		throw new Error('Data de nascimento do segurado não pôde ser confirmada');
 	}
 
-	return valid;
-}
+	if (!valid.vehicle.driver.birth) {
+		throw new Error(
+			'Data de nascimento do principal condutor não pôde ser confirmada',
+		);
+	}
 
-/**
- * ============================================================================
- * Extração
- * ============================================================================
- */
+	return SchemaDataExtract.parse(valid);
+}
 
 async function extractData(
 	path: ArrayBuffer,
@@ -1237,95 +895,54 @@ async function extractData(
 ) {
 	const extracted = await runPdfExtraction({
 		label: 'extract-pdf',
-
 		buffer: path,
-
 		ask: (input) => askModel(input, insuranceCompanies),
 	});
 
 	const lookupStarted = performance.now();
-
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf] consultas de nascimento ${Math.round(
-			performance.now() - lookupStarted,
-		)}ms`,
+		`[extract-pdf] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
 }
 
-/**
- * ============================================================================
- * Router
- * ============================================================================
- */
-
 function registerRoutersServicesSafesExtractPDF(server: Server) {
 	server.post(
 		'/extract-pdf',
-
 		zValidator(
 			'form',
 			z.object({
 				file: z.file('Arquivo inválido'),
 			}),
 		),
-
 		async (ctx) => {
 			try {
 				const { file } = ctx.req.valid('form');
-
 				const buffer = await file.arrayBuffer();
-
 				const hash = Bun.hash(buffer).toString(16);
-
-				const cacheKey = `pdf-extract:v9:${hash}`;
-
+				const cacheKey = `pdf-extract:v10:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
-				let data: DataExtract | null = null;
-
-				// if (cached) {
-				// 	try {
-				// 		data =
-				// 			SchemaDataExtract.parse(
-				// 				JSON.parse(
-				// 					cached,
-				// 				),
-				// 			);
-				// 	} catch {
-				// 		data =
-				// 			null;
-				// 	}
-				// }
-
-				if (!data) {
-					const insuranceCompanies =
-						await ctx.database.insuranceCompany.findMany({
-							select: {
-								id: true,
-
-								name: true,
-
-								cnpj: true,
-							},
-
-							orderBy: {
-								name: 'asc',
-							},
-						});
-
-					data = await extractData(buffer, insuranceCompanies);
-
-					await ctx.cache.set(
-						cacheKey,
-						JSON.stringify(data),
-						'EX',
-						60 * 60 * 24,
-					);
+				if (cached) {
+					return ctx.json(JSON.parse(cached), 200);
 				}
+
+				const data = await extractData(
+					buffer,
+					await ctx.database.insuranceCompany.findMany({
+						select: {
+							id: true,
+							name: true,
+							cnpj: true,
+						},
+						orderBy: { name: 'asc' },
+					}),
+				);
+
+				await ctx.cache.set(cacheKey, JSON.stringify(data), 'EX', 60 * 60 * 24);
 
 				return ctx.json(data, 200);
 			} catch (error) {
@@ -1334,12 +951,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 						? error.message
 						: 'Falha ao extrair dados do documento';
 
-				return ctx.json(
-					{
-						message,
-					},
-					409,
-				);
+				if (error instanceof AIProviderError) {
+					return ctx.json({ message }, 503);
+				}
+
+				return ctx.json({ message }, 409);
 			}
 		},
 	);
