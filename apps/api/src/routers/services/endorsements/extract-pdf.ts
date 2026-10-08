@@ -150,6 +150,145 @@ function sourceContainsRegistrationNear(
 	return false;
 }
 
+function parseCpfCandidate(value: string): string | null {
+	const direct = SchemaCPF.safeParse(value);
+
+	if (direct.success) {
+		return direct.data;
+	}
+
+	const digits = digitsOnly(value);
+	const normalized = SchemaCPF.safeParse(digits);
+
+	return normalized.success ? normalized.data : null;
+}
+
+function cpfCandidatesFromText(text: string): Array<string> {
+	const matches =
+		text.match(/\b\d{3}[.\s]?\d{3}[.\s]?\d{3}[-\s]?\d{2}\b/g) ?? [];
+
+	return [
+		...new Set(
+			matches
+				.map((candidate) => parseCpfCandidate(candidate))
+				.filter((candidate): candidate is string => candidate !== null),
+		),
+	];
+}
+
+function sourceMarksPrincipalDriverAsInsured(sourceText: string): boolean {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!normalizedLine.includes('principal condutor') &&
+			!normalizedLine.includes('condutor principal')
+		) {
+			continue;
+		}
+
+		const start = Math.max(0, index - 1);
+		const end = Math.min(lines.length, index + 3);
+		const block = normalizeText(lines.slice(start, end).join(' '));
+
+		if (
+			/\bproprio segurado\b|\bo proprio segurado\b|\bmesmo segurado\b|\bproprio proponente\b|\bo proprio proponente\b/.test(
+				block,
+			)
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function sourcePrincipalDriverCpf(sourceText: string): string | null {
+	const lines = sourceText.split('\n');
+	const candidates = new Set<string>();
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!normalizedLine.includes('principal condutor') &&
+			!normalizedLine.includes('condutor principal') &&
+			!normalizedLine.includes('cpf condutor')
+		) {
+			continue;
+		}
+
+		const start = Math.max(0, index - 1);
+		const end = Math.min(lines.length, index + 5);
+		const block = lines.slice(start, end).join(' ');
+
+		const labelled = block.match(
+			/(?:cpf\s*(?:do\s*)?(?:principal\s*)?condutor|cpf\s*condutor)\s*:?\s*([0-9.\-\s]{11,18})/i,
+		);
+
+		if (labelled?.[1]) {
+			const parsed = parseCpfCandidate(labelled[1]);
+
+			if (parsed) {
+				return parsed;
+			}
+		}
+
+		for (const candidate of cpfCandidatesFromText(block)) {
+			candidates.add(candidate);
+		}
+	}
+
+	return candidates.size === 1 ? ([...candidates][0] ?? null) : null;
+}
+
+function resolvePrincipalDriverCpf({
+	modelDriver,
+	lookup,
+	sourceText,
+}: {
+	modelDriver: string | null;
+	lookup: z.infer<typeof SchemaLookup>;
+	sourceText: string;
+}): string | null {
+	if (modelDriver) {
+		const parsedModelDriver = parseCpfCandidate(modelDriver);
+
+		if (
+			parsedModelDriver &&
+			(sourceContainsRegistrationNear(sourceText, parsedModelDriver, [
+				'principal condutor',
+				'condutor principal',
+				'cpf condutor',
+				'nome do principal condutor',
+			]) ||
+				(sourceMarksPrincipalDriverAsInsured(sourceText) &&
+					lookup.insuredRegistration !== null &&
+					digitsOnly(parsedModelDriver) ===
+						digitsOnly(lookup.insuredRegistration)))
+		) {
+			return parsedModelDriver;
+		}
+	}
+
+	const fromDocument = sourcePrincipalDriverCpf(sourceText);
+
+	if (fromDocument) {
+		return fromDocument;
+	}
+
+	if (
+		sourceMarksPrincipalDriverAsInsured(sourceText) &&
+		lookup.insuredRegistration
+	) {
+		return parseCpfCandidate(lookup.insuredRegistration);
+	}
+
+	return null;
+}
+
 function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
 	const normalized = normalizeText(evidence);
 
@@ -449,6 +588,10 @@ Para vehicle_conductor:
 - driver quando muda apenas principal condutor;
 - vehicle_and_driver quando ambos mudam;
 - unknown se não for possível saber.
+- IMPORTANTE: data.driver é SEMPRE o CPF do PRINCIPAL CONDUTOR RESULTANTE após o endosso, mesmo quando o condutor não foi alterado.
+- Se o documento disser "Principal condutor: Próprio Segurado", "O próprio segurado" ou equivalente, copie para data.driver o CPF do SEGURADO identificado em lookup.insuredRegistration.
+- Se o principal condutor for outra pessoa, use o CPF explicitamente associado ao principal condutor.
+- Não use null só porque changeKind=vehicle; changeKind descreve o que mudou, enquanto data.driver descreve quem ficou como principal condutor após o endosso.
 
 Quando houver mudança de veículo, retorne os dados RESULTANTES após o endosso:
 - data.plate = nova placa;
@@ -837,18 +980,18 @@ function finalizeModelOutput(
 				franchise = raw.data.franchise;
 			}
 
-			let driver: string | null = null;
+			const driver = resolvePrincipalDriverCpf({
+				modelDriver: raw.data.driver,
+				lookup,
+				sourceText,
+			});
 
-			if (changesDriver) {
-				if (!raw.data.driver) {
-					throw new Error(
-						'Alteração de condutor sem CPF do novo principal condutor',
-					);
-				}
-
-				driver = SchemaCPF.parse(raw.data.driver);
-			} else if (raw.data.driver) {
-				driver = SchemaCPF.parse(raw.data.driver);
+			if (!driver) {
+				throw new Error(
+					changesDriver
+						? 'Alteração de condutor sem CPF do novo principal condutor confirmado'
+						: 'Principal condutor resultante não identificado com segurança',
+				);
 			}
 
 			return SchemaDataExtractVehicleConductor.parse({
@@ -1041,7 +1184,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v13:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v14:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;
