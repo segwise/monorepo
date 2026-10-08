@@ -99,6 +99,10 @@ function evidenceContainsValue(
 	);
 }
 
+function digitsOnly(value: string): string {
+	return value.replace(/\D/g, '');
+}
+
 function evidenceContainsRegistration(
 	evidence: string | null | undefined,
 	registration: string,
@@ -107,7 +111,43 @@ function evidenceContainsRegistration(
 		return false;
 	}
 
-	return maskNumber(evidence).includes(maskNumber(registration));
+	const expected = digitsOnly(registration);
+
+	return expected.length > 0 && digitsOnly(evidence).includes(expected);
+}
+
+function sourceContainsRegistrationNear(
+	sourceText: string,
+	registration: string,
+	keywords: Array<string>,
+	radius = 4,
+): boolean {
+	const expected = digitsOnly(registration);
+
+	if (!expected) {
+		return false;
+	}
+
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? '';
+		const normalizedLine = normalizeText(line);
+
+		if (!keywords.some((keyword) => normalizedLine.includes(keyword))) {
+			continue;
+		}
+
+		const start = Math.max(0, index - radius);
+		const end = Math.min(lines.length, index + radius + 1);
+		const block = lines.slice(start, end).join(' ');
+
+		if (digitsOnly(block).includes(expected)) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
@@ -479,16 +519,26 @@ ${text}
 
 function normalizeLookup(
 	lookup: ModelOutput['lookup'],
+	sourceText: string,
 ): z.infer<typeof SchemaLookup> {
 	if (!lookup.insuredRegistration || !lookup.insuredName || !lookup.evidence) {
 		throw new Error('Segurado do endosso não identificado com segurança');
 	}
 
-	if (
-		!evidenceContainsRegistration(lookup.evidence, lookup.insuredRegistration)
-	) {
+	const registrationConfirmed =
+		evidenceContainsRegistration(lookup.evidence, lookup.insuredRegistration) ||
+		sourceContainsRegistrationNear(sourceText, lookup.insuredRegistration, [
+			'dados do segurado',
+			'dados do proponente',
+			'proponente',
+			'segurado',
+			'nome do segurado',
+			'cpf cnpj',
+		]);
+
+	if (!registrationConfirmed) {
 		throw new Error(
-			'A evidência não confirma o CPF/CNPJ do segurado do endosso',
+			'O documento não confirma o CPF/CNPJ do segurado do endosso',
 		);
 	}
 
@@ -658,7 +708,10 @@ function normalizeResultingPlate(
 	throw new Error('Não foi possível determinar a nova placa com segurança');
 }
 
-function finalizeModelOutput(raw: ModelOutput): DataExtractEndorsement {
+function finalizeModelOutput(
+	raw: ModelOutput,
+	sourceText: string,
+): DataExtractEndorsement {
 	if (raw.type === 'unknown') {
 		throw new Error(
 			`Tipo de endosso não suportado ou não identificado com segurança: ${raw.data.reason}`,
@@ -666,7 +719,7 @@ function finalizeModelOutput(raw: ModelOutput): DataExtractEndorsement {
 	}
 
 	validateTypeEvidence(raw.type, raw.typeEvidence);
-	const lookup = normalizeLookup(raw.lookup);
+	const lookup = normalizeLookup(raw.lookup, sourceText);
 
 	switch (raw.type) {
 		case 'vehicle_conductor': {
@@ -843,7 +896,7 @@ async function askModel({
 
 	const raw = SchemaModelOutput.parse(parsed);
 
-	return finalizeModelOutput(raw);
+	return finalizeModelOutput(raw, text);
 }
 
 async function extractDataEndorsement(path: ArrayBuffer) {
@@ -931,7 +984,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v10:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v11:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;

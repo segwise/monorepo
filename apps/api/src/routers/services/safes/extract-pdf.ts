@@ -119,6 +119,10 @@ function evidenceContainsValue(
 	);
 }
 
+function digitsOnly(value: string): string {
+	return value.replace(/\D/g, '');
+}
+
 function evidenceContainsRegistration(
 	evidence: string | null | undefined,
 	registration: string,
@@ -127,7 +131,81 @@ function evidenceContainsRegistration(
 		return false;
 	}
 
-	return maskNumber(evidence).includes(maskNumber(registration));
+	const expected = digitsOnly(registration);
+
+	return expected.length > 0 && digitsOnly(evidence).includes(expected);
+}
+
+function sourceContainsRegistrationNear(
+	sourceText: string,
+	registration: string,
+	keywords: Array<string>,
+	radius = 4,
+): boolean {
+	const expected = digitsOnly(registration);
+
+	if (!expected) {
+		return false;
+	}
+
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? '';
+		const normalizedLine = normalizeText(line);
+
+		if (!keywords.some((keyword) => normalizedLine.includes(keyword))) {
+			continue;
+		}
+
+		const start = Math.max(0, index - radius);
+		const end = Math.min(lines.length, index + radius + 1);
+		const block = lines.slice(start, end).join(' ');
+
+		if (digitsOnly(block).includes(expected)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function sourceContainsPhoneNear(
+	sourceText: string,
+	phone: string,
+	keywords: Array<string>,
+	radius = 3,
+): boolean {
+	const expected = normalizeBrazilianPhone(phone);
+
+	if (!expected) {
+		return false;
+	}
+
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? '';
+		const normalizedLine = normalizeText(line);
+
+		if (!keywords.some((keyword) => normalizedLine.includes(keyword))) {
+			continue;
+		}
+
+		const start = Math.max(0, index - radius);
+		const end = Math.min(lines.length, index + radius + 1);
+		const blockDigits = digitsOnly(lines.slice(start, end).join(' '));
+
+		if (blockDigits.includes(expected)) {
+			return true;
+		}
+
+		if (expected.startsWith('55') && blockDigits.includes(expected.slice(2))) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 function evidenceContainsDate(
@@ -156,7 +234,7 @@ function evidenceSupportsInstallments(
 
 	const directPatterns = [
 		new RegExp(`\\b${installments}\\s*x\\b`, 'i'),
-		new RegExp(`\\b${installments}\\s*parcel`, 'i'),
+		new RegExp(`\\b${installments}\\s*parc(?:ela)?s?\\b`, 'i'),
 		new RegExp(`parcelas?\\s*[:=-]?\\s*${installments}\\b`, 'i'),
 		new RegExp(
 			`numero\\s+de\\s+parcelas?\\s*[:=-]?\\s*${installments}\\b`,
@@ -644,6 +722,7 @@ function validateFinancial(raw: ModelOutput['financial']) {
 function finalizeModelOutput(
 	raw: ModelOutput,
 	insuranceCompanies: Array<InsuranceCompanyRow>,
+	sourceText: string,
 ): DataExtract {
 	if (raw.documentKind === 'endorsement') {
 		throw new Error(
@@ -707,14 +786,32 @@ function finalizeModelOutput(
 		);
 	}
 
-	if (!evidenceContainsRegistration(insured.evidence, insured.registration)) {
-		throw new Error('A evidência não confirma o CPF/CNPJ do segurado');
+	const insuredRegistrationConfirmed =
+		evidenceContainsRegistration(insured.evidence, insured.registration) ||
+		sourceContainsRegistrationNear(sourceText, insured.registration, [
+			'dados do segurado',
+			'dados do proponente',
+			'proponente segurado',
+			'nome do segurado',
+			'nome do proponente',
+		]);
+
+	if (!insuredRegistrationConfirmed) {
+		throw new Error('O documento não confirma o CPF/CNPJ do segurado');
 	}
 
 	const normalizedPhone = normalizeBrazilianPhone(insured.phone);
 
-	if (!maskNumber(insured.phoneEvidence).includes(normalizedPhone)) {
-		throw new Error('A evidência não confirma o celular do segurado');
+	const insuredPhoneConfirmed =
+		digitsOnly(insured.phoneEvidence).includes(normalizedPhone) ||
+		sourceContainsPhoneNear(sourceText, insured.phone, [
+			'celular',
+			'tel celular',
+			'telefone celular',
+		]);
+
+	if (!insuredPhoneConfirmed) {
+		throw new Error('O documento não confirma o celular do segurado');
 	}
 
 	const vehicle = raw.vehicle;
@@ -761,8 +858,18 @@ function finalizeModelOutput(
 		throw new Error('Principal condutor não identificado com segurança');
 	}
 
-	if (!evidenceContainsRegistration(driver.evidence, driver.cpf)) {
-		throw new Error('A evidência não confirma o CPF do principal condutor');
+	const driverRegistrationConfirmed =
+		evidenceContainsRegistration(driver.evidence, driver.cpf) ||
+		sourceContainsRegistrationNear(sourceText, driver.cpf, [
+			'principal condutor',
+			'condutor principal',
+			'nome do principal condutor',
+			'dados do perfil',
+			'questionario de avaliacao de risco',
+		]);
+
+	if (!driverRegistrationConfirmed) {
+		throw new Error('O documento não confirma o CPF do principal condutor');
 	}
 
 	const vigency = raw.vigency;
@@ -835,7 +942,7 @@ async function askModel(
 
 	const raw = SchemaModelOutput.parse(parsed);
 
-	return finalizeModelOutput(raw, insuranceCompanies);
+	return finalizeModelOutput(raw, insuranceCompanies, text);
 }
 
 async function completeBirths(valid: DataExtract): Promise<DataExtract> {
@@ -923,7 +1030,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v10:${hash}`;
+				const cacheKey = `pdf-extract:v11:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
