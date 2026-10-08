@@ -170,6 +170,66 @@ function sourceContainsRegistrationNear(
 	return false;
 }
 
+function parseCpfCandidate(value: string | null | undefined): string | null {
+	if (!value) {
+		return null;
+	}
+
+	const direct = SchemaCPF.safeParse(value);
+
+	if (direct.success) {
+		return direct.data;
+	}
+
+	const digits = digitsOnly(value);
+	const normalized = SchemaCPF.safeParse(digits);
+
+	return normalized.success ? normalized.data : null;
+}
+
+function sourceMarksPrincipalDriverAsInsured(sourceText: string): boolean {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!normalizedLine.includes('principal condutor') &&
+			!normalizedLine.includes('condutor principal')
+		) {
+			continue;
+		}
+
+		const start = Math.max(0, index - 1);
+		const end = Math.min(lines.length, index + 4);
+		const block = normalizeText(lines.slice(start, end).join(' '));
+
+		if (
+			/\bproprio segurado\b|\bo proprio segurado\b|\bmesmo segurado\b|\bproprio proponente\b|\bo proprio proponente\b|\bsegurado e o principal condutor\b/.test(
+				block,
+			)
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function evidenceMarksPrincipalDriverAsInsured(
+	evidence: string | null | undefined,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	const normalized = normalizeText(evidence);
+
+	return /\bproprio segurado\b|\bo proprio segurado\b|\bmesmo segurado\b|\bproprio proponente\b|\bo proprio proponente\b|\bsegurado e o principal condutor\b/.test(
+		normalized,
+	);
+}
+
 function sourceContainsPhoneNear(
 	sourceText: string,
 	phone: string,
@@ -264,44 +324,202 @@ function evidenceSupportsInstallments(
 	return false;
 }
 
+const COMPANY_STOP_WORDS = new Set([
+	'seguro',
+	'seguros',
+	'seguradora',
+	'companhia',
+	'cia',
+	'brasil',
+	'gerais',
+	'geral',
+	'participacoes',
+	'participacao',
+	'servicos',
+	'tecnicos',
+	'administrativos',
+	'corretagem',
+	'de',
+	'da',
+	'do',
+	'das',
+	'dos',
+	'e',
+	's',
+	'a',
+	'sa',
+]);
+
+function companyTokens(companyName: string): Array<string> {
+	return normalizeText(companyName)
+		.split(' ')
+		.filter(
+			(token) =>
+				token.length >= 2 &&
+				!COMPANY_STOP_WORDS.has(token) &&
+				!/^\d+$/.test(token),
+		);
+}
+
 function companyEvidenceMatches(
 	companyName: string,
 	evidence: string,
 ): boolean {
-	const company = normalizeText(companyName);
 	const source = normalizeText(evidence);
+	const tokens = companyTokens(companyName);
 
-	const stopWords = new Set([
-		'seguro',
-		'seguros',
-		'seguradora',
-		'companhia',
-		'cia',
-		'brasil',
-		'gerais',
-		'geral',
-		'participacoes',
-		'participacao',
-		'servicos',
-		'tecnicos',
-		'administrativos',
-		'corretagem',
-		'de',
-		'da',
-		'do',
-		'das',
-		'dos',
-		'e',
-		's',
-		'a',
-		'sa',
-	]);
+	return tokens.length > 0 && tokens.some((token) => source.includes(token));
+}
 
-	const tokens = company
-		.split(' ')
-		.filter((token) => token && !stopWords.has(token));
+function companySourceScore(
+	companyName: string,
+	sourceText: string,
+	modelEvidence: string | null,
+	modelBasis: 'commercial_brand' | 'legal_issuer' | null,
+	isModelSelection: boolean,
+): number {
+	const tokens = companyTokens(companyName);
 
-	return tokens.some((token) => source.includes(token));
+	if (!tokens.length) {
+		return Number.NEGATIVE_INFINITY;
+	}
+
+	const lines = sourceText.split('\n');
+	let page = 1;
+	let score = 0;
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const rawLine = lines[index] ?? '';
+		const normalizedLine = normalizeText(rawLine);
+
+		const pageMatch = normalizedLine.match(/^pagina\s+(\d+)$/);
+		if (pageMatch?.[1]) {
+			page = Number(pageMatch[1]);
+			continue;
+		}
+
+		if (!tokens.some((token) => normalizedLine.includes(token))) {
+			continue;
+		}
+
+		const start = Math.max(0, index - 1);
+		const end = Math.min(lines.length, index + 2);
+		const context = normalizeText(lines.slice(start, end).join(' '));
+
+		const previousContext =
+			/seguradora anterior|cia anterior|congenere|origem do bonus|apolice anterior|renovacao congenere|renova apolice/.test(
+				context,
+			);
+
+		if (previousContext) {
+			score -= 20;
+			continue;
+		}
+
+		score += 2;
+
+		if (page === 1) {
+			score += 4;
+		}
+
+		if (
+			/segmento|produto|tradicional|proposta de seguro|seguro auto|seguro moto|oferta|modalidade/.test(
+				context,
+			)
+		) {
+			score += 7;
+		}
+
+		if (normalizedLine.length <= 80) {
+			score += 2;
+		}
+
+		if (
+			/dados da seguradora|cnpj|codigo da seguradora|codigo susep|este seguro e garantido|garantido pela|garantido por|canais de atendimento/.test(
+				context,
+			)
+		) {
+			score -= 3;
+		}
+
+		if (/operado pela|grupo/.test(context)) {
+			score -= 2;
+		}
+	}
+
+	if (modelEvidence && companyEvidenceMatches(companyName, modelEvidence)) {
+		score += modelBasis === 'commercial_brand' ? 8 : 3;
+	}
+
+	if (isModelSelection) {
+		score += 1;
+	}
+
+	return score;
+}
+
+function resolveInsuranceCompany(
+	raw: ModelOutput['insuranceCompany'],
+	insuranceCompanies: Array<InsuranceCompanyRow>,
+	sourceText: string,
+): InsuranceCompanyRow {
+	const modelIndex = raw.index;
+	const modelCompany =
+		modelIndex && modelIndex >= 1
+			? (insuranceCompanies[modelIndex - 1] ?? null)
+			: null;
+
+	const scored = insuranceCompanies
+		.map((company, index) => ({
+			company,
+			index: index + 1,
+			score: companySourceScore(
+				company.name,
+				sourceText,
+				raw.evidence,
+				raw.basis,
+				index + 1 === modelIndex,
+			),
+		}))
+		.filter((candidate) => Number.isFinite(candidate.score))
+		.sort((a, b) => b.score - a.score || a.index - b.index);
+
+	const first = scored[0];
+	const second = scored[1];
+
+	if (
+		first &&
+		first.score >= 10 &&
+		(!second || first.score - second.score >= 4)
+	) {
+		return first.company;
+	}
+
+	if (raw.evidence) {
+		const evidenceCandidates = insuranceCompanies.filter((company) =>
+			companyEvidenceMatches(company.name, raw.evidence as string),
+		);
+
+		if (evidenceCandidates.length === 1) {
+			const candidate = evidenceCandidates[0];
+
+			if (candidate) {
+				return candidate;
+			}
+		}
+	}
+
+	if (
+		modelCompany &&
+		raw.evidence &&
+		companyEvidenceMatches(modelCompany.name, raw.evidence)
+	) {
+		return modelCompany;
+	}
+
+	throw new Error(
+		'Não foi possível determinar a marca/seguradora comercial atual com segurança',
+	);
 }
 
 function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
@@ -494,6 +712,14 @@ const SchemaModelOutput = z
 					])
 					.nullable(),
 				overnightStayPostalCode: z.string().nullable(),
+				driverRelation: z
+					.enum(['insured', 'other', 'unknown'])
+					.nullish()
+					.transform((value) => value ?? 'unknown'),
+				driverEvidence: z
+					.string()
+					.nullish()
+					.transform((value) => value ?? null),
 				driver: z
 					.object({
 						name: z.string().nullable(),
@@ -536,6 +762,95 @@ const SchemaModelOutput = z
 
 type ModelOutput = z.infer<typeof SchemaModelOutput>;
 
+function resolvePrincipalDriver({
+	vehicle,
+	insured,
+	sourceText,
+}: {
+	vehicle: ModelOutput['vehicle'];
+	insured: ModelOutput['insured'];
+	sourceText: string;
+}): {
+	name: string;
+	cpf: string;
+	birth: string | null;
+} {
+	if (!insured.name || !insured.registration) {
+		throw new Error(
+			'Segurado não identificado para resolver o principal condutor',
+		);
+	}
+
+	const insuredCpf = parseCpfCandidate(insured.registration);
+	const relationEvidence = vehicle.driverEvidence ?? vehicle.driver?.evidence;
+	const sourceSaysInsured = sourceMarksPrincipalDriverAsInsured(sourceText);
+	const evidenceSaysInsured =
+		evidenceMarksPrincipalDriverAsInsured(relationEvidence);
+
+	if (sourceSaysInsured || evidenceSaysInsured) {
+		if (!insuredCpf) {
+			throw new Error(
+				'O documento informa que o principal condutor é o próprio segurado, mas o segurado não possui CPF válido',
+			);
+		}
+
+		return {
+			name: insured.name,
+			cpf: insuredCpf,
+			birth: insured.birth,
+		};
+	}
+
+	if (vehicle.driverRelation === 'insured') {
+		throw new Error(
+			'A IA indicou que o principal condutor é o próprio segurado, mas não apresentou evidência suficiente',
+		);
+	}
+
+	const modelDriver = vehicle.driver;
+
+	if (!modelDriver?.name || !modelDriver.cpf) {
+		throw new Error('Principal condutor não identificado com segurança');
+	}
+
+	const driverCpf = parseCpfCandidate(modelDriver.cpf);
+
+	if (!driverCpf) {
+		throw new Error('CPF do principal condutor inválido');
+	}
+
+	const driverEvidence = vehicle.driverEvidence ?? modelDriver.evidence;
+	const driverRegistrationConfirmed =
+		evidenceContainsRegistration(driverEvidence, driverCpf) ||
+		sourceContainsRegistrationNear(sourceText, driverCpf, [
+			'principal condutor',
+			'condutor principal',
+			'nome do principal condutor',
+			'cpf condutor',
+			'dados do perfil',
+			'questionario de avaliacao de risco',
+			'informacoes do condutor principal',
+		]);
+
+	if (!driverRegistrationConfirmed) {
+		throw new Error('O documento não confirma o CPF do principal condutor');
+	}
+
+	if (insuredCpf && digitsOnly(driverCpf) === digitsOnly(insuredCpf)) {
+		return {
+			name: insured.name,
+			cpf: insuredCpf,
+			birth: insured.birth ?? modelDriver.birth,
+		};
+	}
+
+	return {
+		name: modelDriver.name,
+		cpf: driverCpf,
+		birth: modelDriver.birth,
+	};
+}
+
 function mountPrompt(
 	text: string,
 	insuranceCompanies: Array<InsuranceCompanyRow>,
@@ -572,7 +887,14 @@ NUNCA use como seguradora atual algo que esteja apenas em contexto de:
 - renovação de outra companhia.
 
 Uma empresa do grupo pode emitir/garantir juridicamente um produto com outra marca comercial. Se a marca comercial tiver registro próprio na lista, escolha a marca comercial.
-"insuranceCompany.evidence" deve ser um trecho curto do documento que mostre a marca escolhida.
+
+Exemplos de interpretação:
+- "Itaú Tradicional" no cabeçalho/segmento + Porto Seguro como emissor jurídico no rodapé => escolha Itaú;
+- "Azul Tradicional" no produto + Porto Seguro como emissor jurídico => escolha Azul;
+- produto/marca Aliro + Yelum como sociedade jurídica => escolha Aliro;
+- somente Porto como produto atual, sem outra marca comercial => escolha Porto.
+
+"insuranceCompany.evidence" deve ser um trecho curto do documento que mostre a MARCA COMERCIAL escolhida, preferindo cabeçalho, segmento ou nome do produto. Não use somente o rodapé jurídico quando existir marca comercial distinta.
 "basis" = "commercial_brand" quando houver marca comercial explícita; use "legal_issuer" somente quando o emissor jurídico também representar o produto atual e não houver outra marca comercial.
 
 MODALIDADE
@@ -584,8 +906,15 @@ MODALIDADE
 SEGURADO E CONDUTOR
 - segurado/proponente não é automaticamente o condutor;
 - use o celular do segurado, nunca telefone do corretor, banco ou terceiro;
-- quando o documento disser explicitamente "Próprio Segurado" ou equivalente, copie os dados do segurado para o principal condutor;
-- se existir outro principal condutor, use os dados dele;
+- "vehicle.driverRelation" descreve a relação do principal condutor com o segurado:
+  - "insured" quando o documento disser explicitamente "Próprio Segurado", "o próprio segurado", repetir o mesmo CPF do segurado no campo de principal condutor ou equivalente;
+  - "other" quando o principal condutor for outra pessoa;
+  - "unknown" somente quando realmente não for possível determinar;
+- "vehicle.driverEvidence" deve ser o menor trecho que comprove quem é o principal condutor ou sua relação com o segurado;
+- quando driverRelation="insured", copie nome, CPF e data de nascimento do segurado para "vehicle.driver";
+- quando driverRelation="other", preencha "vehicle.driver" com nome, CPF e nascimento do principal condutor indicado no documento;
+- nunca retorne driver=null apenas porque o principal condutor é o próprio segurado;
+- para vehicle e motorcycle, sempre tente retornar o principal condutor resultante da contratação;
 - ano do veículo = ANO MODELO quando fabricação/modelo forem diferentes.
 
 PLACA
@@ -657,7 +986,7 @@ Responda somente JSON minificado neste formato exato:
   "modalityEvidence":"string|null",
   "insuranceCompany":{"index":1,"basis":"commercial_brand|legal_issuer|null","evidence":"string|null"},
   "insured":{"name":"string|null","registration":"string|null","phone":"string|null","birth":"DD/MM/AAAA|null","profession":"string|null","evidence":"string|null","phoneEvidence":"string|null"},
-  "vehicle":{"plate":"string|null","plateStatus":"present|explicitly_absent|unknown","plateEvidence":"string|null","model":"string|null","year":2026,"usage":"leisure_and_work|leisure|client_supplier_visits|app_based_transport|taxi|public_transportation|delivieries|tourism|null","overnightStayPostalCode":"string|null","driver":{"name":"string|null","cpf":"string|null","birth":"DD/MM/AAAA|null","evidence":"string|null"}|null},
+  "vehicle":{"plate":"string|null","plateStatus":"present|explicitly_absent|unknown","plateEvidence":"string|null","model":"string|null","year":2026,"usage":"leisure_and_work|leisure|client_supplier_visits|app_based_transport|taxi|public_transportation|delivieries|tourism|null","overnightStayPostalCode":"string|null","driverRelation":"insured|other|unknown","driverEvidence":"string|null","driver":{"name":"string|null","cpf":"string|null","birth":"DD/MM/AAAA|null","evidence":"string|null"}|null},
   "vigency":{"requestedAt":"DD/MM/AAAA|null","expirationAt":"DD/MM/AAAA|null","effectivedAt":"DD/MM/AAAA|null","evidence":"string|null"},
   "financial":{"award":1234.56,"awardComponents":[1234.56],"awardEvidence":"string|null","nonLiquidCharges":[91.23],"finalTotal":1325.79,"financialEvidence":"string|null","installments":10,"installmentsEvidence":"string|null","franchise":2500,"franchiseEvidence":"string|null"}
 }
@@ -797,25 +1126,11 @@ function finalizeModelOutput(
 		);
 	}
 
-	const companyIndex = raw.insuranceCompany.index;
-
-	if (!companyIndex || !raw.insuranceCompany.evidence) {
-		throw new Error(
-			'Não foi possível determinar a seguradora atual com segurança',
-		);
-	}
-
-	const company = insuranceCompanies[companyIndex - 1];
-
-	if (!company) {
-		throw new Error('Seguradora não encontrada na lista do banco de dados');
-	}
-
-	if (!companyEvidenceMatches(company.name, raw.insuranceCompany.evidence)) {
-		throw new Error(
-			'A evidência da seguradora não confirma a marca/seguradora selecionada',
-		);
-	}
+	const company = resolveInsuranceCompany(
+		raw.insuranceCompany,
+		insuranceCompanies,
+		sourceText,
+	);
 
 	const insured = raw.insured;
 
@@ -865,10 +1180,9 @@ function finalizeModelOutput(
 		!vehicle.model ||
 		vehicle.year === null ||
 		!vehicle.usage ||
-		!vehicle.overnightStayPostalCode ||
-		!vehicle.driver
+		!vehicle.overnightStayPostalCode
 	) {
-		throw new Error('Dados do veículo/condutor incompletos ou ambíguos');
+		throw new Error('Dados do veículo incompletos ou ambíguos');
 	}
 
 	let plate: string | null;
@@ -897,25 +1211,11 @@ function finalizeModelOutput(
 		throw new Error('Não foi possível determinar a placa com segurança');
 	}
 
-	const driver = vehicle.driver;
-
-	if (!driver.name || !driver.cpf || !driver.evidence) {
-		throw new Error('Principal condutor não identificado com segurança');
-	}
-
-	const driverRegistrationConfirmed =
-		evidenceContainsRegistration(driver.evidence, driver.cpf) ||
-		sourceContainsRegistrationNear(sourceText, driver.cpf, [
-			'principal condutor',
-			'condutor principal',
-			'nome do principal condutor',
-			'dados do perfil',
-			'questionario de avaliacao de risco',
-		]);
-
-	if (!driverRegistrationConfirmed) {
-		throw new Error('O documento não confirma o CPF do principal condutor');
-	}
+	const driver = resolvePrincipalDriver({
+		vehicle,
+		insured,
+		sourceText,
+	});
 
 	const vigency = raw.vigency;
 
@@ -1010,22 +1310,26 @@ async function completeBirths(valid: DataExtract): Promise<DataExtract> {
 	const driverIsInsured =
 		insuredIsPerson && valid.insured.registration === valid.vehicle.driver.cpf;
 
+	const insuredBirthPromise = valid.insured.birth
+		? Promise.resolve(valid.insured.birth)
+		: insuredIsPerson
+			? lookupCPF(valid.insured.registration)
+			: Promise.resolve(null);
+
+	const driverBirthPromise = valid.vehicle.driver.birth
+		? Promise.resolve(valid.vehicle.driver.birth)
+		: driverIsInsured
+			? Promise.resolve(null)
+			: lookupCPF(valid.vehicle.driver.cpf);
+
 	const [insuredBirth, driverBirth] = await Promise.all([
-		valid.insured.birth
-			? Promise.resolve(valid.insured.birth)
-			: insuredIsPerson
-				? lookupCPF(valid.insured.registration)
-				: Promise.resolve(null),
-		valid.vehicle.driver.birth
-			? Promise.resolve(valid.vehicle.driver.birth)
-			: driverIsInsured && valid.insured.birth
-				? Promise.resolve(valid.insured.birth)
-				: lookupCPF(valid.vehicle.driver.cpf),
+		insuredBirthPromise,
+		driverBirthPromise,
 	]);
 
 	valid.insured.birth = insuredBirth ?? null;
 	valid.vehicle.driver.birth = driverIsInsured
-		? (valid.insured.birth ?? driverBirth ?? null)
+		? valid.insured.birth
 		: (driverBirth ?? null);
 
 	if (insuredIsPerson && !valid.insured.birth) {
@@ -1075,7 +1379,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v14:${hash}`;
+				const cacheKey = `pdf-extract:v16:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
