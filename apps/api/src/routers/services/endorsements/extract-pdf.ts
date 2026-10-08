@@ -166,7 +166,7 @@ function typeEvidenceMatches(
 
 	switch (type) {
 		case 'vehicle_conductor':
-			return /substituicao de veiculo|alteracao de veiculo|troca de veiculo|principal condutor|alteracao de condutor|substituicao de condutor/.test(
+			return /endosso de substituicao|substituicao de veiculo|alteracao de veiculo|troca de veiculo|principal condutor|alteracao de condutor|substituicao de condutor/.test(
 				normalized,
 			);
 		case 'address':
@@ -665,11 +665,68 @@ function normalizeFinancialData(data: z.infer<typeof SchemaModelFinancial>): {
 	return { amount, percentage };
 }
 
+function sourceSupportsEndorsementType(
+	type: 'vehicle_conductor' | 'address' | 'franchise' | 'cancellation',
+	sourceText: string,
+): boolean {
+	const normalized = normalizeText(sourceText);
+
+	switch (type) {
+		case 'vehicle_conductor':
+			return [
+				/\bproposta de endosso de substituicao\b/,
+				/\bendosso de substituicao(?: de)? veiculo\b/,
+				/\bsubstituicao de veiculo\b/,
+				/\btipo de endosso substituicao de veiculo\b/,
+				/\bdados do veiculo substituido\b/,
+				/\balteracao do principal condutor\b/,
+				/\balteracao de principal condutor\b/,
+				/\bsubstituicao de condutor\b/,
+			].some((pattern) => pattern.test(normalized));
+
+		case 'address':
+			return [
+				/\btipo de endosso alteracao de endereco\b/,
+				/\bendosso de alteracao de endereco\b/,
+				/\balteracao de cep de pernoite\b/,
+				/\balteracao do cep de pernoite\b/,
+				/\balteracao de local de risco\b/,
+				/\balteracao do local de risco\b/,
+			].some((pattern) => pattern.test(normalized));
+
+		case 'franchise':
+			return [
+				/\btipo de endosso alteracao de franquia\b/,
+				/\bendosso de alteracao de franquia\b/,
+				/\balteracao da franquia\b/,
+				/\balteracao de franquia\b/,
+			].some((pattern) => pattern.test(normalized));
+
+		case 'cancellation':
+			return [
+				/\btipo de endosso cancelamento\b/,
+				/\bendosso de cancelamento\b/,
+				/\bcancelamento da apolice\b/,
+				/\bcancelamento do seguro\b/,
+				/\brescisao da apolice\b/,
+				/\bencerramento da apolice\b/,
+			].some((pattern) => pattern.test(normalized));
+	}
+}
+
 function validateTypeEvidence(
 	type: 'vehicle_conductor' | 'address' | 'franchise' | 'cancellation',
 	evidence: string | null,
+	sourceText: string,
 ): void {
-	if (!evidence || !typeEvidenceMatches(type, evidence)) {
+	const modelEvidenceIsValid =
+		!!evidence && typeEvidenceMatches(type, evidence);
+	const documentEvidenceIsValid = sourceSupportsEndorsementType(
+		type,
+		sourceText,
+	);
+
+	if (!modelEvidenceIsValid && !documentEvidenceIsValid) {
 		throw new Error(
 			`Tipo de endosso ${type} identificado sem evidência suficiente`,
 		);
@@ -718,7 +775,7 @@ function finalizeModelOutput(
 		);
 	}
 
-	validateTypeEvidence(raw.type, raw.typeEvidence);
+	validateTypeEvidence(raw.type, raw.typeEvidence, sourceText);
 	const lookup = normalizeLookup(raw.lookup, sourceText);
 
 	switch (raw.type) {
@@ -984,7 +1041,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v11:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v13:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;
