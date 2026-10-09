@@ -160,6 +160,113 @@ function digitsOnly(value: string): string {
 	return value.replace(/\D/g, '');
 }
 
+type SupportedModality = 'vehicle' | 'motorcycle';
+
+type ResolvedModality = {
+	modality: SupportedModality;
+	evidence: string;
+};
+
+function sourceSupportedModality(sourceText: string): ResolvedModality | null {
+	const lines = sourceText.split('\n');
+	const candidates: Array<ResolvedModality & { score: number }> = [];
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const block = lines
+			.slice(Math.max(0, index - 1), Math.min(lines.length, index + 6))
+			.join(' ')
+			.replace(/\s+/g, ' ')
+			.trim();
+		const normalizedBlock = normalizeText(block);
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (!normalizedBlock) {
+			continue;
+		}
+
+		// Não use finalidade de uso (ex.: "fretamento (carga/serviços)") para
+		// decidir modalidade. A modalidade vem do ramo/tipo/categoria do veículo.
+		if (
+			/\bramo\b/.test(normalizedLine) &&
+			/\b(motocicleta|motocicletas|moto|motos)\b/.test(normalizedBlock)
+		) {
+			candidates.push({ modality: 'motorcycle', evidence: block, score: 120 });
+		}
+
+		if (
+			/\b(tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo)\b/.test(
+				normalizedLine,
+			) &&
+			/\b(motocicleta|motocicletas|moto|motos)\b/.test(normalizedBlock)
+		) {
+			candidates.push({ modality: 'motorcycle', evidence: block, score: 110 });
+		}
+
+		if (
+			/\bramo\b/.test(normalizedLine) &&
+			/\bautomovel\b/.test(normalizedBlock)
+		) {
+			candidates.push({ modality: 'vehicle', evidence: block, score: 120 });
+		}
+
+		if (
+			/\bcategoria(?: de risco)?\b/.test(normalizedLine) &&
+			/\b(automovel|veiculos? de passeio|pick ups? leves?|pickup(?:s)? leves?|suv)\b/.test(
+				normalizedBlock,
+			)
+		) {
+			candidates.push({ modality: 'vehicle', evidence: block, score: 115 });
+		}
+
+		if (
+			/\b(tipo do veiculo|marca modelo do veiculo)\b/.test(normalizedLine) &&
+			/\b(furgao|furgão|van|utilitario|utilitário|pickup|pick up)\b/.test(
+				normalizedBlock,
+			)
+		) {
+			candidates.push({ modality: 'vehicle', evidence: block, score: 105 });
+		}
+	}
+
+	if (candidates.length === 0) {
+		return null;
+	}
+
+	candidates.sort((a, b) => b.score - a.score);
+	const best = candidates[0]!;
+	const conflicting = candidates.find(
+		(candidate) =>
+			candidate.modality !== best.modality && candidate.score >= best.score - 5,
+	);
+
+	if (conflicting) {
+		return null;
+	}
+
+	return { modality: best.modality, evidence: best.evidence };
+}
+
+function resolveSupportedModality(
+	modelModality: 'vehicle' | 'motorcycle' | 'unsupported' | 'unknown',
+	modelEvidence: string | null,
+	sourceText: string,
+): ResolvedModality | null {
+	const sourceResolved = sourceSupportedModality(sourceText);
+
+	if (sourceResolved) {
+		return sourceResolved;
+	}
+
+	if (
+		(modelModality === 'vehicle' || modelModality === 'motorcycle') &&
+		modelEvidence
+	) {
+		return { modality: modelModality, evidence: modelEvidence };
+	}
+
+	return null;
+}
+
 function evidenceContainsRegistration(
 	evidence: string | null | undefined,
 	registration: string,
@@ -1566,10 +1673,13 @@ TIPO DE DOCUMENTO
 - Status "Emitido" e número de apólice não transformam um endosso em proposta/apólice nova.
 
 MODALIDADE
-- carro, utilitário, SUV, pickup leve etc. => vehicle;
+- carro, utilitário, SUV, pickup leve, furgão, van e utilitário comercial leve => vehicle;
 - moto/motocicleta => motorcycle;
-- caminhão, cavalo mecânico ou outra modalidade => unsupported;
-- não use finalidade de uso para decidir modalidade.
+- caminhão pesado, cavalo mecânico ou outra modalidade fora do escopo => unsupported;
+- "Ramo: Automóvel" é evidência forte de vehicle quando os dados do veículo não identificarem caminhão pesado/cavalo mecânico;
+- categoria como "Pick-ups leves" ou "Veículos de passeio" => vehicle;
+- não use finalidade de uso para decidir modalidade;
+- "Fretamento (carga/serviços)", entregas, uso comercial ou transporte de carga descrevem USO, não transformam automaticamente um furgão/pickup leve em caminhão.
 
 SEGURADO E CONDUTOR
 - segurado/proponente não é automaticamente o condutor;
@@ -1841,14 +1951,16 @@ function finalizeModelOutput(
 		);
 	}
 
-	if (raw.modality !== 'vehicle' && raw.modality !== 'motorcycle') {
+	const resolvedModality = resolveSupportedModality(
+		raw.modality,
+		raw.modalityEvidence,
+		sourceText,
+	);
+
+	if (!resolvedModality) {
 		throw new Error(
 			'Modalidade não suportada ou não identificada com segurança',
 		);
-	}
-
-	if (!raw.modalityEvidence) {
-		throw new Error('Modalidade identificada sem evidência');
 	}
 
 	if (raw.renewal === null || !raw.renewalEvidence) {
@@ -1949,7 +2061,7 @@ function finalizeModelOutput(
 	return SchemaDataExtract.parse({
 		latestProposal: raw.latestProposal,
 		renewal: raw.renewal,
-		modality: raw.modality,
+		modality: resolvedModality.modality,
 		insuranceCompany: company,
 		insured: {
 			name: insured.name,
@@ -2085,7 +2197,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v33:${hash}`;
+				const cacheKey = `pdf-extract:v34:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
