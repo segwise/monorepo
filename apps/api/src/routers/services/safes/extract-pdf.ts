@@ -272,6 +272,26 @@ function compactAlphanumeric(value: string): string {
 	return value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 }
 
+function isExplicitPlateAbsenceValue(
+	value: string | null | undefined,
+): boolean {
+	if (!value) {
+		return false;
+	}
+
+	const trimmed = value.trim();
+
+	if (/^[-–—]+$/.test(trimmed)) {
+		return true;
+	}
+
+	const normalized = normalizeText(trimmed);
+
+	return /^(a avisar|avisar|sem placa|s placa|splaca|nao possui placa|placa nao informada|nao informada)$/.test(
+		normalized,
+	);
+}
+
 function evidenceShowsExplicitPlateAbsence(
 	evidence: string | null | undefined,
 ): boolean {
@@ -279,17 +299,22 @@ function evidenceShowsExplicitPlateAbsence(
 		return false;
 	}
 
+	if (isExplicitPlateAbsenceValue(evidence)) {
+		return true;
+	}
+
 	const normalized = normalizeText(evidence);
 
 	if (
-		/\b(a avisar|avisar|sem placa|s placa|zero km sem placa|0 km sem placa)\b/.test(
+		/\b(a avisar|avisar|sem placa|s placa|zero km sem placa|0 km sem placa|placa nao informada)\b/.test(
 			normalized,
 		)
 	) {
 		return true;
 	}
 
-	return /(?:^|\b)placa\s*[:=-]?\s*-\s*(?:$|\n|\r)/i.test(evidence);
+	// Exemplos: "Placa: -", "Placa -", "PLACA —".
+	return /\bplaca\b\s*:?\s*[-–—]+(?:\s|$)/i.test(evidence);
 }
 
 function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
@@ -304,31 +329,31 @@ function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
 		}
 
 		const start = Math.max(0, index - 1);
-		const end = Math.min(lines.length, index + 4);
+		const end = Math.min(lines.length, index + 6);
 		const block = lines.slice(start, end).join('\n');
 		const normalizedBlock = normalizeText(block);
 
 		if (
-			/\b(a avisar|avisar|sem placa|s placa|zero km sem placa|0 km sem placa)\b/.test(
+			/\b(a avisar|avisar|sem placa|s placa|zero km sem placa|0 km sem placa|placa nao informada)\b/.test(
 				normalizedBlock,
 			)
 		) {
 			return true;
 		}
 
-		// Layouts tabulares (Porto/Azul/Itaú, por exemplo) podem extrair o cabeçalho
-		// "Placa Chassi Veículo..." em uma linha e os valores na linha seguinte.
-		// Quando a primeira célula da linha de valores é "-", isso é uma ausência
-		// explícita de placa, não uma falha de leitura.
+		if (/\bplaca\b\s*:?\s*[-–—]+(?:\s|$)/i.test(block)) {
+			return true;
+		}
+
+		// Alguns extratores preservam a tabela em duas linhas: cabeçalho em uma
+		// linha e a primeira célula da linha de valores como "-".
 		const followingLines = lines.slice(
 			index + 1,
-			Math.min(lines.length, index + 4),
+			Math.min(lines.length, index + 6),
 		);
 
 		if (
-			followingLines.some((candidate) =>
-				/^\s*-\s+(?:[A-Z0-9]{8,}|\S+)/i.test(candidate),
-			)
+			followingLines.some((candidate) => /^\s*[-–—]+(?:\s+|$)/.test(candidate))
 		) {
 			return true;
 		}
@@ -354,7 +379,7 @@ function sourceContainsPlateNear(sourceText: string, plate: string): boolean {
 		}
 
 		const start = Math.max(0, index - 1);
-		const end = Math.min(lines.length, index + 4);
+		const end = Math.min(lines.length, index + 6);
 		const block = compactAlphanumeric(lines.slice(start, end).join(' '));
 
 		if (block.includes(expected)) {
@@ -369,11 +394,19 @@ function resolveVehiclePlate(
 	vehicle: ModelOutput['vehicle'],
 	sourceText: string,
 ): string | null {
-	const parsedPlate = SchemaPlateLenient.parse(vehicle.plate);
+	const rawPlateIsExplicitlyAbsent = isExplicitPlateAbsenceValue(vehicle.plate);
+	const parsedPlate = rawPlateIsExplicitlyAbsent
+		? null
+		: SchemaPlateLenient.parse(vehicle.plate);
 
+	const evidenceConfirmsAbsence = evidenceShowsExplicitPlateAbsence(
+		vehicle.plateEvidence,
+	);
+	const sourceConfirmsAbsence = sourceShowsExplicitPlateAbsence(sourceText);
 	const explicitAbsence =
-		evidenceShowsExplicitPlateAbsence(vehicle.plateEvidence) ||
-		sourceShowsExplicitPlateAbsence(sourceText);
+		rawPlateIsExplicitlyAbsent ||
+		evidenceConfirmsAbsence ||
+		sourceConfirmsAbsence;
 
 	if (parsedPlate) {
 		if (explicitAbsence) {
@@ -396,9 +429,11 @@ function resolveVehiclePlate(
 		return parsedPlate;
 	}
 
-	// A classificação da IA não é soberana. Se ela marcou "present" mas o
-	// próprio PDF mostra "-", "SEM PLACA", "A AVISAR" etc., prevalece o
-	// documento e a placa resultante é null. O mesmo vale para status "unknown".
+	// O valor bruto "-", "A AVISAR", "SEM PLACA" etc. já representa uma
+	// ausência explícita. Isso é importante em PDFs zero-km nos quais o texto
+	// linearizado pode perder a célula "-", embora a visão a leia corretamente.
+	// Nesses casos, plateStatus é apenas auxiliar e não pode converter uma
+	// ausência explícita em erro só porque o modelo o classificou como "present".
 	if (explicitAbsence) {
 		return null;
 	}
@@ -408,7 +443,9 @@ function resolveVehiclePlate(
 	}
 
 	if (vehicle.plateStatus === 'present') {
-		throw new Error('Placa informada não pôde ser validada');
+		throw new Error(
+			'A IA indicou existência de placa, mas não retornou uma placa brasileira válida nem evidência de ausência explícita',
+		);
 	}
 
 	throw new Error('Não foi possível determinar a placa com segurança');
@@ -1064,8 +1101,10 @@ SEGURADO E CONDUTOR
 - ano do veículo = ANO MODELO quando fabricação/modelo forem diferentes.
 
 PLACA
-- "plateStatus" = "present" somente quando houver placa válida impressa;
-- "explicitly_absent" somente quando o documento mostrar claramente ausência, por exemplo "-", "A AVISAR", "SEM PLACA" ou equivalente;
+- "plateStatus" = "present" somente quando houver placa brasileira válida impressa;
+- quando o campo visual da placa mostrar "-", "A AVISAR", "SEM PLACA", "S/ PLACA" ou equivalente, retorne "plate":null e "plateStatus":"explicitly_absent";
+- NUNCA retorne "-" como valor de "plate"; use null nesses casos;
+- "plateEvidence" deve transcrever o menor trecho que mostre a placa ou sua ausência explícita;
 - se você apenas não conseguir localizar a placa, use "unknown", não "explicitly_absent".
 
 USO DO VEÍCULO
@@ -1501,7 +1540,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v17:${hash}`;
+				const cacheKey = `pdf-extract:v18:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
