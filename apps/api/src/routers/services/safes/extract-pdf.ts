@@ -717,15 +717,16 @@ function evidenceSupportsInstallments(
 	const directPatterns = [
 		new RegExp(`\\b${installments}\\s*x\\b`, 'i'),
 		new RegExp(`\\b${installments}\\s*parc(?:ela)?s?\\b`, 'i'),
-		new RegExp(`parcelas?\\s*[:=-]?\\s*${installments}\\b`, 'i'),
+		new RegExp(`parcelas?\\s*[:=-]?\\s*0*${installments}\\b`, 'i'),
 		new RegExp(
-			`numero\\s+de\\s+parcelas?\\s*[:=-]?\\s*${installments}\\b`,
+			`numero\\s+de\\s+parcelas?\\s*[:=-]?\\s*0*${installments}\\b`,
 			'i',
 		),
 		new RegExp(
-			`quant(?:idade)?\\.?\\s*parcelas?\\s*[:=-]?\\s*${installments}\\b`,
+			`quant(?:idade)?\\.?\\s*(?:de\\s+)?parcelas?\\s*[:=-]?\\s*0*${installments}\\b`,
 			'i',
 		),
+		new RegExp(`em\\s+0*${installments}\\s+parcelas?\\b`, 'i'),
 	];
 
 	if (directPatterns.some((pattern) => pattern.test(normalized))) {
@@ -744,6 +745,101 @@ function evidenceSupportsInstallments(
 	}
 
 	return false;
+}
+
+function installmentCandidatesFromSource(sourceText: string): number[] {
+	const candidates = new Set<number>();
+	const lines = sourceText.split('\n');
+
+	const addCandidate = (value: number) => {
+		if (Number.isInteger(value) && value >= 1 && value <= 60) {
+			candidates.add(value);
+		}
+	};
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const contextStart = Math.max(0, index - 1);
+		const contextEnd = Math.min(lines.length, index + 2);
+		const block = lines.slice(contextStart, contextEnd).join(' ');
+		const normalizedBlock = normalizeText(block);
+
+		if (
+			!/parcela|forma de pagamento|forma de cobranca|informacoes de pagamento|codigo do plano|tipo de cobranca/.test(
+				normalizedBlock,
+			)
+		) {
+			continue;
+		}
+
+		const quantityPatterns = [
+			/quant(?:idade)?\.?\s*(?:de\s+)?parcelas?\s*[:=-]?\s*0*(\d{1,2})\b/i,
+			/n(?:u|ú)mero\s*(?:de\s+)?parcelas?\s*[:=-]?\s*0*(\d{1,2})\b/i,
+			/\b0*(\d{1,2})\s*x\b/i,
+			/\b0*(\d{1,2})\s*parc(?:ela)?s?\b/i,
+			/\bem\s+0*(\d{1,2})\s+parcelas?\b/i,
+		];
+
+		for (const pattern of quantityPatterns) {
+			const match = block.match(pattern);
+			if (match?.[1]) {
+				addCandidate(Number(match[1]));
+			}
+		}
+
+		const split = block.match(/\b(\d{1,2})\s*\+\s*(\d{1,2})\b/);
+		if (split?.[1] && split[2]) {
+			addCandidate(Number(split[1]) + Number(split[2]));
+		}
+	}
+
+	return [...candidates].sort((a, b) => a - b);
+}
+
+function resolveInstallments(
+	raw: ModelOutput['financial'],
+	sourceText: string,
+): number {
+	const sourceCandidates = installmentCandidatesFromSource(sourceText);
+
+	if (sourceCandidates.length === 1) {
+		const sourceInstallments = sourceCandidates[0] as number;
+
+		if (raw.installments !== null && raw.installments !== sourceInstallments) {
+			console.warn(
+				`[extract-pdf] parcelas corrigidas pela evidência estrutural: modelo=${raw.installments} documento=${sourceInstallments}`,
+			);
+		}
+
+		return sourceInstallments;
+	}
+
+	if (
+		raw.installments !== null &&
+		raw.installments >= 1 &&
+		evidenceSupportsInstallments(raw.installmentsEvidence, raw.installments)
+	) {
+		return raw.installments;
+	}
+
+	if (
+		raw.installments !== null &&
+		raw.installments >= 1 &&
+		sourceCandidates.includes(raw.installments)
+	) {
+		return raw.installments;
+	}
+
+	if (sourceCandidates.length > 1) {
+		throw new Error(
+			`Quantidade de parcelas ambígua no documento: ${sourceCandidates.join(', ')}`,
+		);
+	}
+
+	if (raw.installments === null || raw.installments < 1) {
+		throw new Error('Não foi possível determinar a quantidade de parcelas');
+	}
+
+	throw new Error('A evidência não confirma a quantidade de parcelas');
 }
 
 const COMPANY_STOP_WORDS = new Set([
@@ -1078,48 +1174,72 @@ const SchemaDataExtract = z
 
 type DataExtract = z.infer<typeof SchemaDataExtract>;
 
-const SchemaModelMoneyNullable = z.preprocess(
-	parseBrazilianNumber,
-	z.number().finite().nullable(),
-);
+const SchemaModelNullableString = z
+	.string()
+	.nullish()
+	.transform((value) => value ?? null);
 
-const SchemaModelIntegerNullable = z.preprocess(
-	parseInteger,
-	z.number().int().nullable(),
-);
+const SchemaModelMoneyNullable = z
+	.preprocess(parseBrazilianNumber, z.number().finite().nullish())
+	.transform((value) => value ?? null);
+
+const SchemaModelIntegerNullable = z
+	.preprocess(parseInteger, z.number().int().nullish())
+	.transform((value) => value ?? null);
+
+const SchemaModelMoneyArray = z
+	.array(z.preprocess(parseBrazilianNumber, z.number().finite()))
+	.nullish()
+	.transform((value) => value ?? []);
+
+const SchemaModelNonNegativeMoneyArray = z
+	.array(z.preprocess(parseBrazilianNumber, z.number().finite().nonnegative()))
+	.nullish()
+	.transform((value) => value ?? []);
 
 const SchemaModelOutput = z
 	.object({
 		documentKind: z.enum(['proposal', 'policy', 'endorsement', 'unknown']),
-		latestProposal: z.string().nullable(),
-		renewal: z.boolean().nullable(),
-		renewalEvidence: z.string().nullable(),
+		latestProposal: SchemaModelNullableString,
+		renewal: z
+			.boolean()
+			.nullish()
+			.transform((value) => value ?? null),
+		renewalEvidence: SchemaModelNullableString,
 		modality: z.enum(['vehicle', 'motorcycle', 'unsupported', 'unknown']),
-		modalityEvidence: z.string().nullable(),
+		modalityEvidence: SchemaModelNullableString,
 		insuranceCompany: z
 			.object({
-				index: z.number().int().min(1).nullable(),
-				basis: z.enum(['commercial_brand', 'legal_issuer']).nullable(),
-				evidence: z.string().nullable(),
+				index: z
+					.number()
+					.int()
+					.min(1)
+					.nullish()
+					.transform((value) => value ?? null),
+				basis: z
+					.enum(['commercial_brand', 'legal_issuer'])
+					.nullish()
+					.transform((value) => value ?? null),
+				evidence: SchemaModelNullableString,
 			})
 			.strict(),
 		insured: z
 			.object({
-				name: z.string().nullable(),
-				registration: z.string().nullable(),
-				phone: z.string().nullable(),
-				birth: z.string().nullable(),
-				profession: z.string().nullable(),
-				evidence: z.string().nullable(),
-				phoneEvidence: z.string().nullable(),
+				name: SchemaModelNullableString,
+				registration: SchemaModelNullableString,
+				phone: SchemaModelNullableString,
+				birth: SchemaModelNullableString,
+				profession: SchemaModelNullableString,
+				evidence: SchemaModelNullableString,
+				phoneEvidence: SchemaModelNullableString,
 			})
 			.strict(),
 		vehicle: z
 			.object({
-				plate: z.string().nullable(),
+				plate: SchemaModelNullableString,
 				plateStatus: z.enum(['present', 'explicitly_absent', 'unknown']),
-				plateEvidence: z.string().nullable(),
-				model: z.string().nullable(),
+				plateEvidence: SchemaModelNullableString,
+				model: SchemaModelNullableString,
 				year: SchemaModelIntegerNullable,
 				usage: z
 					.enum([
@@ -1133,7 +1253,7 @@ const SchemaModelOutput = z
 						'tourism',
 					])
 					.nullable(),
-				overnightStayPostalCode: z.string().nullable(),
+				overnightStayPostalCode: SchemaModelNullableString,
 				driverRelation: z
 					.enum(['insured', 'other', 'unknown'])
 					.nullish()
@@ -1144,10 +1264,10 @@ const SchemaModelOutput = z
 					.transform((value) => value ?? null),
 				driver: z
 					.object({
-						name: z.string().nullable(),
+						name: SchemaModelNullableString,
 						cpf: z.string().nullable(),
-						birth: z.string().nullable(),
-						evidence: z.string().nullable(),
+						birth: SchemaModelNullableString,
+						evidence: SchemaModelNullableString,
 					})
 					.strict()
 					.nullable(),
@@ -1155,28 +1275,24 @@ const SchemaModelOutput = z
 			.strict(),
 		vigency: z
 			.object({
-				requestedAt: z.string().nullable(),
-				expirationAt: z.string().nullable(),
-				effectivedAt: z.string().nullable(),
-				evidence: z.string().nullable(),
+				requestedAt: SchemaModelNullableString,
+				expirationAt: SchemaModelNullableString,
+				effectivedAt: SchemaModelNullableString,
+				evidence: SchemaModelNullableString,
 			})
 			.strict(),
 		financial: z
 			.object({
 				award: SchemaModelMoneyNullable,
-				awardComponents: z.array(
-					z.preprocess(parseBrazilianNumber, z.number().finite()),
-				),
-				awardEvidence: z.string().nullable(),
-				nonLiquidCharges: z.array(
-					z.preprocess(parseBrazilianNumber, z.number().finite().nonnegative()),
-				),
+				awardComponents: SchemaModelMoneyArray,
+				awardEvidence: SchemaModelNullableString,
+				nonLiquidCharges: SchemaModelNonNegativeMoneyArray,
 				finalTotal: SchemaModelMoneyNullable,
-				financialEvidence: z.string().nullable(),
+				financialEvidence: SchemaModelNullableString,
 				installments: SchemaModelIntegerNullable,
-				installmentsEvidence: z.string().nullable(),
+				installmentsEvidence: SchemaModelNullableString,
 				franchise: SchemaModelMoneyNullable,
-				franchiseEvidence: z.string().nullable(),
+				franchiseEvidence: SchemaModelNullableString,
 			})
 			.strict(),
 	})
@@ -1477,6 +1593,8 @@ PARCELAS
 - "1+3" => 4;
 - em "2412 - CR - 12 parc", 2412 é código do plano e 12 é a quantidade.
 "installmentsEvidence" deve transcrever o trecho que comprova a quantidade.
+- Em layouts Bradesco, "Quant. Parcelas: 04" significa 4 parcelas; não confunda "1º Parcela" com a quantidade total.
+- Se a tabela trouxer o cabeçalho "Parcelas" e a linha de pagamento contiver "10x", a quantidade é 10.
 
 FRANQUIA
 "franchise" = franquia PRINCIPAL do risco/veículo, sempre existente neste domínio.
@@ -1604,15 +1722,7 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 		);
 	}
 
-	if (raw.installments === null || raw.installments < 1) {
-		throw new Error('Não foi possível determinar a quantidade de parcelas');
-	}
-
-	if (
-		!evidenceSupportsInstallments(raw.installmentsEvidence, raw.installments)
-	) {
-		throw new Error('A evidência não confirma a quantidade de parcelas');
-	}
+	const installments = resolveInstallments(raw, sourceText);
 
 	if (raw.franchise === null || raw.franchise <= 0) {
 		throw new Error('Não foi possível determinar a franquia principal');
@@ -1637,7 +1747,7 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 
 	return {
 		award: raw.award,
-		installments: raw.installments,
+		installments,
 		franchise: raw.franchise,
 	};
 }
@@ -1906,7 +2016,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v26:${hash}`;
+				const cacheKey = `pdf-extract:v29:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
