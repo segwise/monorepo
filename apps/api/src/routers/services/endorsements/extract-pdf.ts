@@ -103,6 +103,189 @@ function digitsOnly(value: string): string {
 	return value.replace(/\D/g, '');
 }
 
+function uniquePostalCodesFromText(text: string): Array<string> {
+	const matches = text.match(/\b\d{5}-?\d{3}\b/g) ?? [];
+	const values = new Set<string>();
+
+	for (const match of matches) {
+		const parsed = SchemaPostalCode.safeParse(digitsOnly(match));
+
+		if (parsed.success) {
+			values.add(parsed.data);
+		}
+	}
+
+	return [...values];
+}
+
+function fiveDigitPostalPrefixes(text: string): Array<string> {
+	return [...new Set(text.match(/\b\d{5}\b/g) ?? [])];
+}
+
+function endorsementPostalContextBlocks(sourceText: string): Array<string> {
+	const lines = sourceText.split('\n');
+	const blocks: Array<string> = [];
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!normalizedLine.includes('cep pernoite') &&
+			!normalizedLine.includes('cep de pernoite') &&
+			!normalizedLine.includes('cep onde pernoita') &&
+			!normalizedLine.includes('local de risco') &&
+			!normalizedLine.includes('endereco de risco') &&
+			!normalizedLine.includes('novo cep') &&
+			!normalizedLine.includes('cep novo') &&
+			!normalizedLine.includes('novo endereco') &&
+			!normalizedLine.includes('alteracao de endereco') &&
+			!normalizedLine.includes('alteracao do endereco')
+		) {
+			continue;
+		}
+
+		const start = Math.max(0, index - 2);
+		const end = Math.min(lines.length, index + 9);
+		blocks.push(lines.slice(start, end).join('\n'));
+	}
+
+	return blocks;
+}
+
+function resolveEndorsementPostalCode(
+	rawValue: string | null,
+	sourceText: string,
+): string {
+	if (rawValue) {
+		const direct = SchemaPostalCode.safeParse(digitsOnly(rawValue));
+
+		if (direct.success) {
+			return direct.data;
+		}
+	}
+
+	const allFullPostalCodes = uniquePostalCodesFromText(sourceText);
+	const contextBlocks = endorsementPostalContextBlocks(sourceText);
+	const rawPrefixes = new Set<string>();
+	const contextPrefixes = new Set<string>();
+
+	if (rawValue) {
+		for (const prefix of fiveDigitPostalPrefixes(rawValue)) {
+			rawPrefixes.add(prefix);
+		}
+
+		const compactRaw = digitsOnly(rawValue);
+
+		if (compactRaw.length === 5) {
+			rawPrefixes.add(compactRaw);
+		}
+	}
+
+	// Se a IA trouxe um prefixo de 5 dígitos para o NOVO CEP, ele é a evidência
+	// mais específica. Primeiro tentamos encontrar no documento um único CEP
+	// completo que comece por esse prefixo.
+	if (rawPrefixes.size === 1) {
+		const [prefix] = rawPrefixes;
+
+		if (prefix) {
+			const compatible = allFullPostalCodes.filter((candidate) =>
+				digitsOnly(candidate).startsWith(prefix),
+			);
+
+			if (compatible.length === 1) {
+				return compatible[0] as string;
+			}
+
+			if (compatible.length > 1) {
+				throw new Error(
+					'Novo CEP do endosso aparece apenas parcialmente e corresponde a mais de um CEP completo no documento',
+				);
+			}
+
+			// Não existe CEP completo compatível em nenhum outro ponto do PDF.
+			// Preservamos a região postal preenchendo zeros somente à direita.
+			// Ex.: 50630 -> 50630000.
+			const regionalPostalCode = SchemaPostalCode.safeParse(
+				prefix.padEnd(8, '0'),
+			);
+
+			if (regionalPostalCode.success) {
+				return regionalPostalCode.data;
+			}
+		}
+	}
+
+	if (rawPrefixes.size > 1) {
+		throw new Error(
+			'Novo CEP do endosso aparece apenas parcialmente e há mais de um prefixo regional possível',
+		);
+	}
+
+	// Fallback para quando a IA não conseguiu retornar o CEP, mas o documento
+	// contém o novo endereço/CEP em contexto forte de alteração.
+	const contextFullCodes = new Set<string>();
+
+	for (const block of contextBlocks) {
+		for (const postalCode of uniquePostalCodesFromText(block)) {
+			contextFullCodes.add(postalCode);
+		}
+
+		for (const prefix of fiveDigitPostalPrefixes(block)) {
+			contextPrefixes.add(prefix);
+		}
+	}
+
+	if (contextFullCodes.size === 1) {
+		const [postalCode] = contextFullCodes;
+
+		if (postalCode) {
+			return postalCode;
+		}
+	}
+
+	if (contextFullCodes.size > 1) {
+		throw new Error(
+			'Há mais de um CEP completo possível no contexto da alteração de endereço',
+		);
+	}
+
+	if (contextPrefixes.size === 1) {
+		const [prefix] = contextPrefixes;
+
+		if (prefix) {
+			const compatible = allFullPostalCodes.filter((candidate) =>
+				digitsOnly(candidate).startsWith(prefix),
+			);
+
+			if (compatible.length === 1) {
+				return compatible[0] as string;
+			}
+
+			if (compatible.length > 1) {
+				throw new Error(
+					'Novo CEP do endosso aparece apenas parcialmente e corresponde a mais de um CEP completo no documento',
+				);
+			}
+
+			const regionalPostalCode = SchemaPostalCode.safeParse(
+				prefix.padEnd(8, '0'),
+			);
+
+			if (regionalPostalCode.success) {
+				return regionalPostalCode.data;
+			}
+		}
+	}
+
+	if (contextPrefixes.size > 1) {
+		throw new Error(
+			'Há mais de um prefixo de CEP possível no contexto da alteração de endereço',
+		);
+	}
+
+	throw new Error('Endosso de endereço sem novo CEP confirmado');
+}
+
 function evidenceContainsRegistration(
 	evidence: string | null | undefined,
 	registration: string,
@@ -630,7 +813,10 @@ const SchemaModelAddress = z
 		lookup: SchemaModelLookup,
 		data: z
 			.object({
-				postalCode: z.string().nullable(),
+				postalCode: z
+					.string()
+					.nullish()
+					.transform((value) => value ?? null),
 			})
 			.merge(SchemaModelFinancial)
 			.strict(),
@@ -767,6 +953,13 @@ Se o próprio documento trouxer Preço Líquido negativo, preserve a natureza de
 "nonLiquidCharges" = IOF, juros, encargos e custos adicionados ao líquido para chegar ao total final; não inclua zeros.
 "finalTotal" = total final com tributos/encargos, somente para conferência.
 "financialEvidence" deve trazer os trechos curtos usados para conferir líquido + encargos + total.
+
+ENDEREÇO / CEP
+Para address, "data.postalCode" é o NOVO CEP resultante do endosso.
+- se o documento trouxer o CEP completo com 8 dígitos, retorne o CEP completo;
+- se o campo trouxer somente um prefixo regional de 5 dígitos, por exemplo "50630", retorne exatamente "50630";
+- NÃO invente os 3 dígitos finais. O sistema tentará localizar um CEP completo compatível em outro ponto do documento e, se não existir, normalizará o prefixo regional preenchendo zeros à direita (50630 -> 50630000);
+- não use CEP antigo, CEP do corretor ou CEP de correspondência sem evidência de que seja o novo CEP resultante da alteração.
 
 COMISSÃO
 "percentage" é EXCLUSIVAMENTE percentual de comissão do corretor.
@@ -1219,17 +1412,17 @@ function finalizeModelOutput(
 		}
 
 		case 'address': {
-			if (!raw.data.postalCode) {
-				throw new Error('Endosso de endereço sem novo CEP confirmado');
-			}
-
+			const postalCode = resolveEndorsementPostalCode(
+				raw.data.postalCode,
+				sourceText,
+			);
 			const financial = normalizeFinancialData(raw.data, sourceText);
 
 			return SchemaDataExtractAddress.parse({
 				type: 'address',
 				lookup,
 				data: {
-					postalCode: raw.data.postalCode,
+					postalCode,
 					amount: financial.amount,
 					percentage: financial.percentage,
 				},
@@ -1393,7 +1586,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v24:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v27:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;

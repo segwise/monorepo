@@ -268,6 +268,160 @@ function sourceContainsPhoneNear(
 	return false;
 }
 
+function uniquePostalCodesFromText(text: string): Array<string> {
+	const matches = text.match(/\b\d{5}-?\d{3}\b/g) ?? [];
+	const values = new Set<string>();
+
+	for (const match of matches) {
+		const parsed = SchemaPostalCode.safeParse(digitsOnly(match));
+
+		if (parsed.success) {
+			values.add(parsed.data);
+		}
+	}
+
+	return [...values];
+}
+
+function fiveDigitPostalPrefixes(text: string): Array<string> {
+	return [...new Set(text.match(/\b\d{5}\b/g) ?? [])];
+}
+
+function pernoiteContextBlocks(sourceText: string): Array<string> {
+	const lines = sourceText.split('\n');
+	const blocks: Array<string> = [];
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!normalizedLine.includes('cep pernoite') &&
+			!normalizedLine.includes('cep de pernoite') &&
+			!normalizedLine.includes('cep onde pernoita') &&
+			!normalizedLine.includes('cep onde o veiculo pernoita')
+		) {
+			continue;
+		}
+
+		const start = Math.max(0, index - 1);
+		const end = Math.min(lines.length, index + 8);
+		blocks.push(lines.slice(start, end).join('\n'));
+	}
+
+	return blocks;
+}
+
+function resolveOvernightStayPostalCode(
+	rawValue: string | null,
+	sourceText: string,
+): string {
+	if (rawValue) {
+		const direct = SchemaPostalCode.safeParse(digitsOnly(rawValue));
+
+		if (direct.success) {
+			return direct.data;
+		}
+	}
+
+	const allFullPostalCodes = uniquePostalCodesFromText(sourceText);
+	const pernoiteBlocks = pernoiteContextBlocks(sourceText);
+
+	// Alguns layouts (especialmente Yelum) imprimem no campo de pernoite apenas
+	// o prefixo regional de 5 dígitos, por exemplo:
+	// "Reg. Tarif./CEP Pernoite 2300 / 50630".
+	//
+	// Regra de resolução:
+	// 1. se houver um único CEP completo no documento com o mesmo prefixo, usamos ele;
+	// 2. se não houver CEP completo compatível, preservamos a informação regional
+	//    completando à direita com zeros: 50630 -> 50630000;
+	// 3. se houver mais de um prefixo plausível, rejeitamos em vez de escolher um.
+	const rawPrefixes = new Set<string>();
+	const prefixes = new Set<string>();
+
+	if (rawValue) {
+		for (const prefix of fiveDigitPostalPrefixes(rawValue)) {
+			rawPrefixes.add(prefix);
+			prefixes.add(prefix);
+		}
+
+		const compactRaw = digitsOnly(rawValue);
+
+		if (compactRaw.length === 5) {
+			rawPrefixes.add(compactRaw);
+			prefixes.add(compactRaw);
+		}
+	}
+
+	for (const block of pernoiteBlocks) {
+		const fullCodesInBlock = uniquePostalCodesFromText(block);
+
+		if (fullCodesInBlock.length === 1) {
+			return fullCodesInBlock[0] as string;
+		}
+
+		for (const prefix of fiveDigitPostalPrefixes(block)) {
+			prefixes.add(prefix);
+		}
+	}
+
+	const compatible = new Set<string>();
+
+	for (const prefix of prefixes) {
+		for (const candidate of allFullPostalCodes) {
+			if (digitsOnly(candidate).startsWith(prefix)) {
+				compatible.add(candidate);
+			}
+		}
+	}
+
+	if (compatible.size === 1) {
+		const [resolved] = compatible;
+
+		if (resolved) {
+			return resolved;
+		}
+	}
+
+	if (compatible.size > 1) {
+		throw new Error(
+			'CEP de pernoite aparece apenas parcialmente e corresponde a mais de um CEP completo no documento',
+		);
+	}
+
+	// Se nenhum CEP completo compatível existir, o prefixo de 5 dígitos ainda
+	// identifica a região postal. Nesse caso completamos somente à direita com
+	// zeros para produzir um CEP de 8 dígitos válido para persistência.
+	// Ex.: 50630 -> 50630000.
+	// Damos prioridade ao prefixo retornado especificamente para o campo de
+	// pernoite; só usamos os prefixos encontrados no bloco textual quando a IA
+	// não retornou nenhum prefixo aproveitável.
+	const fallbackPrefixes = rawPrefixes.size > 0 ? rawPrefixes : prefixes;
+
+	if (fallbackPrefixes.size === 1) {
+		const [prefix] = fallbackPrefixes;
+
+		if (prefix) {
+			const regionalPostalCode = SchemaPostalCode.safeParse(
+				prefix.padEnd(8, '0'),
+			);
+
+			if (regionalPostalCode.success) {
+				return regionalPostalCode.data;
+			}
+		}
+	}
+
+	if (fallbackPrefixes.size > 1) {
+		throw new Error(
+			'CEP de pernoite aparece apenas parcialmente e há mais de um prefixo regional possível',
+		);
+	}
+
+	throw new Error(
+		'Não foi possível determinar o CEP de pernoite com segurança',
+	);
+}
+
 function compactAlphanumeric(value: string): string {
 	return value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 }
@@ -1276,6 +1430,14 @@ PLACA
 - "plateEvidence" deve transcrever o menor trecho que mostre a placa ou sua ausência explícita;
 - se você apenas não conseguir localizar a placa, use "unknown", não "explicitly_absent".
 
+CEP DE PERNOITE
+- "overnightStayPostalCode" representa o CEP onde o veículo pernoita, não necessariamente o CEP cadastral do segurado;
+- prefira o CEP completo de 8 dígitos quando estiver explicitamente disponível;
+- alguns layouts mostram apenas um prefixo de 5 dígitos no campo de pernoite, por exemplo "Reg. Tarif./CEP Pernoite 2300 / 50630";
+- nesse caso, se existir no próprio documento um ÚNICO CEP completo começando pelo mesmo prefixo, retorne esse CEP completo;
+- se não existir CEP completo compatível em nenhum outro ponto do documento, retorne o prefixo de 5 dígitos exatamente como impresso; o sistema irá normalizá-lo como CEP regional preenchendo zeros à direita (ex.: 50630 -> 50630000);
+- se houver mais de um CEP completo possível com o mesmo prefixo, não adivinhe: retorne somente o valor que o documento efetivamente permite identificar.
+
 USO DO VEÍCULO
 Mapeie para exatamente um valor:
 - particular => leisure_and_work;
@@ -1566,16 +1728,15 @@ function finalizeModelOutput(
 
 	const vehicle = raw.vehicle;
 
-	if (
-		!vehicle.model ||
-		vehicle.year === null ||
-		!vehicle.usage ||
-		!vehicle.overnightStayPostalCode
-	) {
+	if (!vehicle.model || vehicle.year === null || !vehicle.usage) {
 		throw new Error('Dados do veículo incompletos ou ambíguos');
 	}
 
 	const plate = resolveVehiclePlate(vehicle, sourceText);
+	const overnightStayPostalCode = resolveOvernightStayPostalCode(
+		vehicle.overnightStayPostalCode,
+		sourceText,
+	);
 
 	const driver = resolvePrincipalDriver({
 		vehicle,
@@ -1623,7 +1784,7 @@ function finalizeModelOutput(
 			model: vehicle.model,
 			year: vehicle.year,
 			usage: vehicle.usage,
-			overnightStayPostalCode: vehicle.overnightStayPostalCode,
+			overnightStayPostalCode,
 			driver: {
 				name: driver.name,
 				cpf: driver.cpf,
@@ -1745,7 +1906,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v24:${hash}`;
+				const cacheKey = `pdf-extract:v26:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
