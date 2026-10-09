@@ -1030,6 +1030,70 @@ const SchemaModelOutput = z
 
 type ModelOutput = z.infer<typeof SchemaModelOutput>;
 
+function sourceConfirmsPrincipalDriverRegistration(
+	sourceText: string,
+	registration: string,
+): boolean {
+	const expected = digitsOnly(registration);
+
+	if (!expected) {
+		return false;
+	}
+
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		const strongDriverLabel =
+			normalizedLine.includes('principal condutor') ||
+			normalizedLine.includes('condutor principal') ||
+			normalizedLine.includes('nome do principal condutor') ||
+			normalizedLine.includes('cpf condutor') ||
+			normalizedLine.includes('informacoes do condutor principal') ||
+			/\bcondutor\b.*\b(?:nascimento|cpf)\b/.test(normalizedLine) ||
+			/\b(?:nascimento|cpf)\b.*\bcondutor\b/.test(normalizedLine) ||
+			normalizedLine === 'condutor';
+
+		if (!strongDriverLabel) {
+			continue;
+		}
+
+		const start = Math.max(0, index - 1);
+		const end = Math.min(lines.length, index + 5);
+		const block = lines.slice(start, end).join(' ');
+
+		if (digitsOnly(block).includes(expected)) {
+			return true;
+		}
+	}
+
+	// Alguns layouts usam um título de questionário e, logo abaixo, uma linha
+	// "Condutor / Nascimento / CPF". Mantemos esta segunda verificação curta e
+	// contextual para não aceitar um CPF encontrado em cláusulas genéricas.
+	return sourceContainsRegistrationNear(sourceText, registration, [
+		'questionario de avaliacao de risco',
+		'dados do perfil',
+	]);
+}
+
+function evidenceConfirmsPrincipalDriverRegistration(
+	evidence: string | null | undefined,
+	registration: string,
+): boolean {
+	if (!evidence || !evidenceContainsRegistration(evidence, registration)) {
+		return false;
+	}
+
+	const normalized = normalizeText(evidence);
+
+	return (
+		normalized.includes('condutor') ||
+		normalized.includes('principal') ||
+		evidenceMarksPrincipalDriverAsInsured(evidence)
+	);
+}
+
 function resolvePrincipalDriver({
 	vehicle,
 	insured,
@@ -1050,12 +1114,46 @@ function resolvePrincipalDriver({
 	}
 
 	const insuredCpf = parseCpfCandidate(insured.registration);
-	const relationEvidence = vehicle.driverEvidence ?? vehicle.driver?.evidence;
+	const modelDriver = vehicle.driver;
+	const modelDriverCpf = parseCpfCandidate(modelDriver?.cpf);
+	const driverEvidence = vehicle.driverEvidence ?? modelDriver?.evidence;
+
 	const sourceSaysInsured = sourceMarksPrincipalDriverAsInsured(sourceText);
 	const evidenceSaysInsured =
-		evidenceMarksPrincipalDriverAsInsured(relationEvidence);
+		evidenceMarksPrincipalDriverAsInsured(driverEvidence);
 
-	if (sourceSaysInsured || evidenceSaysInsured) {
+	const sourceConfirmsInsuredCpf = insuredCpf
+		? sourceConfirmsPrincipalDriverRegistration(sourceText, insuredCpf)
+		: false;
+
+	const evidenceConfirmsInsuredCpf = insuredCpf
+		? evidenceConfirmsPrincipalDriverRegistration(driverEvidence, insuredCpf)
+		: false;
+
+	const modelDriverConfirmed = modelDriverCpf
+		? evidenceConfirmsPrincipalDriverRegistration(
+				driverEvidence,
+				modelDriverCpf,
+			) || sourceConfirmsPrincipalDriverRegistration(sourceText, modelDriverCpf)
+		: false;
+
+	const modelDriverIsInsured =
+		Boolean(insuredCpf && modelDriverCpf) &&
+		digitsOnly(modelDriverCpf as string) === digitsOnly(insuredCpf as string);
+
+	// A relação "segurado = principal condutor" pode ser demonstrada de várias
+	// formas válidas pelo documento:
+	// - "Próprio Segurado" / equivalente;
+	// - o CPF do segurado repetido no campo de principal condutor;
+	// - a IA retornar o mesmo CPF para o condutor e esse CPF estar confirmado
+	//   no contexto de condutor pelo texto/evidência.
+	if (
+		sourceSaysInsured ||
+		evidenceSaysInsured ||
+		sourceConfirmsInsuredCpf ||
+		evidenceConfirmsInsuredCpf ||
+		(modelDriverIsInsured && modelDriverConfirmed)
+	) {
 		if (!insuredCpf) {
 			throw new Error(
 				'O documento informa que o principal condutor é o próprio segurado, mas o segurado não possui CPF válido',
@@ -1065,46 +1163,32 @@ function resolvePrincipalDriver({
 		return {
 			name: insured.name,
 			cpf: insuredCpf,
-			birth: insured.birth,
+			birth: insured.birth ?? modelDriver?.birth ?? null,
 		};
 	}
 
+	// driverRelation é um sinal da IA, não prova suficiente isoladamente.
+	// Só rejeitamos aqui depois de tentar confirmar a relação diretamente no
+	// texto/evidência e também comparar o CPF retornado para o condutor.
 	if (vehicle.driverRelation === 'insured') {
 		throw new Error(
-			'A IA indicou que o principal condutor é o próprio segurado, mas não apresentou evidência suficiente',
+			'A IA indicou que o principal condutor é o próprio segurado, mas o documento não permitiu confirmar essa relação',
 		);
 	}
-
-	const modelDriver = vehicle.driver;
 
 	if (!modelDriver?.name || !modelDriver.cpf) {
 		throw new Error('Principal condutor não identificado com segurança');
 	}
 
-	const driverCpf = parseCpfCandidate(modelDriver.cpf);
-
-	if (!driverCpf) {
+	if (!modelDriverCpf) {
 		throw new Error('CPF do principal condutor inválido');
 	}
 
-	const driverEvidence = vehicle.driverEvidence ?? modelDriver.evidence;
-	const driverRegistrationConfirmed =
-		evidenceContainsRegistration(driverEvidence, driverCpf) ||
-		sourceContainsRegistrationNear(sourceText, driverCpf, [
-			'principal condutor',
-			'condutor principal',
-			'nome do principal condutor',
-			'cpf condutor',
-			'dados do perfil',
-			'questionario de avaliacao de risco',
-			'informacoes do condutor principal',
-		]);
-
-	if (!driverRegistrationConfirmed) {
+	if (!modelDriverConfirmed) {
 		throw new Error('O documento não confirma o CPF do principal condutor');
 	}
 
-	if (insuredCpf && digitsOnly(driverCpf) === digitsOnly(insuredCpf)) {
+	if (insuredCpf && digitsOnly(modelDriverCpf) === digitsOnly(insuredCpf)) {
 		return {
 			name: insured.name,
 			cpf: insuredCpf,
@@ -1114,7 +1198,7 @@ function resolvePrincipalDriver({
 
 	return {
 		name: modelDriver.name,
-		cpf: driverCpf,
+		cpf: modelDriverCpf,
 		birth: modelDriver.birth,
 	};
 }
@@ -1625,7 +1709,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v20:${hash}`;
+				const cacheKey = `pdf-extract:v21:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
