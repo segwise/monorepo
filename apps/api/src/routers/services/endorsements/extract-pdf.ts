@@ -289,6 +289,143 @@ function resolvePrincipalDriverCpf({
 	return null;
 }
 
+function sourceLooksLikeVehicleSubstitutionAdjustment(
+	sourceText: string,
+): boolean {
+	const normalized = normalizeText(sourceText);
+
+	const vehicleChanged =
+		/\bveiculo igual ao anterior nao\b/.test(normalized) ||
+		/\b(substituicao|troca|alteracao) de veiculo\b/.test(normalized);
+
+	const hasNegativeLiquid =
+		/(?:pre[cç]o|pr[eê]mio|valor)\s+l[ií]quido(?:\s+total)?\s*:?\s*R?\$?\s*-\s*\d/i.test(
+			sourceText,
+		);
+
+	const hasCredit = /\bcredito em conta\b/.test(normalized);
+	const hasPreviousPolicy =
+		/\b(apolice anterior|seguradora anterior|fim da vigencia anterior)\b/.test(
+			normalized,
+		);
+
+	return (
+		vehicleChanged && hasPreviousPolicy && (hasNegativeLiquid || hasCredit)
+	);
+}
+
+function sourceLiquidAmount(
+	sourceText: string,
+): { value: number; evidence: string } | null {
+	const lines = sourceText.split('\n');
+	const candidates: Array<{ value: number; evidence: string }> = [];
+
+	const pattern =
+		/(?:pre[cç]o|pr[eê]mio|valor)\s+l[ií]quido(?:\s+total)?\s*:?\s*(?:R\$)?\s*(-?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2})|-?\s*\d+(?:,\d{1,2})?)/i;
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const block = lines
+			.slice(index, Math.min(lines.length, index + 2))
+			.join(' ');
+		const match = block.match(pattern);
+
+		if (!match?.[1]) {
+			continue;
+		}
+
+		const parsed = parseBrazilianNumber(match[1].replace(/\s+/g, ''));
+
+		if (typeof parsed === 'number' && Number.isFinite(parsed)) {
+			candidates.push({ value: parsed, evidence: block.trim() });
+		}
+	}
+
+	if (!candidates.length) {
+		return null;
+	}
+
+	const unique = [
+		...new Map(
+			candidates.map((candidate) => [candidate.value.toFixed(2), candidate]),
+		).values(),
+	];
+
+	return unique.length === 1 ? (unique[0] ?? null) : null;
+}
+
+function sourcePrincipalFranchise(
+	sourceText: string,
+): { value: number; evidence: string } | null {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!normalizedLine.includes('franquia participacao obrigatoria') &&
+			!normalizedLine.includes('indenizacao parcial do veiculo')
+		) {
+			continue;
+		}
+
+		const block = lines
+			.slice(index, Math.min(lines.length, index + 7))
+			.join(' ');
+		const normalizedBlock = normalizeText(block);
+
+		if (
+			!/\b(normal|obrigatoria|basica|reduzida|indenizacao parcial do veiculo)\b/.test(
+				normalizedBlock,
+			)
+		) {
+			continue;
+		}
+
+		const values = numericValuesFromText(block).filter((value) => value > 1);
+
+		// Em tabelas como Allianz, o último valor monetário do pequeno bloco de
+		// franquia principal é o valor da participação obrigatória. Percentuais
+		// (25, 50 etc.) são descartados escolhendo o maior valor plausível.
+		const plausible = values.filter((value) => value >= 100);
+
+		if (plausible.length) {
+			return { value: Math.max(...plausible), evidence: block.trim() };
+		}
+	}
+
+	return null;
+}
+
+function sourceContainsPlateNear(sourceText: string, plate: string): boolean {
+	const expected = plate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+	if (!expected) {
+		return false;
+	}
+
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (!normalizedLine.includes('placa')) {
+			continue;
+		}
+
+		const block = lines
+			.slice(Math.max(0, index - 1), Math.min(lines.length, index + 4))
+			.join(' ')
+			.replace(/[^a-zA-Z0-9]/g, '')
+			.toLowerCase();
+
+		if (block.includes(expected)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
 	const normalized = normalizeText(evidence);
 
@@ -575,6 +712,11 @@ Retorne exatamente um:
 A simples presença de uma franquia no documento NÃO torna o endosso do tipo franchise.
 "typeEvidence" deve ser um trecho curto que prove a finalidade.
 
+ATENÇÃO A ENDOSSOS COM TÍTULO DE "PROPOSTA"
+- Algumas seguradoras usam um layout chamado apenas "PROPOSTA" mesmo para uma alteração durante a vigência.
+- Se o documento mostrar simultaneamente sinais como "Veículo Igual ao Anterior: Não", apólice/seguradora anterior e efeito financeiro de ajuste (por exemplo "Preço Líquido" negativo ou "Crédito em Conta"), trate como vehicle_conductor com changeKind="vehicle".
+- Nesse caso, o valor líquido negativo é restituição/crédito do endosso, NÃO prêmio de uma nova apólice.
+
 LOOKUP DO SEGURO
 - insuredRegistration = CPF/CNPJ do SEGURADO, nunca do condutor, corretor ou titular do cartão;
 - insuredName = nome do SEGURADO;
@@ -692,53 +834,78 @@ function normalizeLookup(
 	});
 }
 
-function normalizeFinancialData(data: z.infer<typeof SchemaModelFinancial>): {
+function normalizeFinancialData(
+	data: z.infer<typeof SchemaModelFinancial>,
+	sourceText: string,
+): {
 	amount: number;
 	percentage: number | null;
 } {
-	if (data.amount === null || !data.amountEvidence) {
+	const sourceAmount = sourceLiquidAmount(sourceText);
+	let rawAmount = data.amount;
+	let amountEvidence = data.amountEvidence;
+
+	if (
+		sourceAmount &&
+		(rawAmount === null ||
+			!amountEvidence ||
+			!evidenceContainsValue(amountEvidence, rawAmount) ||
+			Math.abs(rawAmount - sourceAmount.value) > MONEY_TOLERANCE)
+	) {
+		rawAmount = sourceAmount.value;
+		amountEvidence = sourceAmount.evidence;
+	}
+
+	if (rawAmount === null || !amountEvidence) {
 		throw new Error(
 			'Não foi possível determinar com segurança o valor líquido do endosso',
 		);
 	}
 
-	if (!evidenceContainsValue(data.amountEvidence, data.amount)) {
+	if (!evidenceContainsValue(amountEvidence, rawAmount)) {
 		throw new Error('A evidência não confirma o valor líquido do endosso');
 	}
 
+	const evidence = normalizeText(
+		`${amountEvidence} ${data.financialEvidence ?? ''} ${sourceText}`,
+	);
+
 	let direction = data.amountDirection;
 
-	if (!direction) {
-		if (data.amount < 0) {
-			direction = 'refund';
-		} else if (data.amount > 0) {
+	// Valor líquido negativo ou pagamento em forma de crédito/restituição é uma
+	// evidência mais forte do que a classificação auxiliar da IA.
+	if (
+		rawAmount < 0 ||
+		/\b(credito em conta|restituicao|estorno|devolucao|a restituir)\b/.test(
+			evidence,
+		)
+	) {
+		direction = 'refund';
+	} else if (!direction) {
+		if (rawAmount > 0) {
 			direction = 'charge';
 		} else {
 			throw new Error('Valor zero sem indicação explícita de neutralidade');
 		}
 	}
 
-	const evidence = normalizeText(
-		`${data.amountEvidence} ${data.financialEvidence ?? ''}`,
-	);
-
 	let amount: number;
 
 	switch (direction) {
 		case 'charge': {
-			if (data.amount < 0) {
+			if (rawAmount < 0) {
 				throw new Error(
 					'Endosso marcado como cobrança com valor líquido negativo',
 				);
 			}
 
-			amount = Math.abs(data.amount);
+			amount = Math.abs(rawAmount);
 			break;
 		}
 
 		case 'refund': {
 			const hasRefundSignal =
-				data.amount < 0 ||
+				rawAmount < 0 ||
 				/restituicao|credito|estorno|devolucao|a restituir/.test(evidence);
 
 			if (!hasRefundSignal) {
@@ -747,12 +914,12 @@ function normalizeFinancialData(data: z.infer<typeof SchemaModelFinancial>): {
 				);
 			}
 
-			amount = -Math.abs(data.amount);
+			amount = -Math.abs(rawAmount);
 			break;
 		}
 
 		case 'neutral': {
-			if (Math.abs(data.amount) > 0.01) {
+			if (Math.abs(rawAmount) > 0.01) {
 				throw new Error(
 					'Endosso neutro possui valor financeiro diferente de zero',
 				);
@@ -787,7 +954,7 @@ function normalizeFinancialData(data: z.infer<typeof SchemaModelFinancial>): {
 		}
 
 		assertClose(
-			Math.abs(data.amount) + sum(data.nonLiquidCharges),
+			Math.abs(rawAmount) + sum(data.nonLiquidCharges),
 			Math.abs(data.finalTotal),
 			'Valor líquido, encargos e total final do endosso são inconsistentes',
 		);
@@ -816,16 +983,19 @@ function sourceSupportsEndorsementType(
 
 	switch (type) {
 		case 'vehicle_conductor':
-			return [
-				/\bproposta de endosso de substituicao\b/,
-				/\bendosso de substituicao(?: de)? veiculo\b/,
-				/\bsubstituicao de veiculo\b/,
-				/\btipo de endosso substituicao de veiculo\b/,
-				/\bdados do veiculo substituido\b/,
-				/\balteracao do principal condutor\b/,
-				/\balteracao de principal condutor\b/,
-				/\bsubstituicao de condutor\b/,
-			].some((pattern) => pattern.test(normalized));
+			return (
+				sourceLooksLikeVehicleSubstitutionAdjustment(sourceText) ||
+				[
+					/\bproposta de endosso de substituicao\b/,
+					/\bendosso de substituicao(?: de)? veiculo\b/,
+					/\bsubstituicao de veiculo\b/,
+					/\btipo de endosso substituicao de veiculo\b/,
+					/\bdados do veiculo substituido\b/,
+					/\balteracao do principal condutor\b/,
+					/\balteracao de principal condutor\b/,
+					/\bsubstituicao de condutor\b/,
+				].some((pattern) => pattern.test(normalized))
+			);
 
 		case 'address':
 			return [
@@ -880,17 +1050,23 @@ function normalizeResultingPlate(
 	plate: string | null,
 	status: 'present' | 'explicitly_absent' | 'unknown',
 	evidence: string | null,
+	sourceText: string,
 ): string | null {
 	if (status === 'present') {
 		const normalized = SchemaPlateLenient.parse(plate);
 
-		if (!normalized || !evidence) {
+		if (!normalized) {
 			throw new Error('Nova placa do endosso não pôde ser confirmada');
 		}
 
-		const compactEvidence = evidence.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+		const compactEvidence = evidence
+			? evidence.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
+			: '';
 
-		if (!compactEvidence.includes(normalized)) {
+		if (
+			!compactEvidence.includes(normalized) &&
+			!sourceContainsPlateNear(sourceText, normalized)
+		) {
 			throw new Error('A evidência não confirma a nova placa do endosso');
 		}
 
@@ -913,6 +1089,12 @@ function finalizeModelOutput(
 	sourceText: string,
 ): DataExtractEndorsement {
 	if (raw.type === 'unknown') {
+		if (sourceLooksLikeVehicleSubstitutionAdjustment(sourceText)) {
+			throw new Error(
+				'O documento possui sinais claros de substituição de veículo, mas a IA não retornou os dados estruturados de vehicle_conductor',
+			);
+		}
+
 		throw new Error(
 			`Tipo de endosso não suportado ou não identificado com segurança: ${raw.data.reason}`,
 		);
@@ -923,19 +1105,24 @@ function finalizeModelOutput(
 
 	switch (raw.type) {
 		case 'vehicle_conductor': {
-			if (raw.data.changeKind === 'unknown') {
+			const inferredVehicleChange =
+				sourceLooksLikeVehicleSubstitutionAdjustment(sourceText);
+			const changeKind =
+				raw.data.changeKind === 'unknown' && inferredVehicleChange
+					? 'vehicle'
+					: raw.data.changeKind;
+
+			if (changeKind === 'unknown') {
 				throw new Error(
 					'Alteração de veículo/condutor não identificada com segurança',
 				);
 			}
 
-			const financial = normalizeFinancialData(raw.data);
+			const financial = normalizeFinancialData(raw.data, sourceText);
 			const changesVehicle =
-				raw.data.changeKind === 'vehicle' ||
-				raw.data.changeKind === 'vehicle_and_driver';
+				changeKind === 'vehicle' || changeKind === 'vehicle_and_driver';
 			const changesDriver =
-				raw.data.changeKind === 'driver' ||
-				raw.data.changeKind === 'vehicle_and_driver';
+				changeKind === 'driver' || changeKind === 'vehicle_and_driver';
 
 			let plate: string | null = null;
 			let model: string | null = null;
@@ -947,29 +1134,43 @@ function finalizeModelOutput(
 					raw.data.plate,
 					raw.data.plateStatus,
 					raw.data.plateEvidence,
+					sourceText,
 				);
+
+				const sourceFranchise = sourcePrincipalFranchise(sourceText);
+				let resolvedFranchise = raw.data.franchise;
+				let franchiseEvidence = raw.data.franchiseEvidence;
+
+				if (
+					sourceFranchise &&
+					(resolvedFranchise === null ||
+						!franchiseEvidence ||
+						!evidenceContainsValue(franchiseEvidence, resolvedFranchise) ||
+						!franchiseEvidenceLooksPrincipal(franchiseEvidence))
+				) {
+					resolvedFranchise = sourceFranchise.value;
+					franchiseEvidence = sourceFranchise.evidence;
+				}
 
 				if (
 					!raw.data.model ||
 					raw.data.modelYear === null ||
-					raw.data.franchise === null ||
-					raw.data.franchise <= 0 ||
-					!raw.data.franchiseEvidence
+					resolvedFranchise === null ||
+					resolvedFranchise <= 0 ||
+					!franchiseEvidence
 				) {
 					throw new Error(
 						'Substituição de veículo sem modelo, ano ou franquia principal confirmados',
 					);
 				}
 
-				if (
-					!evidenceContainsValue(raw.data.franchiseEvidence, raw.data.franchise)
-				) {
+				if (!evidenceContainsValue(franchiseEvidence, resolvedFranchise)) {
 					throw new Error(
 						'A evidência não confirma a franquia principal resultante',
 					);
 				}
 
-				if (!franchiseEvidenceLooksPrincipal(raw.data.franchiseEvidence)) {
+				if (!franchiseEvidenceLooksPrincipal(franchiseEvidence)) {
 					throw new Error(
 						'A evidência não permite confirmar que a franquia seja a principal',
 					);
@@ -977,7 +1178,7 @@ function finalizeModelOutput(
 
 				model = raw.data.model;
 				modelYear = raw.data.modelYear;
-				franchise = raw.data.franchise;
+				franchise = resolvedFranchise;
 			}
 
 			const driver = resolvePrincipalDriverCpf({
@@ -994,9 +1195,17 @@ function finalizeModelOutput(
 				);
 			}
 
+			const resultLookup =
+				changesVehicle &&
+				lookup.plate &&
+				plate &&
+				lookup.plate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === plate
+					? { ...lookup, plate: null }
+					: lookup;
+
 			return SchemaDataExtractVehicleConductor.parse({
 				type: 'vehicle_conductor',
-				lookup,
+				lookup: resultLookup,
 				data: {
 					driver,
 					plate,
@@ -1014,7 +1223,7 @@ function finalizeModelOutput(
 				throw new Error('Endosso de endereço sem novo CEP confirmado');
 			}
 
-			const financial = normalizeFinancialData(raw.data);
+			const financial = normalizeFinancialData(raw.data, sourceText);
 
 			return SchemaDataExtractAddress.parse({
 				type: 'address',
@@ -1048,7 +1257,7 @@ function finalizeModelOutput(
 				);
 			}
 
-			const financial = normalizeFinancialData(raw.data);
+			const financial = normalizeFinancialData(raw.data, sourceText);
 
 			return SchemaDataExtractFranchise.parse({
 				type: 'franchise',
@@ -1184,7 +1393,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v18:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v24:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;

@@ -1356,6 +1356,39 @@ ${text}
 `;
 }
 
+function sourceLooksLikeEndorsementAdjustment(sourceText: string): boolean {
+	const normalized = normalizeText(sourceText);
+
+	const hasNegativeLiquid =
+		/(?:pre[cç]o|pr[eê]mio|valor)\s+l[ií]quido(?:\s+total)?\s*:?\s*R?\$?\s*-\s*\d/i.test(
+			sourceText,
+		);
+
+	const hasCreditOrRefund =
+		/\b(credito em conta|restituicao|estorno|devolucao|a restituir)\b/.test(
+			normalized,
+		);
+
+	const vehicleChanged =
+		/\bveiculo igual ao anterior nao\b/.test(normalized) ||
+		/\b(substituicao|troca|alteracao) de veiculo\b/.test(normalized);
+
+	const hasPolicyContext =
+		/\b(apolice anterior|numero apolice|n apolice anterior|vigencia)\b/.test(
+			normalized,
+		);
+
+	// Algumas seguradoras geram alterações/endossos usando um layout cujo título
+	// continua sendo "Proposta". Um prêmio líquido global negativo, especialmente
+	// acompanhado de crédito/restituição e mudança de veículo, não representa o
+	// prêmio de uma nova proposta/apólice: é efeito financeiro de uma alteração.
+	return (
+		hasNegativeLiquid &&
+		hasPolicyContext &&
+		(hasCreditOrRefund || vehicleChanged)
+	);
+}
+
 function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 	if (raw.award === null || raw.award <= 0) {
 		throw new Error(
@@ -1452,9 +1485,12 @@ function finalizeModelOutput(
 	insuranceCompanies: Array<InsuranceCompanyRow>,
 	sourceText: string,
 ): DataExtract {
-	if (raw.documentKind === 'endorsement') {
+	if (
+		raw.documentKind === 'endorsement' ||
+		sourceLooksLikeEndorsementAdjustment(sourceText)
+	) {
 		throw new Error(
-			'O documento enviado é um endosso, não uma proposta/apólice',
+			'O documento enviado é um endosso/alteração, não uma proposta/apólice',
 		);
 	}
 
@@ -1709,7 +1745,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v21:${hash}`;
+				const cacheKey = `pdf-extract:v24:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
