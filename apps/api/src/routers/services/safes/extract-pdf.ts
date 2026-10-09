@@ -318,7 +318,18 @@ function evidenceShowsExplicitPlateAbsence(
 }
 
 function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
-	const lines = sourceText.split('\n');
+	const raw = sourceText.replace(/\r/g, '');
+
+	// Casos em que o valor aparece na mesma linha do rótulo.
+	if (
+		/\bplaca\b\s*:?\s*(?:[-–—]+|a\s+avisar|avisar|sem\s+placa|s\/?\s*placa|placa\s+n[aã]o\s+informada)(?=\s|$)/im.test(
+			raw,
+		)
+	) {
+		return true;
+	}
+
+	const lines = raw.split('\n');
 
 	for (let index = 0; index < lines.length; index += 1) {
 		const line = lines[index] ?? '';
@@ -329,12 +340,13 @@ function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
 		}
 
 		const start = Math.max(0, index - 1);
-		const end = Math.min(lines.length, index + 6);
-		const block = lines.slice(start, end).join('\n');
+		const end = Math.min(lines.length, index + 8);
+		const blockLines = lines.slice(start, end);
+		const block = blockLines.join('\n');
 		const normalizedBlock = normalizeText(block);
 
 		if (
-			/\b(a avisar|avisar|sem placa|s placa|zero km sem placa|0 km sem placa|placa nao informada)\b/.test(
+			/\b(a avisar|avisar|sem placa|s placa|zero km sem placa|0 km sem placa|placa nao informada|nao possui placa)\b/.test(
 				normalizedBlock,
 			)
 		) {
@@ -345,18 +357,44 @@ function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
 			return true;
 		}
 
-		// Alguns extratores preservam a tabela em duas linhas: cabeçalho em uma
-		// linha e a primeira célula da linha de valores como "-".
-		const followingLines = lines.slice(
-			index + 1,
-			Math.min(lines.length, index + 6),
-		);
+		const looksLikeVehicleTableHeader =
+			normalizedLine.includes('chassi') ||
+			normalizedLine.includes('veiculo') ||
+			normalizedLine.includes('ano') ||
+			normalizedLine.includes('fipe') ||
+			normalizedLine.includes('zero km');
 
-		if (
-			followingLines.some((candidate) => /^\s*[-–—]+(?:\s+|$)/.test(candidate))
-		) {
-			return true;
+		// Layouts tabulares podem trazer:
+		// "Placa    Chassi    Veículo    Ano ..."
+		// "-        LC0CE4... ..."
+		if (looksLikeVehicleTableHeader) {
+			for (const candidate of lines.slice(index + 1, index + 5)) {
+				if (!candidate?.trim()) {
+					continue;
+				}
+
+				if (/^\s*[-–—]+(?=\s|$)/.test(candidate)) {
+					return true;
+				}
+
+				// Depois da primeira linha efetiva de valores já não precisamos avançar,
+				// evitando capturar um hífen de outra seção da página.
+				break;
+			}
 		}
+	}
+
+	// Alguns extratores de PDF perdem as quebras de linha da tabela. Neste caso
+	// preservamos os hífens, compactamos somente os espaços e verificamos a
+	// sequência estrutural "Placa ... Chassi ... - <chassi>".
+	const flattened = raw.replace(/\s+/g, ' ');
+
+	if (
+		/\bplaca\b(?=.{0,180}\bchassi\b).{0,320}?[-–—]\s+[A-Z0-9]{12,20}\b/i.test(
+			flattened,
+		)
+	) {
+		return true;
 	}
 
 	return false;
@@ -408,8 +446,12 @@ function resolveVehiclePlate(
 		evidenceConfirmsAbsence ||
 		sourceConfirmsAbsence;
 
+	// O documento é a autoridade. Se ele comprova ausência de placa, um
+	// plateStatus="present" incorreto da IA não transforma o caso em conflito.
+	// Só tratamos como conflito quando existe uma placa brasileira válida e
+	// também evidência documental forte de ausência.
 	if (parsedPlate) {
-		if (explicitAbsence) {
+		if (sourceConfirmsAbsence) {
 			throw new Error(
 				'Documento apresenta sinais conflitantes sobre a existência da placa do veículo',
 			);
@@ -429,14 +471,20 @@ function resolveVehiclePlate(
 		return parsedPlate;
 	}
 
-	// O valor bruto "-", "A AVISAR", "SEM PLACA" etc. já representa uma
-	// ausência explícita. Isso é importante em PDFs zero-km nos quais o texto
-	// linearizado pode perder a célula "-", embora a visão a leia corretamente.
-	// Nesses casos, plateStatus é apenas auxiliar e não pode converter uma
-	// ausência explícita em erro só porque o modelo o classificou como "present".
 	if (explicitAbsence) {
 		return null;
 	}
+
+	console.warn(
+		`[extract-pdf] placa não resolvida ${JSON.stringify({
+			plate: vehicle.plate,
+			plateStatus: vehicle.plateStatus,
+			plateEvidence: vehicle.plateEvidence,
+			sourceConfirmsAbsence,
+			evidenceConfirmsAbsence,
+			rawPlateIsExplicitlyAbsent,
+		})}`,
+	);
 
 	if (vehicle.plateStatus === 'explicitly_absent') {
 		throw new Error('Ausência de placa informada sem evidência documental');
@@ -1540,7 +1588,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v18:${hash}`;
+				const cacheKey = `pdf-extract:v19:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
