@@ -233,7 +233,12 @@ function sourceSupportedModality(sourceText: string): ResolvedModality | null {
 	}
 
 	candidates.sort((a, b) => b.score - a.score);
-	const best = candidates[0]!;
+	const best = candidates[0];
+
+	if (!best) {
+		return null;
+	}
+
 	const conflicting = candidates.find(
 		(candidate) =>
 			candidate.modality !== best.modality && candidate.score >= best.score - 5,
