@@ -329,6 +329,12 @@ function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
 		return true;
 	}
 
+	// Alguns extratores posicionam a célula antes do rótulo da coluna:
+	// "-\nPlaca\n<chassi>\nChassi". Esse hífen também é ausência explícita.
+	if (/(?:^|\n)\s*[-–—]+\s*\n\s*placa\b/i.test(raw)) {
+		return true;
+	}
+
 	const lines = raw.split('\n');
 
 	for (let index = 0; index < lines.length; index += 1) {
@@ -337,6 +343,36 @@ function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
 
 		if (!normalizedLine.includes('placa')) {
 			continue;
+		}
+
+		// Alguns parsers de PDF (inclusive em layouts Porto/Azul/Itaú)
+		// podem linearizar a tabela com o VALOR antes do rótulo, por exemplo:
+		//
+		//   -
+		//   Placa
+		//   LC0CE4CB4T0012228
+		//   Chassi
+		//
+		// Nesse caso o hífen imediatamente anterior a "Placa" é a célula
+		// explícita da placa, enquanto a linha seguinte é o valor do chassi.
+		for (
+			let previous = index - 1;
+			previous >= Math.max(0, index - 3);
+			previous -= 1
+		) {
+			const candidate = lines[previous]?.trim();
+
+			if (!candidate) {
+				continue;
+			}
+
+			if (isExplicitPlateAbsenceValue(candidate)) {
+				return true;
+			}
+
+			// Paramos no primeiro conteúdo não vazio anterior para não capturar
+			// hífens pertencentes a outro campo/seção.
+			break;
 		}
 
 		const start = Math.max(0, index - 1);
@@ -392,7 +428,8 @@ function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
 	if (
 		/\bplaca\b(?=.{0,180}\bchassi\b).{0,320}?[-–—]\s+[A-Z0-9]{12,20}\b/i.test(
 			flattened,
-		)
+		) ||
+		/[-–—]\s+placa\s+[A-Z0-9]{12,20}\s+chassi\b/i.test(flattened)
 	) {
 		return true;
 	}
@@ -1588,7 +1625,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v19:${hash}`;
+				const cacheKey = `pdf-extract:v20:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
