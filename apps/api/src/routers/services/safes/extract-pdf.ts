@@ -840,6 +840,163 @@ function sourceSupportsPrincipalFranchise(
 	return false;
 }
 
+function parseMoneyCandidate(value: string): number | null {
+	const parsed = parseBrazilianNumber(value);
+
+	return typeof parsed === 'number' && Number.isFinite(parsed) && parsed > 0
+		? parsed
+		: null;
+}
+
+/**
+ * Extrai somente valores com semântica FORTE de franquia principal.
+ *
+ * Isso é propositalmente mais restritivo do que procurar qualquer número perto
+ * da palavra "franquia". Em várias seguradoras a mesma linha da cobertura
+ * principal contém LMI, franquia e prêmio da cobertura; procurar qualquer valor
+ * nesse bloco faz o prêmio ser confundido com a franquia.
+ */
+function strongPrincipalFranchiseCandidates(text: string): number[] {
+	const candidates = new Set<number>();
+	const flattened = text.replace(/\s+/g, ' ');
+
+	const addMatches = (pattern: RegExp) => {
+		for (const match of flattened.matchAll(pattern)) {
+			const raw = match[1];
+
+			if (!raw) {
+				continue;
+			}
+
+			const parsed = parseMoneyCandidate(raw);
+
+			if (parsed !== null) {
+				candidates.add(parsed);
+			}
+		}
+	};
+
+	// Ex.: "R$ 19.172,00 (50% da Obrigatória)" /
+	//      "R$ 2.966,00 (25% da Básica)".
+	addMatches(
+		/(?:R\$\s*)?([0-9]{1,3}(?:\.[0-9]{3})*(?:,[0-9]{2})|[0-9]+(?:,[0-9]{2}))\s*\(\s*(?:25|50|75|100)\s*%\s*da\s*(?:b[aá]sica|obrigat[oó]ria|normal)\s*\)/gi,
+	);
+
+	// Ex.: Allianz "25% da Normal 1.578,40".
+	addMatches(
+		/(?:25|50|75|100)\s*%\s*da\s*(?:b[aá]sica|obrigat[oó]ria|normal)\s*(?:[:=-]\s*)?(?:R\$\s*)?([0-9]{1,3}(?:\.[0-9]{3})*(?:,[0-9]{2})|[0-9]+(?:,[0-9]{2}))/gi,
+	);
+
+	// Ex.: Tokio "Indenização Parcial do Veículo R$ 2.966,00".
+	addMatches(
+		/(?:indeniza[cç][aã]o\s+parcial\s+do\s+ve[ií]culo|franquia\s+(?:principal|do\s+ve[ií]culo))\s*[:=-]?\s*(?:R\$\s*)?([0-9]{1,3}(?:\.[0-9]{3})*(?:,[0-9]{2})|[0-9]+(?:,[0-9]{2}))/gi,
+	);
+
+	return [...candidates];
+}
+
+function resolvePrincipalFranchise(
+	raw: ModelOutput['financial'],
+	sourceText: string,
+): number {
+	if (raw.franchise === null || raw.franchise <= 0) {
+		throw new Error('Não foi possível determinar a franquia principal');
+	}
+
+	if (!raw.franchiseEvidence) {
+		throw new Error('Franquia principal identificada sem evidência');
+	}
+
+	const evidenceCandidates = strongPrincipalFranchiseCandidates(
+		raw.franchiseEvidence,
+	);
+	const sourceCandidates = strongPrincipalFranchiseCandidates(sourceText);
+
+	const uniqueEvidence =
+		evidenceCandidates.length === 1 ? evidenceCandidates[0] : null;
+	const uniqueSource =
+		sourceCandidates.length === 1 ? sourceCandidates[0] : null;
+
+	if (
+		uniqueEvidence !== null &&
+		uniqueSource !== null &&
+		Math.abs(uniqueEvidence! - uniqueSource!) > MONEY_TOLERANCE
+	) {
+		throw new Error(
+			'O documento apresenta valores conflitantes para a franquia principal',
+		);
+	}
+
+	// Evidência estrutural forte do próprio documento vence o número escolhido
+	// pela IA. Isso corrige tabelas que têm "Franquia" e "Valor do Prêmio" na
+	// mesma linha visual, como Porto/Azul/Itaú.
+	const resolved = uniqueSource ?? uniqueEvidence;
+
+	if (resolved !== null) {
+		if (Math.abs(resolved! - raw.franchise) > MONEY_TOLERANCE) {
+			console.warn(
+				`[extract-pdf] franquia corrigida pela evidência estrutural: modelo=${raw.franchise} documento=${resolved}`,
+			);
+		}
+
+		return resolved!;
+	}
+
+	if (!evidenceContainsValue(raw.franchiseEvidence, raw.franchise)) {
+		throw new Error('A evidência não confirma a franquia principal');
+	}
+
+	if (
+		!franchiseEvidenceLooksPrincipal(raw.franchiseEvidence) &&
+		!sourceSupportsPrincipalFranchise(sourceText, raw.franchise)
+	) {
+		throw new Error(
+			'A evidência da franquia não permite confirmar que seja a franquia principal',
+		);
+	}
+
+	return raw.franchise;
+}
+
+function resolveVehicleModelYear(
+	modelYear: number,
+	sourceText: string,
+): number {
+	const flattened = sourceText.replace(/\s+/g, ' ');
+
+	const fabricationModelPair = flattened.match(
+		/ano\s*(?:de\s*)?fabrica[cç][aã]o\s*\/\s*modelo.{0,180}?(\d{4})\s*\/\s*(\d{4})/i,
+	);
+
+	if (fabricationModelPair?.[2]) {
+		const resolved = Number(fabricationModelPair[2]);
+
+		if (Number.isInteger(resolved) && resolved >= 1900 && resolved <= 2100) {
+			return resolved;
+		}
+	}
+
+	const explicitModelYear = flattened.match(
+		/(?:ano\s*\/\s*modelo|ano\s+modelo)\s*[:=-]?\s*(\d{4})\b/i,
+	);
+
+	if (explicitModelYear?.[1]) {
+		const resolved = Number(explicitModelYear[1]);
+
+		if (Number.isInteger(resolved) && resolved >= 1900 && resolved <= 2100) {
+			return resolved;
+		}
+	}
+
+	return modelYear;
+}
+
+function normalizeVehicleModelName(model: string): string {
+	// Alguns layouts Porto/Azul/Itaú antepõem código interno e campos vazios:
+	// "16322 - - YUAN PLUS EV ELETRICO". O código não faz parte do modelo.
+	return model.replace(/^\d{3,8}\s*-\s*-\s*/, '').trim();
+}
+
 function sum(values: number[]): number {
 	return values.reduce((total, value) => total + value, 0);
 }
@@ -1267,7 +1424,7 @@ SEGURADO E CONDUTOR
 - quando driverRelation="other", preencha "vehicle.driver" com nome, CPF e nascimento do principal condutor indicado no documento;
 - nunca retorne driver=null apenas porque o principal condutor é o próprio segurado;
 - para vehicle e motorcycle, sempre tente retornar o principal condutor resultante da contratação;
-- ano do veículo = ANO MODELO quando fabricação/modelo forem diferentes.
+- ano do veículo = ANO MODELO quando fabricação/modelo forem diferentes; em "Ano Fabricação / Modelo: 2025 / 2026", retorne year=2026.
 
 PLACA
 - "plateStatus" = "present" somente quando houver placa brasileira válida impressa;
@@ -1419,31 +1576,12 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 		throw new Error('A evidência não confirma a quantidade de parcelas');
 	}
 
-	if (raw.franchise === null || raw.franchise <= 0) {
-		throw new Error('Não foi possível determinar a franquia principal');
-	}
-
-	if (!raw.franchiseEvidence) {
-		throw new Error('Franquia principal identificada sem evidência');
-	}
-
-	if (!evidenceContainsValue(raw.franchiseEvidence, raw.franchise)) {
-		throw new Error('A evidência não confirma a franquia principal');
-	}
-
-	if (
-		!franchiseEvidenceLooksPrincipal(raw.franchiseEvidence) &&
-		!sourceSupportsPrincipalFranchise(sourceText, raw.franchise)
-	) {
-		throw new Error(
-			'A evidência da franquia não permite confirmar que seja a franquia principal',
-		);
-	}
+	const franchise = resolvePrincipalFranchise(raw, sourceText);
 
 	return {
 		award: raw.award,
 		installments: raw.installments,
-		franchise: raw.franchise,
+		franchise,
 	};
 }
 
@@ -1547,6 +1685,9 @@ function finalizeModelOutput(
 		sourceText,
 	});
 
+	const modelYear = resolveVehicleModelYear(vehicle.year, sourceText);
+	const model = normalizeVehicleModelName(vehicle.model);
+
 	const vigency = raw.vigency;
 
 	if (!vigency.requestedAt || !vigency.expirationAt || !vigency.evidence) {
@@ -1584,8 +1725,8 @@ function finalizeModelOutput(
 		},
 		vehicle: {
 			plate,
-			model: vehicle.model,
-			year: vehicle.year,
+			model,
+			year: modelYear,
 			usage: vehicle.usage,
 			overnightStayPostalCode: vehicle.overnightStayPostalCode,
 			driver: {
@@ -1709,7 +1850,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v21:${hash}`;
+				const cacheKey = `pdf-extract:v22:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
