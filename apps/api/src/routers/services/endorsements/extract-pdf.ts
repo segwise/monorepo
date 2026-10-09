@@ -579,6 +579,141 @@ function sourcePrincipalFranchise(
 	return null;
 }
 
+function compactAlphanumeric(value: string): string {
+	return value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+function isExplicitPlateAbsenceValue(
+	value: string | null | undefined,
+): boolean {
+	if (!value) {
+		return false;
+	}
+
+	const trimmed = value.trim();
+
+	if (/^[-–—]+$/.test(trimmed)) {
+		return true;
+	}
+
+	const normalized = normalizeText(trimmed);
+
+	return /^(a avisar|avisar|sem placa|s placa|splaca|nao possui placa|placa nao informada|nao informada)$/.test(
+		normalized,
+	);
+}
+
+function evidenceShowsExplicitPlateAbsence(
+	evidence: string | null | undefined,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	if (isExplicitPlateAbsenceValue(evidence)) {
+		return true;
+	}
+
+	const normalized = normalizeText(evidence);
+
+	if (
+		/\b(a avisar|avisar|sem placa|s placa|zero km sem placa|0 km sem placa|placa nao informada)\b/.test(
+			normalized,
+		)
+	) {
+		return true;
+	}
+
+	return /\bplaca\b\s*:?\s*[-–—]+(?:\s|$)/i.test(evidence);
+}
+
+function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
+	const raw = sourceText.replace(/\r/g, '');
+
+	if (
+		/\bplaca\b\s*:?\s*(?:[-–—]+|a\s+avisar|avisar|sem\s+placa|s\/?\s*placa|placa\s+n[aã]o\s+informada)(?=\s|$)/im.test(
+			raw,
+		)
+	) {
+		return true;
+	}
+
+	if (/(?:^|\n)\s*[-–—]+\s*\n\s*placa\b/i.test(raw)) {
+		return true;
+	}
+
+	const lines = raw.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (!normalizedLine.includes('placa')) {
+			continue;
+		}
+
+		for (
+			let previous = index - 1;
+			previous >= Math.max(0, index - 3);
+			previous -= 1
+		) {
+			const candidate = lines[previous]?.trim();
+
+			if (!candidate) {
+				continue;
+			}
+
+			if (isExplicitPlateAbsenceValue(candidate)) {
+				return true;
+			}
+
+			break;
+		}
+
+		const block = lines
+			.slice(Math.max(0, index - 1), Math.min(lines.length, index + 8))
+			.join('\n');
+		const normalizedBlock = normalizeText(block);
+
+		if (
+			/\b(a avisar|avisar|sem placa|s placa|zero km sem placa|0 km sem placa|placa nao informada|nao possui placa)\b/.test(
+				normalizedBlock,
+			) ||
+			/\bplaca\b\s*:?\s*[-–—]+(?:\s|$)/i.test(block)
+		) {
+			return true;
+		}
+
+		const looksLikeVehicleTableHeader =
+			normalizedLine.includes('chassi') ||
+			normalizedLine.includes('veiculo') ||
+			normalizedLine.includes('ano') ||
+			normalizedLine.includes('fipe') ||
+			normalizedLine.includes('zero km');
+
+		if (looksLikeVehicleTableHeader) {
+			for (const candidate of lines.slice(index + 1, index + 5)) {
+				if (!candidate?.trim()) {
+					continue;
+				}
+
+				if (/^\s*[-–—]+(?=\s|$)/.test(candidate)) {
+					return true;
+				}
+
+				break;
+			}
+		}
+	}
+
+	const flattened = raw.replace(/\s+/g, ' ');
+
+	return (
+		/\bplaca\b(?=.{0,180}\bchassi\b).{0,320}?[-–—]\s+[A-Z0-9]{12,20}\b/i.test(
+			flattened,
+		) || /[-–—]\s+placa\s+[A-Z0-9]{12,20}\s+chassi\b/i.test(flattened)
+	);
+}
+
 function sourceContainsPlateNear(sourceText: string, plate: string): boolean {
 	const expected = plate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
@@ -740,49 +875,60 @@ const SchemaDataExtractEndorsement = z.discriminatedUnion('type', [
 
 type DataExtractEndorsement = z.infer<typeof SchemaDataExtractEndorsement>;
 
+const SchemaModelNullableString = z
+	.string()
+	.nullish()
+	.transform((value) => value ?? null);
+
 const SchemaModelMoneyNullable = z.preprocess(
-	parseBrazilianNumber,
+	(value) => (value == null ? null : parseBrazilianNumber(value)),
 	z.number().finite().nullable(),
 );
 
 const SchemaModelPercentageNullable = z.preprocess(
-	parseBrazilianNumber,
+	(value) => (value == null ? null : parseBrazilianNumber(value)),
 	z.number().finite().min(0).max(100).nullable(),
 );
 
 const SchemaModelIntegerNullable = z.preprocess(
-	parseInteger,
+	(value) => (value == null ? null : parseInteger(value)),
 	z.number().int().nullable(),
 );
 
 const SchemaModelLookup = z
 	.object({
-		plate: z.string().nullable(),
-		insuredRegistration: z.string().nullable(),
-		insuredName: z.string().nullable(),
-		evidence: z.string().nullable(),
+		plate: SchemaModelNullableString,
+		insuredRegistration: SchemaModelNullableString,
+		insuredName: SchemaModelNullableString,
+		evidence: SchemaModelNullableString,
 	})
 	.strict();
 
 const SchemaModelFinancial = z
 	.object({
 		amount: SchemaModelMoneyNullable,
-		amountDirection: z.enum(['charge', 'refund', 'neutral']).nullable(),
-		amountEvidence: z.string().nullable(),
-		nonLiquidCharges: z.array(
-			z.preprocess(parseBrazilianNumber, z.number().finite().nonnegative()),
-		),
+		amountDirection: z
+			.enum(['charge', 'refund', 'neutral'])
+			.nullish()
+			.transform((value) => value ?? null),
+		amountEvidence: SchemaModelNullableString,
+		nonLiquidCharges: z
+			.array(
+				z.preprocess(parseBrazilianNumber, z.number().finite().nonnegative()),
+			)
+			.nullish()
+			.transform((value) => value ?? []),
 		finalTotal: SchemaModelMoneyNullable,
-		financialEvidence: z.string().nullable(),
+		financialEvidence: SchemaModelNullableString,
 		percentage: SchemaModelPercentageNullable,
-		percentageEvidence: z.string().nullable(),
+		percentageEvidence: SchemaModelNullableString,
 	})
 	.strict();
 
 const SchemaModelVehicleConductor = z
 	.object({
 		type: z.literal('vehicle_conductor'),
-		typeEvidence: z.string().nullable(),
+		typeEvidence: SchemaModelNullableString,
 		lookup: SchemaModelLookup,
 		data: z
 			.object({
@@ -792,14 +938,14 @@ const SchemaModelVehicleConductor = z
 					'vehicle_and_driver',
 					'unknown',
 				]),
-				driver: z.string().nullable(),
-				plate: z.string().nullable(),
+				driver: SchemaModelNullableString,
+				plate: SchemaModelNullableString,
 				plateStatus: z.enum(['present', 'explicitly_absent', 'unknown']),
-				plateEvidence: z.string().nullable(),
-				model: z.string().nullable(),
+				plateEvidence: SchemaModelNullableString,
+				model: SchemaModelNullableString,
 				modelYear: SchemaModelIntegerNullable,
 				franchise: SchemaModelMoneyNullable,
-				franchiseEvidence: z.string().nullable(),
+				franchiseEvidence: SchemaModelNullableString,
 			})
 			.merge(SchemaModelFinancial)
 			.strict(),
@@ -809,7 +955,7 @@ const SchemaModelVehicleConductor = z
 const SchemaModelAddress = z
 	.object({
 		type: z.literal('address'),
-		typeEvidence: z.string().nullable(),
+		typeEvidence: SchemaModelNullableString,
 		lookup: SchemaModelLookup,
 		data: z
 			.object({
@@ -826,12 +972,12 @@ const SchemaModelAddress = z
 const SchemaModelFranchise = z
 	.object({
 		type: z.literal('franchise'),
-		typeEvidence: z.string().nullable(),
+		typeEvidence: SchemaModelNullableString,
 		lookup: SchemaModelLookup,
 		data: z
 			.object({
 				franchise: SchemaModelMoneyNullable,
-				franchiseEvidence: z.string().nullable(),
+				franchiseEvidence: SchemaModelNullableString,
 			})
 			.merge(SchemaModelFinancial)
 			.strict(),
@@ -841,11 +987,11 @@ const SchemaModelFranchise = z
 const SchemaModelCancellation = z
 	.object({
 		type: z.literal('cancellation'),
-		typeEvidence: z.string().nullable(),
+		typeEvidence: SchemaModelNullableString,
 		lookup: SchemaModelLookup,
 		data: z
 			.object({
-				effectivedAt: z.string().nullable(),
+				effectivedAt: SchemaModelNullableString,
 			})
 			.strict(),
 	})
@@ -854,7 +1000,7 @@ const SchemaModelCancellation = z
 const SchemaModelUnknown = z
 	.object({
 		type: z.literal('unknown'),
-		typeEvidence: z.string().nullable(),
+		typeEvidence: SchemaModelNullableString,
 		lookup: SchemaModelLookup,
 		data: z
 			.object({
@@ -999,12 +1145,17 @@ function normalizeLookup(
 	lookup: ModelOutput['lookup'],
 	sourceText: string,
 ): z.infer<typeof SchemaLookup> {
-	if (!lookup.insuredRegistration || !lookup.insuredName || !lookup.evidence) {
+	if (!lookup.insuredRegistration || !lookup.insuredName) {
 		throw new Error('Segurado do endosso não identificado com segurança');
 	}
 
 	const registrationConfirmed =
-		evidenceContainsRegistration(lookup.evidence, lookup.insuredRegistration) ||
+		(lookup.evidence
+			? evidenceContainsRegistration(
+					lookup.evidence,
+					lookup.insuredRegistration,
+				)
+			: false) ||
 		sourceContainsRegistrationNear(sourceText, lookup.insuredRegistration, [
 			'dados do segurado',
 			'dados do proponente',
@@ -1131,11 +1282,11 @@ function normalizeFinancialData(
 		}
 	}
 
-	if (data.finalTotal !== null) {
-		if (!data.financialEvidence) {
-			throw new Error('Total do endosso identificado sem evidência');
-		}
-
+	// finalTotal e encargos são campos auxiliares de conferência, não fazem parte
+	// da saída final. Se a IA omitir a evidência deles, não rejeitamos uma extração
+	// cujo valor líquido já foi confirmado pelo documento. Quando a evidência vem,
+	// continuamos validando matematicamente tudo.
+	if (data.finalTotal !== null && data.financialEvidence) {
 		if (!evidenceContainsValue(data.financialEvidence, data.finalTotal)) {
 			throw new Error('A evidência não confirma o total final do endosso');
 		}
@@ -1245,16 +1396,25 @@ function normalizeResultingPlate(
 	evidence: string | null,
 	sourceText: string,
 ): string | null {
-	if (status === 'present') {
-		const normalized = SchemaPlateLenient.parse(plate);
+	const rawPlateIsExplicitlyAbsent = isExplicitPlateAbsenceValue(plate);
+	const normalized = rawPlateIsExplicitlyAbsent
+		? null
+		: SchemaPlateLenient.parse(plate);
+	const evidenceConfirmsAbsence = evidenceShowsExplicitPlateAbsence(evidence);
+	const sourceConfirmsAbsence = sourceShowsExplicitPlateAbsence(sourceText);
+	const explicitAbsence =
+		rawPlateIsExplicitlyAbsent ||
+		evidenceConfirmsAbsence ||
+		sourceConfirmsAbsence;
 
-		if (!normalized) {
-			throw new Error('Nova placa do endosso não pôde ser confirmada');
+	if (normalized) {
+		if (sourceConfirmsAbsence) {
+			throw new Error(
+				'Documento apresenta sinais conflitantes sobre a nova placa do endosso',
+			);
 		}
 
-		const compactEvidence = evidence
-			? evidence.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
-			: '';
+		const compactEvidence = evidence ? compactAlphanumeric(evidence) : '';
 
 		if (
 			!compactEvidence.includes(normalized) &&
@@ -1266,12 +1426,22 @@ function normalizeResultingPlate(
 		return normalized;
 	}
 
-	if (status === 'explicitly_absent') {
-		if (!evidence) {
-			throw new Error('Ausência de nova placa informada sem evidência');
-		}
-
+	// Assim como na proposta, o documento é a autoridade. Se ele comprova
+	// ausência de placa, um status="present" incorreto da IA não gera falso 409.
+	if (explicitAbsence) {
 		return null;
+	}
+
+	if (status === 'explicitly_absent') {
+		throw new Error(
+			'Ausência de nova placa informada sem evidência documental',
+		);
+	}
+
+	if (status === 'present') {
+		throw new Error(
+			'A IA indicou existência de nova placa, mas não retornou uma placa brasileira válida nem evidência de ausência explícita',
+		);
 	}
 
 	throw new Error('Não foi possível determinar a nova placa com segurança');
@@ -1430,21 +1600,35 @@ function finalizeModelOutput(
 		}
 
 		case 'franchise': {
+			const sourceFranchise = sourcePrincipalFranchise(sourceText);
+			let resolvedFranchise = raw.data.franchise;
+			let franchiseEvidence = raw.data.franchiseEvidence;
+
 			if (
-				raw.data.franchise === null ||
-				raw.data.franchise <= 0 ||
-				!raw.data.franchiseEvidence
+				sourceFranchise &&
+				(resolvedFranchise === null ||
+					resolvedFranchise <= 0 ||
+					!franchiseEvidence ||
+					!evidenceContainsValue(franchiseEvidence, resolvedFranchise) ||
+					!franchiseEvidenceLooksPrincipal(franchiseEvidence))
+			) {
+				resolvedFranchise = sourceFranchise.value;
+				franchiseEvidence = sourceFranchise.evidence;
+			}
+
+			if (
+				resolvedFranchise === null ||
+				resolvedFranchise <= 0 ||
+				!franchiseEvidence
 			) {
 				throw new Error('Endosso de franquia sem novo valor confirmado');
 			}
 
-			if (
-				!evidenceContainsValue(raw.data.franchiseEvidence, raw.data.franchise)
-			) {
+			if (!evidenceContainsValue(franchiseEvidence, resolvedFranchise)) {
 				throw new Error('A evidência não confirma a nova franquia');
 			}
 
-			if (!franchiseEvidenceLooksPrincipal(raw.data.franchiseEvidence)) {
+			if (!franchiseEvidenceLooksPrincipal(franchiseEvidence)) {
 				throw new Error(
 					'A evidência não confirma que seja a franquia principal',
 				);
@@ -1456,7 +1640,7 @@ function finalizeModelOutput(
 				type: 'franchise',
 				lookup,
 				data: {
-					franchise: raw.data.franchise,
+					franchise: resolvedFranchise,
 					amount: financial.amount,
 					percentage: financial.percentage,
 				},
@@ -1586,7 +1770,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v27:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v30:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;
