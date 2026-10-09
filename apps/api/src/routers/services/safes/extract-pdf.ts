@@ -336,6 +336,51 @@ function parseCpfCandidate(value: string | null | undefined): string | null {
 	return normalized.success ? normalized.data : null;
 }
 
+function sourceUsesSuhaiProponentProfileAsPrincipalDriver(
+	sourceText: string,
+): boolean {
+	const normalized = normalizeText(sourceText);
+
+	const isSuhai =
+		normalized.includes('suhai seguradora') ||
+		/\bproduto\s+suhai\b/.test(normalized);
+
+	if (!isSuhai) {
+		return false;
+	}
+
+	const hasProponentSection = normalized.includes('dados do proponente');
+	const hasProfileSection = normalized.includes('dados do perfil');
+	const hasNaturalPerson =
+		/\btipo pessoa\s+fisica\b/.test(normalized) ||
+		/\btipo pessoa\b.{0,40}\bfisica\b/.test(normalized);
+
+	// O layout de proposta da Suhai usa os dados demográficos do próprio
+	// proponente como base do PERFIL (idade, sexo, estado civil e utilização)
+	// e não imprime um bloco separado de principal condutor quando ele é o
+	// próprio proponente. Só aplicamos essa regra quando a assinatura do layout
+	// está completa e não existe qualquer condutor diferente explicitamente.
+	const profileUsesProponentDemographics =
+		normalized.includes('respostas incorretas no perfil') &&
+		normalized.includes('idade') &&
+		normalized.includes('sexo') &&
+		normalized.includes('estado civil') &&
+		normalized.includes('utilizacao do veiculo');
+
+	const hasExplicitDriverSection =
+		/\bprincipal condutor\b|\bcondutor principal\b|\bnome do principal condutor\b|\bcpf condutor\b|\binformacoes do condutor principal\b/.test(
+			normalized,
+		);
+
+	return (
+		hasProponentSection &&
+		hasProfileSection &&
+		hasNaturalPerson &&
+		profileUsesProponentDemographics &&
+		!hasExplicitDriverSection
+	);
+}
+
 function sourceMarksPrincipalDriverAsInsured(sourceText: string): boolean {
 	const lines = sourceText.split('\n');
 
@@ -1541,6 +1586,8 @@ function resolvePrincipalDriver({
 	const driverEvidence = vehicle.driverEvidence ?? modelDriver?.evidence;
 
 	const sourceSaysInsured = sourceMarksPrincipalDriverAsInsured(sourceText);
+	const suhaiProfileUsesInsured =
+		sourceUsesSuhaiProponentProfileAsPrincipalDriver(sourceText);
 	const evidenceSaysInsured =
 		evidenceMarksPrincipalDriverAsInsured(driverEvidence);
 
@@ -1571,6 +1618,7 @@ function resolvePrincipalDriver({
 	//   no contexto de condutor pelo texto/evidência.
 	if (
 		sourceSaysInsured ||
+		suhaiProfileUsesInsured ||
 		evidenceSaysInsured ||
 		sourceConfirmsInsuredCpf ||
 		evidenceConfirmsInsuredCpf ||
@@ -1688,6 +1736,7 @@ MODALIDADE
 
 SEGURADO E CONDUTOR
 - segurado/proponente não é automaticamente o condutor;
+- exceção estrutural Suhai: nas propostas SUHAI em que houver "DADOS DO PROPONENTE" + "DADOS DO PERFIL", pessoa física, o PERFIL usar idade/sexo/estado civil/utilização do proponente e NÃO existir bloco separado de principal condutor, considere o próprio proponente/segurado como principal condutor;
 - use o celular do segurado, nunca telefone do corretor, banco ou terceiro;
 - "vehicle.driverRelation" descreve a relação do principal condutor com o segurado:
   - "insured" quando o documento disser explicitamente "Próprio Segurado", "o próprio segurado", repetir o mesmo CPF do segurado no campo de principal condutor ou equivalente;
@@ -2202,7 +2251,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v34:${hash}`;
+				const cacheKey = `pdf-extract:v36:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {

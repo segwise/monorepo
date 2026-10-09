@@ -508,6 +508,51 @@ function cpfCandidatesFromText(text: string): Array<string> {
 	];
 }
 
+function sourceUsesSuhaiProponentProfileAsPrincipalDriver(
+	sourceText: string,
+): boolean {
+	const normalized = normalizeText(sourceText);
+
+	const isSuhai =
+		normalized.includes('suhai seguradora') ||
+		/\bproduto\s+suhai\b/.test(normalized);
+
+	if (!isSuhai) {
+		return false;
+	}
+
+	const hasProponentSection = normalized.includes('dados do proponente');
+	const hasProfileSection = normalized.includes('dados do perfil');
+	const hasNaturalPerson =
+		/\btipo pessoa\s+fisica\b/.test(normalized) ||
+		/\btipo pessoa\b.{0,40}\bfisica\b/.test(normalized);
+
+	// O layout de proposta da Suhai usa os dados demográficos do próprio
+	// proponente como base do PERFIL (idade, sexo, estado civil e utilização)
+	// e não imprime um bloco separado de principal condutor quando ele é o
+	// próprio proponente. Só aplicamos essa regra quando a assinatura do layout
+	// está completa e não existe qualquer condutor diferente explicitamente.
+	const profileUsesProponentDemographics =
+		normalized.includes('respostas incorretas no perfil') &&
+		normalized.includes('idade') &&
+		normalized.includes('sexo') &&
+		normalized.includes('estado civil') &&
+		normalized.includes('utilizacao do veiculo');
+
+	const hasExplicitDriverSection =
+		/\bprincipal condutor\b|\bcondutor principal\b|\bnome do principal condutor\b|\bcpf condutor\b|\binformacoes do condutor principal\b/.test(
+			normalized,
+		);
+
+	return (
+		hasProponentSection &&
+		hasProfileSection &&
+		hasNaturalPerson &&
+		profileUsesProponentDemographics &&
+		!hasExplicitDriverSection
+	);
+}
+
 function sourceMarksPrincipalDriverAsInsured(sourceText: string): boolean {
 	const lines = sourceText.split('\n');
 
@@ -661,6 +706,7 @@ function resolvePrincipalDriverCpf({
 	if (
 		lookup.insuredRegistration &&
 		(sourceMarksPrincipalDriverAsInsured(sourceText) ||
+			sourceUsesSuhaiProponentProfileAsPrincipalDriver(sourceText) ||
 			sourceConfirmsPrincipalDriverRegistration(
 				sourceText,
 				lookup.insuredRegistration,
@@ -1348,6 +1394,7 @@ Para vehicle_conductor:
 - "Ramo: Automóvel" é evidência forte de vehicle quando não houver sinal explícito de caminhão pesado/cavalo mecânico.
 - modalityEvidence deve ser um trecho curto do documento que sustente a modalidade quando disponível.
 - IMPORTANTE: data.driver é SEMPRE o CPF do PRINCIPAL CONDUTOR RESULTANTE após o endosso, mesmo quando o condutor não foi alterado.
+- exceção estrutural Suhai: quando o documento usar o layout SUHAI com "DADOS DO PROPONENTE" + "DADOS DO PERFIL", pessoa física, o PERFIL usar idade/sexo/estado civil/utilização do proponente e NÃO houver bloco separado de principal condutor, use lookup.insuredRegistration como o principal condutor resultante;
 - Se o documento disser "Principal condutor: Próprio Segurado", "O próprio segurado" ou equivalente, copie para data.driver o CPF do SEGURADO identificado em lookup.insuredRegistration.
 - Se o principal condutor for outra pessoa, use o CPF explicitamente associado ao principal condutor.
 - Não use null só porque changeKind=vehicle; changeKind descreve o que mudou, enquanto data.driver descreve quem ficou como principal condutor após o endosso.
@@ -2093,7 +2140,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v35:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v36:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;
