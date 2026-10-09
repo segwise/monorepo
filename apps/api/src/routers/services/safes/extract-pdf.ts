@@ -119,6 +119,43 @@ function evidenceContainsValue(
 	);
 }
 
+function sourceFinancialContext(sourceText: string): string {
+	const lines = sourceText.split('\n');
+	const blocks: string[] = [];
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!/(valor liquido|premio liquido|preco liquido|liquido auto|forma de pagamento|informacoes de pagamento|demonstrativo de premio|premios|iof|juros|encargos|custo de emissao|custo de apolice|adic fracionamento|adicional de fracionamento|valor total|preco total|premio total|total a pagar)/.test(
+				normalizedLine,
+			)
+		) {
+			continue;
+		}
+
+		blocks.push(
+			lines
+				.slice(Math.max(0, index - 2), Math.min(lines.length, index + 6))
+				.join(' '),
+		);
+	}
+
+	return blocks.join(' \n ');
+}
+
+function financialEvidenceContainsValue(
+	evidence: string | null | undefined,
+	sourceText: string,
+	value: number,
+	tolerance = 0.02,
+): boolean {
+	return (
+		evidenceContainsValue(evidence, value, tolerance) ||
+		evidenceContainsValue(sourceFinancialContext(sourceText), value, tolerance)
+	);
+}
+
 function digitsOnly(value: string): string {
 	return value.replace(/\D/g, '');
 }
@@ -1696,10 +1733,6 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 		);
 	}
 
-	if (!raw.awardEvidence) {
-		throw new Error('Prêmio líquido identificado sem evidência');
-	}
-
 	if (raw.awardComponents.length) {
 		assertClose(
 			sum(raw.awardComponents),
@@ -1708,29 +1741,45 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 		);
 
 		for (const component of raw.awardComponents) {
-			if (!evidenceContainsValue(raw.awardEvidence, component)) {
+			if (
+				!financialEvidenceContainsValue(
+					raw.awardEvidence,
+					sourceText,
+					component,
+				)
+			) {
 				throw new Error(
-					'A evidência não confirma todos os componentes do prêmio líquido',
+					'O documento não confirma todos os componentes do prêmio líquido',
 				);
 			}
 		}
-	} else if (!evidenceContainsValue(raw.awardEvidence, raw.award)) {
-		throw new Error('A evidência não confirma o prêmio líquido');
+	} else if (
+		!financialEvidenceContainsValue(raw.awardEvidence, sourceText, raw.award)
+	) {
+		throw new Error('O documento não confirma o prêmio líquido');
 	}
 
 	if (raw.finalTotal !== null) {
-		if (!raw.financialEvidence) {
-			throw new Error('Total financeiro identificado sem evidência');
-		}
-
-		if (!evidenceContainsValue(raw.financialEvidence, raw.finalTotal)) {
-			throw new Error('A evidência não confirma o valor total da contratação');
+		if (
+			!financialEvidenceContainsValue(
+				raw.financialEvidence,
+				sourceText,
+				raw.finalTotal,
+			)
+		) {
+			throw new Error('O documento não confirma o valor total da contratação');
 		}
 
 		for (const charge of raw.nonLiquidCharges) {
-			if (!evidenceContainsValue(raw.financialEvidence, charge)) {
+			if (
+				!financialEvidenceContainsValue(
+					raw.financialEvidence,
+					sourceText,
+					charge,
+				)
+			) {
 				throw new Error(
-					'A evidência não confirma todos os encargos financeiros',
+					'O documento não confirma todos os encargos financeiros',
 				);
 			}
 		}
@@ -2036,7 +2085,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v32:${hash}`;
+				const cacheKey = `pdf-extract:v33:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {

@@ -1420,14 +1420,23 @@ function normalizeFinancialData(
 	// da saída final. Se a IA omitir a evidência deles, não rejeitamos uma extração
 	// cujo valor líquido já foi confirmado pelo documento. Quando a evidência vem,
 	// continuamos validando matematicamente tudo.
-	if (data.finalTotal !== null && data.financialEvidence) {
-		if (!evidenceContainsValue(data.financialEvidence, data.finalTotal)) {
-			throw new Error('A evidência não confirma o total final do endosso');
+	if (data.finalTotal !== null) {
+		const sourceFinancialEvidence = sourceFinancialContext(sourceText);
+		const totalConfirmed =
+			evidenceContainsValue(data.financialEvidence, data.finalTotal) ||
+			evidenceContainsValue(sourceFinancialEvidence, data.finalTotal);
+
+		if (!totalConfirmed) {
+			throw new Error('O documento não confirma o total final do endosso');
 		}
 
 		for (const charge of data.nonLiquidCharges) {
-			if (!evidenceContainsValue(data.financialEvidence, charge)) {
-				throw new Error('A evidência não confirma os encargos do endosso');
+			const chargeConfirmed =
+				evidenceContainsValue(data.financialEvidence, charge) ||
+				evidenceContainsValue(sourceFinancialEvidence, charge);
+
+			if (!chargeConfirmed) {
+				throw new Error('O documento não confirma os encargos do endosso');
 			}
 		}
 
@@ -1904,7 +1913,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v32:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v33:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;
