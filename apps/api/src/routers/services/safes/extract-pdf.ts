@@ -205,9 +205,10 @@ function sourceMarksPrincipalDriverAsInsured(sourceText: string): boolean {
 		const block = normalizeText(lines.slice(start, end).join(' '));
 
 		if (
-			/\bproprio segurado\b|\bo proprio segurado\b|\bmesmo segurado\b|\bproprio proponente\b|\bo proprio proponente\b|\bsegurado e o principal condutor\b/.test(
+			/\bproprio segurado\b|\bo proprio segurado\b|\bmesmo segurado\b|\bproprio proponente\b|\bo proprio proponente\b/.test(
 				block,
-			)
+			) ||
+			/\bsegurado e o principal condutor\b.{0,40}\bsim\b/.test(block)
 		) {
 			return true;
 		}
@@ -225,8 +226,10 @@ function evidenceMarksPrincipalDriverAsInsured(
 
 	const normalized = normalizeText(evidence);
 
-	return /\bproprio segurado\b|\bo proprio segurado\b|\bmesmo segurado\b|\bproprio proponente\b|\bo proprio proponente\b|\bsegurado e o principal condutor\b/.test(
-		normalized,
+	return (
+		/\bproprio segurado\b|\bo proprio segurado\b|\bmesmo segurado\b|\bproprio proponente\b|\bo proprio proponente\b/.test(
+			normalized,
+		) || /\bsegurado e o principal condutor\b.{0,40}\bsim\b/.test(normalized)
 	);
 }
 
@@ -1329,7 +1332,7 @@ function sourceConfirmsPrincipalDriverRegistration(
 			continue;
 		}
 
-		const start = Math.max(0, index - 1);
+		const start = Math.max(0, index - 3);
 		const end = Math.min(lines.length, index + 5);
 		const block = lines.slice(start, end).join(' ');
 
@@ -2016,7 +2019,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v29:${hash}`;
+				const cacheKey = `pdf-extract:v31:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {

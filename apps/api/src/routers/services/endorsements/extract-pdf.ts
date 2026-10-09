@@ -379,7 +379,8 @@ function sourceMarksPrincipalDriverAsInsured(sourceText: string): boolean {
 		if (
 			/\bproprio segurado\b|\bo proprio segurado\b|\bmesmo segurado\b|\bproprio proponente\b|\bo proprio proponente\b/.test(
 				block,
-			)
+			) ||
+			/\bsegurado e o principal condutor\b.{0,40}\bsim\b/.test(block)
 		) {
 			return true;
 		}
@@ -388,22 +389,70 @@ function sourceMarksPrincipalDriverAsInsured(sourceText: string): boolean {
 	return false;
 }
 
+function sourceConfirmsPrincipalDriverRegistration(
+	sourceText: string,
+	registration: string,
+): boolean {
+	const expected = digitsOnly(registration);
+
+	if (!expected) {
+		return false;
+	}
+
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+		const strongDriverLabel =
+			normalizedLine.includes('principal condutor') ||
+			normalizedLine.includes('condutor principal') ||
+			normalizedLine.includes('nome do principal condutor') ||
+			normalizedLine.includes('cpf condutor') ||
+			normalizedLine.includes('informacoes do condutor principal') ||
+			/\bcondutor\b.*\b(?:nascimento|cpf)\b/.test(normalizedLine) ||
+			/\b(?:nascimento|cpf)\b.*\bcondutor\b/.test(normalizedLine) ||
+			normalizedLine === 'condutor';
+
+		if (!strongDriverLabel) {
+			continue;
+		}
+
+		const start = Math.max(0, index - 3);
+		const end = Math.min(lines.length, index + 5);
+		const block = lines.slice(start, end).join(' ');
+
+		if (digitsOnly(block).includes(expected)) {
+			return true;
+		}
+	}
+
+	return sourceContainsRegistrationNear(sourceText, registration, [
+		'questionario de avaliacao de risco',
+		'dados do perfil',
+	]);
+}
+
 function sourcePrincipalDriverCpf(sourceText: string): string | null {
 	const lines = sourceText.split('\n');
 	const candidates = new Set<string>();
 
 	for (let index = 0; index < lines.length; index += 1) {
 		const normalizedLine = normalizeText(lines[index] ?? '');
+		const strongDriverLabel =
+			normalizedLine.includes('principal condutor') ||
+			normalizedLine.includes('condutor principal') ||
+			normalizedLine.includes('nome do principal condutor') ||
+			normalizedLine.includes('cpf condutor') ||
+			normalizedLine.includes('informacoes do condutor principal') ||
+			/\bcondutor\b.*\b(?:nascimento|cpf)\b/.test(normalizedLine) ||
+			/\b(?:nascimento|cpf)\b.*\bcondutor\b/.test(normalizedLine) ||
+			normalizedLine === 'condutor';
 
-		if (
-			!normalizedLine.includes('principal condutor') &&
-			!normalizedLine.includes('condutor principal') &&
-			!normalizedLine.includes('cpf condutor')
-		) {
+		if (!strongDriverLabel) {
 			continue;
 		}
 
-		const start = Math.max(0, index - 1);
+		const start = Math.max(0, index - 3);
 		const end = Math.min(lines.length, index + 5);
 		const block = lines.slice(start, end).join(' ');
 
@@ -441,12 +490,10 @@ function resolvePrincipalDriverCpf({
 
 		if (
 			parsedModelDriver &&
-			(sourceContainsRegistrationNear(sourceText, parsedModelDriver, [
-				'principal condutor',
-				'condutor principal',
-				'cpf condutor',
-				'nome do principal condutor',
-			]) ||
+			(sourceConfirmsPrincipalDriverRegistration(
+				sourceText,
+				parsedModelDriver,
+			) ||
 				(sourceMarksPrincipalDriverAsInsured(sourceText) &&
 					lookup.insuredRegistration !== null &&
 					digitsOnly(parsedModelDriver) ===
@@ -463,8 +510,12 @@ function resolvePrincipalDriverCpf({
 	}
 
 	if (
-		sourceMarksPrincipalDriverAsInsured(sourceText) &&
-		lookup.insuredRegistration
+		lookup.insuredRegistration &&
+		(sourceMarksPrincipalDriverAsInsured(sourceText) ||
+			sourceConfirmsPrincipalDriverRegistration(
+				sourceText,
+				lookup.insuredRegistration,
+			))
 	) {
 		return parseCpfCandidate(lookup.insuredRegistration);
 	}
@@ -1770,7 +1821,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v30:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v31:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;
