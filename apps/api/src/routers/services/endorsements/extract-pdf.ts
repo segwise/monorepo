@@ -71,6 +71,155 @@ function normalizeText(value: string): string {
 		.trim();
 }
 
+type SupportedEndorsementModality = 'vehicle' | 'motorcycle';
+
+type ResolvedEndorsementModality = {
+	modality: SupportedEndorsementModality;
+	evidence: string;
+};
+
+function sourceSupportedEndorsementModality(
+	sourceText: string,
+): ResolvedEndorsementModality | null {
+	const lines = sourceText.split('\n');
+	const candidates: Array<ResolvedEndorsementModality & { score: number }> = [];
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const block = lines
+			.slice(Math.max(0, index - 1), Math.min(lines.length, index + 6))
+			.join(' ')
+			.replace(/\s+/g, ' ')
+			.trim();
+		const normalizedBlock = normalizeText(block);
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (!normalizedBlock) {
+			continue;
+		}
+
+		// Finalidade de uso não define modalidade. "Fretamento (carga/serviços)",
+		// entregas ou transporte de carga podem pertencer a furgão/pick-up leve.
+		if (
+			/\bramo\b/.test(normalizedLine) &&
+			/\b(motocicleta|motocicletas|moto|motos)\b/.test(normalizedBlock)
+		) {
+			candidates.push({ modality: 'motorcycle', evidence: block, score: 120 });
+		}
+
+		if (
+			/\b(tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo)\b/.test(
+				normalizedLine,
+			) &&
+			/\b(motocicleta|motocicletas|moto|motos)\b/.test(normalizedBlock)
+		) {
+			candidates.push({ modality: 'motorcycle', evidence: block, score: 110 });
+		}
+
+		if (
+			/\bramo\b/.test(normalizedLine) &&
+			/\bautomovel\b/.test(normalizedBlock)
+		) {
+			candidates.push({ modality: 'vehicle', evidence: block, score: 120 });
+		}
+
+		if (
+			/\bcategoria(?: de risco)?\b/.test(normalizedLine) &&
+			/\b(automovel|veiculos? de passeio|pick ups? leves?|pickup(?:s)? leves?|suv)\b/.test(
+				normalizedBlock,
+			)
+		) {
+			candidates.push({ modality: 'vehicle', evidence: block, score: 115 });
+		}
+
+		if (
+			/\b(tipo do veiculo|marca modelo do veiculo|veiculo)\b/.test(
+				normalizedLine,
+			) &&
+			/\b(furgao|van|utilitario|pickup|pick up)\b/.test(normalizedBlock)
+		) {
+			candidates.push({ modality: 'vehicle', evidence: block, score: 105 });
+		}
+	}
+
+	if (candidates.length === 0) {
+		return null;
+	}
+
+	candidates.sort((a, b) => b.score - a.score);
+	const best = candidates[0];
+
+	if (!best) {
+		return null;
+	}
+
+	const conflicting = candidates.find(
+		(candidate) =>
+			candidate.modality !== best.modality && candidate.score >= best.score - 5,
+	);
+
+	if (!best || conflicting) {
+		return null;
+	}
+
+	return { modality: best.modality, evidence: best.evidence };
+}
+
+function sourceExplicitlyUnsupportedEndorsementModality(
+	sourceText: string,
+): string | null {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!/\b(ramo|tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo|veiculo)\b/.test(
+				normalizedLine,
+			)
+		) {
+			continue;
+		}
+
+		const block = lines
+			.slice(Math.max(0, index - 1), Math.min(lines.length, index + 6))
+			.join(' ')
+			.replace(/\s+/g, ' ')
+			.trim();
+		const normalizedBlock = normalizeText(block);
+
+		if (
+			/\b(caminhao|caminhoes|cavalo mecanico|semi reboque|semirreboque|carreta|trator rodoviario|onibus|micro onibus)\b/.test(
+				normalizedBlock,
+			)
+		) {
+			return block;
+		}
+	}
+
+	return null;
+}
+
+function resolveSupportedEndorsementModality(
+	modelModality: 'vehicle' | 'motorcycle' | 'unsupported' | 'unknown',
+	modelEvidence: string | null,
+	sourceText: string,
+): ResolvedEndorsementModality | null {
+	const sourceResolved = sourceSupportedEndorsementModality(sourceText);
+
+	if (sourceResolved) {
+		return sourceResolved;
+	}
+
+	if (
+		(modelModality === 'vehicle' || modelModality === 'motorcycle') &&
+		modelEvidence
+	) {
+		return { modality: modelModality, evidence: modelEvidence };
+	}
+
+	return null;
+}
+
 function numericValuesFromText(text: string): number[] {
 	const matches =
 		text.match(/-?\d+(?:\.\d{3})*(?:,\d+)?|-?\d+(?:\.\d+)?/g) ?? [];
@@ -1062,6 +1211,11 @@ const SchemaModelVehicleConductor = z
 					'vehicle_and_driver',
 					'unknown',
 				]),
+				modality: z
+					.enum(['vehicle', 'motorcycle', 'unsupported', 'unknown'])
+					.nullish()
+					.transform((value) => value ?? 'unknown'),
+				modalityEvidence: SchemaModelNullableString,
 				driver: SchemaModelNullableString,
 				plate: SchemaModelNullableString,
 				plateStatus: z.enum(['present', 'explicitly_absent', 'unknown']),
@@ -1186,6 +1340,13 @@ Para vehicle_conductor:
 - driver quando muda apenas principal condutor;
 - vehicle_and_driver quando ambos mudam;
 - unknown se não for possível saber.
+- data.modality descreve a modalidade do veículo resultante: vehicle, motorcycle, unsupported ou unknown.
+- Automóvel, veículo de passeio, SUV, furgão, van, utilitário e pick-up leve => vehicle.
+- Moto/motocicleta => motorcycle.
+- Caminhão pesado, cavalo mecânico, carreta, semirreboque e ônibus => unsupported.
+- "Fretamento (carga/serviços)", entregas, uso comercial ou transporte de carga descrevem USO e NÃO transformam automaticamente furgão/pick-up leve em caminhão.
+- "Ramo: Automóvel" é evidência forte de vehicle quando não houver sinal explícito de caminhão pesado/cavalo mecânico.
+- modalityEvidence deve ser um trecho curto do documento que sustente a modalidade quando disponível.
 - IMPORTANTE: data.driver é SEMPRE o CPF do PRINCIPAL CONDUTOR RESULTANTE após o endosso, mesmo quando o condutor não foi alterado.
 - Se o documento disser "Principal condutor: Próprio Segurado", "O próprio segurado" ou equivalente, copie para data.driver o CPF do SEGURADO identificado em lookup.insuredRegistration.
 - Se o principal condutor for outra pessoa, use o CPF explicitamente associado ao principal condutor.
@@ -1248,7 +1409,7 @@ FORMATO DE SAÍDA
 Retorne apenas um JSON minificado compatível com um destes formatos.
 
 vehicle_conductor:
-{"type":"vehicle_conductor","typeEvidence":"string|null","lookup":{"plate":"string|null","insuredRegistration":"string|null","insuredName":"string|null","evidence":"string|null"},"data":{"changeKind":"vehicle|driver|vehicle_and_driver|unknown","driver":"CPF|null","plate":"string|null","plateStatus":"present|explicitly_absent|unknown","plateEvidence":"string|null","model":"string|null","modelYear":2026,"franchise":1234.56,"franchiseEvidence":"string|null","amount":100.25,"amountDirection":"charge|refund|neutral|null","amountEvidence":"string|null","nonLiquidCharges":[7.39],"finalTotal":107.64,"financialEvidence":"string|null","percentage":null,"percentageEvidence":null}}
+{"type":"vehicle_conductor","typeEvidence":"string|null","lookup":{"plate":"string|null","insuredRegistration":"string|null","insuredName":"string|null","evidence":"string|null"},"data":{"changeKind":"vehicle|driver|vehicle_and_driver|unknown","modality":"vehicle|motorcycle|unsupported|unknown","modalityEvidence":"string|null","driver":"CPF|null","plate":"string|null","plateStatus":"present|explicitly_absent|unknown","plateEvidence":"string|null","model":"string|null","modelYear":2026,"franchise":1234.56,"franchiseEvidence":"string|null","amount":100.25,"amountDirection":"charge|refund|neutral|null","amountEvidence":"string|null","nonLiquidCharges":[7.39],"finalTotal":107.64,"financialEvidence":"string|null","percentage":null,"percentageEvidence":null}}
 
 address:
 {"type":"address","typeEvidence":"string|null","lookup":{"plate":"string|null","insuredRegistration":"string|null","insuredName":"string|null","evidence":"string|null"},"data":{"postalCode":"string|null","amount":100.25,"amountDirection":"charge|refund|neutral|null","amountEvidence":"string|null","nonLiquidCharges":[7.39],"finalTotal":107.64,"financialEvidence":"string|null","percentage":null,"percentageEvidence":null}}
@@ -1609,6 +1770,13 @@ function finalizeModelOutput(
 	validateTypeEvidence(raw.type, raw.typeEvidence, sourceText);
 	const lookup = normalizeLookup(raw.lookup, sourceText);
 
+	const unsupportedModalityEvidence =
+		sourceExplicitlyUnsupportedEndorsementModality(sourceText);
+
+	if (unsupportedModalityEvidence) {
+		throw new Error('Modalidade do veículo do endosso não suportada');
+	}
+
 	switch (raw.type) {
 		case 'vehicle_conductor': {
 			const inferredVehicleChange =
@@ -1636,6 +1804,18 @@ function finalizeModelOutput(
 			let franchise: number | null = null;
 
 			if (changesVehicle) {
+				const resolvedModality = resolveSupportedEndorsementModality(
+					raw.data.modality,
+					raw.data.modalityEvidence,
+					sourceText,
+				);
+
+				if (!resolvedModality) {
+					throw new Error(
+						'Modalidade do veículo resultante não suportada ou não identificada com segurança',
+					);
+				}
+
 				plate = normalizeResultingPlate(
 					raw.data.plate,
 					raw.data.plateStatus,
@@ -1913,7 +2093,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v33:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v35:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;
