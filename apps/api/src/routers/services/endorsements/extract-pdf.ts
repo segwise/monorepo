@@ -548,6 +548,79 @@ function sourceLooksLikeVehicleSubstitutionAdjustment(
 	);
 }
 
+function sourceFinancialContext(sourceText: string): string {
+	const lines = sourceText.split('\n');
+	const blocks: string[] = [];
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!/(preco liquido|premio liquido|valor liquido|forma de pagamento|informacoes de pagamento|parcelamento do premio|tipo de endosso|restituicao de premio|ordem de restituicao)/.test(
+				normalizedLine,
+			)
+		) {
+			continue;
+		}
+
+		blocks.push(
+			lines
+				.slice(Math.max(0, index - 2), Math.min(lines.length, index + 6))
+				.join(' '),
+		);
+	}
+
+	return blocks.join(' \n ');
+}
+
+function sourceFinancialDirection(
+	sourceText: string,
+	rawAmount: number,
+	modelEvidence?: string | null,
+): 'charge' | 'refund' | 'neutral' | null {
+	if (rawAmount < -MONEY_TOLERANCE) {
+		return 'refund';
+	}
+
+	const documentContext = normalizeText(sourceFinancialContext(sourceText));
+	const modelContext = normalizeText(modelEvidence ?? '');
+	const context = documentContext || modelContext;
+
+	const explicitRefund =
+		/forma de pagamento.{0,220}(restituicao de premio|credito em conta)/.test(
+			context,
+		) ||
+		/tipo de endosso.{0,120}(restituicao|devolucao|estorno)/.test(context) ||
+		/restituicao de premio/.test(context) ||
+		/ordem de restituicao.{0,100}(?:valor )?\d/.test(context);
+
+	if (explicitRefund) {
+		return 'refund';
+	}
+
+	const explicitCharge =
+		/tipo de endosso.{0,120}(cobranca|cobrar)/.test(context) ||
+		/forma de pagamento.{0,260}(boleto|cartao de credito|debito em conta|pix)/.test(
+			context,
+		);
+
+	if (rawAmount > MONEY_TOLERANCE) {
+		// Um líquido positivo representa cobrança por padrão. Para transformá-lo em
+		// restituição é necessária evidência financeira local e inequívoca; menções
+		// genéricas a devolução/restituição em cláusulas do contrato não contam.
+		return 'charge';
+	}
+
+	if (explicitCharge) {
+		return 'charge';
+	}
+
+	const explicitNeutral =
+		/sem (cobranca|movimentacao|premio)|sem premio|sem movimento/.test(context);
+
+	return explicitNeutral ? 'neutral' : null;
+}
+
 function sourceLiquidAmount(
 	sourceText: string,
 ): { value: number; evidence: string } | null {
@@ -1145,6 +1218,10 @@ DIREÇÃO FINANCEIRA
 - refund: segurado recebe crédito/restituição/estorno; valor final interno será negativo;
 - neutral: somente quando o documento explicitar ausência de movimentação e amount=0.
 Se o próprio documento trouxer Preço Líquido negativo, preserve a natureza de restituição: amountDirection=refund.
+Para líquido positivo, use refund SOMENTE quando a área financeira do endosso indicar explicitamente restituição/crédito/estorno.
+Menções genéricas em cláusulas, como possibilidade de "devolução" em caso de recusa futura, NÃO definem a direção financeira deste endosso.
+"Cartão de Crédito" é forma de cobrança e não deve ser interpretado como "crédito ao segurado".
+Se houver "Tipo de Endosso: ENDOSSO DE COBRANÇA", classifique como charge.
 
 "amountEvidence" deve provar o valor LÍQUIDO escolhido.
 "nonLiquidCharges" = IOF, juros, encargos e custos adicionados ao líquido para chegar ao total final; não inclua zeros.
@@ -1261,24 +1338,28 @@ function normalizeFinancialData(
 		throw new Error('A evidência não confirma o valor líquido do endosso');
 	}
 
-	const evidence = normalizeText(
-		`${amountEvidence} ${data.financialEvidence ?? ''} ${sourceText}`,
+	const financialContext = normalizeText(
+		`${amountEvidence} ${data.financialEvidence ?? ''} ${sourceFinancialContext(sourceText)}`,
 	);
 
-	let direction = data.amountDirection;
+	const sourceDirection = sourceFinancialDirection(
+		sourceText,
+		rawAmount,
+		`${amountEvidence} ${data.financialEvidence ?? ''}`,
+	);
 
-	// Valor líquido negativo ou pagamento em forma de crédito/restituição é uma
-	// evidência mais forte do que a classificação auxiliar da IA.
-	if (
-		rawAmount < 0 ||
-		/\b(credito em conta|restituicao|estorno|devolucao|a restituir)\b/.test(
-			evidence,
-		)
-	) {
-		direction = 'refund';
-	} else if (!direction) {
-		if (rawAmount > 0) {
+	let direction = sourceDirection ?? data.amountDirection;
+
+	// A direção financeira nunca é inferida a partir do documento inteiro.
+	// Cláusulas genéricas podem mencionar devolução/restituição sem descrever o
+	// efeito financeiro deste endosso. Líquido negativo é restituição; líquido
+	// positivo é cobrança, salvo evidência financeira local inequívoca em sentido
+	// contrário.
+	if (!direction) {
+		if (rawAmount > MONEY_TOLERANCE) {
 			direction = 'charge';
+		} else if (rawAmount < -MONEY_TOLERANCE) {
+			direction = 'refund';
 		} else {
 			throw new Error('Valor zero sem indicação explícita de neutralidade');
 		}
@@ -1301,7 +1382,9 @@ function normalizeFinancialData(
 		case 'refund': {
 			const hasRefundSignal =
 				rawAmount < 0 ||
-				/restituicao|credito|estorno|devolucao|a restituir/.test(evidence);
+				/restituicao de premio|credito em conta|estorno|a restituir/.test(
+					financialContext,
+				);
 
 			if (!hasRefundSignal) {
 				throw new Error(
@@ -1322,7 +1405,7 @@ function normalizeFinancialData(
 
 			if (
 				!/sem.*(cobranca|movimentacao|premio)|sem premio|sem movimento/.test(
-					evidence,
+					financialContext,
 				)
 			) {
 				throw new Error('Endosso neutro sem evidência explícita de valor zero');
@@ -1821,7 +1904,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v31:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v32:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				let extracted: DataExtractEndorsement;

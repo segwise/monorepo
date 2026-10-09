@@ -1522,6 +1522,12 @@ Exemplos de interpretação:
 "insuranceCompany.evidence" deve ser um trecho curto do documento que mostre a MARCA COMERCIAL escolhida, preferindo cabeçalho, segmento ou nome do produto. Não use somente o rodapé jurídico quando existir marca comercial distinta.
 "basis" = "commercial_brand" quando houver marca comercial explícita; use "legal_issuer" somente quando o emissor jurídico também representar o produto atual e não houver outra marca comercial.
 
+TIPO DE DOCUMENTO
+- Não classifique apenas pelo título visual. Algumas seguradoras usam o título "Proposta" também para alterações contratuais.
+- Se "Tipo de Operação" indicar "SUBSTITUIÇÃO DE VEÍCULO", "ALTERAÇÃO DE VEÍCULO", "TROCA DE VEÍCULO" ou cancelamento, documentKind="endorsement".
+- "Proposta de Endosso de Substituição" e equivalentes também são endorsement.
+- Status "Emitido" e número de apólice não transformam um endosso em proposta/apólice nova.
+
 MODALIDADE
 - carro, utilitário, SUV, pickup leve etc. => vehicle;
 - moto/motocicleta => motorcycle;
@@ -1641,6 +1647,17 @@ ${text}
 
 function sourceLooksLikeEndorsementAdjustment(sourceText: string): boolean {
 	const normalized = normalizeText(sourceText);
+
+	const hasExplicitEndorsementOperation =
+		/\btipo de operacao.{0,140}(substituicao de veiculo|alteracao de veiculo|troca de veiculo|cancelamento)\b/.test(
+			normalized,
+		) ||
+		/\bproposta de endosso de substituicao\b/.test(normalized) ||
+		/\bendosso de substituicao(?: de)? veiculo\b/.test(normalized);
+
+	if (hasExplicitEndorsementOperation) {
+		return true;
+	}
 
 	const hasNegativeLiquid =
 		/(?:pre[cç]o|pr[eê]mio|valor)\s+l[ií]quido(?:\s+total)?\s*:?\s*R?\$?\s*-\s*\d/i.test(
@@ -2019,7 +2036,7 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v31:${hash}`;
+				const cacheKey = `pdf-extract:v32:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				if (cached) {
