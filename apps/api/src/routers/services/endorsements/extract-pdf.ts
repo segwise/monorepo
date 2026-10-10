@@ -83,7 +83,17 @@ function sourceSupportedEndorsementModality(
 	sourceText: string,
 ): ResolvedEndorsementModality | null {
 	const lines = sourceText.split('\n');
-	const candidates: Array<ResolvedEndorsementModality & { score: number }> = [];
+	const specificCandidates: Array<
+		ResolvedEndorsementModality & { score: number }
+	> = [];
+	const genericCandidates: Array<
+		ResolvedEndorsementModality & { score: number }
+	> = [];
+
+	const motorcycleTerms =
+		/\b(motocicleta|motocicletas|moto|motos|motoneta|motonetas|bicicleta motorizada|bicicletas motorizadas|side car|vespacar)\b/;
+	const vehicleTerms =
+		/\b(veiculos? de passeio|automovel particular|pick ups? leves?|pickup(?:s)? leves?|suv|furgao|van|utilitario|utilitario comercial leve)\b/;
 
 	for (let index = 0; index < lines.length; index += 1) {
 		const block = lines
@@ -98,49 +108,52 @@ function sourceSupportedEndorsementModality(
 			continue;
 		}
 
-		// Finalidade de uso não define modalidade. "Fretamento (carga/serviços)",
-		// entregas ou transporte de carga podem pertencer a furgão/pick-up leve.
-		if (
-			/\bramo\b/.test(normalizedLine) &&
-			/\b(motocicleta|motocicletas|moto|motos)\b/.test(normalizedBlock)
-		) {
-			candidates.push({ modality: 'motorcycle', evidence: block, score: 120 });
+		const isSpecificVehicleContext =
+			/\b(tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo|dados do veiculo segurado|veiculo)\b/.test(
+				normalizedLine,
+			);
+
+		if (isSpecificVehicleContext && motorcycleTerms.test(normalizedBlock)) {
+			specificCandidates.push({
+				modality: 'motorcycle',
+				evidence: block,
+				score: 300,
+			});
+		}
+
+		if (isSpecificVehicleContext && vehicleTerms.test(normalizedBlock)) {
+			specificCandidates.push({
+				modality: 'vehicle',
+				evidence: block,
+				score: 280,
+			});
 		}
 
 		if (
-			/\b(tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo)\b/.test(
-				normalizedLine,
-			) &&
-			/\b(motocicleta|motocicletas|moto|motos)\b/.test(normalizedBlock)
+			/\bramo\b/.test(normalizedLine) &&
+			motorcycleTerms.test(normalizedBlock)
 		) {
-			candidates.push({ modality: 'motorcycle', evidence: block, score: 110 });
+			specificCandidates.push({
+				modality: 'motorcycle',
+				evidence: block,
+				score: 240,
+			});
 		}
 
 		if (
 			/\bramo\b/.test(normalizedLine) &&
 			/\bautomovel\b/.test(normalizedBlock)
 		) {
-			candidates.push({ modality: 'vehicle', evidence: block, score: 120 });
-		}
-
-		if (
-			/\bcategoria(?: de risco)?\b/.test(normalizedLine) &&
-			/\b(automovel|veiculos? de passeio|pick ups? leves?|pickup(?:s)? leves?|suv)\b/.test(
-				normalizedBlock,
-			)
-		) {
-			candidates.push({ modality: 'vehicle', evidence: block, score: 115 });
-		}
-
-		if (
-			/\b(tipo do veiculo|marca modelo do veiculo|veiculo)\b/.test(
-				normalizedLine,
-			) &&
-			/\b(furgao|van|utilitario|pickup|pick up)\b/.test(normalizedBlock)
-		) {
-			candidates.push({ modality: 'vehicle', evidence: block, score: 105 });
+			genericCandidates.push({
+				modality: 'vehicle',
+				evidence: block,
+				score: 50,
+			});
 		}
 	}
+
+	const candidates =
+		specificCandidates.length > 0 ? specificCandidates : genericCandidates;
 
 	if (candidates.length === 0) {
 		return null;
@@ -1476,7 +1489,9 @@ Para vehicle_conductor:
 - Moto/motocicleta => motorcycle.
 - Caminhão pesado, cavalo mecânico, carreta, semirreboque e ônibus => unsupported.
 - "Fretamento (carga/serviços)", entregas, uso comercial ou transporte de carga descrevem USO e NÃO transformam automaticamente furgão/pick-up leve em caminhão.
-- "Ramo: Automóvel" é evidência forte de vehicle quando não houver sinal explícito de caminhão pesado/cavalo mecânico.
+- categoria/tipo/modelo específico do veículo prevalece sobre "Ramo".
+- Categorias contendo "Motocicletas", "Motonetas", "Bicicletas Motorizadas", "SIDE-CAR" ou equivalentes => motorcycle, MESMO que o documento também diga "Ramo: Automóvel".
+- "Ramo: Automóvel" pode ser um ramo comercial genérico que inclui motos em algumas seguradoras; use-o como vehicle somente quando não houver categoria/tipo/modelo mais específico.
 - modalityEvidence deve ser um trecho curto do documento que sustente a modalidade quando disponível.
 - IMPORTANTE: data.driver é SEMPRE o CPF do PRINCIPAL CONDUTOR RESULTANTE após o endosso, mesmo quando o condutor não foi alterado.
 - exceção estrutural Suhai: quando o documento usar o layout SUHAI com "DADOS DO PROPONENTE" + "DADOS DO PERFIL", pessoa física, o PERFIL usar idade/sexo/estado civil/utilização do proponente e NÃO houver bloco separado de principal condutor, use lookup.insuredRegistration como o principal condutor resultante;
@@ -1792,7 +1807,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-endorsement:v39] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-endorsement:v40] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${expectedTotal.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2282,11 +2297,11 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v39:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v40:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-endorsement:v39] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-endorsement:v40] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				let extracted: DataExtractEndorsement;
@@ -2297,7 +2312,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
 					} catch (error) {
 						console.warn(
-							'[extract-endorsement:v39] cache incompatível, executando nova extração:',
+							'[extract-endorsement:v40] cache incompatível, executando nova extração:',
 							error instanceof Error ? error.message : error,
 						);
 

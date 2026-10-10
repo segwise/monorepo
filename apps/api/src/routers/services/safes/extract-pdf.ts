@@ -168,9 +168,50 @@ type ResolvedModality = {
 	evidence: string;
 };
 
+function sourceExplicitlyUnsupportedModality(
+	sourceText: string,
+): string | null {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!/\b(ramo|tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo|veiculo)\b/.test(
+				normalizedLine,
+			)
+		) {
+			continue;
+		}
+
+		const block = lines
+			.slice(Math.max(0, index - 1), Math.min(lines.length, index + 6))
+			.join(' ')
+			.replace(/\s+/g, ' ')
+			.trim();
+		const normalizedBlock = normalizeText(block);
+
+		if (
+			/\b(caminhao|caminhoes|cavalo mecanico|semi reboque|semirreboque|carreta|trator rodoviario|onibus|micro onibus)\b/.test(
+				normalizedBlock,
+			)
+		) {
+			return block;
+		}
+	}
+
+	return null;
+}
+
 function sourceSupportedModality(sourceText: string): ResolvedModality | null {
 	const lines = sourceText.split('\n');
-	const candidates: Array<ResolvedModality & { score: number }> = [];
+	const specificCandidates: Array<ResolvedModality & { score: number }> = [];
+	const genericCandidates: Array<ResolvedModality & { score: number }> = [];
+
+	const motorcycleTerms =
+		/\b(motocicleta|motocicletas|moto|motos|motoneta|motonetas|bicicleta motorizada|bicicletas motorizadas|side car|vespacar)\b/;
+	const vehicleTerms =
+		/\b(veiculos? de passeio|automovel particular|pick ups? leves?|pickup(?:s)? leves?|suv|furgao|van|utilitario|utilitario comercial leve)\b/;
 
 	for (let index = 0; index < lines.length; index += 1) {
 		const block = lines
@@ -185,49 +226,55 @@ function sourceSupportedModality(sourceText: string): ResolvedModality | null {
 			continue;
 		}
 
-		// Não use finalidade de uso (ex.: "fretamento (carga/serviços)") para
-		// decidir modalidade. A modalidade vem do ramo/tipo/categoria do veículo.
+		const isSpecificVehicleContext =
+			/\b(tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo|dados do veiculo segurado)\b/.test(
+				normalizedLine,
+			);
+
+		// Categoria/tipo/modelo específico prevalece sobre ramos comerciais amplos.
+		if (isSpecificVehicleContext && motorcycleTerms.test(normalizedBlock)) {
+			specificCandidates.push({
+				modality: 'motorcycle',
+				evidence: block,
+				score: 300,
+			});
+		}
+
+		if (isSpecificVehicleContext && vehicleTerms.test(normalizedBlock)) {
+			specificCandidates.push({
+				modality: 'vehicle',
+				evidence: block,
+				score: 280,
+			});
+		}
+
 		if (
 			/\bramo\b/.test(normalizedLine) &&
-			/\b(motocicleta|motocicletas|moto|motos)\b/.test(normalizedBlock)
+			motorcycleTerms.test(normalizedBlock)
 		) {
-			candidates.push({ modality: 'motorcycle', evidence: block, score: 120 });
+			specificCandidates.push({
+				modality: 'motorcycle',
+				evidence: block,
+				score: 240,
+			});
 		}
 
-		if (
-			/\b(tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo)\b/.test(
-				normalizedLine,
-			) &&
-			/\b(motocicleta|motocicletas|moto|motos)\b/.test(normalizedBlock)
-		) {
-			candidates.push({ modality: 'motorcycle', evidence: block, score: 110 });
-		}
-
+		// Em algumas seguradoras, "Ramo: Automóvel" é um ramo comercial amplo
+		// que também contém motocicletas. Use apenas como fallback.
 		if (
 			/\bramo\b/.test(normalizedLine) &&
 			/\bautomovel\b/.test(normalizedBlock)
 		) {
-			candidates.push({ modality: 'vehicle', evidence: block, score: 120 });
-		}
-
-		if (
-			/\bcategoria(?: de risco)?\b/.test(normalizedLine) &&
-			/\b(automovel|veiculos? de passeio|pick ups? leves?|pickup(?:s)? leves?|suv)\b/.test(
-				normalizedBlock,
-			)
-		) {
-			candidates.push({ modality: 'vehicle', evidence: block, score: 115 });
-		}
-
-		if (
-			/\b(tipo do veiculo|marca modelo do veiculo)\b/.test(normalizedLine) &&
-			/\b(furgao|furgão|van|utilitario|utilitário|pickup|pick up)\b/.test(
-				normalizedBlock,
-			)
-		) {
-			candidates.push({ modality: 'vehicle', evidence: block, score: 105 });
+			genericCandidates.push({
+				modality: 'vehicle',
+				evidence: block,
+				score: 50,
+			});
 		}
 	}
+
+	const candidates =
+		specificCandidates.length > 0 ? specificCandidates : genericCandidates;
 
 	if (candidates.length === 0) {
 		return null;
@@ -257,6 +304,10 @@ function resolveSupportedModality(
 	modelEvidence: string | null,
 	sourceText: string,
 ): ResolvedModality | null {
+	if (sourceExplicitlyUnsupportedModality(sourceText)) {
+		return null;
+	}
+
 	const sourceResolved = sourceSupportedModality(sourceText);
 
 	if (sourceResolved) {
@@ -1823,7 +1874,9 @@ MODALIDADE
 - carro, utilitário, SUV, pickup leve, furgão, van e utilitário comercial leve => vehicle;
 - moto/motocicleta => motorcycle;
 - caminhão pesado, cavalo mecânico ou outra modalidade fora do escopo => unsupported;
-- "Ramo: Automóvel" é evidência forte de vehicle quando os dados do veículo não identificarem caminhão pesado/cavalo mecânico;
+- categoria/tipo/modelo específico do veículo prevalece sobre "Ramo";
+- categorias contendo "Motocicletas", "Motonetas", "Bicicletas Motorizadas", "SIDE-CAR" ou equivalentes => motorcycle, MESMO que o documento também diga "Ramo: Automóvel";
+- "Ramo: Automóvel" pode ser um ramo comercial genérico que inclui motos em algumas seguradoras; use-o como vehicle somente quando não houver categoria/tipo/modelo mais específico;
 - categoria como "Pick-ups leves" ou "Veículos de passeio" => vehicle;
 - não use finalidade de uso para decidir modalidade;
 - "Fretamento (carga/serviços)", entregas, uso comercial ou transporte de carga descrevem USO, não transformam automaticamente um furgão/pickup leve em caminhão.
@@ -2022,7 +2075,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v39] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v40] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2389,7 +2442,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v39] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v40] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2409,11 +2462,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v39:${hash}`;
+				const cacheKey = `pdf-extract:v40:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v39] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v40] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {
