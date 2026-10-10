@@ -79,6 +79,71 @@ type ResolvedEndorsementModality = {
 	evidence: string;
 };
 
+function modalityClassificationContext(
+	lines: Array<string>,
+	index: number,
+): string | null {
+	const rawLine = lines[index] ?? '';
+	const normalizedLine = normalizeText(rawLine);
+
+	const hasStructuredLabel =
+		/\b(ramo|tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo|produto)\b/.test(
+			normalizedLine,
+		) || /\bve[ií]culo\s*:/i.test(rawLine);
+
+	if (!hasStructuredLabel) {
+		return null;
+	}
+
+	if (/https?:\/\/|www\./i.test(rawLine)) {
+		return null;
+	}
+
+	const contextLines = [rawLine];
+
+	for (let offset = 1; offset <= 2; offset += 1) {
+		const nextLine = lines[index + offset];
+
+		if (typeof nextLine !== 'string') {
+			break;
+		}
+
+		if (/https?:\/\/|www\./i.test(nextLine)) {
+			break;
+		}
+
+		contextLines.push(nextLine);
+	}
+
+	return contextLines.join(' ').replace(/\s+/g, ' ').trim();
+}
+
+function sourceExplicitlyUnsupportedEndorsementModality(
+	sourceText: string,
+): string | null {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const block = modalityClassificationContext(lines, index);
+
+		if (!block) {
+			continue;
+		}
+
+		const normalizedBlock = normalizeText(block);
+
+		if (
+			/\b(caminhao|caminhoes|cavalo mecanico|semi reboque|semirreboque|carreta|trator rodoviario|onibus|micro onibus)\b/.test(
+				normalizedBlock,
+			)
+		) {
+			return block;
+		}
+	}
+
+	return null;
+}
+
 function sourceSupportedEndorsementModality(
 	sourceText: string,
 ): ResolvedEndorsementModality | null {
@@ -96,36 +161,42 @@ function sourceSupportedEndorsementModality(
 		/\b(veiculos? de passeio|automovel particular|pick ups? leves?|pickup(?:s)? leves?|suv|furgao|van|utilitario|utilitario comercial leve)\b/;
 
 	for (let index = 0; index < lines.length; index += 1) {
-		const block = lines
-			.slice(Math.max(0, index - 1), Math.min(lines.length, index + 6))
-			.join(' ')
-			.replace(/\s+/g, ' ')
-			.trim();
+		const rawLine = lines[index] ?? '';
+		const normalizedLine = normalizeText(rawLine);
+		const block =
+			modalityClassificationContext(lines, index) ??
+			lines
+				.slice(Math.max(0, index - 1), Math.min(lines.length, index + 3))
+				.join(' ')
+				.replace(/\s+/g, ' ')
+				.trim();
 		const normalizedBlock = normalizeText(block);
-		const normalizedLine = normalizeText(lines[index] ?? '');
 
 		if (!normalizedBlock) {
 			continue;
 		}
 
-		const isSpecificVehicleContext =
-			/\b(tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo|dados do veiculo segurado|veiculo)\b/.test(
-				normalizedLine,
-			);
-
-		if (isSpecificVehicleContext && motorcycleTerms.test(normalizedBlock)) {
+		if (
+			/\bcategoria(?: de risco)?\b/.test(normalizedLine) &&
+			motorcycleTerms.test(normalizedBlock)
+		) {
 			specificCandidates.push({
 				modality: 'motorcycle',
 				evidence: block,
-				score: 300,
+				score: 350,
 			});
 		}
 
-		if (isSpecificVehicleContext && vehicleTerms.test(normalizedBlock)) {
+		if (
+			/\b(tipo do veiculo|marca modelo do veiculo|dados do veiculo segurado)\b/.test(
+				normalizedLine,
+			) &&
+			motorcycleTerms.test(normalizedBlock)
+		) {
 			specificCandidates.push({
-				modality: 'vehicle',
+				modality: 'motorcycle',
 				evidence: block,
-				score: 280,
+				score: 330,
 			});
 		}
 
@@ -136,10 +207,37 @@ function sourceSupportedEndorsementModality(
 			specificCandidates.push({
 				modality: 'motorcycle',
 				evidence: block,
-				score: 240,
+				score: 320,
 			});
 		}
 
+		if (
+			/\bproduto\b/.test(normalizedLine) &&
+			motorcycleTerms.test(normalizedBlock)
+		) {
+			specificCandidates.push({
+				modality: 'motorcycle',
+				evidence: block,
+				score: 310,
+			});
+		}
+
+		if (
+			/\b(categoria(?: de risco)?|tipo do veiculo|marca modelo do veiculo|dados do veiculo segurado)\b/.test(
+				normalizedLine,
+			) &&
+			vehicleTerms.test(normalizedBlock)
+		) {
+			specificCandidates.push({
+				modality: 'vehicle',
+				evidence: block,
+				score: 300,
+			});
+		}
+
+		// "Ramo: Automóvel" é amplo em algumas seguradoras e pode aparecer
+		// inclusive em produtos de moto. Só serve como fallback quando nenhum
+		// sinal específico do veículo foi encontrado.
 		if (
 			/\bramo\b/.test(normalizedLine) &&
 			/\bautomovel\b/.test(normalizedBlock)
@@ -176,41 +274,6 @@ function sourceSupportedEndorsementModality(
 	}
 
 	return { modality: best.modality, evidence: best.evidence };
-}
-
-function sourceExplicitlyUnsupportedEndorsementModality(
-	sourceText: string,
-): string | null {
-	const lines = sourceText.split('\n');
-
-	for (let index = 0; index < lines.length; index += 1) {
-		const normalizedLine = normalizeText(lines[index] ?? '');
-
-		if (
-			!/\b(ramo|tipo do veiculo|categoria(?: de risco)?|marca modelo do veiculo|veiculo)\b/.test(
-				normalizedLine,
-			)
-		) {
-			continue;
-		}
-
-		const block = lines
-			.slice(Math.max(0, index - 1), Math.min(lines.length, index + 6))
-			.join(' ')
-			.replace(/\s+/g, ' ')
-			.trim();
-		const normalizedBlock = normalizeText(block);
-
-		if (
-			/\b(caminhao|caminhoes|cavalo mecanico|semi reboque|semirreboque|carreta|trator rodoviario|onibus|micro onibus)\b/.test(
-				normalizedBlock,
-			)
-		) {
-			return block;
-		}
-	}
-
-	return null;
 }
 
 function resolveSupportedEndorsementModality(
@@ -1594,7 +1657,8 @@ Para vehicle_conductor:
 - Caminhão pesado, cavalo mecânico, carreta, semirreboque e ônibus => unsupported.
 - "Fretamento (carga/serviços)", entregas, uso comercial ou transporte de carga descrevem USO e NÃO transformam automaticamente furgão/pick-up leve em caminhão.
 - categoria/tipo/modelo específico do veículo prevalece sobre "Ramo".
-- Categorias contendo "Motocicletas", "Motonetas", "Bicicletas Motorizadas", "SIDE-CAR" ou equivalentes => motorcycle, MESMO que o documento também diga "Ramo: Automóvel".
+- Categorias contendo "Moto", "Motocicletas", "Motonetas", "Bicicletas Motorizadas", "SIDE-CAR" ou equivalentes => motorcycle, MESMO que o documento também diga "Ramo: Automóvel".
+- "Ramo: 31 - Moto", "Produto: Moto" e "Categoria de Risco: Moto" são evidências fortes de motorcycle.
 - "Ramo: Automóvel" pode ser um ramo comercial genérico que inclui motos em algumas seguradoras; use-o como vehicle somente quando não houver categoria/tipo/modelo mais específico.
 - modalityEvidence deve ser um trecho curto do documento que sustente a modalidade quando disponível.
 - IMPORTANTE: data.driver é SEMPRE o CPF do PRINCIPAL CONDUTOR RESULTANTE após o endosso, mesmo quando o condutor não foi alterado.
@@ -1911,7 +1975,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-endorsement:v42] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-endorsement:v43] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${expectedTotal.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2401,11 +2465,11 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v42:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v43:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-endorsement:v42] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-endorsement:v43] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				let extracted: DataExtractEndorsement;
@@ -2416,7 +2480,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
 					} catch (error) {
 						console.warn(
-							'[extract-endorsement:v42] cache incompatível, executando nova extração:',
+							'[extract-endorsement:v43] cache incompatível, executando nova extração:',
 							error instanceof Error ? error.message : error,
 						);
 
