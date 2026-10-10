@@ -158,7 +158,7 @@ function sourceSupportedEndorsementModality(
 			candidate.modality !== best.modality && candidate.score >= best.score - 5,
 	);
 
-	if (!best || conflicting) {
+	if (conflicting) {
 		return null;
 	}
 
@@ -876,6 +876,12 @@ function sourceLiquidAmount(
 function sourcePrincipalFranchise(
 	sourceText: string,
 ): { value: number; evidence: string } | null {
+	const explicitNoFranchise = sourceExplicitNoPrincipalFranchise(sourceText);
+
+	if (explicitNoFranchise) {
+		return { value: 0, evidence: explicitNoFranchise };
+	}
+
 	const lines = sourceText.split('\n');
 
 	for (let index = 0; index < lines.length; index += 1) {
@@ -1084,9 +1090,76 @@ function sourceContainsPlateNear(sourceText: string, plate: string): boolean {
 function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
 	const normalized = normalizeText(evidence);
 
-	return /\b(casco|compreensiva|basica|obrigatoria|participacao obrigatoria|indenizacao parcial do veiculo|franquia do veiculo|veiculo)\b/.test(
+	return /\b(casco|compreensiva|basica|obrigatoria|participacao obrigatoria|indenizacao parcial do veiculo|indenizacao integral|ind integral|roubo furto|colisao danos|franquia do veiculo|veiculo|normal|reduzida|facultativa)\b/.test(
 		normalized,
 	);
+}
+
+function evidenceExplicitlyStatesNoPrincipalFranchise(
+	evidence: string | null | undefined,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	const normalized = normalizeText(evidence);
+
+	return (
+		/\b(nao ha franquia|sem franquia|isento de franquia|isenta de franquia|franquia isenta|franquia zerada)\b/.test(
+			normalized,
+		) && franchiseEvidenceLooksPrincipal(evidence)
+	);
+}
+
+function sourceExplicitNoPrincipalFranchise(sourceText: string): string | null {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? '';
+		const normalizedLine = normalizeText(line);
+
+		if (
+			!/\b(nao ha franquia|sem franquia|isento de franquia|isenta de franquia|franquia isenta|franquia zerada)\b/.test(
+				normalizedLine,
+			)
+		) {
+			continue;
+		}
+
+		if (franchiseEvidenceLooksPrincipal(line)) {
+			return line.trim();
+		}
+
+		const previous = lines[index - 1] ?? '';
+		const combined = `${previous} ${line}`.trim();
+		const normalizedPrevious = normalizeText(previous);
+
+		if (
+			/\b(indenizacao integral|ind integral|compreensiva|casco|roubo furto|colisao danos)\b/.test(
+				normalizedPrevious,
+			) &&
+			franchiseEvidenceLooksPrincipal(combined)
+		) {
+			return combined;
+		}
+	}
+
+	return null;
+}
+
+function franchiseEvidenceConfirmsValue(
+	evidence: string | null | undefined,
+	value: number,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	if (value === 0) {
+		return evidenceExplicitlyStatesNoPrincipalFranchise(evidence);
+	}
+
+	return evidenceContainsValue(evidence, value);
 }
 
 function typeEvidenceMatches(
@@ -1146,7 +1219,7 @@ const SchemaDataExtractVehicleConductor = z
 					.nullable(),
 				franchise: z
 					.number('Valor da franquia inválido')
-					.positive('Valor da franquia inválido')
+					.nonnegative('Valor da franquia inválido')
 					.nullable(),
 				amount: z.number('Valor do endosso inválido'),
 				percentage: SchemaPercentage,
@@ -1177,7 +1250,7 @@ const SchemaDataExtractFranchise = z
 			.object({
 				franchise: z
 					.number('Valor da franquia inválido')
-					.positive('Valor da franquia inválido'),
+					.nonnegative('Valor da franquia inválido'),
 				amount: z.number('Valor do endosso inválido'),
 				percentage: SchemaPercentage,
 			})
@@ -1415,13 +1488,13 @@ Quando houver mudança de veículo, retorne os dados RESULTANTES após o endosso
 - data.plate = nova placa;
 - data.model = novo modelo;
 - data.modelYear = ano modelo;
-- data.franchise = franquia PRINCIPAL resultante do veículo;
+- data.franchise = franquia PRINCIPAL resultante do veículo; se a cobertura principal declarar explicitamente "Não há franquia"/"Sem franquia", use 0; nunca use 0 apenas por ausência de informação;
 - data.plateStatus="explicitly_absent" somente se o PDF mostrar claramente "-", "A AVISAR", "SEM PLACA" ou equivalente; se não localizou a placa, use "unknown".
 
 FRANQUIA PRINCIPAL
 Aceite casco/compreensiva/básica/obrigatória/participação obrigatória/25% da normal/50% da obrigatória ou equivalente.
 Nunca use franquias de vidro, para-brisa, farol, lanterna, retrovisor, roda, pneu ou assistência.
-"franchiseEvidence" deve conter o rótulo da cobertura/franquia principal e o valor.
+"franchiseEvidence" deve conter o rótulo da cobertura/franquia principal e o valor, ou o trecho explícito que diga que a cobertura principal não possui franquia.
 
 VALOR FINANCEIRO DO ENDOSSO
 "amount" = valor LÍQUIDO da negociação do endosso, ANTES de IOF, juros, encargos ou custos.
@@ -1719,7 +1792,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-endorsement:v38] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-endorsement:v39] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${expectedTotal.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -1937,7 +2010,10 @@ function finalizeModelOutput(
 					sourceFranchise &&
 					(resolvedFranchise === null ||
 						!franchiseEvidence ||
-						!evidenceContainsValue(franchiseEvidence, resolvedFranchise) ||
+						!franchiseEvidenceConfirmsValue(
+							franchiseEvidence,
+							resolvedFranchise,
+						) ||
 						!franchiseEvidenceLooksPrincipal(franchiseEvidence))
 				) {
 					resolvedFranchise = sourceFranchise.value;
@@ -1948,7 +2024,7 @@ function finalizeModelOutput(
 					!raw.data.model ||
 					raw.data.modelYear === null ||
 					resolvedFranchise === null ||
-					resolvedFranchise <= 0 ||
+					resolvedFranchise < 0 ||
 					!franchiseEvidence
 				) {
 					throw new Error(
@@ -1956,7 +2032,9 @@ function finalizeModelOutput(
 					);
 				}
 
-				if (!evidenceContainsValue(franchiseEvidence, resolvedFranchise)) {
+				if (
+					!franchiseEvidenceConfirmsValue(franchiseEvidence, resolvedFranchise)
+				) {
 					throw new Error(
 						'A evidência não confirma a franquia principal resultante',
 					);
@@ -2036,9 +2114,12 @@ function finalizeModelOutput(
 			if (
 				sourceFranchise &&
 				(resolvedFranchise === null ||
-					resolvedFranchise <= 0 ||
+					resolvedFranchise < 0 ||
 					!franchiseEvidence ||
-					!evidenceContainsValue(franchiseEvidence, resolvedFranchise) ||
+					!franchiseEvidenceConfirmsValue(
+						franchiseEvidence,
+						resolvedFranchise,
+					) ||
 					!franchiseEvidenceLooksPrincipal(franchiseEvidence))
 			) {
 				resolvedFranchise = sourceFranchise.value;
@@ -2047,13 +2128,15 @@ function finalizeModelOutput(
 
 			if (
 				resolvedFranchise === null ||
-				resolvedFranchise <= 0 ||
+				resolvedFranchise < 0 ||
 				!franchiseEvidence
 			) {
 				throw new Error('Endosso de franquia sem novo valor confirmado');
 			}
 
-			if (!evidenceContainsValue(franchiseEvidence, resolvedFranchise)) {
+			if (
+				!franchiseEvidenceConfirmsValue(franchiseEvidence, resolvedFranchise)
+			) {
 				throw new Error('A evidência não confirma a nova franquia');
 			}
 
@@ -2199,11 +2282,11 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v38:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v39:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-endorsement:v38] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-endorsement:v39] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				let extracted: DataExtractEndorsement;
@@ -2214,7 +2297,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
 					} catch (error) {
 						console.warn(
-							'[extract-endorsement:v38] cache incompatível, executando nova extração:',
+							'[extract-endorsement:v39] cache incompatível, executando nova extração:',
 							error instanceof Error ? error.message : error,
 						);
 

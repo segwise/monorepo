@@ -1261,7 +1261,7 @@ function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
 	const normalized = normalizeText(evidence);
 
 	const strongPrincipal =
-		/\b(casco|compreensiva|basica|obrigatoria|participacao obrigatoria|indenizacao parcial do veiculo|franquia do veiculo|normal|reduzida|facultativa)\b/.test(
+		/\b(casco|compreensiva|basica|obrigatoria|participacao obrigatoria|indenizacao parcial do veiculo|indenizacao integral|ind integral|roubo furto|colisao danos|franquia do veiculo|normal|reduzida|facultativa)\b/.test(
 			normalized,
 		);
 
@@ -1275,6 +1275,80 @@ function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
 		);
 
 	return !accessory && /\bfranquia\b/.test(normalized);
+}
+
+function evidenceExplicitlyStatesNoPrincipalFranchise(
+	evidence: string | null | undefined,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	const normalized = normalizeText(evidence);
+
+	const explicitNoFranchise =
+		/\b(nao ha franquia|sem franquia|isento de franquia|isenta de franquia|franquia isenta|franquia zerada)\b/.test(
+			normalized,
+		);
+
+	return explicitNoFranchise && franchiseEvidenceLooksPrincipal(evidence);
+}
+
+function sourceExplicitNoPrincipalFranchise(sourceText: string): string | null {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? '';
+		const normalizedLine = normalizeText(line);
+
+		if (
+			!/\b(nao ha franquia|sem franquia|isento de franquia|isenta de franquia|franquia isenta|franquia zerada)\b/.test(
+				normalizedLine,
+			)
+		) {
+			continue;
+		}
+
+		// Prefer the same extracted row. This avoids treating an RCF/accessory row
+		// with "Não há franquia" as the principal vehicle deductible.
+		if (franchiseEvidenceLooksPrincipal(line)) {
+			return line.trim();
+		}
+
+		// Some PDF parsers split a principal coverage label across exactly two lines.
+		const previous = lines[index - 1] ?? '';
+		const combined = `${previous} ${line}`.trim();
+		const normalizedPrevious = normalizeText(previous);
+
+		const previousLooksLikeContinuationOfPrincipalCoverage =
+			/\b(indenizacao integral|ind integral|compreensiva|casco|roubo furto|colisao danos)\b/.test(
+				normalizedPrevious,
+			);
+
+		if (
+			previousLooksLikeContinuationOfPrincipalCoverage &&
+			franchiseEvidenceLooksPrincipal(combined)
+		) {
+			return combined;
+		}
+	}
+
+	return null;
+}
+
+function franchiseEvidenceConfirmsValue(
+	evidence: string | null | undefined,
+	value: number,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	if (value === 0) {
+		return evidenceExplicitlyStatesNoPrincipalFranchise(evidence);
+	}
+
+	return evidenceContainsValue(evidence, value);
 }
 
 function sourceSupportsPrincipalFranchise(
@@ -1385,7 +1459,7 @@ const SchemaDataExtract = z
 			.int('Quantidade de parcelas inválida')
 			.min(1, 'Quantidade de parcelas inválida')
 			.max(60, 'Quantidade de parcelas inválida'),
-		franchise: z.number('Franquia inválida').positive('Franquia inválida'),
+		franchise: z.number('Franquia inválida').nonnegative('Franquia inválida'),
 	})
 	.strict();
 
@@ -1827,12 +1901,14 @@ PARCELAS
 - Se a tabela trouxer o cabeçalho "Parcelas" e a linha de pagamento contiver "10x", a quantidade é 10.
 
 FRANQUIA
-"franchise" = franquia PRINCIPAL do risco/veículo, sempre existente neste domínio.
-Ela pode aparecer como casco, compreensiva, básica, obrigatória, reduzida, participação obrigatória, 25% da normal, 50% da obrigatória, indenização parcial do veículo ou outro nome equivalente.
+"franchise" = franquia PRINCIPAL do risco/veículo.
+Ela pode aparecer como casco, compreensiva, básica, obrigatória, reduzida, participação obrigatória, 25% da normal, 50% da obrigatória, indenização parcial/integral do veículo ou outro nome equivalente.
+Se a cobertura PRINCIPAL declarar explicitamente "Não há franquia", "Sem franquia" ou equivalente, retorne franchise=0.
+NUNCA use 0 apenas porque o valor não foi encontrado: zero exige ausência explícita de franquia na cobertura principal.
 Normalmente está associada à primeira cobertura principal, mas confirme pela estrutura da tabela.
 NUNCA use franquia de vidro, para-brisa, farol, lanterna, retrovisor, roda, pneu, assistência ou outro serviço acessório.
 NUNCA confunda a franquia com o prêmio da cobertura na coluna ao lado.
-"franchiseEvidence" deve conter o trecho da cobertura/franquia principal e seu valor.
+"franchiseEvidence" deve conter o trecho da cobertura/franquia principal e seu valor, ou o trecho explícito de ausência de franquia.
 
 RENOVAÇÃO
 - renewal=true somente com evidência de renovação/apólice anterior/congênere;
@@ -1946,7 +2022,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v37] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v39] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2026,21 +2102,34 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 
 	const installments = resolveInstallments(raw, sourceText);
 
-	if (raw.franchise === null || raw.franchise <= 0) {
+	const explicitNoFranchise = sourceExplicitNoPrincipalFranchise(sourceText);
+
+	let resolvedFranchise = raw.franchise;
+	let franchiseEvidence = raw.franchiseEvidence;
+
+	if (explicitNoFranchise) {
+		resolvedFranchise = 0;
+		franchiseEvidence = explicitNoFranchise;
+	}
+
+	if (resolvedFranchise === null || resolvedFranchise < 0) {
 		throw new Error('Não foi possível determinar a franquia principal');
 	}
 
-	if (!raw.franchiseEvidence) {
+	if (!franchiseEvidence) {
 		throw new Error('Franquia principal identificada sem evidência');
 	}
 
-	if (!evidenceContainsValue(raw.franchiseEvidence, raw.franchise)) {
+	if (!franchiseEvidenceConfirmsValue(franchiseEvidence, resolvedFranchise)) {
 		throw new Error('A evidência não confirma a franquia principal');
 	}
 
 	if (
-		!franchiseEvidenceLooksPrincipal(raw.franchiseEvidence) &&
-		!sourceSupportsPrincipalFranchise(sourceText, raw.franchise)
+		!franchiseEvidenceLooksPrincipal(franchiseEvidence) &&
+		!(
+			resolvedFranchise > 0 &&
+			sourceSupportsPrincipalFranchise(sourceText, resolvedFranchise)
+		)
 	) {
 		throw new Error(
 			'A evidência da franquia não permite confirmar que seja a franquia principal',
@@ -2050,7 +2139,7 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 	return {
 		award: raw.award,
 		installments,
-		franchise: raw.franchise,
+		franchise: resolvedFranchise,
 	};
 }
 
@@ -2300,7 +2389,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v37] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v39] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2320,11 +2409,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v37:${hash}`;
+				const cacheKey = `pdf-extract:v39:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v37] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v39] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {
