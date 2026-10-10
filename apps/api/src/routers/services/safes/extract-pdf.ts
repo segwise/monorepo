@@ -1308,24 +1308,50 @@ function resolveInsuranceCompany(
 	);
 }
 
+function principalVehicleCoverageLooksPrincipal(evidence: string): boolean {
+	const normalized = normalizeText(evidence);
+
+	const clearlySecondaryOrOtherProduct =
+		/\b(rcf|danos materiais|danos corporais|danos morais|app|vidro|vidros|para brisa|parabrisa|farol|farois|lanterna|lanternas|retrovisor|retrovisores|assistencia|carro reserva|residencia|residencial|incendio|vendaval|responsabilidade civil familiar|aluguel|predio|conteudo|local em risco)\b/.test(
+			normalized,
+		);
+
+	const principalVehicleCoverage =
+		/\b(casco|compreensiva|basica|indenizacao parcial do veiculo|indenizacao integral|ind integral|roubo furto|colisao danos)\b/.test(
+			normalized,
+		);
+
+	return principalVehicleCoverage && !clearlySecondaryOrOtherProduct;
+}
+
 function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
 	const normalized = normalizeText(evidence);
 
-	const strongPrincipal =
-		/\b(casco|compreensiva|basica|obrigatoria|participacao obrigatoria|indenizacao parcial do veiculo|indenizacao integral|ind integral|roubo furto|colisao danos|franquia do veiculo|normal|reduzida|facultativa)\b/.test(
-			normalized,
-		);
-
-	if (strongPrincipal) {
+	if (principalVehicleCoverageLooksPrincipal(evidence)) {
 		return true;
 	}
 
-	const accessory =
-		/\b(vidro|vidros|para brisa|parabrisa|farol|farois|lanterna|lanternas|retrovisor|retrovisores|vigia|lateral|laterais|teto solar|pneu|pneus|roda|rodas|martelinho|para choque|maquina de vidro|kit gas|assistencia)\b/.test(
+	const otherProduct =
+		/\b(residencia|residencial|incendio|vendaval|responsabilidade civil familiar|aluguel|predio|conteudo|local em risco)\b/.test(
 			normalized,
 		);
 
-	return !accessory && /\bfranquia\b/.test(normalized);
+	if (otherProduct) {
+		return false;
+	}
+
+	const accessory =
+		/\b(vidro|vidros|para brisa|parabrisa|farol|farois|lanterna|lanternas|retrovisor|retrovisores|vigia|lateral|laterais|teto solar|pneu|pneus|roda|rodas|martelinho|para choque|maquina de vidro|kit gas|assistencia|carro reserva)\b/.test(
+			normalized,
+		);
+
+	if (accessory) {
+		return false;
+	}
+
+	return /\b(participacao obrigatoria|franquia do veiculo|normal|reduzida|facultativa)\b/.test(
+		normalized,
+	);
 }
 
 function evidenceExplicitlyStatesNoPrincipalFranchise(
@@ -1342,7 +1368,9 @@ function evidenceExplicitlyStatesNoPrincipalFranchise(
 			normalized,
 		);
 
-	return explicitNoFranchise && franchiseEvidenceLooksPrincipal(evidence);
+	return (
+		explicitNoFranchise && principalVehicleCoverageLooksPrincipal(evidence)
+	);
 }
 
 function sourceExplicitNoPrincipalFranchise(sourceText: string): string | null {
@@ -1360,28 +1388,128 @@ function sourceExplicitNoPrincipalFranchise(sourceText: string): string | null {
 			continue;
 		}
 
-		// Prefer the same extracted row. This avoids treating an RCF/accessory row
-		// with "Não há franquia" as the principal vehicle deductible.
-		if (franchiseEvidenceLooksPrincipal(line)) {
+		// Zero só vale quando a PRÓPRIA cobertura principal Auto/Moto declara
+		// ausência de franquia. "Sem Franquia" de residência, RCF ou serviço
+		// acessório nunca pode zerar a franquia principal do veículo.
+		if (principalVehicleCoverageLooksPrincipal(line)) {
 			return line.trim();
 		}
 
-		// Some PDF parsers split a principal coverage label across exactly two lines.
 		const previous = lines[index - 1] ?? '';
 		const combined = `${previous} ${line}`.trim();
-		const normalizedPrevious = normalizeText(previous);
 
-		const previousLooksLikeContinuationOfPrincipalCoverage =
-			/\b(indenizacao integral|ind integral|compreensiva|casco|roubo furto|colisao danos)\b/.test(
-				normalizedPrevious,
-			);
-
-		if (
-			previousLooksLikeContinuationOfPrincipalCoverage &&
-			franchiseEvidenceLooksPrincipal(combined)
-		) {
+		if (principalVehicleCoverageLooksPrincipal(combined)) {
 			return combined;
 		}
+	}
+
+	return null;
+}
+
+function sourcePrincipalVehicleFranchise(
+	sourceText: string,
+): { value: number; evidence: string } | null {
+	const lines = sourceText.split('\n');
+
+	// 1) Padrões explícitos como:
+	// R$ 19.172,00 (50% da Obrigatória)
+	// 25% da Normal 2.629,59
+	// Veículo: 2.842,61 (25 da obrigatória)
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? '';
+		const normalizedLine = normalizeText(line);
+
+		const beforePercentage = normalizedLine.match(
+			/(?:r\$\s*)?(\d+(?:\.\d{3})*,\d{2})\s*\(\s*\d+(?:[.,]\d+)?\s*%\s*da\s*(?:obrigatoria|normal|basica)\s*\)/,
+		);
+
+		if (beforePercentage) {
+			const value = parseBrazilianNumber(beforePercentage[1] ?? '');
+
+			if (value !== null && value >= 0) {
+				return { value, evidence: line.trim() };
+			}
+		}
+
+		const afterPercentage = normalizedLine.match(
+			/\d+(?:[.,]\d+)?\s*%\s*da\s*(?:obrigatoria|normal|basica)[^\d]{0,30}(\d+(?:\.\d{3})*,\d{2})/,
+		);
+
+		if (afterPercentage) {
+			const value = parseBrazilianNumber(afterPercentage[1] ?? '');
+
+			if (value !== null && value >= 0) {
+				return { value, evidence: line.trim() };
+			}
+		}
+
+		if (
+			/\bveiculo\b/.test(normalizedLine) &&
+			/\bfranquias?\b/.test(
+				normalizeText(lines.slice(Math.max(0, index - 5), index + 1).join(' ')),
+			)
+		) {
+			const afterVehicle = normalizedLine.match(
+				/\bveiculo\b\s*:?\s*(?:r\$\s*)?(\d+(?:\.\d{3})*,\d{2})/,
+			);
+
+			if (afterVehicle) {
+				const value = parseBrazilianNumber(afterVehicle[1] ?? '');
+
+				if (value !== null && value >= 0) {
+					return { value, evidence: line.trim() };
+				}
+			}
+		}
+	}
+
+	// 2) Tabelas cujo cabeçalho termina em Franquia/Vl.Franquia.
+	// HDI DUO, Suhai e outros layouts apresentam a franquia principal na
+	// última coluna da linha de Casco/Compreensiva.
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? '';
+
+		if (!principalVehicleCoverageLooksPrincipal(line)) {
+			continue;
+		}
+
+		const header = lines
+			.slice(Math.max(0, index - 10), index)
+			.join(' ')
+			.replace(/\s+/g, ' ')
+			.trim();
+		const normalizedHeader = normalizeText(header);
+
+		const franchiseIsLastColumn =
+			(/\bcoberturas? auto\b/.test(normalizedHeader) &&
+				/\bfranquia\b/.test(normalizedHeader)) ||
+			/\bvl franquia\b/.test(normalizedHeader) ||
+			(/\bcoberturas contratadas\b/.test(normalizedHeader) &&
+				/\bfranquia\b/.test(normalizedHeader) &&
+				!/\bvalor do premio\b/.test(normalizedHeader));
+
+		if (!franchiseIsLastColumn) {
+			continue;
+		}
+
+		const values = numericValuesFromText(line);
+		const last = values[values.length - 1];
+
+		if (typeof last !== 'number') {
+			continue;
+		}
+
+		if (last > 0) {
+			return { value: last, evidence: line.trim() };
+		}
+	}
+
+	// 3) Se nenhuma franquia positiva principal foi encontrada, zero só é
+	// aceito quando a própria cobertura principal diz explicitamente que não há.
+	const explicitNoFranchise = sourceExplicitNoPrincipalFranchise(sourceText);
+
+	if (explicitNoFranchise) {
+		return { value: 0, evidence: explicitNoFranchise };
 	}
 
 	return null;
@@ -1956,8 +2084,9 @@ PARCELAS
 FRANQUIA
 "franchise" = franquia PRINCIPAL do risco/veículo.
 Ela pode aparecer como casco, compreensiva, básica, obrigatória, reduzida, participação obrigatória, 25% da normal, 50% da obrigatória, indenização parcial/integral do veículo ou outro nome equivalente.
-Se a cobertura PRINCIPAL declarar explicitamente "Não há franquia", "Sem franquia" ou equivalente, retorne franchise=0.
-NUNCA use 0 apenas porque o valor não foi encontrado: zero exige ausência explícita de franquia na cobertura principal.
+Se a cobertura PRINCIPAL DO VEÍCULO declarar explicitamente "Não há franquia", "Sem franquia" ou equivalente, retorne franchise=0.
+Em documentos com mais de um produto (ex.: Auto + Residencial), a franquia do Auto/Moto principal SEMPRE prevalece. Ignore franquias, "Sem Franquia" e franquias obrigatórias de Residencial, RCF, vidros, assistências ou outros produtos/coberturas secundárias.
+NUNCA use 0 apenas porque o valor não foi encontrado: zero exige ausência explícita de franquia na própria cobertura principal do veículo.
 Normalmente está associada à primeira cobertura principal, mas confirme pela estrutura da tabela.
 NUNCA use franquia de vidro, para-brisa, farol, lanterna, retrovisor, roda, pneu, assistência ou outro serviço acessório.
 NUNCA confunda a franquia com o prêmio da cobertura na coluna ao lado.
@@ -2075,7 +2204,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v40] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v42] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2155,14 +2284,14 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 
 	const installments = resolveInstallments(raw, sourceText);
 
-	const explicitNoFranchise = sourceExplicitNoPrincipalFranchise(sourceText);
+	const sourceFranchise = sourcePrincipalVehicleFranchise(sourceText);
 
 	let resolvedFranchise = raw.franchise;
 	let franchiseEvidence = raw.franchiseEvidence;
 
-	if (explicitNoFranchise) {
-		resolvedFranchise = 0;
-		franchiseEvidence = explicitNoFranchise;
+	if (sourceFranchise) {
+		resolvedFranchise = sourceFranchise.value;
+		franchiseEvidence = sourceFranchise.evidence;
 	}
 
 	if (resolvedFranchise === null || resolvedFranchise < 0) {
@@ -2442,7 +2571,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v40] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v42] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2462,11 +2591,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v40:${hash}`;
+				const cacheKey = `pdf-extract:v42:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v40] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v42] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {
