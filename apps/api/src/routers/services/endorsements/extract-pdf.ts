@@ -18,6 +18,7 @@ import {
 } from '@/libraries/ai/pdf-extraction';
 
 const MONEY_TOLERANCE = 0.05;
+const DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE = 0.1;
 
 function parseBrazilianNumber(value: unknown): unknown {
 	if (typeof value === 'number') {
@@ -510,7 +511,14 @@ function cpfCandidatesFromText(text: string): Array<string> {
 
 function sourceUsesSuhaiProponentProfileAsPrincipalDriver(
 	sourceText: string,
+	insuredRegistration: string | null,
 ): boolean {
+	const expected = insuredRegistration ? digitsOnly(insuredRegistration) : '';
+
+	if (!expected) {
+		return false;
+	}
+
 	const normalized = normalizeText(sourceText);
 
 	const isSuhai =
@@ -521,23 +529,30 @@ function sourceUsesSuhaiProponentProfileAsPrincipalDriver(
 		return false;
 	}
 
-	const hasProponentSection = normalized.includes('dados do proponente');
+	const lines = sourceText.split('\n');
+	let proponentBlock = '';
+
+	for (let index = 0; index < lines.length; index += 1) {
+		if (!normalizeText(lines[index] ?? '').includes('dados do proponente')) {
+			continue;
+		}
+
+		proponentBlock = lines
+			.slice(index, Math.min(lines.length, index + 35))
+			.join(' ');
+
+		break;
+	}
+
+	const normalizedProponentBlock = normalizeText(proponentBlock);
+
+	const hasProponentSection = Boolean(proponentBlock);
 	const hasProfileSection = normalized.includes('dados do perfil');
 	const hasNaturalPerson =
-		/\btipo pessoa\s+fisica\b/.test(normalized) ||
-		/\btipo pessoa\b.{0,40}\bfisica\b/.test(normalized);
-
-	// O layout de proposta da Suhai usa os dados demográficos do próprio
-	// proponente como base do PERFIL (idade, sexo, estado civil e utilização)
-	// e não imprime um bloco separado de principal condutor quando ele é o
-	// próprio proponente. Só aplicamos essa regra quando a assinatura do layout
-	// está completa e não existe qualquer condutor diferente explicitamente.
-	const profileUsesProponentDemographics =
-		normalized.includes('respostas incorretas no perfil') &&
-		normalized.includes('idade') &&
-		normalized.includes('sexo') &&
-		normalized.includes('estado civil') &&
-		normalized.includes('utilizacao do veiculo');
+		normalizedProponentBlock.includes('fisica') ||
+		/\btipo pessoa\s+fisica\b/.test(normalized);
+	const proponentConfirmsInsured =
+		digitsOnly(proponentBlock).includes(expected);
 
 	const hasExplicitDriverSection =
 		/\bprincipal condutor\b|\bcondutor principal\b|\bnome do principal condutor\b|\bcpf condutor\b|\binformacoes do condutor principal\b/.test(
@@ -548,7 +563,7 @@ function sourceUsesSuhaiProponentProfileAsPrincipalDriver(
 		hasProponentSection &&
 		hasProfileSection &&
 		hasNaturalPerson &&
-		profileUsesProponentDemographics &&
+		proponentConfirmsInsured &&
 		!hasExplicitDriverSection
 	);
 }
@@ -706,7 +721,10 @@ function resolvePrincipalDriverCpf({
 	if (
 		lookup.insuredRegistration &&
 		(sourceMarksPrincipalDriverAsInsured(sourceText) ||
-			sourceUsesSuhaiProponentProfileAsPrincipalDriver(sourceText) ||
+			sourceUsesSuhaiProponentProfileAsPrincipalDriver(
+				sourceText,
+				lookup.insuredRegistration,
+			) ||
 			sourceConfirmsPrincipalDriverRegistration(
 				sourceText,
 				lookup.insuredRegistration,
@@ -1095,12 +1113,6 @@ function typeEvidenceMatches(
 
 function sum(values: number[]): number {
 	return values.reduce((total, value) => total + value, 0);
-}
-
-function assertClose(actual: number, expected: number, message: string): void {
-	if (Math.abs(actual - expected) > MONEY_TOLERANCE) {
-		throw new Error(message);
-	}
 }
 
 const SchemaLookup = z
@@ -1648,11 +1660,14 @@ function normalizeFinancialData(
 			}
 		}
 
-		assertClose(
-			Math.abs(rawAmount) + sum(data.nonLiquidCharges),
-			Math.abs(data.finalTotal),
-			'Valor líquido, encargos e total final do endosso são inconsistentes',
-		);
+		assertDocumentFinancialReconciliation({
+			liquid: rawAmount,
+			charges: data.nonLiquidCharges,
+			total: data.finalTotal,
+			sourceText,
+			message:
+				'Valor líquido, encargos e total final do endosso são inconsistentes',
+		});
 	}
 
 	let percentage = data.percentage;
@@ -1668,6 +1683,50 @@ function normalizeFinancialData(
 	}
 
 	return { amount, percentage };
+}
+
+function assertDocumentFinancialReconciliation({
+	liquid,
+	charges,
+	total,
+	sourceText,
+	message,
+}: {
+	liquid: number;
+	charges: Array<number>;
+	total: number;
+	sourceText: string;
+	message: string;
+}): void {
+	const calculated = Math.abs(liquid) + sum(charges);
+	const expectedTotal = Math.abs(total);
+	const difference = Math.abs(calculated - expectedTotal);
+
+	if (difference <= MONEY_TOLERANCE) {
+		return;
+	}
+
+	const sourceFinancialEvidence = sourceFinancialContext(sourceText);
+	const sourceConfirmsAllValues =
+		evidenceContainsValue(sourceFinancialEvidence, Math.abs(liquid)) &&
+		charges.every((charge) =>
+			evidenceContainsValue(sourceFinancialEvidence, charge),
+		) &&
+		evidenceContainsValue(sourceFinancialEvidence, expectedTotal);
+
+	if (
+		sourceConfirmsAllValues &&
+		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
+	) {
+		console.warn(
+			`[extract-endorsement:v38] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+				2,
+			)} total=${expectedTotal.toFixed(2)} diferença=${difference.toFixed(2)}`,
+		);
+		return;
+	}
+
+	throw new Error(message);
 }
 
 function sourceSupportsEndorsementType(
@@ -2140,8 +2199,12 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v36:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v38:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
+
+				console.log(
+					`[extract-endorsement:v38] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+				);
 
 				let extracted: DataExtractEndorsement;
 				let shouldCache = !cached;
@@ -2151,7 +2214,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
 					} catch (error) {
 						console.warn(
-							'[extract-endorsement] cache incompatível, executando nova extração:',
+							'[extract-endorsement:v38] cache incompatível, executando nova extração:',
 							error instanceof Error ? error.message : error,
 						);
 

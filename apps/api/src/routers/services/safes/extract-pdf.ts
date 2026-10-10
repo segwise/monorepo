@@ -26,6 +26,7 @@ import {
 type InsuranceCompanyRow = { id: string; name: string; cnpj: string };
 
 const MONEY_TOLERANCE = 0.05;
+const DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE = 0.1;
 
 function parseBrazilianNumber(value: unknown): unknown {
 	if (typeof value === 'number') {
@@ -338,7 +339,14 @@ function parseCpfCandidate(value: string | null | undefined): string | null {
 
 function sourceUsesSuhaiProponentProfileAsPrincipalDriver(
 	sourceText: string,
+	insuredRegistration: string | null,
 ): boolean {
+	const expected = insuredRegistration ? digitsOnly(insuredRegistration) : '';
+
+	if (!expected) {
+		return false;
+	}
+
 	const normalized = normalizeText(sourceText);
 
 	const isSuhai =
@@ -349,34 +357,46 @@ function sourceUsesSuhaiProponentProfileAsPrincipalDriver(
 		return false;
 	}
 
-	const hasProponentSection = normalized.includes('dados do proponente');
+	const lines = sourceText.split('\n');
+	let proponentBlock = '';
+
+	for (let index = 0; index < lines.length; index += 1) {
+		if (!normalizeText(lines[index] ?? '').includes('dados do proponente')) {
+			continue;
+		}
+
+		proponentBlock = lines
+			.slice(index, Math.min(lines.length, index + 35))
+			.join(' ');
+
+		break;
+	}
+
+	const normalizedProponentBlock = normalizeText(proponentBlock);
+
+	const hasProponentSection = Boolean(proponentBlock);
 	const hasProfileSection = normalized.includes('dados do perfil');
 	const hasNaturalPerson =
-		/\btipo pessoa\s+fisica\b/.test(normalized) ||
-		/\btipo pessoa\b.{0,40}\bfisica\b/.test(normalized);
+		normalizedProponentBlock.includes('fisica') ||
+		/\btipo pessoa\s+fisica\b/.test(normalized);
+	const proponentConfirmsInsured =
+		digitsOnly(proponentBlock).includes(expected);
 
-	// O layout de proposta da Suhai usa os dados demográficos do próprio
-	// proponente como base do PERFIL (idade, sexo, estado civil e utilização)
-	// e não imprime um bloco separado de principal condutor quando ele é o
-	// próprio proponente. Só aplicamos essa regra quando a assinatura do layout
-	// está completa e não existe qualquer condutor diferente explicitamente.
-	const profileUsesProponentDemographics =
-		normalized.includes('respostas incorretas no perfil') &&
-		normalized.includes('idade') &&
-		normalized.includes('sexo') &&
-		normalized.includes('estado civil') &&
-		normalized.includes('utilizacao do veiculo');
-
+	// Se houver um bloco explícito de condutor, ele deve prevalecer.
 	const hasExplicitDriverSection =
 		/\bprincipal condutor\b|\bcondutor principal\b|\bnome do principal condutor\b|\bcpf condutor\b|\binformacoes do condutor principal\b/.test(
 			normalized,
 		);
 
+	// Em propostas Suhai desse layout, o PERFIL pertence ao próprio proponente
+	// quando não existe bloco separado de condutor. A confirmação é estrutural:
+	// SUHAI + DADOS DO PROPONENTE + pessoa física + CPF do segurado nesse bloco
+	// + DADOS DO PERFIL + ausência de um condutor separado.
 	return (
 		hasProponentSection &&
 		hasProfileSection &&
 		hasNaturalPerson &&
-		profileUsesProponentDemographics &&
+		proponentConfirmsInsured &&
 		!hasExplicitDriverSection
 	);
 }
@@ -1587,7 +1607,7 @@ function resolvePrincipalDriver({
 
 	const sourceSaysInsured = sourceMarksPrincipalDriverAsInsured(sourceText);
 	const suhaiProfileUsesInsured =
-		sourceUsesSuhaiProponentProfileAsPrincipalDriver(sourceText);
+		sourceUsesSuhaiProponentProfileAsPrincipalDriver(sourceText, insuredCpf);
 	const evidenceSaysInsured =
 		evidenceMarksPrincipalDriverAsInsured(driverEvidence);
 
@@ -1890,6 +1910,52 @@ function sourceLooksLikeEndorsementAdjustment(sourceText: string): boolean {
 	);
 }
 
+function assertDocumentFinancialReconciliation({
+	liquid,
+	charges,
+	total,
+	sourceText,
+	message,
+}: {
+	liquid: number;
+	charges: Array<number>;
+	total: number;
+	sourceText: string;
+	message: string;
+}): void {
+	const calculated = liquid + sum(charges);
+	const difference = Math.abs(calculated - total);
+
+	if (difference <= MONEY_TOLERANCE) {
+		return;
+	}
+
+	const sourceConfirmsAllValues =
+		financialEvidenceContainsValue(null, sourceText, liquid) &&
+		charges.every((charge) =>
+			financialEvidenceContainsValue(null, sourceText, charge),
+		) &&
+		financialEvidenceContainsValue(null, sourceText, total);
+
+	// Algumas seguradoras imprimem líquido, juros, IOF e total com uma pequena
+	// diferença residual de centavos decorrente do rateio/arredondamento interno.
+	// Quando TODOS os valores estão explicitamente confirmados no documento,
+	// não transformamos uma diferença residual <= R$ 0,10 em falso 409.
+	if (
+		sourceConfirmsAllValues &&
+		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
+	) {
+		console.warn(
+			`[extract-pdf:v37] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+				2,
+			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
+		);
+		return;
+	}
+
+	throw new Error(message);
+}
+
 function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 	if (raw.award === null || raw.award <= 0) {
 		throw new Error(
@@ -1948,11 +2014,14 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 			}
 		}
 
-		assertClose(
-			raw.award + sum(raw.nonLiquidCharges),
-			raw.finalTotal,
-			'Prêmio líquido, encargos e total final são matematicamente inconsistentes',
-		);
+		assertDocumentFinancialReconciliation({
+			liquid: raw.award,
+			charges: raw.nonLiquidCharges,
+			total: raw.finalTotal,
+			sourceText,
+			message:
+				'Prêmio líquido, encargos e total final são matematicamente inconsistentes',
+		});
 	}
 
 	const installments = resolveInstallments(raw, sourceText);
@@ -2231,7 +2300,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v37] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2251,8 +2320,12 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v36:${hash}`;
+				const cacheKey = `pdf-extract:v37:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
+
+				console.log(
+					`[extract-pdf:v37] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+				);
 
 				if (cached) {
 					return ctx.json(JSON.parse(cached), 200);
