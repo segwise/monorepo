@@ -902,7 +902,7 @@ function sourcePrincipalFranchise(
 		if (beforePercentage) {
 			const value = parseBrazilianNumber(beforePercentage[1] ?? '');
 
-			if (value !== null && value >= 0) {
+			if (typeof value === 'number' && value >= 0) {
 				return { value, evidence: line.trim() };
 			}
 		}
@@ -914,7 +914,7 @@ function sourcePrincipalFranchise(
 		if (afterPercentage) {
 			const value = parseBrazilianNumber(afterPercentage[1] ?? '');
 
-			if (value !== null && value >= 0) {
+			if (typeof value === 'number' && value >= 0) {
 				return { value, evidence: line.trim() };
 			}
 		}
@@ -932,7 +932,7 @@ function sourcePrincipalFranchise(
 			if (match) {
 				const value = parseBrazilianNumber(match[1] ?? '');
 
-				if (value !== null && value >= 0) {
+				if (typeof value === 'number' && value >= 0) {
 					return { value, evidence: line.trim() };
 				}
 			}

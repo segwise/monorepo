@@ -1426,7 +1426,7 @@ function sourcePrincipalVehicleFranchise(
 		if (beforePercentage) {
 			const value = parseBrazilianNumber(beforePercentage[1] ?? '');
 
-			if (value !== null && value >= 0) {
+			if (typeof value === 'number' && value >= 0) {
 				return { value, evidence: line.trim() };
 			}
 		}
@@ -1438,7 +1438,7 @@ function sourcePrincipalVehicleFranchise(
 		if (afterPercentage) {
 			const value = parseBrazilianNumber(afterPercentage[1] ?? '');
 
-			if (value !== null && value >= 0) {
+			if (typeof value === 'number' && value >= 0) {
 				return { value, evidence: line.trim() };
 			}
 		}
@@ -1456,7 +1456,7 @@ function sourcePrincipalVehicleFranchise(
 			if (afterVehicle) {
 				const value = parseBrazilianNumber(afterVehicle[1] ?? '');
 
-				if (value !== null && value >= 0) {
+				if (typeof value === 'number' && value >= 0) {
 					return { value, evidence: line.trim() };
 				}
 			}
