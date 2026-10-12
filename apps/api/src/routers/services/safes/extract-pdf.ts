@@ -56,6 +56,16 @@ function parseBrazilianNumber(value: unknown): unknown {
 	return Number.isFinite(parsed) ? parsed : value;
 }
 
+function parseBrazilianMoneyValue(value: string | undefined): number | null {
+	if (!value) {
+		return null;
+	}
+
+	const parsed = parseBrazilianNumber(value);
+
+	return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : null;
+}
+
 function parseInteger(value: unknown): unknown {
 	if (typeof value === 'number') {
 		return Number.isInteger(value) ? value : value;
@@ -1405,6 +1415,14 @@ function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
 			normalized,
 		);
 
+	const explicitVehicleDeductible =
+		/\bveiculo\b/.test(normalized) &&
+		/\b(obrigatoria|normal|basica|reduzida|facultativa)\b/.test(normalized);
+
+	if (explicitVehicleDeductible) {
+		return true;
+	}
+
 	if (accessory) {
 		return false;
 	}
@@ -1471,36 +1489,80 @@ function sourcePrincipalVehicleFranchise(
 ): { value: number; evidence: string } | null {
 	const lines = sourceText.split('\n');
 
-	// 1) Padrões explícitos como:
-	// R$ 19.172,00 (50% da Obrigatória)
-	// 25% da Normal 2.629,59
-	// Veículo: 2.842,61 (25 da obrigatória)
+	// A extração de tabelas PDF nem sempre preserva a linha visual.
+	// Em Bradesco, por exemplo, pode sair:
+	// FRANQUIAS -> Veículo -> outros rótulos -> 4.123,73 (25 da obrigatória).
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!/\bfranquias?\b/.test(normalizedLine) ||
+			/\b(isencao|primeiro sinistro)\b/.test(normalizedLine)
+		) {
+			continue;
+		}
+
+		const section = lines
+			.slice(index, Math.min(lines.length, index + 45))
+			.join(' ')
+			.replace(/\s+/g, ' ')
+			.trim();
+
+		const vehiclePercentage = section.match(
+			/\bve[ií]culo\s*:?(?:[\s\S]{0,700}?)(\d{1,3}(?:\.\d{3})*,\d{2})\s*\(\s*\d+(?:[.,]\d+)?\s*%?\s*da\s*(?:obrigat[oó]ria|normal|b[aá]sica)\s*\)/i,
+		);
+		const vehiclePercentageValue = parseBrazilianMoneyValue(
+			vehiclePercentage?.[1],
+		);
+
+		if (vehiclePercentageValue !== null && vehiclePercentageValue >= 0) {
+			return {
+				value: vehiclePercentageValue,
+				evidence: vehiclePercentage?.[0]?.trim() ?? section,
+			};
+		}
+
+		const percentageBeforeValue = section.match(
+			/\d+(?:[.,]\d+)?\s*%?\s*da\s*(?:obrigat[oó]ria|normal|b[aá]sica)(?:[\s\S]{0,80}?)(\d{1,3}(?:\.\d{3})*,\d{2})/i,
+		);
+		const percentageBeforeValueParsed = parseBrazilianMoneyValue(
+			percentageBeforeValue?.[1],
+		);
+
+		if (
+			percentageBeforeValueParsed !== null &&
+			percentageBeforeValueParsed >= 0
+		) {
+			return {
+				value: percentageBeforeValueParsed,
+				evidence: percentageBeforeValue?.[0]?.trim() ?? section,
+			};
+		}
+	}
+
+	// Layouts que preservam a linha visual.
 	for (let index = 0; index < lines.length; index += 1) {
 		const line = lines[index] ?? '';
 		const normalizedLine = normalizeText(line);
 
-		const beforePercentage = normalizedLine.match(
-			/(?:r\$\s*)?(\d+(?:\.\d{3})*,\d{2})\s*\(\s*\d+(?:[.,]\d+)?\s*%\s*da\s*(?:obrigatoria|normal|basica)\s*\)/,
+		const beforePercentage = line.match(
+			/(?:R\$\s*)?(\d+(?:\.\d{3})*,\d{2})\s*\(\s*\d+(?:[.,]\d+)?\s*%?\s*da\s*(?:obrigat[oó]ria|normal|b[aá]sica)\s*\)/i,
+		);
+		const beforePercentageValue = parseBrazilianMoneyValue(
+			beforePercentage?.[1],
 		);
 
-		if (beforePercentage) {
-			const value = parseBrazilianNumber(beforePercentage[1] ?? '');
-
-			if (typeof value === 'number' && value >= 0) {
-				return { value, evidence: line.trim() };
-			}
+		if (beforePercentageValue !== null && beforePercentageValue >= 0) {
+			return { value: beforePercentageValue, evidence: line.trim() };
 		}
 
-		const afterPercentage = normalizedLine.match(
-			/\d+(?:[.,]\d+)?\s*%\s*da\s*(?:obrigatoria|normal|basica)[^\d]{0,30}(\d+(?:\.\d{3})*,\d{2})/,
+		const afterPercentage = line.match(
+			/\d+(?:[.,]\d+)?\s*%?\s*da\s*(?:obrigat[oó]ria|normal|b[aá]sica)[^\d]{0,30}(\d+(?:\.\d{3})*,\d{2})/i,
 		);
+		const afterPercentageValue = parseBrazilianMoneyValue(afterPercentage?.[1]);
 
-		if (afterPercentage) {
-			const value = parseBrazilianNumber(afterPercentage[1] ?? '');
-
-			if (typeof value === 'number' && value >= 0) {
-				return { value, evidence: line.trim() };
-			}
+		if (afterPercentageValue !== null && afterPercentageValue >= 0) {
+			return { value: afterPercentageValue, evidence: line.trim() };
 		}
 
 		if (
@@ -1509,23 +1571,18 @@ function sourcePrincipalVehicleFranchise(
 				normalizeText(lines.slice(Math.max(0, index - 5), index + 1).join(' ')),
 			)
 		) {
-			const afterVehicle = normalizedLine.match(
-				/\bveiculo\b\s*:?\s*(?:r\$\s*)?(\d+(?:\.\d{3})*,\d{2})/,
+			const afterVehicle = line.match(
+				/\bve[ií]culo\b\s*:?\s*(?:R\$\s*)?(\d+(?:\.\d{3})*,\d{2})/i,
 			);
+			const afterVehicleValue = parseBrazilianMoneyValue(afterVehicle?.[1]);
 
-			if (afterVehicle) {
-				const value = parseBrazilianNumber(afterVehicle[1] ?? '');
-
-				if (typeof value === 'number' && value >= 0) {
-					return { value, evidence: line.trim() };
-				}
+			if (afterVehicleValue !== null && afterVehicleValue >= 0) {
+				return { value: afterVehicleValue, evidence: line.trim() };
 			}
 		}
 	}
 
-	// 2) Tabelas cujo cabeçalho termina em Franquia/Vl.Franquia.
-	// HDI DUO, Suhai e outros layouts apresentam a franquia principal na
-	// última coluna da linha de Casco/Compreensiva.
+	// Tabelas Auto/Moto cuja última coluna contém a franquia principal.
 	for (let index = 0; index < lines.length; index += 1) {
 		const line = lines[index] ?? '';
 
@@ -1564,8 +1621,6 @@ function sourcePrincipalVehicleFranchise(
 		}
 	}
 
-	// 3) Se nenhuma franquia positiva principal foi encontrada, zero só é
-	// aceito quando a própria cobertura principal diz explicitamente que não há.
 	const explicitNoFranchise = sourceExplicitNoPrincipalFranchise(sourceText);
 
 	if (explicitNoFranchise) {
@@ -2151,7 +2206,7 @@ NUNCA use 0 apenas porque o valor não foi encontrado: zero exige ausência expl
 Normalmente está associada à primeira cobertura principal, mas confirme pela estrutura da tabela.
 NUNCA use franquia de vidro, para-brisa, farol, lanterna, retrovisor, roda, pneu, assistência ou outro serviço acessório.
 NUNCA confunda a franquia com o prêmio da cobertura na coluna ao lado.
-"franchiseEvidence" deve conter o trecho da cobertura/franquia principal e seu valor, ou o trecho explícito de ausência de franquia.
+"franchiseEvidence" deve conter o trecho da cobertura/franquia principal e seu valor, ou o trecho explícito de ausência de franquia. Em layouts Bradesco, a seção "FRANQUIAS" com o campo "Veículo" representa a franquia principal, mesmo que a mesma tabela também liste vidros, faróis, lanternas e retrovisores. O parser pode separar todos os rótulos dos valores; associe ao Veículo o valor anotado como "25 da obrigatória", "50 da obrigatória" ou equivalente.
 
 RENOVAÇÃO
 - renewal=true somente com evidência de renovação/apólice anterior/congênere;
@@ -2265,7 +2320,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v43] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v44] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2346,6 +2401,7 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 	const installments = resolveInstallments(raw, sourceText);
 
 	const sourceFranchise = sourcePrincipalVehicleFranchise(sourceText);
+	const franchiseResolvedFromSource = sourceFranchise !== null;
 
 	let resolvedFranchise = raw.franchise;
 	let franchiseEvidence = raw.franchiseEvidence;
@@ -2368,6 +2424,7 @@ function validateFinancial(raw: ModelOutput['financial'], sourceText: string) {
 	}
 
 	if (
+		!franchiseResolvedFromSource &&
 		!franchiseEvidenceLooksPrincipal(franchiseEvidence) &&
 		!(
 			resolvedFranchise > 0 &&
@@ -2632,7 +2689,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v43] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v44] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2652,11 +2709,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v43:${hash}`;
+				const cacheKey = `pdf-extract:v44:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v43] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v44] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {
