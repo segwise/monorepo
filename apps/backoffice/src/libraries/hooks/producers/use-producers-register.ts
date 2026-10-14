@@ -1,15 +1,19 @@
-import type { ProducerRegister, ResponseDefault } from '@segwise/core/types';
+import type {
+	ProducerRegister,
+	ProducerRegisterResponse,
+} from '@segwise/core/types';
 import { useMutation } from '@tanstack/react-query';
 import { XiorError } from 'xior';
 import { api } from '@/libraries/api';
 import { invalidateProducers } from './invalidate-producers';
 
 const useProducersRegister = () =>
-	useMutation<ResponseDefault, Error, ProducerRegister>({
+	useMutation<ProducerRegisterResponse, Error, ProducerRegister>({
 		mutationKey: ['producers', 'register'],
 		mutationFn: async (props) => {
 			try {
-				return (await api.post<ResponseDefault>('/producers', props)).data;
+				return (await api.post<ProducerRegisterResponse>('/producers', props))
+					.data;
 			} catch (error) {
 				let message = 'Falha ao registrar';
 

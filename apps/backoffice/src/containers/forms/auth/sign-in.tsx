@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { SignIn } from '@/@types/auth/sign-in';
@@ -46,6 +46,31 @@ function FormSignIn() {
 			rememberPassword: false,
 		},
 	});
+
+	// Retorno do link de confirmação do e-mail (`/accept-invitation` no backend
+	// redireciona para cá com o resultado).
+	useEffect(() => {
+		const outcome = new URL(window.location.href).searchParams.get(
+			'invitation',
+		);
+
+		if (outcome === 'confirmed') {
+			toast.success('ACESSO CONFIRMADO!', {
+				description: 'Entre com seu e-mail e a senha informada pela corretora.',
+			});
+		} else if (outcome === 'used') {
+			toast.info('CONVITE JÁ UTILIZADO', {
+				description: 'Se você já confirmou, entre com seu e-mail e senha.',
+			});
+		} else if (outcome === 'expired' || outcome === 'error') {
+			toast.error(
+				outcome === 'expired'
+					? 'CONVITE EXPIRADO'
+					: 'NÃO FOI POSSÍVEL CONFIRMAR O ACESSO',
+				{ description: 'Peça um novo convite à corretora.' },
+			);
+		}
+	}, []);
 
 	const { isDirty, isValid } = form.formState;
 	const isSubmit = !isPending && isValid && isDirty;
