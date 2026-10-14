@@ -2598,16 +2598,12 @@ function finalizeModelOutput(
 				allowInsuredFallback: !changesDriver,
 			});
 
-			if (!driver && changesDriver) {
-				throw new Error(
-					'Alteração de condutor sem CPF do novo principal condutor confirmado',
-				);
-			}
-
-			// Se o endosso não altera o condutor e o documento identifica outro
-			// principal condutor sem informar seu CPF, driver=null é um resultado
-			// válido. Não usamos o CPF do segurado nem o CPF persistido na apólice,
-			// pois o documento não permite confirmar qual CPF pertence ao nome exibido.
+			// Sem CPF do principal condutor confirmado no documento, driver=null é um
+			// resultado válido (também quando o endosso altera o condutor): o painel
+			// limpa o campo, avisa e exige o CPF manualmente, e o restante da extração
+			// (placa, modelo, valores) é aproveitado. Não usamos o CPF do segurado nem
+			// o persistido na apólice, pois o documento não permite confirmar qual CPF
+			// pertence ao nome exibido.
 
 			const resultLookup =
 				changesVehicle &&
