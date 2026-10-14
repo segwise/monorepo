@@ -21,14 +21,42 @@ const useEndorsements = (id: string, enabled?: boolean) =>
 				},
 			);
 
-			return data?.sort((a, b) =>
-				compareDesc(
-					a.effectivedAt ?? a.createdAt,
-					b.effectivedAt ?? b.createdAt,
-				),
-			);
+			// Do mais recente para o mais antigo REGISTRADO: é a ordem em que os
+			// endossos podem ser revertidos (só o primeiro ainda não revertido).
+			return data?.sort((a, b) => compareDesc(a.createdAt, b.createdAt));
 		},
 		enabled,
+	});
+
+// Reverte um endosso (até 24h, só o mais recente não revertido; as regras valem no
+// servidor). O endosso continua na lista, marcado como revertido.
+const useEndorsementRevert = (safeId: string) =>
+	useMutation<{ message: string }, Error, string>({
+		mutationKey: ['endorsements', safeId, 'revert'],
+		mutationFn: async (endorsementId) => {
+			try {
+				const { data } = await api.post(
+					`/endorsements/${safeId}/${endorsementId}/revert`,
+				);
+
+				return data;
+			} catch (error) {
+				if (error instanceof XiorError) {
+					throw new Error(
+						error.response?.data.message ?? 'Falha ao reverter o endosso',
+					);
+				}
+
+				throw error;
+			}
+		},
+		async onSuccess(_data, _variables, _result, { client }) {
+			await Promise.all([
+				client.invalidateQueries({ queryKey: ['endorsements', safeId] }),
+				client.invalidateQueries({ queryKey: ['proposals'] }),
+				client.invalidateQueries({ queryKey: ['safe', safeId] }),
+			]);
+		},
 	});
 
 const useEndorsementPercentage = (
@@ -267,6 +295,7 @@ export {
 	useEndorsementPercentage,
 	useEndorsementVehicleConductorQuery,
 	useEndorsementVehicleConductor,
+	useEndorsementRevert,
 	useEndorsementAddress,
 	useEndorsementFranchise,
 	useEndorsementCancel,

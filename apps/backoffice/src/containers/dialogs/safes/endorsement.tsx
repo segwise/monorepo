@@ -22,8 +22,7 @@ import {
 	SchemaEndorsementVehicleConductor,
 } from '@segwise/core';
 import { useMutation } from '@tanstack/react-query';
-import { format, startOfToday } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { startOfToday } from 'date-fns';
 import {
 	CarIcon,
 	DollarSignIcon,
@@ -70,6 +69,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { EndorsementListItem } from '@/containers/dialogs/safes/endorsement-item';
 import { api } from '@/libraries/api';
 import { useCpfOrCnpj } from '@/libraries/hooks/use-cpf-or-cnpj';
 import {
@@ -189,31 +189,12 @@ function DialogSafeEndorsementById({
 							</div>
 						)}
 						{!isPending &&
-							data?.map(({ id, type, effectivedAt, createdAt }) => (
-								<div
-									key={id}
-									className='border border-border bg-muted rounded-md p-4'
-								>
-									<div className='text-sm'>
-										<b>
-											Endosso de{' '}
-											{type === 'cancellation'
-												? 'Cancelamento'
-												: type === 'address'
-													? 'Endereço'
-													: type === 'franchise'
-														? 'Frânquia'
-														: 'Veicular | Condutor'}
-										</b>
-									</div>
-									<div className='text-sm'>
-										<b>Data:</b>{' '}
-										{format(
-											toZonedTime(effectivedAt ?? createdAt, 'UTC'),
-											'dd/MM/yyyy',
-										)}
-									</div>
-								</div>
+							data?.map((endorsement) => (
+								<EndorsementListItem
+									key={endorsement.id}
+									safeId={id}
+									endorsement={endorsement}
+								/>
 							))}
 					</div>
 					<Separator />
