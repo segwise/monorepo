@@ -97,11 +97,72 @@ function normalizeBrazilianPhone(value: string): string {
 		phone = phone.slice(2);
 	}
 
-	if (phone.length === 13 && phone.startsWith('55')) {
+	// Aceita tanto +55 + celular atual (13 dígitos) quanto +55 + número
+	// legado de 10 dígitos (12 dígitos no total).
+	if ((phone.length === 12 || phone.length === 13) && phone.startsWith('55')) {
 		phone = phone.slice(2);
 	}
 
+	// Algumas seguradoras ainda imprimem celular no formato antigo:
+	// DDD + 8 dígitos. Desde a inclusão do nono dígito, o "9" é inserido
+	// logo após o DDD.
+	//
+	// Ex.: 8199728346 -> 81999728346.
+	//
+	// Limitamos o fallback a assinantes antigos iniciados em 6/7/8/9 para
+	// não converter telefone fixo em celular.
+	if (phone.length === 10 && /^[1-9]{2}[6-9]\d{7}$/.test(phone)) {
+		phone = `${phone.slice(0, 2)}9${phone.slice(2)}`;
+	}
+
 	return phone;
+}
+
+function brazilianPhoneEvidenceCandidates(value: string): Array<string> {
+	let phone = maskNumber(value);
+
+	if (phone.startsWith('00')) {
+		phone = phone.slice(2);
+	}
+
+	if ((phone.length === 12 || phone.length === 13) && phone.startsWith('55')) {
+		phone = phone.slice(2);
+	}
+
+	const normalized = normalizeBrazilianPhone(value);
+	const candidates = new Set<string>();
+
+	if (phone) {
+		candidates.add(phone);
+	}
+
+	if (normalized) {
+		candidates.add(normalized);
+	}
+
+	// Se o valor já estiver no formato atual, também aceitamos como evidência
+	// a representação antiga sem o nono dígito. Isso é apenas para confirmar
+	// o que está impresso no PDF; a saída continua normalizada.
+	if (normalized.length === 11 && normalized[2] === '9') {
+		candidates.add(`${normalized.slice(0, 2)}${normalized.slice(3)}`);
+	}
+
+	return [...candidates];
+}
+
+function evidenceContainsBrazilianPhone(
+	evidence: string | null | undefined,
+	phone: string,
+): boolean {
+	if (!evidence) {
+		return false;
+	}
+
+	const evidenceDigits = maskNumber(evidence);
+
+	return brazilianPhoneEvidenceCandidates(phone).some(
+		(candidate) => candidate.length > 0 && evidenceDigits.includes(candidate),
+	);
 }
 
 function numericValuesFromText(text: string): number[] {
@@ -693,9 +754,9 @@ function sourceContainsPhoneNear(
 	keywords: Array<string>,
 	radius = 3,
 ): boolean {
-	const expected = normalizeBrazilianPhone(phone);
+	const expectedCandidates = brazilianPhoneEvidenceCandidates(phone);
 
-	if (!expected) {
+	if (expectedCandidates.length === 0) {
 		return false;
 	}
 
@@ -713,11 +774,11 @@ function sourceContainsPhoneNear(
 		const end = Math.min(lines.length, index + radius + 1);
 		const blockDigits = digitsOnly(lines.slice(start, end).join(' '));
 
-		if (blockDigits.includes(expected)) {
-			return true;
-		}
-
-		if (expected.startsWith('55') && blockDigits.includes(expected.slice(2))) {
+		if (
+			expectedCandidates.some(
+				(candidate) => candidate.length > 0 && blockDigits.includes(candidate),
+			)
+		) {
 			return true;
 		}
 	}
@@ -2375,6 +2436,7 @@ SEGURADO E CONDUTOR
 - segurado/proponente não é automaticamente o condutor;
 - exceção estrutural Suhai: nas propostas SUHAI em que houver "DADOS DO PROPONENTE" + "DADOS DO PERFIL", pessoa física, o PERFIL usar idade/sexo/estado civil/utilização do proponente e NÃO existir bloco separado de principal condutor, considere o próprio proponente/segurado como principal condutor;
 - use o celular do segurado, nunca telefone do corretor, banco ou terceiro;
+- transcreva insured.phone exatamente como aparece no documento; se a seguradora imprimir celular legado com DDD + 8 dígitos, NÃO invente o nono dígito — a camada determinística fará essa normalização;
 - "vehicle.driverRelation" descreve a relação do principal condutor com o segurado:
   - "insured" quando o documento disser explicitamente "Próprio Segurado", "o próprio segurado", repetir o mesmo CPF do segurado no campo de principal condutor ou equivalente;
   - "other" quando o principal condutor for outra pessoa;
@@ -2568,7 +2630,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v52] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v53] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2766,7 +2828,7 @@ function finalizeModelOutput(
 	const normalizedPhone = normalizeBrazilianPhone(insured.phone);
 
 	const insuredPhoneConfirmed =
-		digitsOnly(insured.phoneEvidence).includes(normalizedPhone) ||
+		evidenceContainsBrazilianPhone(insured.phoneEvidence, insured.phone) ||
 		sourceContainsPhoneNear(sourceText, insured.phone, [
 			'celular',
 			'tel celular',
@@ -2826,7 +2888,7 @@ function finalizeModelOutput(
 		insured: {
 			name: insured.name,
 			registration: insured.registration,
-			phone: insured.phone,
+			phone: normalizedPhone,
 			birth: insured.birth,
 			profession: insured.profession,
 		},
@@ -2937,7 +2999,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v52] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v53] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2957,11 +3019,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v52:${hash}`;
+				const cacheKey = `pdf-extract:v53:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v52] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v53] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {
