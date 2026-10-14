@@ -2133,6 +2133,27 @@ function evidenceConfirmsPrincipalDriverRegistration(
 	);
 }
 
+function evidenceHasPrincipalDriverSignal(
+	evidence: string | null | undefined,
+): boolean {
+	if (!evidence?.trim()) {
+		return false;
+	}
+
+	const normalized = normalizeText(evidence);
+
+	return (
+		/\bprincipal condutor\b/.test(normalized) ||
+		/\bcondutor principal\b/.test(normalized) ||
+		/\bnome do principal condutor\b/.test(normalized) ||
+		/\bcpf condutor\b/.test(normalized) ||
+		/\binformacoes do condutor principal\b/.test(normalized) ||
+		/\bcondutor\b/.test(normalized) ||
+		/\bproprio segurado\b/.test(normalized) ||
+		/\bo proprio segurado\b/.test(normalized)
+	);
+}
+
 function sourceHasPrincipalDriverEvidence(sourceText: string): boolean {
 	const normalized = normalizeText(sourceText);
 
@@ -2246,24 +2267,21 @@ function resolvePrincipalDriver({
 	}
 
 	const hasSourceDriverEvidence = sourceHasPrincipalDriverEvidence(sourceText);
-	const hasModelDriverEvidence = Boolean(driverEvidence?.trim());
-	const hasUnconfirmedOtherDriver = Boolean(
-		modelDriver?.cpf &&
-			modelDriverCpf &&
-			insuredCpf &&
-			digitsOnly(modelDriverCpf) !== digitsOnly(insuredCpf),
-	);
+	const hasExplicitModelDriverEvidence =
+		evidenceHasPrincipalDriverSignal(driverEvidence);
 
 	// FALLBACK FINAL:
-	// se nenhuma regra anterior resolveu e o documento NÃO possui qualquer
-	// evidência de principal condutor, assumimos o segurado como condutor.
-	// Isso fica por último justamente para nunca sobrescrever um condutor
-	// explicitamente informado no documento.
+	// se nenhuma regra anterior resolveu e NÃO existe evidência de principal
+	// condutor nem no texto do PDF nem na evidência visual estruturada da IA,
+	// assumimos o segurado como principal condutor.
+	//
+	// Importante: um CPF/name cru retornado pela IA sem evidência de condutor
+	// NÃO bloqueia este fallback. Isso evita que um palpite do modelo tenha mais
+	// prioridade do que a convenção adotada pelo sistema.
 	if (
 		insuredCpf &&
 		!hasSourceDriverEvidence &&
-		!hasModelDriverEvidence &&
-		!hasUnconfirmedOtherDriver
+		!hasExplicitModelDriverEvidence
 	) {
 		return {
 			name: insured.name,
@@ -2550,7 +2568,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v51] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v52] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2919,7 +2937,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v51] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v52] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2939,11 +2957,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v51:${hash}`;
+				const cacheKey = `pdf-extract:v52:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v51] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v52] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {

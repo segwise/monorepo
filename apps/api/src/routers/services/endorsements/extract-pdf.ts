@@ -837,6 +837,27 @@ function sourceConfirmsPrincipalDriverRegistration(
 	]);
 }
 
+function evidenceHasPrincipalDriverSignal(
+	evidence: string | null | undefined,
+): boolean {
+	if (!evidence?.trim()) {
+		return false;
+	}
+
+	const normalized = normalizeText(evidence);
+
+	return (
+		/\bprincipal condutor\b/.test(normalized) ||
+		/\bcondutor principal\b/.test(normalized) ||
+		/\bnome do principal condutor\b/.test(normalized) ||
+		/\bcpf condutor\b/.test(normalized) ||
+		/\binformacoes do condutor principal\b/.test(normalized) ||
+		/\bcondutor\b/.test(normalized) ||
+		/\bproprio segurado\b/.test(normalized) ||
+		/\bo proprio segurado\b/.test(normalized)
+	);
+}
+
 function sourceHasPrincipalDriverEvidence(sourceText: string): boolean {
 	const normalized = normalizeText(sourceText);
 
@@ -897,15 +918,21 @@ function sourcePrincipalDriverCpf(sourceText: string): string | null {
 
 function resolvePrincipalDriverCpf({
 	modelDriver,
+	modelDriverEvidence,
 	lookup,
 	sourceText,
 	allowInsuredFallback,
 }: {
 	modelDriver: string | null;
+	modelDriverEvidence: string | null;
 	lookup: z.infer<typeof SchemaLookup>;
 	sourceText: string;
 	allowInsuredFallback: boolean;
 }): string | null {
+	const insuredCpf = lookup.insuredRegistration
+		? parseCpfCandidate(lookup.insuredRegistration)
+		: null;
+
 	if (modelDriver) {
 		const parsedModelDriver = parseCpfCandidate(modelDriver);
 
@@ -915,10 +942,8 @@ function resolvePrincipalDriverCpf({
 				sourceText,
 				parsedModelDriver,
 			) ||
-				(sourceMarksPrincipalDriverAsInsured(sourceText) &&
-					lookup.insuredRegistration !== null &&
-					digitsOnly(parsedModelDriver) ===
-						digitsOnly(lookup.insuredRegistration)))
+				(evidenceHasPrincipalDriverSignal(modelDriverEvidence) &&
+					evidenceContainsRegistration(modelDriverEvidence, parsedModelDriver)))
 		) {
 			return parsedModelDriver;
 		}
@@ -931,43 +956,44 @@ function resolvePrincipalDriverCpf({
 	}
 
 	if (
-		lookup.insuredRegistration &&
+		insuredCpf &&
 		(sourceMarksPrincipalDriverAsInsured(sourceText) ||
 			sourceUsesSuhaiProponentProfileAsPrincipalDriver(
 				sourceText,
-				lookup.insuredRegistration,
+				insuredCpf,
 			) ||
-			sourceConfirmsPrincipalDriverRegistration(
-				sourceText,
-				lookup.insuredRegistration,
-			) ||
+			sourceConfirmsPrincipalDriverRegistration(sourceText, insuredCpf) ||
 			sourcePrincipalDriverMatchesInsuredIdentity({
 				sourceText,
 				insuredName: lookup.insuredName,
-				insuredRegistration: lookup.insuredRegistration,
-			}))
+				insuredRegistration: insuredCpf,
+			}) ||
+			(evidenceHasPrincipalDriverSignal(modelDriverEvidence) &&
+				evidenceContainsRegistration(modelDriverEvidence, insuredCpf)))
 	) {
-		return parseCpfCandidate(lookup.insuredRegistration);
+		return insuredCpf;
 	}
 
 	const hasSourceDriverEvidence = sourceHasPrincipalDriverEvidence(sourceText);
-	const hasUnconfirmedModelDriver = Boolean(modelDriver?.trim());
+	const hasExplicitModelDriverEvidence =
+		evidenceHasPrincipalDriverSignal(modelDriverEvidence);
 
-	// FALLBACK FINAL para endosso que NÃO altera o condutor:
-	// se nenhuma regra anterior encontrou principal condutor e o PDF não traz
-	// qualquer evidência de condutor, preservamos a convenção das seguradoras
-	// usadas neste sistema: o principal condutor resultante é o próprio segurado.
+	// FALLBACK FINAL:
+	// Quando o endosso não altera o condutor e nenhuma regra anterior encontrou
+	// evidência real de principal condutor, o principal condutor resultante é o
+	// próprio segurado.
 	//
-	// Não aplicamos este fallback quando changeKind informa alteração de
-	// condutor, nem quando a IA encontrou um CPF de condutor que não conseguiu
-	// ser confirmado, pois nesses casos existe sinal de outro condutor.
+	// Um modelDriver cru, sem driverEvidence e sem confirmação no documento,
+	// NÃO bloqueia o fallback. Esse era o motivo do falso 409 no Bradesco AION:
+	// a IA podia preencher data.driver por inferência, mas não existia qualquer
+	// bloco de principal condutor no PDF.
 	if (
 		allowInsuredFallback &&
-		lookup.insuredRegistration &&
+		insuredCpf &&
 		!hasSourceDriverEvidence &&
-		!hasUnconfirmedModelDriver
+		!hasExplicitModelDriverEvidence
 	) {
-		return parseCpfCandidate(lookup.insuredRegistration);
+		return insuredCpf;
 	}
 
 	return null;
@@ -1846,6 +1872,7 @@ const SchemaModelVehicleConductor = z
 					.transform((value) => value ?? 'unknown'),
 				modalityEvidence: SchemaModelNullableString,
 				driver: SchemaModelNullableString,
+				driverEvidence: SchemaModelNullableString,
 				plate: SchemaModelNullableString,
 				plateStatus: z.enum(['present', 'explicitly_absent', 'unknown']),
 				plateEvidence: SchemaModelNullableString,
@@ -1980,6 +2007,7 @@ Para vehicle_conductor:
 - "Ramo: Automóvel" pode ser um ramo comercial genérico que inclui motos em algumas seguradoras; use-o como vehicle somente quando não houver categoria/tipo/modelo mais específico.
 - modalityEvidence deve ser um trecho curto do documento que sustente a modalidade quando disponível.
 - IMPORTANTE: data.driver é SEMPRE o CPF do PRINCIPAL CONDUTOR RESULTANTE após o endosso, mesmo quando o condutor não foi alterado.
+- data.driverEvidence = menor trecho que comprove o principal condutor quando houver evidência explícita; se o documento não trouxer qualquer informação de condutor e você estiver usando o FALLBACK FINAL do segurado, use null.
 - exceção estrutural Suhai: quando o documento usar o layout SUHAI com "DADOS DO PROPONENTE" + "DADOS DO PERFIL", pessoa física, o PERFIL usar idade/sexo/estado civil/utilização do proponente e NÃO houver bloco separado de principal condutor, use lookup.insuredRegistration como o principal condutor resultante;
 - Se o documento disser "Principal condutor: Próprio Segurado", "O próprio segurado" ou equivalente, copie para data.driver o CPF do SEGURADO identificado em lookup.insuredRegistration.
 - Se o bloco de Principal Condutor repetir exatamente o nome completo e a data de nascimento do segurado, mas não imprimir o CPF nesse bloco, use lookup.insuredRegistration como o principal condutor resultante.
@@ -2297,7 +2325,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-endorsement:v51] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-endorsement:v52] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${expectedTotal.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2563,6 +2591,7 @@ function finalizeModelOutput(
 
 			const driver = resolvePrincipalDriverCpf({
 				modelDriver: raw.data.driver,
+				modelDriverEvidence: raw.data.driverEvidence,
 				lookup,
 				sourceText,
 				allowInsuredFallback: !changesDriver,
@@ -2798,11 +2827,11 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v51:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v52:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-endorsement:v51] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-endorsement:v52] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				let extracted: DataExtractEndorsement;
@@ -2813,7 +2842,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
 					} catch (error) {
 						console.warn(
-							'[extract-endorsement:v51] cache incompatível, executando nova extração:',
+							'[extract-endorsement:v52] cache incompatível, executando nova extração:',
 							error instanceof Error ? error.message : error,
 						);
 
