@@ -2014,7 +2014,7 @@ Para vehicle_conductor:
 - Se o principal condutor for outra pessoa, use o CPF explicitamente associado ao principal condutor.
 - Não use null só porque changeKind=vehicle; changeKind descreve o que mudou, enquanto data.driver descreve quem ficou como principal condutor após o endosso.
 - FALLBACK FINAL: quando changeKind=vehicle (sem alteração de condutor) e o documento inteiro não trouxer nenhuma evidência de principal condutor, use lookup.insuredRegistration como data.driver. Esta regra só vale depois de todas as demais regras e nunca sobrescreve um condutor explicitamente informado.
-- Se o documento identificar explicitamente OUTRO principal condutor por nome/data de nascimento, mas não imprimir seu CPF, NÃO use o CPF do segurado. Retorne data.driver=null; quando changeKind não altera o condutor, o sistema preservará o driverCPF já cadastrado na apólice atual.
+- Se o documento identificar explicitamente OUTRO principal condutor por nome/data de nascimento, mas não imprimir seu CPF, NÃO use o CPF do segurado e NÃO consulte/substitua pelo CPF já cadastrado na apólice. Retorne data.driver=null. O CPF só pode ser retornado quando estiver confirmado pelo próprio documento/evidência.
 
 Quando houver mudança de veículo, retorne os dados RESULTANTES após o endosso:
 - data.plate = nova placa;
@@ -2326,7 +2326,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-endorsement:v53] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-endorsement:v54] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${expectedTotal.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2604,9 +2604,10 @@ function finalizeModelOutput(
 				);
 			}
 
-			// Se o endosso não altera o condutor, driver=null pode seguir até a
-			// etapa posterior à localização da Safe. Nessa etapa o CPF já cadastrado
-			// na apólice atual será preservado.
+			// Se o endosso não altera o condutor e o documento identifica outro
+			// principal condutor sem informar seu CPF, driver=null é um resultado
+			// válido. Não usamos o CPF do segurado nem o CPF persistido na apólice,
+			// pois o documento não permite confirmar qual CPF pertence ao nome exibido.
 
 			const resultLookup =
 				changesVehicle &&
@@ -2809,30 +2810,6 @@ async function findSafeByLookup(
 	return null;
 }
 
-async function resolvePersistedPrincipalDriver(
-	database: Database,
-	safeId: string,
-): Promise<string | null> {
-	const safe = await database.safe.findFirst({
-		where: { id: safeId },
-		select: {
-			safeVehicle: {
-				select: {
-					driverCPF: true,
-				},
-			},
-		},
-	});
-
-	const driverCPF = safe?.safeVehicle?.driverCPF;
-
-	if (!driverCPF) {
-		return null;
-	}
-
-	return parseCpfCandidate(driverCPF);
-}
-
 function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 	server.post(
 		'/extract-pdf',
@@ -2854,11 +2831,11 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v53:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v54:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-endorsement:v53] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-endorsement:v54] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				let extracted: DataExtractEndorsement;
@@ -2869,7 +2846,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
 					} catch (error) {
 						console.warn(
-							'[extract-endorsement:v53] cache incompatível, executando nova extração:',
+							'[extract-endorsement:v54] cache incompatível, executando nova extração:',
 							error instanceof Error ? error.message : error,
 						);
 
@@ -2895,44 +2872,6 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				if (!safeId) {
 					throw new Error(
 						'Não foi encontrada apólice referente ao endosso; selecione o seguro manualmente',
-					);
-				}
-
-				if (extracted.type === 'vehicle_conductor') {
-					let data = extracted.data;
-
-					if (data.driver === null) {
-						const persistedDriver = await resolvePersistedPrincipalDriver(
-							ctx.database,
-							safeId,
-						);
-
-						if (!persistedDriver) {
-							throw new Error(
-								'O documento identifica principal condutor, mas não informa o CPF e a apólice atual não possui CPF de principal condutor cadastrado',
-							);
-						}
-
-						data = SchemaDataExtractVehicleConductor.parse({
-							...extracted,
-							data: {
-								...extracted.data,
-								driver: persistedDriver,
-							},
-						}).data;
-
-						console.log(
-							`[extract-endorsement:v53] principal condutor preservado da apólice safeId=${safeId}`,
-						);
-					}
-
-					return ctx.json(
-						{
-							safeId,
-							type: extracted.type,
-							data,
-						},
-						200,
 					);
 				}
 
