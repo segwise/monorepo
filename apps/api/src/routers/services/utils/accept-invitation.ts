@@ -4,6 +4,10 @@ import z from 'zod';
 import type { Server } from '@/@types/server';
 import { buildCustomerPortalUrl } from '@/functions/hostname/build-customer-portal-url';
 import { buildProducerPortalUrl } from '@/functions/hostname/build-producer-portal-url';
+import {
+	type ConfirmProducerInvitationOutcome,
+	confirmProducerInvitation,
+} from '@/functions/invitations/confirm-producer-invitation';
 import { responseReplaceSession } from '@/functions/response/replace-session';
 import { Role } from '@/generated/prisma/enums';
 
@@ -27,16 +31,38 @@ function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 				},
 				select: {
 					role: true,
+					confirmOnly: true,
 				},
 			});
 
-			if (!invitation) {
-				return ctx.json(
-					{
-						message: 'Token não encontrado',
-					},
-					404,
+			// Acesso já definido pela corretora: o link só confirma e leva ao login
+			// do portal do parceiro (token inexistente = já utilizado, mesmo destino).
+			if (
+				!invitation ||
+				(invitation.role === Role.producer && invitation.confirmOnly)
+			) {
+				let outcome: ConfirmProducerInvitationOutcome = 'used';
+
+				try {
+					outcome = await confirmProducerInvitation(ctx, token);
+				} catch (error) {
+					console.error(
+						`Falha ao confirmar convite: ${error instanceof Error ? error.message : 'erro'}`,
+					);
+
+					outcome = 'error';
+				}
+
+				const signIn = new URL(
+					buildProducerPortalUrl(ctx.environment, '/sign-in'),
 				);
+
+				signIn.searchParams.set(
+					'invitation',
+					outcome === 'confirmed' ? 'confirmed' : outcome,
+				);
+
+				return ctx.redirect(signIn.toJSON(), 302);
 			}
 
 			if (invitation?.role === Role.producer) {

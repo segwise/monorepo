@@ -628,6 +628,12 @@ model Invitation {
 
   invitationMessage String? @map("invitation_message") @db.Text
 
+  // true = o acesso já está definido (a corretora criou a senha no cadastro, ou o
+  // usuário já tinha conta confirmada): o link do e-mail só CONFIRMA o acesso e
+  // manda para o login. false = convite antigo/equipe: o link leva à tela de
+  // definir senha.
+  confirmOnly Boolean @default(false) @map("confirm_only")
+
   status StatusInvitation @default(pending)
 
   inviterId String @map("inviter_id") @db.Uuid

@@ -7,6 +7,10 @@ type Input = {
 	email: string;
 	phone: string;
 	cpfOrCnpj: string;
+	// Senha criada pela corretora. Só vale para conta nova ou ainda não confirmada
+	// e sem vínculo (nunca sobrescreve a senha de quem já usa o sistema). Sem ela,
+	// a conta nasce com senha aleatória e o parceiro define a dele no aceite.
+	password?: string;
 };
 
 type Result = {
@@ -14,6 +18,11 @@ type Result = {
 	// true só quando o usuário foi criado agora: é o único caso em que ele pode
 	// ser apagado se o resto do cadastro falhar.
 	created: boolean;
+	// A senha informada passou a ser a da conta (e o parceiro não precisa criar
+	// uma no aceite).
+	passwordApplied: boolean;
+	// Conta já confirmada: o parceiro tem senha própria e conhecida.
+	verified: boolean;
 };
 
 function friendlyAuthError(error: unknown): Error {
@@ -26,16 +35,42 @@ function friendlyAuthError(error: unknown): Error {
 	return error instanceof Error ? error : new Error('Falha ao criar usuário');
 }
 
+// Troca a senha de uma conta que ninguém usou ainda (e-mail não confirmado e sem
+// vínculo com corretora), p. ex. o parceiro cadastrado antes que nunca confirmou.
+async function applyPasswordToUnconfirmedUser(
+	ctx: Pick<Context, 'database'>,
+	user: {
+		id: string;
+		emailVerified: boolean | null;
+		members: Array<unknown>;
+	},
+	password?: string,
+): Promise<boolean> {
+	if (!password || user.emailVerified || user.members.length > 0) {
+		return false;
+	}
+
+	const { count } = await ctx.database.account.updateMany({
+		where: { userId: user.id, providerId: 'credential' },
+		data: { password: await Bun.password.hash(password, 'argon2id') },
+	});
+
+	return count > 0;
+}
+
 // Usado pelos três cadastros de produtor/parceiro (interno, admin e link público).
 // - Reaproveita o usuário que já existe por CPF/CNPJ ou por e-mail (sem nunca
 //   atribuir o CPF/CNPJ digitado a uma conta de equipe só pelo e-mail).
 // - O convite é enviado para o e-mail do usuário (o aceite procura o usuário por
 //   esse e-mail), então um CPF/CNPJ já cadastrado com outro e-mail é recusado.
+// - Com `password`: conta nova nasce com ela; conta existente só a recebe se
+//   ainda não foi confirmada e não tem vínculo algum (cadastro anterior que o
+//   parceiro nunca confirmou) — nunca troca a senha de quem já acessa o sistema.
 // - CPF/CNPJ e celular são gravados explicitamente: o `createUser` do
 //   better-auth não grava campos que não são do schema dele.
 async function findOrCreateProducerUser(
 	ctx: Pick<Context, 'database' | 'auth'>,
-	{ name, email, phone, cpfOrCnpj }: Input,
+	{ name, email, phone, cpfOrCnpj, password }: Input,
 ): Promise<Result> {
 	const document = isCPF(cpfOrCnpj)
 		? { cpf: cpfOrCnpj }
@@ -50,7 +85,15 @@ async function findOrCreateProducerUser(
 	const [byDocument, byEmail] = await Promise.all([
 		ctx.database.user.findFirst({
 			where: { OR: [{ cpf: cpfOrCnpj }, { cnpj: cpfOrCnpj }] },
-			select: { id: true, email: true, cpf: true, cnpj: true, phone: true },
+			select: {
+				id: true,
+				email: true,
+				cpf: true,
+				cnpj: true,
+				phone: true,
+				emailVerified: true,
+				members: { select: { id: true } },
+			},
 		}),
 		ctx.database.user.findUnique({
 			where: { email },
@@ -60,7 +103,8 @@ async function findOrCreateProducerUser(
 				cpf: true,
 				cnpj: true,
 				phone: true,
-				members: { select: { role: true } },
+				emailVerified: true,
+				members: { select: { id: true, role: true } },
 			},
 		}),
 	]);
@@ -85,7 +129,16 @@ async function findOrCreateProducerUser(
 			});
 		}
 
-		return { userId: byDocument.id, created: false };
+		return {
+			userId: byDocument.id,
+			created: false,
+			passwordApplied: await applyPasswordToUnconfirmedUser(
+				ctx,
+				byDocument,
+				password,
+			),
+			verified: !!byDocument.emailVerified,
+		};
 	}
 
 	if (byEmail) {
@@ -112,7 +165,16 @@ async function findOrCreateProducerUser(
 			data: { ...document, ...(!byEmail.phone && { phone }) },
 		});
 
-		return { userId: byEmail.id, created: false };
+		return {
+			userId: byEmail.id,
+			created: false,
+			passwordApplied: await applyPasswordToUnconfirmedUser(
+				ctx,
+				byEmail,
+				password,
+			),
+			verified: !!byEmail.emailVerified,
+		};
 	}
 
 	let userId: string;
@@ -122,7 +184,9 @@ async function findOrCreateProducerUser(
 			body: {
 				name,
 				email,
-				password: Bun.randomUUIDv7(),
+				// O better-auth faz o hash (argon2id); aqui vai a senha em texto só
+				// até ele. Nunca é gravada nem registrada em log.
+				password: password ?? Bun.randomUUIDv7(),
 				// @ts-expect-error
 				role: Role.customer,
 			},
@@ -144,7 +208,12 @@ async function findOrCreateProducerUser(
 		throw error;
 	}
 
-	return { userId, created: true };
+	return {
+		userId,
+		created: true,
+		passwordApplied: !!password,
+		verified: false,
+	};
 }
 
 export { findOrCreateProducerUser };

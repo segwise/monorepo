@@ -265,6 +265,11 @@ const auth = betterAuth({
 							type: 'number[]',
 							required: false,
 						},
+						confirmOnly: {
+							type: 'boolean',
+							required: false,
+							defaultValue: false,
+						},
 					},
 				},
 				member: {
@@ -302,13 +307,20 @@ const auth = betterAuth({
 			async sendInvitationEmail(data) {
 				const urlString = buildAcceptInvitationUrl(environment, data.id);
 
+				const confirmOnly = !!(
+					data.invitation as unknown as { confirmOnly?: boolean }
+				).confirmOnly;
+
 				await email.emails.send({
 					from: 'Segwise <invite@emails.xcarcorretora.com.br>',
 					to: data.email,
-					subject: 'Aceitar convite de produção',
+					subject: confirmOnly
+						? 'Confirmar acesso à plataforma'
+						: 'Aceitar convite de produção',
 					react: InvitePartnerEmail({
 						company: data.organization.name,
 						url: urlString,
+						confirmOnly,
 					}),
 				});
 			},

@@ -25,6 +25,7 @@ function registerRoutersServicesProducersPendingRenew(server: Server) {
 				select: {
 					id: true,
 					email: true,
+					confirmOnly: true,
 					broker: {
 						select: { name: true },
 					},
@@ -48,10 +49,13 @@ function registerRoutersServicesProducersPendingRenew(server: Server) {
 			await ctx.email.emails.send({
 				from: 'Segwise <invite@emails.xcarcorretora.com.br>',
 				to: invitation.email,
-				subject: 'Aceitar convite de produção',
+				subject: invitation.confirmOnly
+					? 'Confirmar acesso à plataforma'
+					: 'Aceitar convite de produção',
 				react: InvitePartnerEmail({
 					company: invitation.broker?.name || '',
 					url,
+					confirmOnly: invitation.confirmOnly,
 				}),
 			});
 

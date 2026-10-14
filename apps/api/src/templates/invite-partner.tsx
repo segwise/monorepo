@@ -19,6 +19,9 @@ interface InvitePartnerEmailProps {
 	// Convite da equipe da corretora: saudação e papel; sem eles o texto é o de parceiro.
 	name?: string | null;
 	roleLabel?: string;
+	// Acesso já criado pela corretora: o e-mail só pede para confirmar (sem
+	// criação de senha) e o link leva direto ao login.
+	confirmOnly?: boolean;
 }
 
 function InvitePartnerEmail({
@@ -26,13 +29,18 @@ function InvitePartnerEmail({
 	url,
 	name,
 	roleLabel,
+	confirmOnly,
 }: InvitePartnerEmailProps) {
 	const year = new Date().getFullYear();
 
 	return (
 		<Html lang="pt-BR">
 			<Head />
-			<Preview>Você foi convidado(a) para a plataforma Segwise</Preview>
+			<Preview>
+				{confirmOnly
+					? 'Confirme seu acesso à plataforma Segwise'
+					: 'Você foi convidado(a) para a plataforma Segwise'}
+			</Preview>
 			<Body style={main}>
 				<Container style={container}>
 					<Section style={header}>
@@ -42,25 +50,41 @@ function InvitePartnerEmail({
 						<Heading style={greeting}>
 							Olá, {name ? name.toUpperCase() : 'NOVO PARCEIRO'}.
 						</Heading>
-						<Text style={paragraph}>
-							Você foi convidado(a) para fazer parte da plataforma da{' '}
-							<strong>Segwise</strong> em nome da organização{' '}
-							<strong>{company.toUpperCase()}</strong>
-							{roleLabel ? (
-								<>
-									, com o perfil de <strong>{roleLabel}</strong>
-								</>
-							) : null}
-							.
-						</Text>
-						<Text style={paragraph}>
-							Nossa plataforma foi desenvolvida para simplificar a gestão de
-							corretoras de seguros, integrando cotação, emissão e
-							acompanhamento de apólices em um só lugar.
-						</Text>
+						{confirmOnly ? (
+							<>
+								<Text style={paragraph}>
+									A organização <strong>{company.toUpperCase()}</strong> criou o
+									seu acesso à plataforma da <strong>Segwise</strong>.
+								</Text>
+								<Text style={paragraph}>
+									Seu login é este e-mail e a senha foi informada a você
+									diretamente pela corretora. Para liberar o acesso, basta
+									confirmar abaixo — você será levado(a) à tela de login.
+								</Text>
+							</>
+						) : (
+							<>
+								<Text style={paragraph}>
+									Você foi convidado(a) para fazer parte da plataforma da{' '}
+									<strong>Segwise</strong> em nome da organização{' '}
+									<strong>{company.toUpperCase()}</strong>
+									{roleLabel ? (
+										<>
+											, com o perfil de <strong>{roleLabel}</strong>
+										</>
+									) : null}
+									.
+								</Text>
+								<Text style={paragraph}>
+									Nossa plataforma foi desenvolvida para simplificar a gestão de
+									corretoras de seguros, integrando cotação, emissão e
+									acompanhamento de apólices em um só lugar.
+								</Text>
+							</>
+						)}
 						<Section style={buttonContainer}>
 							<Button style={button} href={url}>
-								Aceitar convite
+								{confirmOnly ? 'Confirmar acesso' : 'Aceitar convite'}
 							</Button>
 						</Section>
 						<Text style={smallText}>
