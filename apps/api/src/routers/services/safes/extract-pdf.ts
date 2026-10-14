@@ -1381,13 +1381,16 @@ function resolveInsuranceCompany(
 function principalVehicleCoverageLooksPrincipal(evidence: string): boolean {
 	const normalized = normalizeText(evidence);
 
+	// "Incêndio" não pode ser tratado isoladamente como indício de produto
+	// residencial: coberturas principais de Casco/Compreensiva frequentemente
+	// são descritas como "Colisão, Incêndio, Roubo e Furto".
 	const clearlySecondaryOrOtherProduct =
-		/\b(rcf|danos materiais|danos corporais|danos morais|app|vidro|vidros|para brisa|parabrisa|farol|farois|lanterna|lanternas|retrovisor|retrovisores|assistencia|carro reserva|residencia|residencial|incendio|vendaval|responsabilidade civil familiar|aluguel|predio|conteudo|local em risco)\b/.test(
+		/\b(rcf|danos materiais|danos corporais|danos morais|app|vidro|vidros|para brisa|parabrisa|farol|farois|lanterna|lanternas|retrovisor|retrovisores|assistencia|carro reserva|residencia|residencial|vendaval|responsabilidade civil familiar|aluguel|predio|conteudo|local em risco)\b/.test(
 			normalized,
 		);
 
 	const principalVehicleCoverage =
-		/\b(casco|compreensiva|basica|indenizacao parcial do veiculo|indenizacao integral|ind integral|roubo furto|colisao danos)\b/.test(
+		/\b(casco|compreensiva|basica|indenizacao parcial do veiculo|indenizacao integral|ind integral|roubo(?: e)? furto|colisao(?: e|\/)? danos)\b/.test(
 			normalized,
 		);
 
@@ -1402,7 +1405,7 @@ function franchiseEvidenceLooksPrincipal(evidence: string): boolean {
 	}
 
 	const otherProduct =
-		/\b(residencia|residencial|incendio|vendaval|responsabilidade civil familiar|aluguel|predio|conteudo|local em risco)\b/.test(
+		/\b(residencia|residencial|vendaval|responsabilidade civil familiar|aluguel|predio|conteudo|local em risco)\b/.test(
 			normalized,
 		);
 
@@ -2266,7 +2269,7 @@ Se a cobertura PRINCIPAL DO VEÍCULO declarar explicitamente "Não há franquia"
 Em documentos com mais de um produto (ex.: Auto + Residencial), a franquia do Auto/Moto principal SEMPRE prevalece. Ignore franquias, "Sem Franquia" e franquias obrigatórias de Residencial, RCF, vidros, assistências ou outros produtos/coberturas secundárias.
 NUNCA use 0 apenas porque o valor não foi encontrado: zero exige ausência explícita de franquia na própria cobertura principal do veículo.
 Normalmente está associada à primeira cobertura principal, mas confirme pela estrutura da tabela.
-NUNCA use franquia de vidro, para-brisa, farol, lanterna, retrovisor, roda, pneu, assistência ou outro serviço acessório.
+NUNCA use franquia de vidro, para-brisa, farol, lanterna, retrovisor, roda, pneu, assistência ou outro serviço acessório. "Incêndio" dentro de uma cobertura de Casco/Compreensiva continua sendo cobertura principal do veículo; não trate essa palavra isoladamente como produto residencial.
 NUNCA confunda a franquia com o prêmio da cobertura na coluna ao lado.
 "franchiseEvidence" deve conter o trecho da cobertura/franquia principal e seu valor, ou o trecho explícito de ausência de franquia. Em layouts Bradesco, a seção "FRANQUIAS" com o campo "Veículo" representa a franquia principal, mesmo que a mesma tabela também liste vidros, faróis, lanternas e retrovisores. Em Porto/Azul, o valor principal costuma aparecer como "R$ X (50% da Obrigatória)". Nunca use o LMI da cobertura seguinte (por exemplo R$ 150.000,00 de RCF) como franquia. O parser pode separar rótulos e valores; valores com "(25 da obrigatória)", "(50% da obrigatória)" ou equivalente são sinais fortes da franquia principal. Em MAPFRE, dentro de "Franquia(s)", uma linha principal de Casco como "Reduzida 50% 3.124,32" significa franchise=3124.32; o percentual não é o valor monetário da franquia.
 
@@ -2382,7 +2385,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v46] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v47] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2751,7 +2754,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v46] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v47] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2771,11 +2774,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v46:${hash}`;
+				const cacheKey = `pdf-extract:v47:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v46] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v47] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {
