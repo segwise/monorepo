@@ -10,6 +10,7 @@ import {
 	type EndorsementFranchise,
 	type EndorsementVehicleConductor,
 	getNumericValue,
+	isCPF,
 	isPlate,
 	maskCPF,
 	maskPlate,
@@ -30,6 +31,7 @@ import {
 	Loader2Icon,
 	MapPinIcon,
 	SaveIcon,
+	TriangleAlertIcon,
 	UploadIcon,
 	XCircleIcon,
 } from 'lucide-react';
@@ -93,6 +95,9 @@ interface DialogSafeEndorsementDetailsProps {
 	onOpenChange: (open: boolean) => void;
 }
 
+const DRIVER_MISSING_MESSAGE =
+	'O documento não informa o CPF do principal condutor. Informe-o manualmente.';
+
 const plateKey = (value?: string | null) =>
 	(value ?? '').replace(/[^a-z0-9]/gi, '').toLowerCase();
 
@@ -109,7 +114,8 @@ function commissionFromAmountAndPercentage(
 }
 
 type VehicleConductorFields = {
-	driver: string;
+	// null quando o documento não informa o CPF do principal condutor.
+	driver: string | null;
 	plate: string | null;
 	model: string;
 	modelYear: string | number;
@@ -385,6 +391,9 @@ function DialogSafeEndorsementDetails({
 	>(null);
 
 	const [notPlate, setNotPlate] = useState<boolean>(false);
+
+	// O documento enviado não trouxe o CPF do principal condutor (driver = null).
+	const [driverMissing, setDriverMissing] = useState<boolean>(false);
 
 	const [resolvedId, setResolvedId] = useState<string | null>(idProp ?? null);
 
@@ -725,7 +734,24 @@ function DialogSafeEndorsementDetails({
 
 			setNotPlate(!parsedData.plate);
 
-			formVehicleConductor.setValue('driver', maskCPF(parsedData.driver ?? ''));
+			// driver = null: o documento não traz o CPF do principal condutor. Limpa o
+			// campo (nunca mantém o CPF cadastrado na apólice), avisa e leva o foco
+			// até ele para o CPF ser informado manualmente.
+			const missingDriver = !parsedData.driver;
+
+			setDriverMissing(missingDriver);
+
+			formVehicleConductor.setValue(
+				'driver',
+				missingDriver ? '' : maskCPF(parsedData.driver as string),
+				missingDriver ? { shouldValidate: true, shouldTouch: true } : undefined,
+			);
+
+			if (missingDriver) {
+				toast.warning(DRIVER_MISSING_MESSAGE.toUpperCase());
+
+				setTimeout(() => document.getElementById('driver-cpf')?.focus(), 150);
+			}
 			formVehicleConductor.setValue(
 				'plate',
 				parsedData.plate ? maskPlate(parsedData.plate) : '',
@@ -815,6 +841,7 @@ function DialogSafeEndorsementDetails({
 		if (!nextOpen) {
 			setType(null);
 			setNotPlate(false);
+			setDriverMissing(false);
 			setResolvedId(idProp ?? null);
 			setFormUnlocked(false);
 			pdfRef.current = { applied: false, plate: null, percentage: false };
@@ -1063,15 +1090,27 @@ function DialogSafeEndorsementDetails({
 															data-invalid={fieldState.invalid}
 															className='col-span-full'
 														>
-															<FieldLabel>CPF do Condutor:</FieldLabel>
+															<FieldLabel htmlFor='driver-cpf'>
+																CPF do Condutor:
+															</FieldLabel>
 															<Input
 																{...field}
+																id='driver-cpf'
 																aria-invalid={fieldState.invalid}
 																placeholder='000.000.000-00'
 																onChange={({ target: { value } }) =>
 																	field.onChange(maskCPF(value))
 																}
 															/>
+															{driverMissing && !isCPF(field.value ?? '') && (
+																<div
+																	role='alert'
+																	className='flex flex-row items-start gap-x-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-400'
+																>
+																	<TriangleAlertIcon className='size-3.5 mt-px shrink-0' />
+																	{DRIVER_MISSING_MESSAGE}
+																</div>
+															)}
 															{driverResponse?.name && (
 																<FieldDescription className='text-foreground text-xs -mt-2'>
 																	{capitalizeFirstLetters(driverResponse.name)}
