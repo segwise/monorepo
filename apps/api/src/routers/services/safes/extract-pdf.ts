@@ -2133,6 +2133,20 @@ function evidenceConfirmsPrincipalDriverRegistration(
 	);
 }
 
+function sourceHasPrincipalDriverEvidence(sourceText: string): boolean {
+	const normalized = normalizeText(sourceText);
+
+	return (
+		/\bprincipal condutor\b/.test(normalized) ||
+		/\bcondutor principal\b/.test(normalized) ||
+		/\bnome do principal condutor\b/.test(normalized) ||
+		/\bcpf condutor\b/.test(normalized) ||
+		/\binformacoes do condutor principal\b/.test(normalized) ||
+		/\bdados do perfil\b/.test(normalized) ||
+		/\bquestionario de avaliacao de risco\b/.test(normalized)
+	);
+}
+
 function resolvePrincipalDriver({
 	vehicle,
 	insured,
@@ -2190,12 +2204,7 @@ function resolvePrincipalDriver({
 		Boolean(insuredCpf && modelDriverCpf) &&
 		digitsOnly(modelDriverCpf as string) === digitsOnly(insuredCpf as string);
 
-	// A relação "segurado = principal condutor" pode ser demonstrada de várias
-	// formas válidas pelo documento:
-	// - "Próprio Segurado" / equivalente;
-	// - o CPF do segurado repetido no campo de principal condutor;
-	// - a IA retornar o mesmo CPF para o condutor e esse CPF estar confirmado
-	//   no contexto de condutor pelo texto/evidência.
+	// Regras explícitas sempre têm prioridade.
 	if (
 		sourceSaysInsured ||
 		suhaiProfileUsesInsured ||
@@ -2218,9 +2227,51 @@ function resolvePrincipalDriver({
 		};
 	}
 
-	// driverRelation é um sinal da IA, não prova suficiente isoladamente.
-	// Só rejeitamos aqui depois de tentar confirmar a relação diretamente no
-	// texto/evidência e também comparar o CPF retornado para o condutor.
+	// Se a IA trouxe outro condutor e o documento confirma esse CPF,
+	// preservamos essa informação e nunca aplicamos o fallback do segurado.
+	if (modelDriver?.name && modelDriverCpf && modelDriverConfirmed) {
+		if (insuredCpf && digitsOnly(modelDriverCpf) === digitsOnly(insuredCpf)) {
+			return {
+				name: insured.name,
+				cpf: insuredCpf,
+				birth: insured.birth ?? modelDriver.birth,
+			};
+		}
+
+		return {
+			name: modelDriver.name,
+			cpf: modelDriverCpf,
+			birth: modelDriver.birth,
+		};
+	}
+
+	const hasSourceDriverEvidence = sourceHasPrincipalDriverEvidence(sourceText);
+	const hasModelDriverEvidence = Boolean(driverEvidence?.trim());
+	const hasUnconfirmedOtherDriver = Boolean(
+		modelDriver?.cpf &&
+			modelDriverCpf &&
+			insuredCpf &&
+			digitsOnly(modelDriverCpf) !== digitsOnly(insuredCpf),
+	);
+
+	// FALLBACK FINAL:
+	// se nenhuma regra anterior resolveu e o documento NÃO possui qualquer
+	// evidência de principal condutor, assumimos o segurado como condutor.
+	// Isso fica por último justamente para nunca sobrescrever um condutor
+	// explicitamente informado no documento.
+	if (
+		insuredCpf &&
+		!hasSourceDriverEvidence &&
+		!hasModelDriverEvidence &&
+		!hasUnconfirmedOtherDriver
+	) {
+		return {
+			name: insured.name,
+			cpf: insuredCpf,
+			birth: insured.birth ?? null,
+		};
+	}
+
 	if (vehicle.driverRelation === 'insured') {
 		throw new Error(
 			'A IA indicou que o principal condutor é o próprio segurado, mas o documento não permitiu confirmar essa relação',
@@ -2235,23 +2286,7 @@ function resolvePrincipalDriver({
 		throw new Error('CPF do principal condutor inválido');
 	}
 
-	if (!modelDriverConfirmed) {
-		throw new Error('O documento não confirma o CPF do principal condutor');
-	}
-
-	if (insuredCpf && digitsOnly(modelDriverCpf) === digitsOnly(insuredCpf)) {
-		return {
-			name: insured.name,
-			cpf: insuredCpf,
-			birth: insured.birth ?? modelDriver.birth,
-		};
-	}
-
-	return {
-		name: modelDriver.name,
-		cpf: modelDriverCpf,
-		birth: modelDriver.birth,
-	};
+	throw new Error('O documento não confirma o CPF do principal condutor');
 }
 
 function mountPrompt(
@@ -2329,6 +2364,7 @@ SEGURADO E CONDUTOR
 - "vehicle.driverEvidence" deve ser o menor trecho que comprove quem é o principal condutor ou sua relação com o segurado;
 - quando driverRelation="insured", copie nome, CPF e data de nascimento do segurado para "vehicle.driver";
 - se o bloco de Principal Condutor repetir exatamente o nome completo e a data de nascimento do segurado, mas omitir o CPF do condutor, considere o próprio segurado como principal condutor e use o CPF do segurado;
+- FALLBACK FINAL: se o documento inteiro não trouxer nenhuma informação/evidência de principal condutor, use o próprio segurado como principal condutor. Esta regra é a última prioridade e nunca pode sobrescrever um condutor explicitamente identificado;
 - quando driverRelation="other", preencha "vehicle.driver" com nome, CPF e nascimento do principal condutor indicado no documento;
 - nunca retorne driver=null apenas porque o principal condutor é o próprio segurado;
 - para vehicle e motorcycle, sempre tente retornar o principal condutor resultante da contratação;
@@ -2514,7 +2550,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v49] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v51] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2883,7 +2919,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v49] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v51] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2903,11 +2939,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v49:${hash}`;
+				const cacheKey = `pdf-extract:v51:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v49] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v51] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {

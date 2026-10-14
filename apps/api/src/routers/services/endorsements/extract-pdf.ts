@@ -837,6 +837,20 @@ function sourceConfirmsPrincipalDriverRegistration(
 	]);
 }
 
+function sourceHasPrincipalDriverEvidence(sourceText: string): boolean {
+	const normalized = normalizeText(sourceText);
+
+	return (
+		/\bprincipal condutor\b/.test(normalized) ||
+		/\bcondutor principal\b/.test(normalized) ||
+		/\bnome do principal condutor\b/.test(normalized) ||
+		/\bcpf condutor\b/.test(normalized) ||
+		/\binformacoes do condutor principal\b/.test(normalized) ||
+		/\bdados do perfil\b/.test(normalized) ||
+		/\bquestionario de avaliacao de risco\b/.test(normalized)
+	);
+}
+
 function sourcePrincipalDriverCpf(sourceText: string): string | null {
 	const lines = sourceText.split('\n');
 	const candidates = new Set<string>();
@@ -885,10 +899,12 @@ function resolvePrincipalDriverCpf({
 	modelDriver,
 	lookup,
 	sourceText,
+	allowInsuredFallback,
 }: {
 	modelDriver: string | null;
 	lookup: z.infer<typeof SchemaLookup>;
 	sourceText: string;
+	allowInsuredFallback: boolean;
 }): string | null {
 	if (modelDriver) {
 		const parsedModelDriver = parseCpfCandidate(modelDriver);
@@ -930,6 +946,26 @@ function resolvePrincipalDriverCpf({
 				insuredName: lookup.insuredName,
 				insuredRegistration: lookup.insuredRegistration,
 			}))
+	) {
+		return parseCpfCandidate(lookup.insuredRegistration);
+	}
+
+	const hasSourceDriverEvidence = sourceHasPrincipalDriverEvidence(sourceText);
+	const hasUnconfirmedModelDriver = Boolean(modelDriver?.trim());
+
+	// FALLBACK FINAL para endosso que NÃO altera o condutor:
+	// se nenhuma regra anterior encontrou principal condutor e o PDF não traz
+	// qualquer evidência de condutor, preservamos a convenção das seguradoras
+	// usadas neste sistema: o principal condutor resultante é o próprio segurado.
+	//
+	// Não aplicamos este fallback quando changeKind informa alteração de
+	// condutor, nem quando a IA encontrou um CPF de condutor que não conseguiu
+	// ser confirmado, pois nesses casos existe sinal de outro condutor.
+	if (
+		allowInsuredFallback &&
+		lookup.insuredRegistration &&
+		!hasSourceDriverEvidence &&
+		!hasUnconfirmedModelDriver
 	) {
 		return parseCpfCandidate(lookup.insuredRegistration);
 	}
@@ -1949,6 +1985,7 @@ Para vehicle_conductor:
 - Se o bloco de Principal Condutor repetir exatamente o nome completo e a data de nascimento do segurado, mas não imprimir o CPF nesse bloco, use lookup.insuredRegistration como o principal condutor resultante.
 - Se o principal condutor for outra pessoa, use o CPF explicitamente associado ao principal condutor.
 - Não use null só porque changeKind=vehicle; changeKind descreve o que mudou, enquanto data.driver descreve quem ficou como principal condutor após o endosso.
+- FALLBACK FINAL: quando changeKind=vehicle (sem alteração de condutor) e o documento inteiro não trouxer nenhuma evidência de principal condutor, use lookup.insuredRegistration como data.driver. Esta regra só vale depois de todas as demais regras e nunca sobrescreve um condutor explicitamente informado.
 
 Quando houver mudança de veículo, retorne os dados RESULTANTES após o endosso:
 - data.plate = nova placa;
@@ -2260,7 +2297,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-endorsement:v50] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-endorsement:v51] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${expectedTotal.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2528,6 +2565,7 @@ function finalizeModelOutput(
 				modelDriver: raw.data.driver,
 				lookup,
 				sourceText,
+				allowInsuredFallback: !changesDriver,
 			});
 
 			if (!driver) {
@@ -2760,11 +2798,11 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v50:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v51:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-endorsement:v50] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-endorsement:v51] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				let extracted: DataExtractEndorsement;
@@ -2775,7 +2813,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
 					} catch (error) {
 						console.warn(
-							'[extract-endorsement:v50] cache incompatível, executando nova extração:',
+							'[extract-endorsement:v51] cache incompatível, executando nova extração:',
 							error instanceof Error ? error.message : error,
 						);
 
