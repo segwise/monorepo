@@ -23,8 +23,6 @@ function buildAccessMessage({
 		`*Senha:* ${password ?? 'a mesma que você já usa na Segwise'}`,
 		'',
 		`*Acesse:* ${accessUrl}`,
-		'',
-		`Antes do primeiro acesso, confirme seu e-mail pelo link que enviamos para ${email}.`,
 	].join('\n');
 }
 

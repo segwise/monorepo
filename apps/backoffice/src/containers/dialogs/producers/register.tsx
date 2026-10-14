@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { maskCNPJ, maskCPF, maskNumber, maskPhone } from '@segwise/core/masks';
+import { maskNumber, maskPhone } from '@segwise/core/masks';
 import {
 	SchemaProducerAreaOfActivity,
 	SchemaProducerRegister,
@@ -13,7 +13,6 @@ import {
 } from '@segwise/core/translate';
 import type { ProducerRegister } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
-import { isCPF } from '@segwise/core/valids';
 import { KeyRoundIcon, SaveIcon, XCircleIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, type DefaultValues, useForm } from 'react-hook-form';
@@ -59,7 +58,6 @@ const MESSAGE = `Novidade\nA {{DISPLAY_NAME}} em parceria com a Segwise vem ofer
 // servidor a recebe para guardar apenas o hash e nunca a devolve.
 function buildDefaults(): DefaultValues<ProducerRegister> {
 	return {
-		cpfOrCnpj: '',
 		name: '',
 		phone: '',
 		email: '',
@@ -170,41 +168,6 @@ function DialogProducerPartnerRegister({ children }: React.PropsWithChildren) {
 						className='grid grid-cols-1 sm:grid-cols-[55%_auto] gap-4 overflow-scroll'
 					>
 						<FieldGroup className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-							<Controller
-								control={control}
-								name='cpfOrCnpj'
-								render={({ field, fieldState }) => (
-									<Field
-										data-invalid={fieldState.invalid}
-										className='col-span-1'
-									>
-										<FieldLabel htmlFor='cpfOrCnpj'>CPF ou CNPJ:</FieldLabel>
-										<Input
-											{...field}
-											id='cpfOrCnpj'
-											aria-invalid={fieldState.invalid}
-											placeholder='Informar Documento'
-											onChange={({ target: { value } }) => {
-												field.onChange(
-													value.length >= 11
-														? isCPF(value)
-															? maskCPF(value)
-															: maskCNPJ(value)
-														: maskNumber(value),
-												);
-
-												if (value.length === 0) {
-													setValue('name', '');
-												}
-											}}
-											maxLength={18}
-										/>
-										{fieldState.invalid && (
-											<FieldError errors={[fieldState.error]} />
-										)}
-									</Field>
-								)}
-							/>
 							<Controller
 								control={control}
 								name='name'

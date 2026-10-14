@@ -70,8 +70,8 @@ function ProducerAccessCredentials({
 			<DialogHeader>
 				<DialogTitle>Parceiro cadastrado</DialogTitle>
 				<DialogDescription>
-					Envie o acesso ao parceiro. Ele receberá um e-mail apenas para
-					confirmar o acesso e, ao confirmar, será levado ao login.
+					O acesso já está liberado: envie o login e a senha ao parceiro. Não há
+					e-mail de confirmação.
 				</DialogDescription>
 			</DialogHeader>
 			<Separator />
