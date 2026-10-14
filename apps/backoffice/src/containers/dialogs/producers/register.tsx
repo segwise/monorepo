@@ -14,7 +14,7 @@ import {
 import type { ProducerRegister } from '@segwise/core/types';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { isCPF } from '@segwise/core/valids';
-import { SaveIcon, XCircleIcon } from 'lucide-react';
+import { KeyRoundIcon, SaveIcon, XCircleIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, type DefaultValues, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import {
 	Field,
+	FieldDescription,
 	FieldError,
 	FieldGroup,
 	FieldLabel,
@@ -53,9 +54,9 @@ import { useProducersRegister } from '@/libraries/hooks/producers/use-producers-
 
 const MESSAGE = `Novidade\nA {{DISPLAY_NAME}} em parceria com a Segwise vem ofertar a promoção\n\nGANHE EM DOBRO\n1 - Orientações em caso de sinistro\n2 - Consulta veicular\n3 - Acesso direto às assistências das seguradoras\n4 - Plataforma de compra e venda de veículos mais segura ( apenas clientes segwise/xcar tem acesso)\n5 - Inclua todos os seguros da família, ganhe agilidade na consulta das renovações e acesso às assistências\n\nBaixe agora o aplicativo *SEGWISE*\n\nUtilize o código *{{CODE}}*\n\nDescontos reais e exclusivos na renovação ou aquisição do seu seguro\n\nGaranta seus benefícios\n\nou acesse pelo link abaixo:`;
 
-// Cada abertura do dialog tem uma senha NOVA, gerada aqui no navegador e mantida só
-// no estado do formulário (campo não exibido). O servidor recebe a senha para
-// guardar apenas o hash e nunca a devolve.
+// A senha de acesso nasce igual ao celular (só números) e acompanha o campo até a
+// primeira edição manual (ou "Gerar senha"). Fica só no estado do formulário: o
+// servidor a recebe para guardar apenas o hash e nunca a devolve.
 function buildDefaults(): DefaultValues<ProducerRegister> {
 	return {
 		cpfOrCnpj: '',
@@ -66,7 +67,7 @@ function buildDefaults(): DefaultValues<ProducerRegister> {
 		startOfPayment: [],
 		pix: '',
 		message: MESSAGE,
-		password: generatePassword(),
+		password: '',
 	};
 }
 
@@ -78,6 +79,9 @@ function DialogProducerPartnerRegister({ children }: React.PropsWithChildren) {
 		accessUrl: string;
 		passwordApplied: boolean;
 	} | null>(null);
+
+	// Depois que o admin mexe na senha, o celular deixa de preenchê-la.
+	const [passwordEdited, setPasswordEdited] = useState<boolean>(false);
 
 	const [defaults] = useState(buildDefaults);
 
@@ -102,6 +106,7 @@ function DialogProducerPartnerRegister({ children }: React.PropsWithChildren) {
 
 		if (!next) {
 			setAccess(null);
+			setPasswordEdited(false);
 			reset(buildDefaults());
 			resetMutation();
 		}
@@ -260,10 +265,63 @@ function DialogProducerPartnerRegister({ children }: React.PropsWithChildren) {
 											id='phone'
 											aria-invalid={fieldState.invalid}
 											placeholder='(00) 00000-0000'
-											onChange={({ target: { value } }) =>
-												field.onChange(maskPhone(value))
-											}
+											onChange={({ target: { value } }) => {
+												const phone = maskPhone(value);
+
+												field.onChange(phone);
+
+												if (!passwordEdited) {
+													setValue('password', maskNumber(phone), {
+														shouldValidate: true,
+													});
+												}
+											}}
 										/>
+										{fieldState.invalid && (
+											<FieldError errors={[fieldState.error]} />
+										)}
+									</Field>
+								)}
+							/>
+							<Controller
+								control={control}
+								name='password'
+								render={({ field, fieldState }) => (
+									<Field
+										data-invalid={fieldState.invalid}
+										className='col-span-full'
+									>
+										<FieldLabel htmlFor='password'>Senha de acesso:</FieldLabel>
+										<div className='flex flex-row items-center gap-x-2'>
+											<Input
+												{...field}
+												id='password'
+												autoComplete='off'
+												aria-invalid={fieldState.invalid}
+												placeholder='Padrão: número do celular'
+												onChange={({ target: { value } }) => {
+													field.onChange(value);
+													setPasswordEdited(true);
+												}}
+											/>
+											<Button
+												type='button'
+												variant='outline'
+												onClick={() => {
+													setValue('password', generatePassword(), {
+														shouldValidate: true,
+													});
+													setPasswordEdited(true);
+												}}
+											>
+												<KeyRoundIcon /> Gerar
+											</Button>
+										</div>
+										<FieldDescription className='text-xs'>
+											{passwordEdited
+												? 'Senha definida manualmente: mudar o celular não altera mais a senha.'
+												: 'Acompanha o celular (só números) até você editar a senha.'}
+										</FieldDescription>
 										{fieldState.invalid && (
 											<FieldError errors={[fieldState.error]} />
 										)}
