@@ -1960,6 +1960,7 @@ Analise primeiro se este PDF realmente representa um ENDOSSO DE SEGURO.
 O layout pode ser de qualquer seguradora e o título do documento nem sempre contém a palavra "endosso". A finalidade real da operação é o que determina o tipo.
 
 Se for somente PROPOSTA DE SEGURO, SEGURO NOVO ou APÓLICE sem operação de alteração durante a vigência, NÃO force um tipo de endosso: retorne type="unknown" e explique em data.reason que o documento não é um endosso.
+- "Tipo de Seguro: Seguro Novo" + proposta, sem operação estrutural explícita de alteração, significa proposta normal e NÃO vehicle_conductor.
 A simples existência de "Principal Condutor", veículo, franquia, prêmio ou cobertura NÃO caracteriza endosso.
 Um documento chamado "PROPOSTA" ainda pode ser endosso quando houver evidência estrutural de operação como "Tipo de Operação: SUBSTITUIÇÃO DE VEÍCULO", "ENDOSSO", alteração de endereço/franquia ou cancelamento.
 
@@ -2331,7 +2332,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-endorsement:v55] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-endorsement:v56] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${expectedTotal.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2393,43 +2394,77 @@ function sourceSupportsEndorsementType(
 	}
 }
 
+function sourceHasStrongEndorsementEvidence(sourceText: string): boolean {
+	const normalized = normalizeText(sourceText);
+
+	return [
+		/\bproposta de endosso\b/,
+		/\btipo de endosso\b/,
+		/\bendosso de substituicao\b/,
+		/\bendosso de alteracao\b/,
+		/\bendosso de cancelamento\b/,
+		/\bdados do veiculo substituido\b/,
+		/\bveiculo substituido\b/,
+		/\bsubstituicao de veiculo\b/,
+		/\btipo de operacao\b.{0,120}\b(substituicao|endosso|alteracao|cancelamento)\b/,
+		/\bmotivo do endosso\b/,
+		/\balteracao do principal condutor\b/,
+		/\balteracao de principal condutor\b/,
+		/\bsubstituicao de condutor\b/,
+		/\balteracao de cep de pernoite\b/,
+		/\balteracao do cep de pernoite\b/,
+		/\balteracao de franquia\b/,
+		/\bcancelamento da apolice\b/,
+		/\bcancelamento do seguro\b/,
+	].some((pattern) => pattern.test(normalized));
+}
+
 function sourceExplicitlyLooksLikeNonEndorsement(
 	sourceText: string,
 ): 'proposal' | 'policy' | null {
-	const hasEndorsementEvidence =
-		sourceSupportsEndorsementType('vehicle_conductor', sourceText) ||
-		sourceSupportsEndorsementType('address', sourceText) ||
-		sourceSupportsEndorsementType('franchise', sourceText) ||
-		sourceSupportsEndorsementType('cancellation', sourceText);
-
-	if (hasEndorsementEvidence) {
-		return null;
-	}
-
 	const normalized = normalizeText(sourceText);
+	const hasStrongEndorsementEvidence =
+		sourceHasStrongEndorsementEvidence(sourceText);
 
-	if (/\bendosso\b|\btipo de endosso\b/.test(normalized)) {
-		return null;
-	}
-
+	// "Seguro Novo" é evidência fortíssima de proposta normal.
+	// Ainda assim, uma operação estrutural explícita de endosso prevalece para
+	// preservar seguradoras que usam título "PROPOSTA" em alterações.
 	const strongProposal =
 		/\bproposta\b/.test(normalized) &&
-		(/\bseguro novo\b/.test(normalized) ||
+		(/\btipo de seguro seguro novo\b/.test(normalized) ||
+			/\bseguro novo\b/.test(normalized) ||
 			/\bn da proposta\b|\bnumero da proposta\b|\bnr proposta\b/.test(
 				normalized,
 			) ||
 			/\boferta escolhida\b/.test(normalized));
 
-	if (strongProposal) {
+	if (strongProposal && !hasStrongEndorsementEvidence) {
 		return 'proposal';
 	}
 
+	if (hasStrongEndorsementEvidence) {
+		return null;
+	}
+
 	const strongPolicy =
-		/\bapolice de seguro\b|\bapolice auto\b|\bapolice moto\b/.test(
-			normalized,
-		) && !/\balteracao\b|\bsubstituicao\b|\bcancelamento\b/.test(normalized);
+		/\bapolice de seguro\b|\bapolice auto\b|\bapolice moto\b/.test(normalized);
 
 	return strongPolicy ? 'policy' : null;
+}
+
+function assertEndorsementDocument(sourceText: string): void {
+	const nonEndorsementKind =
+		sourceExplicitlyLooksLikeNonEndorsement(sourceText);
+
+	if (!nonEndorsementKind) {
+		return;
+	}
+
+	throw new Error(
+		nonEndorsementKind === 'proposal'
+			? '[v56] Documento identificado como proposta de seguro, não como endosso'
+			: '[v56] Documento identificado como apólice de seguro, não como endosso',
+	);
 }
 
 function validateTypeEvidence(
@@ -2512,16 +2547,7 @@ function finalizeModelOutput(
 	raw: ModelOutput,
 	sourceText: string,
 ): DataExtractEndorsement {
-	const nonEndorsementKind =
-		sourceExplicitlyLooksLikeNonEndorsement(sourceText);
-
-	if (nonEndorsementKind) {
-		throw new Error(
-			nonEndorsementKind === 'proposal'
-				? 'Documento identificado como proposta de seguro, não como endosso'
-				: 'Documento identificado como apólice de seguro, não como endosso',
-		);
-	}
+	assertEndorsementDocument(sourceText);
 
 	if (raw.type === 'unknown') {
 		if (sourceLooksLikeVehicleSubstitutionAdjustment(sourceText)) {
@@ -2790,6 +2816,8 @@ async function askModel({
 	text: string;
 	images: Array<string>;
 }): Promise<DataExtractEndorsement> {
+	assertEndorsementDocument(text);
+
 	const parsed = await askJson({
 		model,
 		prompt: mountPrompt(text, images.length),
@@ -2886,11 +2914,11 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v55:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v56:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-endorsement:v55] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-endorsement:v56] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				let extracted: DataExtractEndorsement;
@@ -2901,7 +2929,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
 					} catch (error) {
 						console.warn(
-							'[extract-endorsement:v55] cache incompatível, executando nova extração:',
+							'[extract-endorsement:v56] cache incompatível, executando nova extração:',
 							error instanceof Error ? error.message : error,
 						);
 
