@@ -9,7 +9,7 @@ import {
 import {
 	SchemaEmail,
 	SchemaName,
-	SchemaPassword,
+	SchemaPasswordConfirm,
 	SchemaPhone,
 } from '../../utils';
 import { SchemaCPFOrCNPJ } from '../../utils/document';
@@ -37,9 +37,11 @@ const SchemaProducerRegister = z
 			.min(1, 'Mensagem de indicação inválida')
 			.nullish(),
 		pix: z.string('Chave PIX inválida'),
-		// Senha de acesso criada pela corretora no cadastro. Só trafega aqui: o
-		// backend guarda apenas o hash e o painel a mostra uma única vez.
-		password: SchemaPassword,
+		// Senha de acesso criada pela corretora no cadastro (por padrão o celular do
+		// parceiro, ou outra digitada/gerada). Só exige o mínimo do better-auth
+		// (8 a 128 caracteres): o celular só tem dígitos e não passaria nas regras
+		// de senha forte. O backend guarda apenas o hash.
+		password: SchemaPasswordConfirm,
 	})
 	.superRefine(refineProducerPaymentDays);
 
