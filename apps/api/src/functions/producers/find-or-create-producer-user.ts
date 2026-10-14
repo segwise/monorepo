@@ -6,7 +6,8 @@ type Input = {
 	name: string;
 	email: string;
 	phone: string;
-	cpfOrCnpj: string;
+	// Opcional: o cadastro de parceiro pelo painel não pede documento.
+	cpfOrCnpj?: string;
 	// Senha criada pela corretora. Só vale para conta nova ou ainda não confirmada
 	// e sem vínculo (nunca sobrescreve a senha de quem já usa o sistema). Sem ela,
 	// a conta nasce com senha aleatória e o parceiro define a dele no aceite.
@@ -72,29 +73,34 @@ async function findOrCreateProducerUser(
 	ctx: Pick<Context, 'database' | 'auth'>,
 	{ name, email, phone, cpfOrCnpj, password }: Input,
 ): Promise<Result> {
-	const document = isCPF(cpfOrCnpj)
-		? { cpf: cpfOrCnpj }
-		: isCNPJ(cpfOrCnpj)
-			? { cnpj: cpfOrCnpj }
-			: null;
+	const document = !cpfOrCnpj
+		? null
+		: isCPF(cpfOrCnpj)
+			? { cpf: cpfOrCnpj }
+			: isCNPJ(cpfOrCnpj)
+				? { cnpj: cpfOrCnpj }
+				: undefined;
 
-	if (!document) {
+	if (document === undefined) {
 		throw new Error('CPF ou CNPJ inválido');
 	}
 
 	const [byDocument, byEmail] = await Promise.all([
-		ctx.database.user.findFirst({
-			where: { OR: [{ cpf: cpfOrCnpj }, { cnpj: cpfOrCnpj }] },
-			select: {
-				id: true,
-				email: true,
-				cpf: true,
-				cnpj: true,
-				phone: true,
-				emailVerified: true,
-				members: { select: { id: true } },
-			},
-		}),
+		// Sem documento informado, só o e-mail identifica o usuário.
+		!cpfOrCnpj
+			? Promise.resolve(null)
+			: ctx.database.user.findFirst({
+					where: { OR: [{ cpf: cpfOrCnpj }, { cnpj: cpfOrCnpj }] },
+					select: {
+						id: true,
+						email: true,
+						cpf: true,
+						cnpj: true,
+						phone: true,
+						emailVerified: true,
+						members: { select: { id: true } },
+					},
+				}),
 		ctx.database.user.findUnique({
 			where: { email },
 			select: {
@@ -142,7 +148,7 @@ async function findOrCreateProducerUser(
 	}
 
 	if (byEmail) {
-		if (byEmail.cpf || byEmail.cnpj) {
+		if (document && (byEmail.cpf || byEmail.cnpj)) {
 			throw new Error('Este e-mail já está cadastrado para outro CPF/CNPJ');
 		}
 
@@ -162,7 +168,7 @@ async function findOrCreateProducerUser(
 
 		await ctx.database.user.update({
 			where: { id: byEmail.id },
-			data: { ...document, ...(!byEmail.phone && { phone }) },
+			data: { ...(document ?? {}), ...(!byEmail.phone && { phone }) },
 		});
 
 		return {
@@ -200,7 +206,7 @@ async function findOrCreateProducerUser(
 	try {
 		await ctx.database.user.update({
 			where: { id: userId },
-			data: { ...document, phone },
+			data: { ...(document ?? {}), phone },
 		});
 	} catch (error) {
 		await ctx.database.user.delete({ where: { id: userId } });
