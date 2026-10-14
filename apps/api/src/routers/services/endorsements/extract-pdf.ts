@@ -987,13 +987,81 @@ function sourceFinancialContext(sourceText: string): string {
 	return blocks.join(' \n ');
 }
 
+function sourceExplicitEndorsementFinancialType(
+	sourceText: string,
+): 'charge' | 'refund' | 'neutral' | null {
+	const lines = sourceText.split('\n');
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (!/\btipo de endosso\b/.test(normalizedLine)) {
+			continue;
+		}
+
+		const block = normalizeText(
+			lines.slice(index, Math.min(lines.length, index + 3)).join(' '),
+		);
+
+		if (/\bendosso de cobranca\b|\bcobranca\b|\ba cobrar\b/.test(block)) {
+			return 'charge';
+		}
+
+		if (
+			/\bendosso de restituicao\b|\brestituicao\b|\bdevolucao\b|\bestorno\b/.test(
+				block,
+			)
+		) {
+			return 'refund';
+		}
+
+		if (
+			/\bsem cobranca\b|\bsem premio\b|\bsem movimentacao\b|\bsem movimento\b/.test(
+				block,
+			)
+		) {
+			return 'neutral';
+		}
+	}
+
+	return null;
+}
+
 function sourceFinancialDirection(
 	sourceText: string,
 	rawAmount: number,
 	modelEvidence?: string | null,
 ): 'charge' | 'refund' | 'neutral' | null {
+	// O sinal do próprio valor líquido é a evidência financeira mais forte.
 	if (rawAmount < -MONEY_TOLERANCE) {
 		return 'refund';
+	}
+
+	const explicitType = sourceExplicitEndorsementFinancialType(sourceText);
+
+	// O tipo explícito do endosso prevalece sobre campos genéricos do template.
+	//
+	// Exemplo Bradesco:
+	// "Restituição: ORDEM DE" pode existir no formulário mesmo quando:
+	// "Tipo de Endosso: ENDOSSO DE COBRANCA".
+	if (explicitType === 'charge') {
+		return 'charge';
+	}
+
+	if (explicitType === 'refund') {
+		return 'refund';
+	}
+
+	if (explicitType === 'neutral') {
+		return 'neutral';
+	}
+
+	// Na ausência de um tipo explícito, líquido positivo é cobrança por padrão.
+	// Não permita que amountDirection=refund retornado pela IA transforme um
+	// prêmio líquido positivo em restituição só porque existe a palavra
+	// "restituição" em algum campo genérico do formulário.
+	if (rawAmount > MONEY_TOLERANCE) {
+		return 'charge';
 	}
 
 	const documentContext = normalizeText(sourceFinancialContext(sourceText));
@@ -1004,26 +1072,17 @@ function sourceFinancialDirection(
 		/forma de pagamento.{0,220}(restituicao de premio|credito em conta)/.test(
 			context,
 		) ||
-		/tipo de endosso.{0,120}(restituicao|devolucao|estorno)/.test(context) ||
 		/restituicao de premio/.test(context) ||
-		/ordem de restituicao.{0,100}(?:valor )?\d/.test(context);
+		/\ba restituir\b/.test(context);
 
 	if (explicitRefund) {
 		return 'refund';
 	}
 
 	const explicitCharge =
-		/tipo de endosso.{0,120}(cobranca|cobrar)/.test(context) ||
 		/forma de pagamento.{0,260}(boleto|cartao de credito|debito em conta|pix)/.test(
 			context,
 		);
-
-	if (rawAmount > MONEY_TOLERANCE) {
-		// Um líquido positivo representa cobrança por padrão. Para transformá-lo em
-		// restituição é necessária evidência financeira local e inequívoca; menções
-		// genéricas a devolução/restituição em cláusulas do contrato não contam.
-		return 'charge';
-	}
 
 	if (explicitCharge) {
 		return 'charge';
@@ -1918,7 +1977,7 @@ DIREÇÃO FINANCEIRA
 - refund: segurado recebe crédito/restituição/estorno; valor final interno será negativo;
 - neutral: somente quando o documento explicitar ausência de movimentação e amount=0.
 Se o próprio documento trouxer Preço Líquido negativo, preserve a natureza de restituição: amountDirection=refund.
-Para líquido positivo, use refund SOMENTE quando a área financeira do endosso indicar explicitamente restituição/crédito/estorno.
+Para líquido positivo, use refund SOMENTE quando o tipo financeiro do endosso indicar explicitamente restituição/crédito/estorno. Em formulários Bradesco, um campo genérico como "Restituição: ORDEM DE" NÃO significa restituição quando o documento também disser "Tipo de Endosso: ENDOSSO DE COBRANCA"; nesse caso use charge.
 Menções genéricas em cláusulas, como possibilidade de "devolução" em caso de recusa futura, NÃO definem a direção financeira deste endosso.
 "Cartão de Crédito" é forma de cobrança e não deve ser interpretado como "crédito ao segurado".
 Se houver "Tipo de Endosso: ENDOSSO DE COBRANÇA", classifique como charge.
@@ -2080,8 +2139,10 @@ function normalizeFinancialData(
 		}
 
 		case 'refund': {
+			const explicitType = sourceExplicitEndorsementFinancialType(sourceText);
 			const hasRefundSignal =
 				rawAmount < 0 ||
+				explicitType === 'refund' ||
 				/restituicao de premio|credito em conta|estorno|a restituir/.test(
 					financialContext,
 				);
@@ -2199,7 +2260,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-endorsement:v49] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-endorsement:v50] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${expectedTotal.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2699,11 +2760,11 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v49:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v50:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-endorsement:v49] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-endorsement:v50] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				let extracted: DataExtractEndorsement;
@@ -2714,7 +2775,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
 					} catch (error) {
 						console.warn(
-							'[extract-endorsement:v49] cache incompatível, executando nova extração:',
+							'[extract-endorsement:v50] cache incompatível, executando nova extração:',
 							error instanceof Error ? error.message : error,
 						);
 
