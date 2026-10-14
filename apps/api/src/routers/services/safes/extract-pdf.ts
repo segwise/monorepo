@@ -985,12 +985,42 @@ function evidenceShowsExplicitPlateAbsence(
 		return true;
 	}
 
+	// A visão pode descrever uma célula visualmente vazia em vez de transcrever
+	// um hífen. Isso só é aceito como ausência quando também houver indicação de
+	// veículo zero km.
+	if (
+		/\bplaca\b.{0,50}\b(em branco|vazia|vazio|sem preenchimento)\b/.test(
+			normalized,
+		) &&
+		/\bzero km\b.{0,20}\bsim\b/.test(normalized)
+	) {
+		return true;
+	}
+
 	// Exemplos: "Placa: -", "Placa -", "PLACA —".
 	return /\bplaca\b\s*:?\s*[-–—]+(?:\s|$)/i.test(evidence);
 }
 
 function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
 	const raw = sourceText.replace(/\r/g, '');
+
+	// Allianz e layouts tabulares semelhantes podem deixar a célula de "Placa"
+	// realmente vazia em veículo 0 km. Quando o PDF é linearizado, a coluna da
+	// direita pode encostar no rótulo:
+	//
+	//   Placa: Condições Gerais: 10/2026
+	//   Chassi: ...
+	//   Zero Km: Sim
+	//
+	// "Condições Gerais" não é o valor da placa; é o próximo campo da tabela.
+	// Só aceitamos esse padrão como ausência quando o mesmo bloco confirma
+	// explicitamente "Zero Km: Sim".
+	const blankPlateZeroKmPattern =
+		/\bplaca\s*:\s*(?=(?:condi[cç][oõ]es gerais|chassi|classe b[oô]nus|zero\s*km|grupo|ano\s*\/?\s*modelo|categoria de risco|cep pernoite)\s*:)[\s\S]{0,450}?\bzero\s*km\s*:\s*sim\b/i;
+
+	if (blankPlateZeroKmPattern.test(raw)) {
+		return true;
+	}
 
 	// Casos em que o valor aparece na mesma linha do rótulo.
 	if (
@@ -1015,6 +1045,27 @@ function sourceShowsExplicitPlateAbsence(sourceText: string): boolean {
 
 		if (!normalizedLine.includes('placa')) {
 			continue;
+		}
+
+		const nearbyVehicleBlock = lines
+			.slice(index, Math.min(lines.length, index + 6))
+			.join(' ');
+		const normalizedNearbyVehicleBlock = normalizeText(nearbyVehicleBlock);
+
+		const plateCellLooksBlank =
+			/^\s*placa\s*:\s*$/i.test(line) ||
+			/^\s*placa\s*:\s{2,}(?:condi[cç][oõ]es gerais|chassi|classe b[oô]nus|zero\s*km|grupo|ano\s*\/?\s*modelo|categoria de risco|cep pernoite)\s*:/i.test(
+				line,
+			) ||
+			/\bplaca\s*:\s*(?:condi[cç][oõ]es gerais|chassi|classe b[oô]nus|zero\s*km|grupo|ano\s*\/?\s*modelo|categoria de risco|cep pernoite)\s*:/i.test(
+				line,
+			);
+
+		if (
+			plateCellLooksBlank &&
+			/\bzero km sim\b/.test(normalizedNearbyVehicleBlock)
+		) {
+			return true;
 		}
 
 		// Alguns parsers de PDF (inclusive em layouts Porto/Azul/Itaú)
@@ -2453,6 +2504,7 @@ SEGURADO E CONDUTOR
 PLACA
 - "plateStatus" = "present" somente quando houver placa brasileira válida impressa;
 - quando o campo visual da placa mostrar "-", "A AVISAR", "SEM PLACA", "S/ PLACA" ou equivalente, retorne "plate":null e "plateStatus":"explicitly_absent";
+- em veículo explicitamente "Zero Km: Sim", se a célula/campo visual "Placa" estiver realmente em branco, isso também é ausência explícita suficiente: retorne "plate":null, "plateStatus":"explicitly_absent" e use como plateEvidence o trecho que mostre "Placa" vazia + "Zero Km: Sim";
 - NUNCA retorne "-" como valor de "plate"; use null nesses casos;
 - "plateEvidence" deve transcrever o menor trecho que mostre a placa ou sua ausência explícita;
 - se você apenas não conseguir localizar a placa, use "unknown", não "explicitly_absent".
@@ -2630,7 +2682,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v53] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v54] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2999,7 +3051,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v53] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v54] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -3019,11 +3071,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v53:${hash}`;
+				const cacheKey = `pdf-extract:v54:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v53] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v54] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {
