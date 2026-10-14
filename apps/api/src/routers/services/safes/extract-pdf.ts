@@ -1583,6 +1583,65 @@ function sourcePrincipalVehicleFranchise(
 		}
 	}
 
+	// MAPFRE e layouts equivalentes:
+	//
+	// Franquia(s)                         Valor - R$
+	// Casco - Colisão, Incêndio, Roubo E Furto: Reduzida 50%    3.124,32
+	//
+	// O percentual descreve o tipo/redução da franquia. O último valor
+	// monetário da linha/bloco da cobertura principal é a franquia.
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (!/\bfranquias?\b/.test(normalizedLine)) {
+			continue;
+		}
+
+		const sectionEnd = Math.min(lines.length, index + 25);
+
+		for (let rowIndex = index + 1; rowIndex < sectionEnd; rowIndex += 1) {
+			const row = lines[rowIndex] ?? '';
+			const normalizedRow = normalizeText(row);
+
+			if (
+				/\b(premios?|formas? de pagamento|assistencias? e servicos|declaracoes?|dados bancarios)\b/.test(
+					normalizedRow,
+				)
+			) {
+				break;
+			}
+
+			if (!principalVehicleCoverageLooksPrincipal(row)) {
+				continue;
+			}
+
+			const block = [row, lines[rowIndex + 1] ?? '']
+				.join(' ')
+				.replace(/\s+/g, ' ')
+				.trim();
+
+			const moneyMatches = [
+				...block.matchAll(/(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})/gi),
+			];
+			const lastMoney = moneyMatches[moneyMatches.length - 1];
+
+			if (!lastMoney) {
+				continue;
+			}
+
+			const value = parseBrazilianMoneyValue(lastMoney[1]);
+
+			if (value === null || value < 0) {
+				continue;
+			}
+
+			return {
+				value,
+				evidence: block,
+			};
+		}
+	}
+
 	// 3) Tabelas Auto/Moto cuja última coluna contém a franquia principal.
 	for (let index = 0; index < lines.length; index += 1) {
 		const line = lines[index] ?? '';
@@ -2209,7 +2268,7 @@ NUNCA use 0 apenas porque o valor não foi encontrado: zero exige ausência expl
 Normalmente está associada à primeira cobertura principal, mas confirme pela estrutura da tabela.
 NUNCA use franquia de vidro, para-brisa, farol, lanterna, retrovisor, roda, pneu, assistência ou outro serviço acessório.
 NUNCA confunda a franquia com o prêmio da cobertura na coluna ao lado.
-"franchiseEvidence" deve conter o trecho da cobertura/franquia principal e seu valor, ou o trecho explícito de ausência de franquia. Em layouts Bradesco, a seção "FRANQUIAS" com o campo "Veículo" representa a franquia principal, mesmo que a mesma tabela também liste vidros, faróis, lanternas e retrovisores. Em Porto/Azul, o valor principal costuma aparecer como "R$ X (50% da Obrigatória)". Nunca use o LMI da cobertura seguinte (por exemplo R$ 150.000,00 de RCF) como franquia. O parser pode separar rótulos e valores; valores com "(25 da obrigatória)", "(50% da obrigatória)" ou equivalente são sinais fortes da franquia principal.
+"franchiseEvidence" deve conter o trecho da cobertura/franquia principal e seu valor, ou o trecho explícito de ausência de franquia. Em layouts Bradesco, a seção "FRANQUIAS" com o campo "Veículo" representa a franquia principal, mesmo que a mesma tabela também liste vidros, faróis, lanternas e retrovisores. Em Porto/Azul, o valor principal costuma aparecer como "R$ X (50% da Obrigatória)". Nunca use o LMI da cobertura seguinte (por exemplo R$ 150.000,00 de RCF) como franquia. O parser pode separar rótulos e valores; valores com "(25 da obrigatória)", "(50% da obrigatória)" ou equivalente são sinais fortes da franquia principal. Em MAPFRE, dentro de "Franquia(s)", uma linha principal de Casco como "Reduzida 50% 3.124,32" significa franchise=3124.32; o percentual não é o valor monetário da franquia.
 
 RENOVAÇÃO
 - renewal=true somente com evidência de renovação/apólice anterior/congênere;
@@ -2323,7 +2382,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v45] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v46] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2692,7 +2751,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v45] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v46] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2712,11 +2771,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v45:${hash}`;
+				const cacheKey = `pdf-extract:v46:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v45] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v46] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {
