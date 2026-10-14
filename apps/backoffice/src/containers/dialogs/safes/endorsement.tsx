@@ -13,6 +13,7 @@ import {
 	isCPF,
 	isPlate,
 	maskCPF,
+	maskNumber,
 	maskPlate,
 	maskPostalCode,
 	SchemaEndorsementAddress,
@@ -116,6 +117,8 @@ function commissionFromAmountAndPercentage(
 type VehicleConductorFields = {
 	// null quando o documento não informa o CPF do principal condutor.
 	driver: string | null;
+	// Nome do condutor, quando o retorno já o traz (evita consultar o CPF de novo).
+	driverName?: string | null;
 	plate: string | null;
 	model: string;
 	modelYear: string | number;
@@ -395,6 +398,16 @@ function DialogSafeEndorsementDetails({
 	// O documento enviado não trouxe o CPF do principal condutor (driver = null).
 	const [driverMissing, setDriverMissing] = useState<boolean>(false);
 
+	// Dados que já vieram do retorno da extração: enquanto o campo continuar com o
+	// valor do retorno, não se consulta de novo (cada consulta de placa/CPF custa).
+	// - placa: só quando veio a placa COM o modelo;
+	// - condutor: só quando veio o CPF COM o nome.
+	const [pdfPlateKey, setPdfPlateKey] = useState<string | null>(null);
+	const [pdfDriver, setPdfDriver] = useState<{
+		cpf: string;
+		name: string;
+	} | null>(null);
+
 	const [resolvedId, setResolvedId] = useState<string | null>(idProp ?? null);
 
 	const [formUnlocked, setFormUnlocked] = useState<boolean>(false);
@@ -490,6 +503,8 @@ function DialogSafeEndorsementDetails({
 		name: 'plate',
 	});
 
+	const skipPlateLookup = !!pdfPlateKey && pdfPlateKey === plateKey(plate);
+
 	// Pré-preenche com os dados atuais do seguro só enquanto não houver PDF.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: só reage à chegada da consulta
 	useEffect(() => {
@@ -538,6 +553,9 @@ function DialogSafeEndorsementDetails({
 		name: 'driver',
 	});
 
+	const skipDriverLookup =
+		!!pdfDriver && pdfDriver.cpf === maskNumber(driver ?? '');
+
 	const amountVehicleConductor = useWatch({
 		control: formVehicleConductor.control,
 		name: 'amount',
@@ -572,9 +590,12 @@ function DialogSafeEndorsementDetails({
 		data: plateResponse,
 		isPending: plateResponseIsPending,
 		isError: plateResponseIsError,
-	} = useVehiclesPlate(plate ?? '');
+	} = useVehiclesPlate(skipPlateLookup ? '' : (plate ?? ''));
 
-	const { data: driverResponse } = useCpfOrCnpj(driver);
+	const { data: driverResponse } = useCpfOrCnpj(skipDriverLookup ? '' : driver);
+
+	// Nome mostrado sob o CPF: o do retorno quando já veio, senão o da consulta.
+	const driverName = skipDriverLookup ? pdfDriver?.name : driverResponse?.name;
 
 	function onSubmitVehicleConductor(props: EndorsementVehicleConductor) {
 		toast.dismiss();
@@ -730,7 +751,23 @@ function DialogSafeEndorsementDetails({
 		if (extracted.type === 'vehicle_conductor') {
 			const parsedData = extracted.data;
 
-			pdfRef.current.plate = plateKey(parsedData.plate) || null;
+			// Placa + modelo no retorno: valem como estão (sem consultar a placa). Só a
+			// placa, sem modelo: a consulta é o que completa modelo e ano.
+			const plateFromPdf =
+				parsedData.plate && parsedData.model
+					? plateKey(parsedData.plate)
+					: null;
+
+			pdfRef.current.plate = plateFromPdf;
+			setPdfPlateKey(plateFromPdf);
+
+			const pdfDriverName = parsedData.driverName?.trim();
+
+			setPdfDriver(
+				parsedData.driver && pdfDriverName
+					? { cpf: maskNumber(parsedData.driver), name: pdfDriverName }
+					: null,
+			);
 
 			setNotPlate(!parsedData.plate);
 
@@ -842,6 +879,8 @@ function DialogSafeEndorsementDetails({
 			setType(null);
 			setNotPlate(false);
 			setDriverMissing(false);
+			setPdfPlateKey(null);
+			setPdfDriver(null);
 			setResolvedId(idProp ?? null);
 			setFormUnlocked(false);
 			pdfRef.current = { applied: false, plate: null, percentage: false };
@@ -988,6 +1027,7 @@ function DialogSafeEndorsementDetails({
 																	/>
 																	{field.value &&
 																		isPlate(field.value) &&
+																		!skipPlateLookup &&
 																		plateResponseIsPending && (
 																			<Loader2Icon className='animate-spin size-4 text-muted-foreground ml-3' />
 																		)}
@@ -1111,9 +1151,9 @@ function DialogSafeEndorsementDetails({
 																	{DRIVER_MISSING_MESSAGE}
 																</div>
 															)}
-															{driverResponse?.name && (
+															{driverName && (
 																<FieldDescription className='text-foreground text-xs -mt-2'>
-																	{capitalizeFirstLetters(driverResponse.name)}
+																	{capitalizeFirstLetters(driverName)}
 																</FieldDescription>
 															)}
 														</Field>
