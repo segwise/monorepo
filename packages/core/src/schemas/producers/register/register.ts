@@ -12,9 +12,8 @@ import {
 	SchemaPasswordConfirm,
 	SchemaPhone,
 } from '../../utils';
-import { SchemaCPFOrCNPJ } from '../../utils/document';
 
-// Cadastro de PARCEIRO (admin cadastrando manualmente) — área de atuação,
+// Cadastro de PARCEIRO (admin cadastrando manualmente), sem CPF/CNPJ — área de atuação,
 // código de indicação e mensagem promocional fazem parte da parceria
 // externa. Produtor interno usa SchemaProducerRegisterInternal, bem mais
 // simples (ver register/internal.ts).
@@ -22,7 +21,6 @@ const SchemaProducerRegister = z
 	.object({
 		referral: SchemaReferral,
 		type: SchemaProducerAreaOfActivity,
-		cpfOrCnpj: SchemaCPFOrCNPJ,
 		name: SchemaName,
 		phone: SchemaPhone,
 		email: SchemaEmail,
