@@ -1,6 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaEndorsementAddress } from '@segwise/core/schemas';
 import type { Server } from '@/@types/server';
+import { captureEndorsementState } from '@/functions/endorsements/snapshot';
+
 import { EndorsementType } from '@/generated/prisma/enums';
 
 function registerRoutersServicesEndorsementsAddress(server: Server) {
@@ -24,26 +26,37 @@ function registerRoutersServicesEndorsementsAddress(server: Server) {
 				);
 			}
 
-			await ctx.database.safe.update({
-				where: {
-					id,
-				},
-				data: {
-					safeVehicle: {
-						update: {
-							overnightPostalCode: postalCode,
+			await ctx.database.$transaction(async (transaction) => {
+				const before = await captureEndorsementState(transaction, id, type);
+
+				await transaction.safe.update({
+					where: {
+						id,
+					},
+					data: {
+						safeVehicle: {
+							update: {
+								overnightPostalCode: postalCode,
+							},
 						},
 					},
-					endorsements: {
-						create: {
-							type,
-							overnightPostalCode: postalCode,
-							amount,
-							percentage,
-							commission,
+				});
+
+				await transaction.endorsement.create({
+					data: {
+						safeId: id,
+						type,
+						overnightPostalCode: postalCode,
+						amount,
+						percentage,
+						commission,
+						createdAt: new Date(),
+						snapshot: {
+							before,
+							after: await captureEndorsementState(transaction, id, type),
 						},
 					},
-				},
+				});
 			});
 
 			return ctx.json(

@@ -1,6 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaEndorsementCancel } from '@segwise/core/schemas';
 import type { Server } from '@/@types/server';
+import { captureEndorsementState } from '@/functions/endorsements/snapshot';
+
 import { EndorsementType, StatusSafe } from '@/generated/prisma/enums';
 
 const CANCELED_BY_ENDORSEMENT_MESSAGE = 'Cancelado por endosso';
@@ -44,22 +46,33 @@ function registerRoutersServicesEndorsementsCancel(server: Server) {
 				);
 			}
 
-			await ctx.database.safe.update({
-				where: {
-					id,
-				},
-				data: {
-					status: StatusSafe.canceled,
-					statusAt: effectivedAt,
-					canceledAt: effectivedAt,
-					statusMessage: CANCELED_BY_ENDORSEMENT_MESSAGE,
-					endorsements: {
-						create: {
-							type,
-							effectivedAt,
+			await ctx.database.$transaction(async (transaction) => {
+				const before = await captureEndorsementState(transaction, id, type);
+
+				await transaction.safe.update({
+					where: {
+						id,
+					},
+					data: {
+						status: StatusSafe.canceled,
+						statusAt: effectivedAt,
+						canceledAt: effectivedAt,
+						statusMessage: CANCELED_BY_ENDORSEMENT_MESSAGE,
+					},
+				});
+
+				await transaction.endorsement.create({
+					data: {
+						safeId: id,
+						type,
+						effectivedAt,
+						createdAt: new Date(),
+						snapshot: {
+							before,
+							after: await captureEndorsementState(transaction, id, type),
 						},
 					},
-				},
+				});
 			});
 
 			return ctx.json(

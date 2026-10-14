@@ -5,6 +5,7 @@ import { registerRoutersServicesEndorsementsCancel } from './cancel';
 import { registerRoutersServicesEndorsementsExtractPDF } from './extract-pdf';
 import { registerRoutersServicesEndorsementsFranchise } from './franchise';
 import { registerRoutersServicesEndorsementsListining } from './listining';
+import { registerRoutersServicesEndorsementsRevert } from './revert';
 import { registerRoutersServicesEndorsementsVehicleConductor } from './vehicle-conductor';
 
 function registerRoutersServicesEndorsements(server: Server) {
@@ -21,6 +22,7 @@ function registerRoutersServicesEndorsements(server: Server) {
 	registerRoutersServicesEndorsementsAddress(baseID);
 	registerRoutersServicesEndorsementsFranchise(baseID);
 	registerRoutersServicesEndorsementsCancel(baseID);
+	registerRoutersServicesEndorsementsRevert(baseID);
 }
 
 export { registerRoutersServicesEndorsements };

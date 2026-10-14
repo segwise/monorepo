@@ -814,9 +814,19 @@ model Endorsement {
 
   overnightPostalCode String? @map("overnight_postal_code") @db.VarChar(8)
 
+  // Estado dos campos da proposta que ESTE endosso altera, antes e depois
+  // ({ before, after }). Permite reverter (ver functions/endorsements/snapshot.ts).
+  // Endossos anteriores ao recurso ficam sem snapshot e não podem ser revertidos.
+  snapshot Json?
+
+  // Reversão: o endosso continua na lista, marcado como revertido.
+  revertedAt   DateTime? @map("reverted_at") @db.Timestamptz
+  revertedById String?   @map("reverted_by_id") @db.Uuid
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([safeId, createdAt])
   @@map("endorsements")
 }
 

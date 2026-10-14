@@ -1,6 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaEndorsementFranchise } from '@segwise/core/schemas';
 import type { Server } from '@/@types/server';
+import { captureEndorsementState } from '@/functions/endorsements/snapshot';
+
 import { EndorsementType } from '@/generated/prisma/enums';
 
 function registerRoutersServicesEndorsementsFranchise(server: Server) {
@@ -24,22 +26,33 @@ function registerRoutersServicesEndorsementsFranchise(server: Server) {
 				);
 			}
 
-			await ctx.database.safe.update({
-				where: {
-					id,
-				},
-				data: {
-					franchise,
-					endorsements: {
-						create: {
-							type,
-							franchise,
-							amount,
-							percentage,
-							commission,
+			await ctx.database.$transaction(async (transaction) => {
+				const before = await captureEndorsementState(transaction, id, type);
+
+				await transaction.safe.update({
+					where: {
+						id,
+					},
+					data: {
+						franchise,
+					},
+				});
+
+				await transaction.endorsement.create({
+					data: {
+						safeId: id,
+						type,
+						franchise,
+						amount,
+						percentage,
+						commission,
+						createdAt: new Date(),
+						snapshot: {
+							before,
+							after: await captureEndorsementState(transaction, id, type),
 						},
 					},
-				},
+				});
 			});
 
 			return ctx.json(

@@ -3,6 +3,7 @@ import { SchemaEndorsementVehicleConductor } from '@segwise/core/schemas';
 import { differenceInYears } from 'date-fns';
 import type { Server } from '@/@types/server';
 import { documentByCPF } from '@/functions/document/by-cpf';
+import { captureEndorsementState } from '@/functions/endorsements/snapshot';
 import { EndorsementType } from '@/generated/prisma/enums';
 
 function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
@@ -104,6 +105,8 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 			const driverResponse = await documentByCPF(driver);
 
 			await ctx.database.$transaction(async (transaction) => {
+				const before = await captureEndorsementState(transaction, id, type);
+
 				const plateDb = plate
 					? await transaction.vehicle.findFirst({
 							where: {
@@ -192,14 +195,21 @@ function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 								}),
 							},
 						},
-						endorsements: {
-							create: {
-								type,
-								franchise,
-								amount,
-								percentage,
-								commission,
-							},
+					},
+				});
+
+				await transaction.endorsement.create({
+					data: {
+						safeId: id,
+						type,
+						franchise,
+						amount,
+						percentage,
+						commission,
+						createdAt: new Date(),
+						snapshot: {
+							before,
+							after: await captureEndorsementState(transaction, id, type),
 						},
 					},
 				});
