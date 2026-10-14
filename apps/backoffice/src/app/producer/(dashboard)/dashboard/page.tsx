@@ -11,12 +11,14 @@ import {
 	ArrowUpRightIcon,
 	Building2Icon,
 	CalendarCheck,
+	ChevronDownIcon,
 	ChevronLeft,
 	ChevronRight,
 	ChevronRightIcon,
 	Clock,
 	CopyIcon,
 	FileIcon,
+	KeyRoundIcon,
 	Loader2Icon,
 	LogOutIcon,
 	User2Icon,
@@ -29,6 +31,13 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
 	Empty,
 	EmptyDescription,
 	EmptyHeader,
@@ -37,6 +46,7 @@ import {
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DialogChangePassword } from '@/containers/dialogs/auth/change-password';
 import { api } from '@/libraries/api';
 import { auth } from '@/libraries/auth';
 import { useSignOut } from '@/libraries/hooks/auth/use-sign-out';
@@ -739,6 +749,11 @@ function ProducerDashboard() {
 
 	const { mutate: signOut, isPending: isPendingSignout } = useSignOut();
 
+	// Menu do avatar (Alterar senha / Sair). O dialog fica fora do menu para o menu
+	// fechar ao escolher o item e não reaparecer depois.
+	const [menuOpen, setMenuOpen] = useState<boolean>(false);
+	const [passwordOpen, setPasswordOpen] = useState<boolean>(false);
+
 	const { data: session, isPending } = auth.useSession();
 
 	function logout() {
@@ -800,6 +815,10 @@ function ProducerDashboard() {
 				state={selectedCep?.state ?? ''}
 				onClose={() => setSelectedCep(null)}
 			/>
+			<DialogChangePassword
+				open={passwordOpen}
+				onOpenChange={setPasswordOpen}
+			/>
 			<div
 				className='relative overflow-hidden px-3 pt-12 pb-6'
 				style={{
@@ -811,9 +830,37 @@ function ProducerDashboard() {
 				<div className='absolute top-8 -left-12 h-36 w-36 rounded-full opacity-15 blur-3xl bg-[#8b5cf6]' />
 				<div className='relative flex items-center justify-between mb-8'>
 					<div className='flex items-center gap-3'>
-						<div className='h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold text-[#0f172a] shrink-0 bg-white'>
-							{session?.user.name.slice(0, 2).toUpperCase()}
-						</div>
+						<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+							<DropdownMenuTrigger asChild>
+								<button
+									type='button'
+									aria-label='Menu da conta'
+									className='relative h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold text-[#0f172a] shrink-0 bg-white cursor-pointer'
+								>
+									{session?.user.name.slice(0, 2).toUpperCase()}
+									<span className='absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-[#1e293b] ring-1 ring-white/30'>
+										{isPendingSignout ? (
+											<Loader2Icon className='size-2.5 text-white/80 animate-spin' />
+										) : (
+											<ChevronDownIcon className='size-2.5 text-white/80' />
+										)}
+									</span>
+								</button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align='start' className='w-48'>
+								<DropdownMenuItem onSelect={() => setPasswordOpen(true)}>
+									<KeyRoundIcon /> Alterar senha
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									variant='destructive'
+									disabled={isPendingSignout}
+									onClick={logout}
+								>
+									<LogOutIcon /> Sair
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
 						<div>
 							<p className='text-white/50 text-[11px] leading-none mb-0.5 uppercase tracking-widest'>
 								Produtor
@@ -827,23 +874,6 @@ function ProducerDashboard() {
 								</p>
 							)}
 						</div>
-						<button
-							type='button'
-							className='ml-1 h-7 w-7 rounded-full flex items-center justify-center transition-colors cursor-pointer'
-							style={{
-								background: 'rgba(255,255,255,0.08)',
-								border: '1px solid rgba(255,255,255,0.12)',
-							}}
-							title='Sair'
-							onClick={logout}
-						>
-							{!isPendingSignout && (
-								<LogOutIcon className='size-3.5 text-white/50' />
-							)}
-							{!!isPendingSignout && (
-								<Loader2Icon className='size-3.5 text-white/50 animate-spin' />
-							)}
-						</button>
 					</div>
 					<div className='flex flex-col items-end'>
 						<div

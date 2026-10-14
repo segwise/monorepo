@@ -1,13 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-	SchemaPasswordIncludeNumber,
-	SchemaPasswordIncludeSpecial,
-	SchemaPasswordIncludeUppercase,
-	SchemaPasswordLengthMin,
-} from '@segwise/core/schemas';
-import { CheckCircleIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -28,10 +22,9 @@ import {
 	InputGroupButton,
 	InputGroupInput,
 } from '@/components/ui/input-group';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { PasswordMustContain } from '@/containers/forms/auth/password-must-contain';
 import { SchemaAuthResetPassword } from '@/schemas/auth/reset-password';
-import { cn } from '@/utils';
 
 function FormResetPassword() {
 	const router = useRouter();
@@ -144,57 +137,6 @@ function FormResetPassword() {
 				</Button>
 			</form>
 		</Form>
-	);
-}
-
-function PasswordMustContain({ value }: { value: string }) {
-	const isMin = SchemaPasswordLengthMin.safeParse(value).success;
-	const isUppercase = SchemaPasswordIncludeUppercase.safeParse(value).success;
-	const isNumber = SchemaPasswordIncludeNumber.safeParse(value).success;
-	const isSpecial = SchemaPasswordIncludeSpecial.safeParse(value).success;
-
-	return (
-		<div className='space-y-2'>
-			<Label className='mb-3'>Sua senha deve conter:</Label>
-			<ul className='space-y-2'>
-				<li
-					className={cn(
-						'flex items-center gap-1 text-xs text-muted-foreground',
-						isMin && '[&_svg]:text-green-600 text-inheret',
-					)}
-				>
-					<CheckCircleIcon className='size-3' />
-					Mínimo de 8 caracteres
-				</li>
-				<li
-					className={cn(
-						'flex items-center gap-1 text-xs text-muted-foreground',
-						isUppercase && '[&_svg]:text-green-600 text-inheret',
-					)}
-				>
-					<CheckCircleIcon className='size-3' />
-					Pelo menos uma letra maiúscula
-				</li>
-				<li
-					className={cn(
-						'flex items-center gap-1 text-xs text-muted-foreground',
-						isNumber && '[&_svg]:text-green-600 text-inheret',
-					)}
-				>
-					<CheckCircleIcon className='size-3' />
-					Pelo menos um número
-				</li>
-				<li
-					className={cn(
-						'flex items-center gap-1 text-xs text-muted-foreground',
-						isSpecial && '[&_svg]:text-green-600 text-inheret',
-					)}
-				>
-					<CheckCircleIcon className='size-3' />
-					Pelo menos um número
-				</li>
-			</ul>
-		</div>
 	);
 }
 
