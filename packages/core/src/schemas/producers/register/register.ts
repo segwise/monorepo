@@ -6,7 +6,12 @@ import {
 	SchemaProducerStartOfProductionPaymentDays,
 	SchemaProducerTypeOfPayment,
 } from '../../producers/type';
-import { SchemaEmail, SchemaName, SchemaPhone } from '../../utils';
+import {
+	SchemaEmail,
+	SchemaName,
+	SchemaPassword,
+	SchemaPhone,
+} from '../../utils';
 import { SchemaCPFOrCNPJ } from '../../utils/document';
 
 // Cadastro de PARCEIRO (admin cadastrando manualmente) — área de atuação,
@@ -32,6 +37,9 @@ const SchemaProducerRegister = z
 			.min(1, 'Mensagem de indicação inválida')
 			.nullish(),
 		pix: z.string('Chave PIX inválida'),
+		// Senha de acesso criada pela corretora no cadastro. Só trafega aqui: o
+		// backend guarda apenas o hash e o painel a mostra uma única vez.
+		password: SchemaPassword,
 	})
 	.superRefine(refineProducerPaymentDays);
 
