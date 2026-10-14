@@ -458,6 +458,19 @@ function parseCpfCandidate(value: string | null | undefined): string | null {
 	return normalized.success ? normalized.data : null;
 }
 
+function cpfCandidatesFromText(text: string): Array<string> {
+	const matches =
+		text.match(/\b\d{3}[.\s]?\d{3}[.\s]?\d{3}[-\s]?\d{2}\b/g) ?? [];
+
+	return [
+		...new Set(
+			matches
+				.map((candidate) => parseCpfCandidate(candidate))
+				.filter((candidate): candidate is string => candidate !== null),
+		),
+	];
+}
+
 function sourceUsesSuhaiProponentProfileAsPrincipalDriver(
 	sourceText: string,
 	insuredRegistration: string | null,
@@ -520,6 +533,112 @@ function sourceUsesSuhaiProponentProfileAsPrincipalDriver(
 		proponentConfirmsInsured &&
 		!hasExplicitDriverSection
 	);
+}
+
+function normalizedPersonName(value: string): string {
+	return normalizeText(value).replace(/\s+/g, ' ').trim();
+}
+
+function firstDateFromText(value: string): string | null {
+	const match = value.match(/\b(\d{2}\/\d{2}\/\d{4})\b/);
+
+	return match?.[1] ?? null;
+}
+
+function sourcePrincipalDriverMatchesInsuredIdentity({
+	sourceText,
+	insuredName,
+	insuredRegistration,
+	insuredBirth,
+}: {
+	sourceText: string;
+	insuredName: string | null;
+	insuredRegistration: string | null;
+	insuredBirth?: string | null;
+}): boolean {
+	if (!insuredName || !insuredRegistration) {
+		return false;
+	}
+
+	const expectedName = normalizedPersonName(insuredName);
+	const expectedRegistration = digitsOnly(insuredRegistration);
+
+	if (!expectedName || !expectedRegistration) {
+		return false;
+	}
+
+	const lines = sourceText.split('\n');
+	let insuredBlock = '';
+	let driverBlock = '';
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!insuredBlock &&
+			/\b(dados do segurado|dados do proponente|segurado)\b/.test(
+				normalizedLine,
+			)
+		) {
+			const candidate = lines
+				.slice(index, Math.min(lines.length, index + 16))
+				.join(' ');
+
+			if (
+				normalizedPersonName(candidate).includes(expectedName) &&
+				digitsOnly(candidate).includes(expectedRegistration)
+			) {
+				insuredBlock = candidate;
+			}
+		}
+
+		if (
+			!driverBlock &&
+			/\b(dados do principal condutor|informacoes do condutor principal|principal condutor)\b/.test(
+				normalizedLine,
+			)
+		) {
+			driverBlock = lines
+				.slice(index, Math.min(lines.length, index + 10))
+				.join(' ');
+		}
+	}
+
+	if (!insuredBlock || !driverBlock) {
+		return false;
+	}
+
+	const normalizedDriverBlock = normalizedPersonName(driverBlock);
+
+	if (!normalizedDriverBlock.includes(expectedName)) {
+		return false;
+	}
+
+	// Se o bloco do principal condutor trouxer um CPF diferente, ele não é o
+	// segurado, mesmo que o nome coincida.
+	const driverCpfCandidates = cpfCandidatesFromText(driverBlock);
+
+	if (
+		driverCpfCandidates.length > 0 &&
+		!driverCpfCandidates.some(
+			(candidate) => digitsOnly(candidate) === expectedRegistration,
+		)
+	) {
+		return false;
+	}
+
+	const driverBirth = firstDateFromText(driverBlock);
+	const sourceInsuredBirth = firstDateFromText(insuredBlock);
+	const expectedBirth = insuredBirth ?? sourceInsuredBirth;
+
+	// Quando ambas as datas existem, elas devem coincidir. Isso torna seguro o
+	// fallback para layouts (como MAPFRE) que exibem nome+nascimento do
+	// principal condutor, mas omitem o CPF naquele bloco.
+	if (driverBirth && expectedBirth && driverBirth !== expectedBirth) {
+		return false;
+	}
+
+	return true;
 }
 
 function sourceMarksPrincipalDriverAsInsured(sourceText: string): boolean {
@@ -2048,6 +2167,14 @@ function resolvePrincipalDriver({
 		? sourceConfirmsPrincipalDriverRegistration(sourceText, insuredCpf)
 		: false;
 
+	const sourceMatchesInsuredIdentity =
+		sourcePrincipalDriverMatchesInsuredIdentity({
+			sourceText,
+			insuredName: insured.name,
+			insuredRegistration: insured.registration,
+			insuredBirth: insured.birth,
+		});
+
 	const evidenceConfirmsInsuredCpf = insuredCpf
 		? evidenceConfirmsPrincipalDriverRegistration(driverEvidence, insuredCpf)
 		: false;
@@ -2074,6 +2201,7 @@ function resolvePrincipalDriver({
 		suhaiProfileUsesInsured ||
 		evidenceSaysInsured ||
 		sourceConfirmsInsuredCpf ||
+		sourceMatchesInsuredIdentity ||
 		evidenceConfirmsInsuredCpf ||
 		(modelDriverIsInsured && modelDriverConfirmed)
 	) {
@@ -2200,6 +2328,7 @@ SEGURADO E CONDUTOR
   - "unknown" somente quando realmente não for possível determinar;
 - "vehicle.driverEvidence" deve ser o menor trecho que comprove quem é o principal condutor ou sua relação com o segurado;
 - quando driverRelation="insured", copie nome, CPF e data de nascimento do segurado para "vehicle.driver";
+- se o bloco de Principal Condutor repetir exatamente o nome completo e a data de nascimento do segurado, mas omitir o CPF do condutor, considere o próprio segurado como principal condutor e use o CPF do segurado;
 - quando driverRelation="other", preencha "vehicle.driver" com nome, CPF e nascimento do principal condutor indicado no documento;
 - nunca retorne driver=null apenas porque o principal condutor é o próprio segurado;
 - para vehicle e motorcycle, sempre tente retornar o principal condutor resultante da contratação;
@@ -2385,7 +2514,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-pdf:v47] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-pdf:v49] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${total.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2754,7 +2883,7 @@ async function extractData(
 	const data = await completeBirths(extracted);
 
 	console.log(
-		`[extract-pdf:v47] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
+		`[extract-pdf:v49] consultas de nascimento ${Math.round(performance.now() - lookupStarted)}ms`,
 	);
 
 	return data;
@@ -2774,11 +2903,11 @@ function registerRoutersServicesSafesExtractPDF(server: Server) {
 				const { file } = ctx.req.valid('form');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `pdf-extract:v47:${hash}`;
+				const cacheKey = `pdf-extract:v49:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-pdf:v47] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-pdf:v49] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				if (cached) {

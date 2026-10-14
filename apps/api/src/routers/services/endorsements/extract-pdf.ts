@@ -569,7 +569,11 @@ function sourceContainsRegistrationNear(
 	return false;
 }
 
-function parseCpfCandidate(value: string): string | null {
+function parseCpfCandidate(value: string | null | undefined): string | null {
+	if (!value) {
+		return null;
+	}
+
 	const direct = SchemaCPF.safeParse(value);
 
 	if (direct.success) {
@@ -652,6 +656,112 @@ function sourceUsesSuhaiProponentProfileAsPrincipalDriver(
 		proponentConfirmsInsured &&
 		!hasExplicitDriverSection
 	);
+}
+
+function normalizedPersonName(value: string): string {
+	return normalizeText(value).replace(/\s+/g, ' ').trim();
+}
+
+function firstDateFromText(value: string): string | null {
+	const match = value.match(/\b(\d{2}\/\d{2}\/\d{4})\b/);
+
+	return match?.[1] ?? null;
+}
+
+function sourcePrincipalDriverMatchesInsuredIdentity({
+	sourceText,
+	insuredName,
+	insuredRegistration,
+	insuredBirth,
+}: {
+	sourceText: string;
+	insuredName: string | null;
+	insuredRegistration: string | null;
+	insuredBirth?: string | null;
+}): boolean {
+	if (!insuredName || !insuredRegistration) {
+		return false;
+	}
+
+	const expectedName = normalizedPersonName(insuredName);
+	const expectedRegistration = digitsOnly(insuredRegistration);
+
+	if (!expectedName || !expectedRegistration) {
+		return false;
+	}
+
+	const lines = sourceText.split('\n');
+	let insuredBlock = '';
+	let driverBlock = '';
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const normalizedLine = normalizeText(lines[index] ?? '');
+
+		if (
+			!insuredBlock &&
+			/\b(dados do segurado|dados do proponente|segurado)\b/.test(
+				normalizedLine,
+			)
+		) {
+			const candidate = lines
+				.slice(index, Math.min(lines.length, index + 16))
+				.join(' ');
+
+			if (
+				normalizedPersonName(candidate).includes(expectedName) &&
+				digitsOnly(candidate).includes(expectedRegistration)
+			) {
+				insuredBlock = candidate;
+			}
+		}
+
+		if (
+			!driverBlock &&
+			/\b(dados do principal condutor|informacoes do condutor principal|principal condutor)\b/.test(
+				normalizedLine,
+			)
+		) {
+			driverBlock = lines
+				.slice(index, Math.min(lines.length, index + 10))
+				.join(' ');
+		}
+	}
+
+	if (!insuredBlock || !driverBlock) {
+		return false;
+	}
+
+	const normalizedDriverBlock = normalizedPersonName(driverBlock);
+
+	if (!normalizedDriverBlock.includes(expectedName)) {
+		return false;
+	}
+
+	// Se o bloco do principal condutor trouxer um CPF diferente, ele não é o
+	// segurado, mesmo que o nome coincida.
+	const driverCpfCandidates = cpfCandidatesFromText(driverBlock);
+
+	if (
+		driverCpfCandidates.length > 0 &&
+		!driverCpfCandidates.some(
+			(candidate) => digitsOnly(candidate) === expectedRegistration,
+		)
+	) {
+		return false;
+	}
+
+	const driverBirth = firstDateFromText(driverBlock);
+	const sourceInsuredBirth = firstDateFromText(insuredBlock);
+	const expectedBirth = insuredBirth ?? sourceInsuredBirth;
+
+	// Quando ambas as datas existem, elas devem coincidir. Isso torna seguro o
+	// fallback para layouts (como MAPFRE) que exibem nome+nascimento do
+	// principal condutor, mas omitem o CPF naquele bloco.
+	if (driverBirth && expectedBirth && driverBirth !== expectedBirth) {
+		return false;
+	}
+
+	return true;
 }
 
 function sourceMarksPrincipalDriverAsInsured(sourceText: string): boolean {
@@ -814,7 +924,12 @@ function resolvePrincipalDriverCpf({
 			sourceConfirmsPrincipalDriverRegistration(
 				sourceText,
 				lookup.insuredRegistration,
-			))
+			) ||
+			sourcePrincipalDriverMatchesInsuredIdentity({
+				sourceText,
+				insuredName: lookup.insuredName,
+				insuredRegistration: lookup.insuredRegistration,
+			}))
 	) {
 		return parseCpfCandidate(lookup.insuredRegistration);
 	}
@@ -1772,6 +1887,7 @@ Para vehicle_conductor:
 - IMPORTANTE: data.driver é SEMPRE o CPF do PRINCIPAL CONDUTOR RESULTANTE após o endosso, mesmo quando o condutor não foi alterado.
 - exceção estrutural Suhai: quando o documento usar o layout SUHAI com "DADOS DO PROPONENTE" + "DADOS DO PERFIL", pessoa física, o PERFIL usar idade/sexo/estado civil/utilização do proponente e NÃO houver bloco separado de principal condutor, use lookup.insuredRegistration como o principal condutor resultante;
 - Se o documento disser "Principal condutor: Próprio Segurado", "O próprio segurado" ou equivalente, copie para data.driver o CPF do SEGURADO identificado em lookup.insuredRegistration.
+- Se o bloco de Principal Condutor repetir exatamente o nome completo e a data de nascimento do segurado, mas não imprimir o CPF nesse bloco, use lookup.insuredRegistration como o principal condutor resultante.
 - Se o principal condutor for outra pessoa, use o CPF explicitamente associado ao principal condutor.
 - Não use null só porque changeKind=vehicle; changeKind descreve o que mudou, enquanto data.driver descreve quem ficou como principal condutor após o endosso.
 
@@ -2083,7 +2199,7 @@ function assertDocumentFinancialReconciliation({
 		difference <= DOCUMENT_FINANCIAL_RECONCILIATION_TOLERANCE
 	) {
 		console.warn(
-			`[extract-endorsement:v47] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
+			`[extract-endorsement:v49] diferença residual no fechamento financeiro: calculado=${calculated.toFixed(
 				2,
 			)} total=${expectedTotal.toFixed(2)} diferença=${difference.toFixed(2)}`,
 		);
@@ -2583,11 +2699,11 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 				const { id } = ctx.req.valid('query');
 				const buffer = await file.arrayBuffer();
 				const hash = Bun.hash(buffer).toString(16);
-				const cacheKey = `endorsement-pdf-extract:v47:${hash}`;
+				const cacheKey = `endorsement-pdf-extract:v49:${hash}`;
 				const cached = await ctx.cache.get(cacheKey);
 
 				console.log(
-					`[extract-endorsement:v47] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
+					`[extract-endorsement:v49] hash=${hash} cache=${cached ? 'hit' : 'miss'}`,
 				);
 
 				let extracted: DataExtractEndorsement;
@@ -2598,7 +2714,7 @@ function registerRoutersServicesEndorsementsExtractPDF(server: Server) {
 						extracted = SchemaDataExtractEndorsement.parse(JSON.parse(cached));
 					} catch (error) {
 						console.warn(
-							'[extract-endorsement:v47] cache incompatível, executando nova extração:',
+							'[extract-endorsement:v49] cache incompatível, executando nova extração:',
 							error instanceof Error ? error.message : error,
 						);
 
