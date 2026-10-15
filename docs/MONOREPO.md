@@ -185,10 +185,23 @@ Roda em PR e em push na `main`. Jobs:
 O workflow foi validado com `actionlint` e as mesmas tarefas rodaram em clone limpo; a
 **primeira execução real no GitHub ainda não aconteceu**.
 
+### Branch protection
+
+O repositório é **público** (decisão de 2026-10: a org está no plano GitHub Free, que só
+aplica branch protection/rulesets em repos públicos — em privado o GitHub avisa *"rulesets
+won't be enforced ... until you upgrade to GitHub Team"*). O ruleset `protect-main` está
+**ativo** na `main`: exige PR, exige o check `CI` (do app `github-actions`) verde, bloqueia
+force-push e exclusão da branch, sem lista de bypass. Aprovações de review: 0 (equipe de uma
+pessoa; aumentar quando houver mais gente).
+
+Consequências de ser público: o código e o histórico são visíveis a qualquer pessoa; Actions
+em runners do GitHub são gratuitos; **nunca** commitar segredos (use GitHub Secrets). Se o repo
+voltar a ser privado, o ruleset deixa de ser aplicado até o upgrade para GitHub Team.
+
 ### Ainda a fazer
 
-- **Quality gate**: Kodus **self-hosted no Dokploy** + branch protection em `main` exigindo o
-  check `CI` (e a review do Kodus).
+- **Quality gate**: Kodus **self-hosted no Dokploy** (GitHub App + regras); depois exigir a
+  review/check dele no ruleset.
 - **CD híbrido**: no merge em `main`, o Actions builda as imagens (api e as 3 variantes do
   backoffice), publica no **GHCR** e aciona o webhook/API do Dokploy, que só puxa a imagem.
   Mobile: EAS Build + hot-updater por workflow quando `apps/mobile/**` mudar.
