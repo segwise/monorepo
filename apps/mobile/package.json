@@ -75,7 +75,6 @@
 	},
 	"devDependencies": {
 		"@babel/plugin-transform-react-jsx": "^8.0.1",
-		"@biomejs/biome": "2.4.6",
 		"@types/react": "catalog:mobile",
 		"babel-preset-expo": "~55.0.10",
 		"hot-updater": "^0.35.0",

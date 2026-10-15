@@ -17,7 +17,8 @@
 		"local": "bun scripts/db-local.ts",
 		"migrate:reset": "bun x --bun prisma migrate reset",
 		"deploy": "bun x --bun prisma migrate deploy",
-		"seed": "bun --bun prisma db seed"
+		"seed": "bun --bun prisma db seed",
+		"lint": "biome check"
 	},
 	"dependencies": {
 		"@prisma/client": "^7.10.0"

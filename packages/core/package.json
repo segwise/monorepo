@@ -11,7 +11,6 @@
 		"typescript": "^5.9.3"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.14",
 		"@types/bun": "latest",
 		"tsc-alias": "^1.8.16"
 	},

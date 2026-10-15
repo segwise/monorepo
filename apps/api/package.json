@@ -12,7 +12,6 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.7",
 		"@react-email/ui": "^6.9.2",
 		"@types/bun": "latest",
 		"@types/headroom": "^0.12.5",
