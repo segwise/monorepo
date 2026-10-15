@@ -500,7 +500,7 @@ function RobberyOrTheft() {
 				accessible={false}
 				className='font-bold text-lg leading-tight mb-1'
 			>
-				Entre em contato com a polícia federal através do número{' '}
+				Entre em contato com a polícia rodoviária federal através do número{' '}
 				<TouchableOpacity onPress={() => Linking.openURL('tel:190')}>
 					<Text
 						allowFontScaling={false}

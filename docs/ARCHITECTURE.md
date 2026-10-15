@@ -1,0 +1,173 @@
+# Arquitetura do sistema Segwise
+
+## Visão geral
+
+Insurtech de seguros automotivos. Quatro repositórios irmãos, sem monorepo
+técnico (sem workspaces/turborepo) — a integração é feita via um pacote npm
+privado (`@segwise/core`) e via HTTP contra uma API central (`backend`).
+
+```
+┌─────────────┐     ┌──────────────┐
+│  backoffice │     │ application  │   clientes HTTP
+│  (Next.js)  │     │(Expo/React   │
+│             │     │   Native)    │
+└──────┬──────┘     └──────┬───────┘
+       │   importam @segwise/core   │
+       │   (schemas/tipos/masks)    │
+       ▼                            ▼
+       │        HTTP (xior)         │
+       └──────────────┬─────────────┘
+                       ▼
+                 ┌───────────┐
+                 │  backend  │  (Hono + Bun)
+                 │           │──imports @segwise/core também
+                 └─────┬─────┘
+                        │
+        ┌───────┬───────┼────────┬─────────────┐
+        ▼       ▼       ▼        ▼             ▼
+   PostgreSQL  Redis  MinIO   Ollama (LLM)  APIs 3ºs (FIPE,
+   (Prisma)   (cache) (S3)   self-hosted    placas, CPF/CNPJ,
+                                             Transfeera/Pix, Resend)
+```
+
+`core` não roda como serviço — é uma lib publicada no GitHub Packages
+(`https://npm.pkg.github.com`), consumida na mesma versão (`^1.1.446` no
+momento deste documento) pelos outros três.
+
+## Papel de cada repositório
+
+### core
+Lib TS pura. Exporta subpaths: `.`, `./schemas`, `./types`, `./masks`,
+`./valids`, `./translate`, `./utils`. Contém o contrato de dados do domínio
+de seguros (ver [`DOMAIN.md`](DOMAIN.md)) e utilitários de validação/máscara
+de documentos brasileiros (CPF, CNPJ, placa, CEP). Não tem infraestrutura
+própria (sem Docker) porque não é executável.
+
+### backend
+API central. Stack: Hono (framework HTTP) + Bun (runtime, roda TS nativo,
+sem transpile) + Prisma 7 com `@prisma/adapter-pg` (PostgreSQL). É o único
+repo com banco de dados — nenhum outro repo persiste dados diretamente.
+
+Integrações externas do backend:
+- **PostgreSQL** via `DATABASE_URL` — dados transacionais (Prisma).
+- **Redis** via `CACHE_URL` — cache e sessões do better-auth (serviço `cache`, `maxmemory 512mb` +
+  `volatile-lru`: só expulsa chaves com TTL, preservando consultas pagas de CPF/CNPJ sem TTL).
+- **Redis** via `QUEUE_URL` — filas BullMQ (serviço `queue`, `maxmemory-policy noeviction`).
+- **MinIO** (S3-compatible) — armazenamento de arquivos/PDFs.
+- **Ollama** (`OLLAMA_BASE_URL`/`AI_BASE_URL` no compose) — LLM self-hosted.
+  - Extração de dados de PDF — propostas (`backend/src/routers/services/safes/extract-pdf.ts`)
+    e endossos (`endorsements/extract-pdf.ts`). A orquestração é compartilhada em
+    `backend/src/libraries/ai/pdf-extraction.ts`. O modelo é chamado via **9Router**
+    (`AI_BASE_URL`, compatível com OpenAI; `GET /models` lista os modelos). Etapas, da
+    mais rápida para a mais completa; resposta inválida (Zod) escala para a próxima
+    em vez de repetir o prompt, e só erro transitório (rede, 408/409/429, 5xx) é
+    retentado — 400/401/403/404 (modelo inválido, chave errada) falham na hora:
+    1. `text-fast`: texto das `AI_TEXT_PAGES` páginas (padrão 3) com mais dados (CPF,
+       CNPJ, datas, R$, CEP; a 1ª página sempre entra), sem pagar tokens de cláusulas.
+    2. `text-full`: texto de todas as páginas.
+    3. `vision`: texto + imagens das 6 primeiras páginas (`libraries/pdf/render-pages.ts`);
+       PDF escaneado (sem texto) vai direto para cá.
+    Variáveis: `AI_MODEL` (1ª etapa, rápida), `AI_MODEL_FALLBACK` (etapas `text-full` e
+    `vision`, um modelo mais forte para quando a 1ª falha; padrão = `AI_MODEL`),
+    `AI_MODEL_VISION` (etapa com imagem, precisa de visão; padrão = `AI_MODEL_FALLBACK`),
+    `AI_VISION_MODE` (`fallback` padrão | `always` | `off`), `AI_TEXT_PAGES`.
+    Os prompts são **autossuficientes** (descrevem o formato do JSON): o antigo modelo
+    `reader-pdf` carregava ~6 mil tokens de instruções embutidas no servidor, ignorava
+    `max_tokens` e escrevia ~45 tokens/s, o que mascarava prompts incompletos e deixava
+    tudo lento. A resposta é curta de propósito (JSON minificado; na proposta a seguradora
+    volta como **índice** da lista e id/nome/CNPJ vêm do banco): o tempo é dominado pelos
+    tokens de saída. Placa fora do padrão (ex.: "A AVISAR") vira `null`. Nascimento ausente
+    é buscado por CPF/CNPJ em paralelo e, se falhar, fica nulo. Logs `[ai]` (tokens) e
+    `[extract-pdf]`/`[extract-endorsement]` (etapa, tentativas e tempos). Cache Redis em
+    `pdf-extract:v3:<hash>` e `endorsement-pdf-extract:v2:<hash>` (24 h).
+    **Escolha de modelo (benchmark de 17 PDFs sintéticos × 21 campos, com gabarito):**
+    cobre zero km "A AVISAR", segurado ≠ condutor, PJ/CNPJ, moto, caminhão, táxi não
+    emplacado, seguradora do mesmo grupo (cabeçalho Azul, rodapé Porto), várias franquias,
+    "prêmio líquido" x "líquido total" x total com IOF, CEP cortado, à vista, ano fab/modelo,
+    placa antiga, uso particular, dados só na página 4 e escaneados. Resultado (3 passadas):
+    `kr/claude-sonnet-4.5` 100/100/100 % · ~4,3 s · `kr/claude-haiku-4.5` 100/100/99,7 % ·
+    ~3,2 s (~3,4 s em doc longo, ~45 % mais rápido) · `reader-pdf` 100/100 % · ~4,2 s (~6 s
+    em doc longo). Fora: `haiku-4.5-thinking` 88 % e lento (raciocínio atrapalha),
+    `deepseek-3.2` e `glm-5` sem visão (falham em escaneado), `qwen3-coder-next` 86 %
+    (inventa proposta anterior, erra seguradora do grupo). Na conta Kiro atual
+    `kr/claude-opus-*`, `kr/claude-sonnet-5`, `kr/MiniMax-M2.5` e `kr/gpt-5.6-*` aparecem
+    no catálogo mas respondem 400 "Invalid model". Recomendado: `AI_MODEL=kr/claude-haiku-4.5`
+    + `AI_MODEL_FALLBACK=kr/claude-sonnet-4.5`. Limites do teste: documentos sintéticos, e a
+    consulta de nascimento foi simulada. Um valor errado porém válido no schema não é
+    detectado (só resposta inválida escala de etapa).
+    Lições de prompt (valeram para todos os modelos, ~80 % → ≥ 94 %): condutor "o próprio
+    segurado" repete os dados do segurado em `driver`; CEP de pernoite cortado usa o CEP do
+    segurado se começar igual, senão completa com zeros; `modality` é só veículo/moto/caminhão
+    (táxi/aplicativo vai em `usage`); à vista = 1 parcela; "só lazer" = `leisure`.
+- **Resend** — envio de e-mail transacional (templates React Email/Handlebars).
+- **Playwright + Chromium** — geração/scraping de PDF (instalado no Dockerfile).
+- **APIs brasileiras de terceiros**: `APIPLACAS_TOKEN` (placas), `CPFCNPJ_TOKEN`,
+  `PLACA_FIPE_TOKEN` (tabela FIPE).
+- **Transfeera** — pagamentos via Pix, incluindo split de pagamento entre
+  partes (`TRANSFEERA_PAYMENT_SPLIT_PIX*`).
+- Deep links para apps mobile: `IOS_APP_URL`/`ANDROID_APP_URL` (app
+  `application` deste conjunto) e `IOS_XCAR_APP_URL`/`ANDROID_XCAR_APP_URL`
+  (um segundo app "xcar", irmão de produto, que **não está** entre os 4
+  diretórios deste workspace — se precisar dele, pergunte ao usuário onde fica).
+
+### backoffice
+Next.js 16 / React 19, App Router. **Uma única base de código, três
+deployments** diferenciados só pela env var `NEXT_PUBLIC_ROLE_SYSTEM`
+(`backoffice` | `customer` | `producer`), ver `docker-compose.yml` — três
+serviços a partir do mesmo `Dockerfile`, cada um com esse build arg distinto:
+- `backoffice` → admin interno.
+- `customer` → portal do segurado/cliente.
+- `producer` → portal do produtor/corretor.
+
+Roteamento em `src/app/{admin,customer,producer}/(auth|dashboard)`, refletindo
+os três papéis dentro do mesmo repo.
+
+### application
+App mobile (Expo/React Native, Expo Router) voltado ao segurado final.
+Features: cotação de seguro, indicação/referral (`attribute-referral.ts`,
+`share-app.ts`), anúncios, consulta de veículo. Build via EAS; atualizações
+OTA (fora das lojas) via `hot-updater` com storage próprio em S3.
+
+## Autenticação
+
+`better-auth` é usado tanto no `backend` (gera/migra o schema de auth via
+`@better-auth/cli`, models `User`/`Session`/`Account`/`Verification` no
+Prisma) quanto no `backoffice` (client-side). A sessão trafega via cookies;
+`backoffice` repassa os cookies relevantes nas chamadas HTTP ao backend
+usando um helper que vem do `core` (`cookies-relevant.ts`). Cada role
+(`admin`/`customer`/`producer`) tem seu próprio fluxo de auth dentro do
+mesmo Next.js app (`(auth)` route groups).
+
+`application` ainda não foi confirmado se usa `better-auth` — checar
+`src/libraries/storage` e o fluxo de login do app antes de assumir.
+
+## Deploy e infraestrutura
+
+- **Sem CI/CD**: nenhum `.github/workflows` em nenhum dos 4 repos.
+- **backend** e **backoffice**: Dockerfile multi-stage (build com Bun),
+  publicados numa rede Docker externa `dokploy-network` → indica orquestração
+  via [Dokploy](https://dokploy.com) (PaaS self-hosted), provavelmente
+  configurado para redeployar a partir do `git push` feito pelo script
+  `deploy` do `package.json`.
+- **application**: sem Docker (é app mobile). Build/submit via `eas.json`
+  (perfis development/preview/production). Updates OTA via `hot-updater`
+  (bucket S3 próprio, fora do fluxo de loja).
+- **core**: sem infra — só publica no GitHub Packages via `bun publish`.
+
+## Convenção de "deploy" (script npm, não é deploy de verdade sozinho)
+
+Em `backend`, `backoffice` e `application`, o script `deploy` do `package.json`
+apenas faz commit + push (`git add . && git commit -m '...' && git push`).
+**Isso dispara o deploy real via Dokploy observando o repositório**, não é
+um script que builda/sobe nada localmente. Tenha isso em mente: rodar
+`bun run deploy` sem que o usuário peça é equivalente a fazer um push para
+produção — trate com o mesmo cuidado que um `git push` normal (peça
+confirmação antes).
+
+## O que verificar antes de confiar cegamente neste documento
+
+Este documento foi escrito a partir de uma inspeção do código em
+2026-09-23. Antes de tomar decisões arquiteturais importantes com base
+nele, confirme que os arquivos citados (`docker-compose.yml`,
+`.env.example`, `package.json` de cada repo) ainda dizem o mesmo — o
+sistema evolui e este arquivo pode ficar desatualizado.
