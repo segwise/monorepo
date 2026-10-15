@@ -25,7 +25,7 @@ inglês são os usados no código (models, tipos, rotas).
 ## Papéis de usuário (roles)
 
 Refletidos em `apps/backoffice/src/app/{admin,customer,producer}` e nos três
-serviços do `docker-compose.yml` do backoffice:
+serviços do `deploy/docker-compose.yml` (`backoffice`, `customer`, `producer`):
 
 - **admin** — equipe interna Segwise, acesso amplo.
 - **customer** — segurado/cliente final (também atendido pelo app `mobile`).

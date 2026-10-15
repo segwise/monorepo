@@ -1,0 +1,197 @@
+# Stack de produção no Dokploy (um compose só): api + 2 Redis + 3 variantes do backoffice.
+# O Postgres fica FORA (Database do Dokploy ou externo): o ciclo de vida do banco não
+# acompanha o deploy da aplicação. DATABASE_URL aponta para ele.
+#
+# As imagens vêm do GHCR (publicadas pelo CD). `latest` + `pull_policy: always`: cada
+# `docker compose up -d` baixa a versão nova e só recria os serviços cuja imagem mudou
+# (os Redis não são recriados). Rollback: rodar o CD com o `sha` desejado, que republica `latest`.
+#
+# As variáveis do Dokploy (aba Environment) são gravadas num .env ao lado deste arquivo e NÃO
+# vão sozinhas para os containers: cada uma é referenciada abaixo com ${VAR}.
+# Lista completa em deploy/.env.example.
+
+name: segwise
+
+x-web-environment: &web-environment
+  NODE_ENV: production
+  NEXT_TELEMETRY_DISABLED: '1'
+  PORT: '3000'
+  # O Next standalone escuta em HOSTNAME; no Docker o padrão é o id do container.
+  HOSTNAME: 0.0.0.0
+  NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+
+x-web-healthcheck: &web-healthcheck
+  test:
+    - CMD
+    - node
+    - -e
+    - "fetch('http://127.0.0.1:3000/sign-in',{redirect:'manual'}).then((r)=>process.exit(r.status<500?0:1),()=>process.exit(1))"
+  interval: 15s
+  timeout: 5s
+  retries: 5
+  start_period: 20s
+
+services:
+  api:
+    image: ghcr.io/segwise/api:latest
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      cache:
+        condition: service_healthy
+      queue:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      APPLICATION_URL: ${APPLICATION_URL}
+      # Sem CUSTOMER_PORTAL_URL o código usa APPLICATION_URL (e vazio não passa na validação de URL).
+      CUSTOMER_PORTAL_URL: ${CUSTOMER_PORTAL_URL:-${APPLICATION_URL}}
+      BASE_URL: ${BASE_URL}
+      AUTH_SECRET: ${AUTH_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      CACHE_URL: redis://cache:6379
+      QUEUE_URL: redis://queue:6379
+      AI_BASE_URL: ${AI_BASE_URL}
+      AI_MODEL: ${AI_MODEL}
+      # Vazio = usa AI_MODEL (o código trata com ||).
+      AI_MODEL_VISION: ${AI_MODEL_VISION:-}
+      AI_API_KEY: ${AI_API_KEY}
+      # Estes três são numéricos e lidos com ??: vazio viraria 0. Defaults = os do código.
+      AI_REQUEST_TIMEOUT_MS: ${AI_REQUEST_TIMEOUT_MS:-45000}
+      AI_MAX_TEXT_CHARS: ${AI_MAX_TEXT_CHARS:-80000}
+      AI_MAX_COMPLETION_TOKENS: ${AI_MAX_COMPLETION_TOKENS:-2200}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
+      APIPLACAS_TOKEN: ${APIPLACAS_TOKEN}
+      CPFCNPJ_TOKEN: ${CPFCNPJ_TOKEN}
+      PLACA_FIPE_TOKEN: ${PLACA_FIPE_TOKEN}
+      AMOUNT_SEARCH_VEHICLE_COMPLETE: ${AMOUNT_SEARCH_VEHICLE_COMPLETE}
+      TRANSFEERA_CLIENT_SECRET: ${TRANSFEERA_CLIENT_SECRET}
+      TRANSFEERA_CLIENT_SECRET_USER: ${TRANSFEERA_CLIENT_SECRET_USER}
+      TRANSFEERA_PAYMENT_PIX_KEY: ${TRANSFEERA_PAYMENT_PIX_KEY}
+      TRANSFEERA_PAYMENT_SPLIT_PIX_TYPE: ${TRANSFEERA_PAYMENT_SPLIT_PIX_TYPE}
+      TRANSFEERA_PAYMENT_SPLIT_PIX: ${TRANSFEERA_PAYMENT_SPLIT_PIX}
+      IOS_APP_URL: ${IOS_APP_URL}
+      ANDROID_APP_URL: ${ANDROID_APP_URL}
+      IOS_XCAR_APP_URL: ${IOS_XCAR_APP_URL}
+      ANDROID_XCAR_APP_URL: ${ANDROID_XCAR_APP_URL}
+    healthcheck:
+      # Qualquer resposta HTTP (até 404) = processo de pé. start_period cobre as migrations do entrypoint.
+      test:
+        - CMD
+        - bun
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then(()=>process.exit(0),()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    networks:
+      - internal-network
+      - dokploy-network
+
+  backoffice:
+    image: ghcr.io/segwise/backoffice:latest
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      <<: *web-environment
+      NEXT_PUBLIC_ROLE_SYSTEM: admin
+    healthcheck: *web-healthcheck
+    networks:
+      - dokploy-network
+
+  customer:
+    image: ghcr.io/segwise/customer:latest
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      <<: *web-environment
+      NEXT_PUBLIC_ROLE_SYSTEM: customer
+    healthcheck: *web-healthcheck
+    networks:
+      - dokploy-network
+
+  producer:
+    image: ghcr.io/segwise/producer:latest
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      <<: *web-environment
+      NEXT_PUBLIC_ROLE_SYSTEM: producer
+    healthcheck: *web-healthcheck
+    networks:
+      - dokploy-network
+
+  # Cache e sessões do better-auth: só expulsa chaves com TTL (preserva as consultas pagas de CPF/CNPJ sem TTL).
+  cache:
+    image: redis:8
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - 'yes'
+      - --save
+      - '60'
+      - '1'
+      - --maxmemory
+      - 512mb
+      - --maxmemory-policy
+      - volatile-lru
+    volumes:
+      - cache-data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - internal-network
+
+  # Filas BullMQ: nunca expulsar chaves (noeviction).
+  queue:
+    image: redis:8
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - 'yes'
+      - --save
+      - '60'
+      - '1'
+      - --maxmemory-policy
+      - noeviction
+    volumes:
+      - queue-data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - internal-network
+
+networks:
+  internal-network:
+    driver: bridge
+    internal: true
+  dokploy-network:
+    external: true
+
+volumes:
+  cache-data:
+  queue-data:

@@ -167,8 +167,9 @@ Transfeera (Pix/split de pagamento). Nunca commitar segredos — só
 (Playwright), buildado com contexto na raiz do monorepo
 (`docker build -f apps/api/Dockerfile .`); roda como usuário não-root e tem
 `entrypoint.sh` (aplica `prisma migrate deploy` via `packages/database` e sobe o
-servidor). `docker-compose.yml` sobe `api` + `cache` (Redis) + `queue` (Redis) em
-rede interna isolada + rede externa `dokploy-network`. Não há mais script `deploy`:
+servidor). Em produção o compose é o `deploy/docker-compose.yml` da raiz (api + backoffices +
+`cache` e `queue` Redis em rede interna isolada + rede externa `dokploy-network`, usando as
+imagens do GHCR); o Postgres fica fora dele. Não há mais script `deploy`:
 subir versão é ação do usuário (ver [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#deploy-é-uma-ação-do-usuário)) —
 nunca rodar `migrate reset` ou `migrate deploy` contra produção sem confirmação.
 ## Busca em listagens

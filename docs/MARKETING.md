@@ -21,7 +21,7 @@ Menu "Marketing" no sidebar do portal `customer`. Primeira feature: **Campanhas*
 ## Agendamento (BullMQ)
 
 - Fila `marketing` em um Redis próprio (`QUEUE_URL`, serviço `queue` no
-  `docker-compose.yml`), separado do cache (`CACHE_URL`): a fila roda com
+  `deploy/docker-compose.yml`), separado do cache (`CACHE_URL`): a fila roda com
   `maxmemory-policy noeviction` para nunca perder jobs por falta de memória.
 - Cada campanha ativa tem um *job scheduler* `campaign:<id>` (cron). Criar,
   editar, pausar ou excluir a campanha sincroniza o scheduler

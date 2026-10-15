@@ -2,7 +2,7 @@
 
 Painel web Next.js. **Uma base de código, três deployments** controlados por
 `NEXT_PUBLIC_ROLE_SYSTEM` (`admin` | `customer` | `producer`) — veja
-`docker-compose.yml`. Antes de mudar algo "global" (layout, providers, auth),
+`deploy/docker-compose.yml` na raiz. Antes de mudar algo "global" (layout, providers, auth),
 lembre que o impacto é nos três públicos ao mesmo tempo.
 
 Contexto do sistema inteiro (arquitetura, domínio, convenções comuns): ver
@@ -99,10 +99,10 @@ seria útil no `api` ou `mobile`), adicione no `core` primeiro — ver
 (`outputFileTracingRoot` na raiz; servidor em `apps/backoffice/server.js`) →
 runtime Node 22 alpine. Buildado com **contexto na raiz do monorepo**
 (`docker build -f apps/backoffice/Dockerfile --build-arg NEXT_PUBLIC_ROLE_SYSTEM=admin ...`).
-`docker-compose.yml` builda os três serviços (`backoffice`, `customer`, `producer`) a
-partir do mesmo Dockerfile com build args diferentes — o valor de
-`NEXT_PUBLIC_ROLE_SYSTEM` do serviço do painel interno é **`admin`** —, todos na
-rede externa `dokploy-network`. Não há mais script `deploy`; subir versão é ação do
+O CD builda três imagens (`backoffice`, `customer`, `producer`) a partir do mesmo
+Dockerfile com build args diferentes — o valor de `NEXT_PUBLIC_ROLE_SYSTEM` do painel
+interno é **`admin`** — e o `deploy/docker-compose.yml` da raiz as sobe na rede externa
+`dokploy-network`. Não há mais script `deploy`; subir versão é ação do
 usuário — não fazer sem confirmação.
 
 ## Typecheck e lint
