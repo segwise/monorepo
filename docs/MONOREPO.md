@@ -251,7 +251,7 @@ e conferido nos logs.
 - **Quality gate**: Kodus **self-hosted no Dokploy** (GitHub App + regras); depois exigir a
   review/check dele no ruleset.
 - **CD do mobile**: EAS Build + hot-updater por workflow quando `apps/mobile/**` mudar.
-- **Health check pós-deploy** no CD e Kodus como check exigido no ruleset.
+- **Health check pós-deploy** no CD (hoje o workflow não detecta deploy que falhe depois).
 
 ## Origem deste repositório
 
