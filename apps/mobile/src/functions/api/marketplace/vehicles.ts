@@ -1,4 +1,3 @@
-import { api } from '@/libraries/api';
 import type {
 	MarketplaceVehicle,
 	MarketplaceVehicleRegisterForm,
@@ -6,7 +5,10 @@ import type {
 	ResponseDefault,
 	SearchParamsMarketplaceSimpleProps,
 } from '@segwise/core/types';
+import { fetch } from 'expo/fetch';
+import { File as ExpoFile } from 'expo-file-system';
 import { XiorError } from 'xior';
+import { api } from '@/libraries/api';
 
 async function vehicles(props: SearchParamsMarketplaceSimpleProps) {
 	try {
@@ -60,12 +62,10 @@ async function vehicleRegister(
 		const formData = new FormData();
 
 		for (const photo of props.photos) {
-			//@ts-expect-error
-			formData.append('photos', {
-				uri: photo,
-				name: `photo-${Date.now()}.jpg`,
-				type: 'image/jpeg',
-			});
+			formData.append(
+				'photos',
+				typeof photo === 'string' ? new ExpoFile(photo) : photo,
+			);
 		}
 
 		formData.set('model', props.model);
@@ -151,12 +151,10 @@ async function vehicleEdit(id: string, props: MarketplaceVehicleRegisterForm) {
 		const formData = new FormData();
 
 		for (const photo of props.photos) {
-			//@ts-expect-error
-			formData.append('photos', {
-				uri: photo,
-				name: `photo-${Date.now()}.jpg`,
-				type: 'image/jpeg',
-			});
+			formData.append(
+				'photos',
+				typeof photo === 'string' ? new ExpoFile(photo) : photo,
+			);
 		}
 
 		formData.set('model', props.model);

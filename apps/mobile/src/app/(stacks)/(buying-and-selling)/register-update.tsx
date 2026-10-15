@@ -1,3 +1,45 @@
+import Feather from '@expo/vector-icons/Feather';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useTheme } from '@react-navigation/native';
+import type { TriggerRef } from '@rn-primitives/select';
+import { maskPhone, maskPlate, maskPostalCode } from '@segwise/core/masks';
+import {
+	SchemaMarketplaceRegister,
+	SchemaMarketplaceVehicleDirection,
+	SchemaMarketplaceVehicleFuel,
+	SchemaVehicleExchange,
+} from '@segwise/core/schemas';
+import { isPlate } from '@segwise/core/valids';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { fetch } from 'expo/fetch';
+import { File as ExpoFile } from 'expo-file-system';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Fragment, useEffect, useRef } from 'react';
+import {
+	Controller,
+	type FieldValues,
+	type UseControllerProps,
+	useController,
+	useForm,
+} from 'react-hook-form';
+import {
+	ActivityIndicator,
+	Keyboard,
+	type NativeScrollEvent,
+	type NativeSyntheticEvent,
+	ScrollView,
+	StyleSheet,
+	Text,
+	type TextInput,
+	TouchableOpacity,
+	useWindowDimensions,
+	View,
+} from 'react-native';
+import { useKeyboardState } from 'react-native-keyboard-controller';
+import { XiorError } from 'xior';
+import type z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -22,46 +64,6 @@ import { toast } from '@/components/ui/toast';
 import { api } from '@/libraries/api';
 import { cn } from '@/libraries/classname';
 import { storage } from '@/libraries/storage';
-import Feather from '@expo/vector-icons/Feather';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useTheme } from '@react-navigation/native';
-import type { TriggerRef } from '@rn-primitives/select';
-import { maskPhone, maskPlate, maskPostalCode } from '@segwise/core/masks';
-import {
-	SchemaMarketplaceRegister,
-	SchemaMarketplaceVehicleDirection,
-	SchemaMarketplaceVehicleFuel,
-	SchemaVehicleExchange,
-} from '@segwise/core/schemas';
-import { isPlate } from '@segwise/core/valids';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Fragment, useEffect, useRef } from 'react';
-import {
-	Controller,
-	type FieldValues,
-	useController,
-	type UseControllerProps,
-	useForm,
-} from 'react-hook-form';
-import {
-	ActivityIndicator,
-	Keyboard,
-	type NativeScrollEvent,
-	type NativeSyntheticEvent,
-	ScrollView,
-	StyleSheet,
-	Text,
-	type TextInput,
-	TouchableOpacity,
-	useWindowDimensions,
-	View,
-} from 'react-native';
-import { useKeyboardState } from 'react-native-keyboard-controller';
-import { XiorError } from 'xior';
-import type z from 'zod';
 
 const directions = [
 	{
@@ -223,11 +225,7 @@ export default function SendMyVehiclesBuy() {
 					if (image instanceof File) {
 						formData.append('images', image);
 					} else if (typeof image !== 'string') {
-						formData.append('images', {
-							uri: image.uri,
-							name: image.fileName,
-							type: image.mimeType,
-						} as unknown as Blob);
+						formData.append('images', new ExpoFile(image.uri));
 					} else {
 						formData.append('images', image);
 					}
