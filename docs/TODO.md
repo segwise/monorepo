@@ -62,8 +62,7 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
 
 - [ ] **Arquivar os 4 repositórios antigos** (`core`, `backend`, `backoffice`, `application`) —
   o monorepo está em `github.com/segwise/monorepo` (push feito).
-- [ ] **Primeira execução real do CI** no GitHub (`.github/workflows/ci.yml` ainda não rodou lá)
-  e **branch protection** em `main` exigindo o check `CI`.
+- [x] CI rodando no GitHub e branch protection (`protect-main`) exigindo o check `CI` (repo público).
 - [ ] **Kodus** self-hosted no Dokploy como quality gate (configurar o GitHub App e as regras).
 - [ ] **CD híbrido**: imagens no GHCR (api + 3 variantes do backoffice) + webhook/API do
   Dokploy; mobile via EAS Build + hot-updater por workflow.
