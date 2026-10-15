@@ -12,7 +12,6 @@ RUN turbo prune @segwise/backoffice --docker
 FROM base AS builder
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
-COPY --from=pruner /app/bunfig.toml ./
 RUN bun install --frozen-lockfile
 COPY --from=pruner /app/out/full/ .
 
