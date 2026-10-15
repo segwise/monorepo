@@ -124,7 +124,7 @@ docker build -f apps/api/Dockerfile -t segwise-api .
 docker build -f apps/backoffice/Dockerfile \
   --build-arg NEXT_PUBLIC_ROLE_SYSTEM=admin \
   --build-arg NEXT_PUBLIC_API_URL=https://api.exemplo.com \
-  -t segwise-backoffice-admin .
+  -t segwise-backoffice .
 ```
 
 - **api**: o `entrypoint.sh` roda `prisma migrate deploy` (pelo

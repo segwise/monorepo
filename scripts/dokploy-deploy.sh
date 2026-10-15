@@ -5,7 +5,7 @@
 #   DOKPLOY_URL      URL base do Dokploy, ex.: https://dokploy.exemplo.com
 #   DOKPLOY_API_KEY  token da API (Dokploy → Profile → API/CLI)
 #   APPLICATION_ID   applicationId do serviço (GET /api/project.all)
-#   IMAGE            imagem completa com tag, ex.: ghcr.io/segwise/monorepo/api:sha-abc1234
+#   IMAGE            imagem completa com tag, ex.: ghcr.io/segwise/api:sha-abc1234
 #
 # Opcional: REGISTRY_URL (padrão ghcr.io). Imagens públicas não precisam de credenciais.
 set -euo pipefail
