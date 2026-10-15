@@ -1,8 +1,6 @@
 {
 	"compilerOptions": {
-		"lib": [
-			"ESNext"
-		],
+		"lib": ["ESNext"],
 		"target": "ES2023",
 		"module": "Preserve",
 		"moduleDetection": "force",
@@ -22,51 +20,21 @@
 		"noUnusedParameters": false,
 		"noPropertyAccessFromIndexSignature": false,
 		"paths": {
-			"@/@types/*": [
-				"./src/@types/*"
-			],
-			"@/services/*": [
-				"./src/services/*"
-			],
-			"@/server/*": [
-				"./src/services/server/*"
-			],
-			"@/server": [
-				"./src/services/server"
-			],
-			"@/const/*": [
-				"./src/config/const/*"
-			],
-			"@/libraries/*": [
-				"./src/libraries/*"
-			],
-			"@/functions/*": [
-				"./src/functions/*"
-			],
-			"@/environment": [
-				"./src/libraries/environment"
-			],
-			"@/routers/*": [
-				"./src/routers/*"
-			],
-			"@/routers": [
-				"./src/routers"
-			],
-			"@/auth": [
-				"./src/services/auth"
-			],
-			"@/auth/*": [
-				"./src/services/auth/*"
-			],
-			"@/controllers/*": [
-				"./src/controllers/*"
-			],
-			"@/db-adapters/*": [
-				"./src/libraries/database/adapters/*"
-			],
-			"@/db-serializers/*": [
-				"./src/libraries/database/serializers/*"
-			]
+			"@/@types/*": ["./src/@types/*"],
+			"@/services/*": ["./src/services/*"],
+			"@/server/*": ["./src/services/server/*"],
+			"@/server": ["./src/services/server"],
+			"@/const/*": ["./src/config/const/*"],
+			"@/libraries/*": ["./src/libraries/*"],
+			"@/functions/*": ["./src/functions/*"],
+			"@/environment": ["./src/libraries/environment"],
+			"@/routers/*": ["./src/routers/*"],
+			"@/routers": ["./src/routers"],
+			"@/auth": ["./src/services/auth"],
+			"@/auth/*": ["./src/services/auth/*"],
+			"@/controllers/*": ["./src/controllers/*"],
+			"@/db-adapters/*": ["./src/libraries/database/adapters/*"],
+			"@/db-serializers/*": ["./src/libraries/database/serializers/*"]
 		}
 	}
 }

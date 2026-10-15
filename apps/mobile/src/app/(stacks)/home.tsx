@@ -1,3 +1,6 @@
+import { Fragment } from 'react';
+import { ScrollView, Text, View } from 'react-native';
+import Svg, { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -12,9 +15,6 @@ import { ButtonLink } from '@/containers/home/button-link';
 import { ShareApp } from '@/functions/share-app';
 import { useSafes } from '@/libraries/hooks/api/safe';
 import { useStorageBoolean } from '@/libraries/storage';
-import { Fragment } from 'react';
-import { ScrollView, Text, View } from 'react-native';
-import Svg, { ClipPath, Defs, G, Path, Rect } from 'react-native-svg';
 
 function HomeScreen() {
 	const { data: safes } = useSafes();

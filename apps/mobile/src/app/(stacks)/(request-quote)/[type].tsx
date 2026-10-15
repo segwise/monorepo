@@ -1,17 +1,3 @@
-import { Button } from '@/components/ui/button';
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from '@/components/ui/dialog';
-import { Input, InputError } from '@/components/ui/input';
-import { toast } from '@/components/ui/toast';
-import { isCompany } from '@/configs/consts/company';
-import { cn } from '@/libraries/classname';
-import { useQuoteSimpleCustomRegister } from '@/libraries/hooks/api/quotes/register/simple';
-import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { maskPhone } from '@segwise/core/masks';
 import { SchemaQuoteSimpleCustomRegister } from '@segwise/core/schemas';
@@ -33,6 +19,20 @@ import {
 } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { Button } from '@/components/ui/button';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
+import { Input, InputError } from '@/components/ui/input';
+import { toast } from '@/components/ui/toast';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
+import { useQuoteSimpleCustomRegister } from '@/libraries/hooks/api/quotes/register/simple';
+import { storage } from '@/libraries/storage';
 
 interface LabelProps {
 	title: string;

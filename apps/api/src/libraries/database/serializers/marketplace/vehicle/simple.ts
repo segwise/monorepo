@@ -1,6 +1,6 @@
 import type { MarketplaceVehicle } from '@segwise/core/types';
-import type { SerializerProps } from '@/@types/serializer';
 import type { Prisma } from '@segwise/database/client';
+import type { SerializerProps } from '@/@types/serializer';
 import type { selectPrisma } from '@/libraries/database/adapters/marketplace/vehicle/simple';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 

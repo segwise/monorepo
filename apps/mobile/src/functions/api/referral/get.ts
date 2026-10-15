@@ -1,9 +1,9 @@
-import { api } from '@/libraries/api';
 import type {
 	ProducerReferral,
 	ProducerReferralResponse,
 } from '@segwise/core/types';
 import { XiorError } from 'xior';
+import { api } from '@/libraries/api';
 
 async function getReferral({ referral }: ProducerReferral) {
 	try {

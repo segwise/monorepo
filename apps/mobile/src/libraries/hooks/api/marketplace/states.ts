@@ -1,5 +1,5 @@
-import { fetchApi } from '@/functions/api';
 import { useQuery } from '@tanstack/react-query';
+import { fetchApi } from '@/functions/api';
 
 const useMarketplaceStates = () =>
 	useQuery({

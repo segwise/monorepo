@@ -1,10 +1,10 @@
 import type { ProducerSimple } from '@segwise/core/types';
-import type { SerializerProps } from '@/@types/serializer';
 import type {
 	Prisma,
 	TypeOfProduction,
 	TypeOfProductionPayment,
 } from '@segwise/database/client';
+import type { SerializerProps } from '@/@types/serializer';
 import type { selectPrisma } from '@/libraries/database/adapters/producer/simple';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 

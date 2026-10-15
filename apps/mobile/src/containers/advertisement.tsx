@@ -1,7 +1,7 @@
-import { isCompany } from '@/configs/consts/company';
-import { cn } from '@/libraries/classname';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
 
 function Advertisement() {
 	const { bottom } = useSafeAreaInsets();

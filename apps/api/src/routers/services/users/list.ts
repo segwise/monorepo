@@ -4,13 +4,13 @@ import {
 	type StaffRole,
 	type UserList,
 } from '@segwise/core';
+import { Role, StatusInvitation } from '@segwise/database/enums';
 import type { Server } from '@/@types/server';
 import {
 	type ParsedSearch,
 	parseSearch,
 } from '@/functions/search/parse-search';
 import { getUsersActor } from '@/functions/users/context';
-import { Role, StatusInvitation } from '@segwise/database/enums';
 
 function userSearchConditions(parsed: ParsedSearch) {
 	if (parsed.kind === 'document') {

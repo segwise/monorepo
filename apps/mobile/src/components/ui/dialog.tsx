@@ -1,11 +1,11 @@
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
-import { cn } from '@/libraries/classname';
 import * as DialogPrimitive from '@rn-primitives/dialog';
 import { SymbolView } from 'expo-symbols';
 import * as React from 'react';
 import { Platform, Text, View, type ViewProps } from 'react-native';
 import { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
+import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
+import { cn } from '@/libraries/classname';
 
 const Dialog = DialogPrimitive.Root;
 
@@ -47,7 +47,7 @@ function DialogOverlay({
 						entering={FadeIn.delay(50)}
 						exiting={FadeOut.duration(150)}
 					>
-						<>{children}</>
+						{children}
 					</NativeOnlyAnimatedView>
 				</NativeOnlyAnimatedView>
 			</DialogPrimitive.Overlay>

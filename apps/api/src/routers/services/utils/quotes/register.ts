@@ -5,12 +5,12 @@ import {
 	SchemaQuoteSimpleCustomRegister,
 	SchemaQuoteSimpleRegister,
 } from '@segwise/core';
+import { ModalityInsurance } from '@segwise/database/enums';
 import { endOfDay } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { resolveProducerByReferral } from '@/functions/producers/resolve-producer-by-referral';
 import { vehicleByPlate } from '@/functions/vehicle/by-plate';
-import { ModalityInsurance } from '@segwise/database/enums';
 import { dayKey } from '@/libraries/dashboard/range';
 
 // Último dia do mês corrente no fuso do usuário, como data (UTC 00:00, coluna

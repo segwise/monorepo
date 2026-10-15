@@ -3,11 +3,11 @@ import {
 	type ProducerRegisterResponse,
 	SchemaProducerRegister,
 } from '@segwise/core';
+import { Role } from '@segwise/database/enums';
 import { XiorError } from 'xior';
 import type { Server } from '@/@types/server';
 import { buildProducerPortalUrl } from '@/functions/hostname/build-producer-portal-url';
 import { findOrCreateProducerUser } from '@/functions/producers/find-or-create-producer-user';
-import { Role } from '@segwise/database/enums';
 
 // Cadastro de PARCEIRO pelo painel: sem CPF/CNPJ e sem e-mail de confirmação. A
 // corretora define a senha e o acesso nasce liberado: o e-mail é marcado como

@@ -1,10 +1,10 @@
-import { isCompany } from '@/configs/consts/company';
-import { cn } from '@/libraries/classname';
 import { openURL } from 'expo-linking';
 import { type Href, useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { z } from 'zod';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
 
 type ButtonLinkVariant =
 	| { href: Href; onPress?: never }

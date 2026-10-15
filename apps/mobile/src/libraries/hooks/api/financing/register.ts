@@ -1,7 +1,7 @@
-import { fetchApi } from '@/functions/api';
 import type { QuoteFinancingRegister } from '@segwise/core/types';
 import { useMutation } from '@tanstack/react-query';
 import type { XiorError } from 'xior';
+import { fetchApi } from '@/functions/api';
 
 const useFinancingRegister = () =>
 	useMutation<

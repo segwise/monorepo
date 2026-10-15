@@ -1,7 +1,3 @@
-import { Separator } from '@/components/ui/separator';
-import { isCompany } from '@/configs/consts/company';
-import { api } from '@/libraries/api';
-import { cn } from '@/libraries/classname';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { maskPostalCode } from '@segwise/core/masks';
@@ -24,6 +20,10 @@ import {
 	View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Separator } from '@/components/ui/separator';
+import { isCompany } from '@/configs/consts/company';
+import { api } from '@/libraries/api';
+import { cn } from '@/libraries/classname';
 
 const featuresArray = [
 	{ id: 'air_barg', name: 'air Bag' },

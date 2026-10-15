@@ -1,6 +1,3 @@
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/libraries/classname';
-import { useInsuranceCompaniesDetailsById } from '@/libraries/hooks/api/insurance-companies/details';
 import { maskCNPJ, maskPhone } from '@segwise/core/masks';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -14,6 +11,9 @@ import {
 	View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/libraries/classname';
+import { useInsuranceCompaniesDetailsById } from '@/libraries/hooks/api/insurance-companies/details';
 
 function InsuranceCompaniesDetailsScreen() {
 	const { id } = useLocalSearchParams<{

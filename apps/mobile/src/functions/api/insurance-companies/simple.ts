@@ -1,6 +1,6 @@
-import { api } from '@/libraries/api';
 import type { InsuranceCompanySimple } from '@segwise/core/types';
 import { XiorError } from 'xior';
+import { api } from '@/libraries/api';
 
 async function getInsuranceCompaniesSimple({
 	signal,

@@ -1,6 +1,6 @@
+import { Role } from '@segwise/database/enums';
 import type { Session } from 'better-auth';
 import type { Context } from '@/@types/server';
-import { Role } from '@segwise/database/enums';
 
 const pathnameIgnoresSession = [
 	'/auth/reset-password',

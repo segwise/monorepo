@@ -1,6 +1,6 @@
+import { Prisma } from '@segwise/database/client';
 import type { Server } from '@/@types/server';
 import { fee } from '@/const/fee';
-import { Prisma } from '@segwise/database/client';
 
 function registerRoutersServicesPIX(server: Server) {
 	const base = server.basePath('/pix');

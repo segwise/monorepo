@@ -6,6 +6,8 @@ import {
 	isCPF,
 	SchemaSafeRegister,
 } from '@segwise/core';
+import { MethodPayment, StatusPayment } from '@segwise/database/enums';
+import { Decimal } from '@segwise/database/internal/prismaNamespace';
 import {
 	addDays,
 	addMonths,
@@ -21,8 +23,6 @@ import {
 	startOfMonth,
 } from 'date-fns';
 import type { Server } from '@/@types/server';
-import { MethodPayment, StatusPayment } from '@segwise/database/enums';
-import { Decimal } from '@segwise/database/internal/prismaNamespace';
 import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 
 function registerRoutersServicesSafesRegister(server: Server) {

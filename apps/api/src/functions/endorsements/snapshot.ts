@@ -1,5 +1,5 @@
-import type { Database } from '@/@types/database';
 import type { EndorsementType } from '@segwise/database/enums';
+import type { Database } from '@/@types/database';
 
 // Reversão de endossos.
 //

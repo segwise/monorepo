@@ -1,7 +1,7 @@
-import { whatToDo } from '@/configs/consts/what-to-do';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Fragment } from 'react';
 import { ScrollView, View } from 'react-native';
+import { whatToDo } from '@/configs/consts/what-to-do';
 
 function WhatToDoReadingScreen() {
 	const { reading } = useLocalSearchParams<{

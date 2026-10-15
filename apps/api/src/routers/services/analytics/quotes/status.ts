@@ -3,11 +3,11 @@ import {
 	SchemaBasisOfAnalysis,
 	SchemaSearchParamsQuoteSimple,
 } from '@segwise/core';
+import { type Prisma, Role } from '@segwise/database/client';
 import { subMonths, subYears } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { timestampRange } from '@/functions/date/timestamp-range';
-import { type Prisma, Role } from '@segwise/database/client';
 import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 
 function registerRoutersServicesAnalyticsQuotesStatus(server: Server) {

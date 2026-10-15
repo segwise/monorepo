@@ -1,6 +1,6 @@
+import { StatusSafe } from '@segwise/database/enums';
 import { addMonths, setDate, startOfDay, startOfToday } from 'date-fns';
 import type { Server } from '@/@types/server';
-import { StatusSafe } from '@segwise/database/enums';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 
 function registerRoutersServicesAuthProfileDetailsProducer(server: Server) {

@@ -1,6 +1,6 @@
+import type { Prisma } from '@segwise/database/client';
 import { format } from 'date-fns';
 import type { selectPrisma } from '@/db-adapters/safe/print';
-import type { Prisma } from '@segwise/database/client';
 
 type SafePrintRow = {
 	id: string;

@@ -1,5 +1,5 @@
-import type { Server } from '@/@types/server.d';
 import type { InsuranceCompanyWhereUniqueInput } from '@segwise/database/models';
+import type { Server } from '@/@types/server.d';
 import { selectPrisma as selectPrismaDetails } from '@/libraries/database/adapters/insurance-company/details';
 import { serializer as serializerDetails } from '@/libraries/database/serializers/insurance-company/details';
 

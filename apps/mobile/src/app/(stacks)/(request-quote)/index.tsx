@@ -1,3 +1,15 @@
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import { useTheme } from '@react-navigation/native';
+import { type Href, Link, useRouter } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
+import { cloneElement, Fragment, useState } from 'react';
+import {
+	Pressable,
+	ScrollView,
+	Text,
+	TouchableOpacity,
+	View,
+} from 'react-native';
 import { Button } from '@/components/ui/button';
 import {
 	Collapsible,
@@ -14,18 +26,6 @@ import { Separator } from '@/components/ui/separator';
 import { isCompany } from '@/configs/consts/company';
 import { Header } from '@/containers/header';
 import { cn } from '@/libraries/classname';
-import { Feather, FontAwesome5 } from '@expo/vector-icons';
-import { useTheme } from '@react-navigation/native';
-import { type Href, Link, useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
-import { cloneElement, Fragment, useState } from 'react';
-import {
-	Pressable,
-	ScrollView,
-	Text,
-	TouchableOpacity,
-	View,
-} from 'react-native';
 
 const insurances: Array<{
 	id: number;

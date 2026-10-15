@@ -1,5 +1,3 @@
-import { TextClassContext } from '@/components/ui/text';
-import { cn } from '@/libraries/classname';
 import * as SelectPrimitive from '@rn-primitives/select';
 import { Image } from 'expo-image';
 import { SymbolView } from 'expo-symbols';
@@ -12,6 +10,8 @@ import {
 	View,
 } from 'react-native';
 import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
+import { TextClassContext } from '@/components/ui/text';
+import { cn } from '@/libraries/classname';
 import { Label } from './label';
 
 type Option = SelectPrimitive.Option;

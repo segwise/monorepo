@@ -1,6 +1,6 @@
-import { ButtonGrid } from '@/containers/home/button-grid';
 import { View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
+import { ButtonGrid } from '@/containers/home/button-grid';
 
 function UsefulContactsScreen() {
 	return (

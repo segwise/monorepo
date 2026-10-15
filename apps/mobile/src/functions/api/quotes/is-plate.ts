@@ -1,6 +1,6 @@
-import { api } from '@/libraries/api';
 import { SchemaPlate } from '@segwise/core/schemas';
 import type { QuoteSimple } from '@segwise/core/types';
+import { api } from '@/libraries/api';
 
 async function isQuotePlate(
 	plate: string,

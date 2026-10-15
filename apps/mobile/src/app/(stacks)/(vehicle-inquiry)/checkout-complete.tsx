@@ -1,4 +1,3 @@
-import { api } from '@/libraries/api';
 import { maskPlate } from '@segwise/core/masks';
 import { useQuery } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
@@ -15,6 +14,7 @@ import {
 	TouchableOpacity,
 	View,
 } from 'react-native';
+import { api } from '@/libraries/api';
 
 type PaymentStatus = 'pending' | 'paid' | 'expired';
 

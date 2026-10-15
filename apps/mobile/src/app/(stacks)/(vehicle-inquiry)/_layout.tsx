@@ -1,5 +1,5 @@
-import { Header } from '@/containers/header';
 import { Stack } from 'expo-router';
+import { Header } from '@/containers/header';
 
 function StackLayout() {
 	return (

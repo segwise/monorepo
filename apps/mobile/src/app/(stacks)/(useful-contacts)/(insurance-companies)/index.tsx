@@ -1,10 +1,10 @@
-import { useInsuranceCompaniesSimple } from '@/libraries/hooks/api/insurance-companies/simple';
 import { maskCNPJ } from '@segwise/core/masks';
 import type { InsuranceCompanySimple } from '@segwise/core/types';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useInsuranceCompaniesSimple } from '@/libraries/hooks/api/insurance-companies/simple';
 
 function Item({ id, name, cnpj, icon }: InsuranceCompanySimple) {
 	const { push } = useRouter();

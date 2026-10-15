@@ -1,9 +1,3 @@
-import IMAGE from '@/assets/images/image-request-code.png';
-import { Button } from '@/components/ui/button';
-import { Input, InputError } from '@/components/ui/input';
-import { toast } from '@/components/ui/toast';
-import { useReferral } from '@/libraries/hooks/api/referral';
-import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SchemaProducerReferral } from '@segwise/core/schemas';
 import type { ProducerReferral } from '@segwise/core/types';
@@ -14,6 +8,12 @@ import { Controller, useForm } from 'react-hook-form';
 import { ActivityIndicator, Keyboard, Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import IMAGE from '@/assets/images/image-request-code.png';
+import { Button } from '@/components/ui/button';
+import { Input, InputError } from '@/components/ui/input';
+import { toast } from '@/components/ui/toast';
+import { useReferral } from '@/libraries/hooks/api/referral';
+import { storage } from '@/libraries/storage';
 
 function RequestReferralScreen() {
 	const { bottom } = useSafeAreaInsets();

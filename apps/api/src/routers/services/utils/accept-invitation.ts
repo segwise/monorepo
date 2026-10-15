@@ -1,5 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaPassword } from '@segwise/core';
+import { Role } from '@segwise/database/enums';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { buildCustomerPortalUrl } from '@/functions/hostname/build-customer-portal-url';
@@ -9,7 +10,6 @@ import {
 	confirmProducerInvitation,
 } from '@/functions/invitations/confirm-producer-invitation';
 import { responseReplaceSession } from '@/functions/response/replace-session';
-import { Role } from '@segwise/database/enums';
 
 function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 	const base = server.basePath('/accept-invitation');

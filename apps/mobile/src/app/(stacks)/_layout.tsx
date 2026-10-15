@@ -1,6 +1,6 @@
+import { Stack } from 'expo-router';
 import { Header } from '@/containers/header';
 import { storage } from '@/libraries/storage';
-import { Stack } from 'expo-router';
 
 export const unstable_settings = {
 	initialRouteName: '/home',

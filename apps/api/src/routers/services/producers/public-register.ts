@@ -1,5 +1,6 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaProducerPublicRegister } from '@segwise/core';
+import { Role, TypeOfProductionPayment } from '@segwise/database/enums';
 import { XiorError } from 'xior';
 import z from 'zod';
 import type { Server } from '@/@types/server';
@@ -7,7 +8,6 @@ import { selectPrisma as selectPrismaBrokerPublic } from '@/db-adapters/broker/p
 import { serializer as serializerBrokerPublic } from '@/db-serializers/broker/public';
 import { buildAcceptInvitationUrl } from '@/functions/hostname/build-accept-invitation-url';
 import { findOrCreateProducerUser } from '@/functions/producers/find-or-create-producer-user';
-import { Role, TypeOfProductionPayment } from '@segwise/database/enums';
 import { InvitePartnerEmail } from '../../../templates/invite-partner';
 
 const SchemaBrokerSlugParam = z.object({

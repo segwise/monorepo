@@ -1,3 +1,14 @@
+import { maskPlate, maskPostalCode } from '@segwise/core/masks';
+import { translateVehicleUsage } from '@segwise/core/translate';
+import type { SafeSimple } from '@segwise/core/types';
+import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import { replace } from 'expo-router/build/global-state/routing';
+import { SymbolView } from 'expo-symbols';
+import { useEffect } from 'react';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -15,17 +26,6 @@ import { cn } from '@/libraries/classname';
 import { useInsuranceCompaniesSimple } from '@/libraries/hooks/api/insurance-companies/simple';
 import { useSafes } from '@/libraries/hooks/api/safe';
 import { storage } from '@/libraries/storage';
-import { maskPlate, maskPostalCode } from '@segwise/core/masks';
-import { translateVehicleUsage } from '@segwise/core/translate';
-import type { SafeSimple } from '@segwise/core/types';
-import { useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { replace } from 'expo-router/build/global-state/routing';
-import { SymbolView } from 'expo-symbols';
-import { useEffect } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 function List({ label, value }: { label: string; value: string }) {
 	return (

@@ -5,12 +5,12 @@ import {
 	SchemaUserRegister,
 	translateStaffRole,
 } from '@segwise/core';
+import { Role, StatusInvitation, StatusMember } from '@segwise/database/enums';
 import type { Server } from '@/@types/server';
 import { buildAcceptInvitationUrl } from '@/functions/hostname/build-accept-invitation-url';
 import { generateUniqueReferral } from '@/functions/producers/generate-unique-referral';
 import { getUsersActor } from '@/functions/users/context';
 import { assertCpfAvailable } from '@/functions/users/cpf';
-import { Role, StatusInvitation, StatusMember } from '@segwise/database/enums';
 import { InvitePartnerEmail } from '../../../templates/invite-partner';
 
 const INVITATION_EXPIRES_IN_MS = 1000 * 60 * 60 * 24 * 30;

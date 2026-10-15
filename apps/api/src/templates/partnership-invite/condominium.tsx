@@ -96,18 +96,18 @@ function InsurerLogoGrid() {
 		<>
 			{rows.map((row, rowIndex) => (
 				// eslint-disable-next-line react/no-array-index-key
-				<Row key={`insurer-row-${rowIndex}`} className="mt-1">
+				<Row key={`insurer-row-${rowIndex}`} className='mt-1'>
 					{row.map((insurer) => (
 						<Column
 							key={insurer.name}
-							className="border border-solid border-[#E5E7EB] rounded py-1 px-1 align-middle"
+							className='border border-solid border-[#E5E7EB] rounded py-1 px-1 align-middle'
 						>
 							<Img
 								src={insurer.logo}
 								alt={insurer.name}
 								width={40}
 								height={15}
-								className="object-contain mx-auto"
+								className='object-contain mx-auto'
 							/>
 						</Column>
 					))}
@@ -132,18 +132,18 @@ function TemplatePartnershipInviteCondominium({
 	}
 
 	return (
-		<Html lang="pt-BR">
+		<Html lang='pt-BR'>
 			<Head>
 				<title>Gestão + Proteção — Administradora de Condomínios | XCAR</title>
 				<Font
-					fontFamily="Inter"
-					fallbackFontFamily="Arial"
+					fontFamily='Inter'
+					fallbackFontFamily='Arial'
 					webFont={{
 						url: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap',
 						format: 'woff2',
 					}}
 					fontWeight={400}
-					fontStyle="normal"
+					fontStyle='normal'
 				/>
 				<style>{`
 					@media print {
@@ -167,55 +167,55 @@ function TemplatePartnershipInviteCondominium({
 				}}
 			>
 				<Body
-					className="bg-white m-0"
+					className='bg-white m-0'
 					style={{ fontFamily: 'Inter, Arial, sans-serif' }}
 				>
-					<Section className="mx-auto max-w-[680px]">
-						<Section className="bg-primary px-10 py-4">
+					<Section className='mx-auto max-w-[680px]'>
+						<Section className='bg-primary px-10 py-4'>
 							<Row>
 								<Column>
 									<Img
 										src={LOGO_WHITE}
-										alt="XCAR CORRETORA DE SEGUROS"
+										alt='XCAR CORRETORA DE SEGUROS'
 										width={120}
 										height={27}
 									/>
 								</Column>
-								<Column align="right">
-									<Text className="text-[10px] tracking-wide text-[#9CA3AF] uppercase m-0">
+								<Column align='right'>
+									<Text className='text-[10px] tracking-wide text-[#9CA3AF] uppercase m-0'>
 										Proposta de parceria comercial
 									</Text>
 								</Column>
 							</Row>
 						</Section>
 
-						<Section className="px-10 pt-5 pb-5">
-							<Text className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+						<Section className='px-10 pt-5 pb-5'>
+							<Text className='text-[11px] font-bold text-[#374151] m-0 mb-0.5'>
 								À(ao) Sr.(a) Responsável por Novos Negócios
 							</Text>
-							<Text className="text-[11px] text-[#374151] m-0 mb-0.5">
+							<Text className='text-[11px] text-[#374151] m-0 mb-0.5'>
 								(Administradora de Condomínios)
 							</Text>
-							<Text className="text-[11px] text-[#374151] m-0 mb-4">
+							<Text className='text-[11px] text-[#374151] m-0 mb-4'>
 								Prezado(a) Senhor(a),
 							</Text>
 
-							<Text className="text-[11px] leading-[16px] text-[#374151] m-0 mb-4">
+							<Text className='text-[11px] leading-[16px] text-[#374151] m-0 mb-4'>
 								Uma excelente oportunidade para ampliar os benefícios oferecidos
 								aos clientes sob a gestão de sua empresa.
 							</Text>
 
-							<Text className="text-[12px] font-bold text-primary m-0 mb-1.5">
+							<Text className='text-[12px] font-bold text-primary m-0 mb-1.5'>
 								PROTEÇÃO AO PATRIMÔNIO
 							</Text>
-							<Text className="text-[11px] leading-[16px] text-[#374151] m-0 mb-3">
+							<Text className='text-[11px] leading-[16px] text-[#374151] m-0 mb-3'>
 								Sendo a missão de sua empresa cuidar da gestão e do patrimônio
 								coletivo dos condomínios, apresentamos uma parceria com a XCAR
 								Corretora de Seguros para também oferecer proteção aos bens
 								particulares dos condôminos, agregando valor aos serviços já
 								disponibilizados.
 							</Text>
-							<Text className="text-[11px] leading-[16px] text-[#374151] m-0 mb-4">
+							<Text className='text-[11px] leading-[16px] text-[#374151] m-0 mb-4'>
 								Meu nome é Fernando Luiz Malheiros de Sena, Diretor da XCAR
 								Corretora de Seguros, e gostaria de apresentar, em parceria com
 								sua empresa, o programa "GESTÃO + PROTEÇÃO", desenvolvido para
@@ -223,28 +223,28 @@ function TemplatePartnershipInviteCondominium({
 								administradora.
 							</Text>
 
-							<Section className="mb-4">
-								<Text className="text-[12px] font-bold text-primary m-0 mb-1.5">
+							<Section className='mb-4'>
+								<Text className='text-[12px] font-bold text-primary m-0 mb-1.5'>
 									1. BENEFÍCIOS AOS CLIENTES
 								</Text>
-								<Text className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								<Text className='text-[11px] font-bold text-[#374151] m-0 mb-0.5'>
 									Acesso ao aplicativo Segwise
 								</Text>
-								<Text className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								<Text className='text-[11px] leading-[16px] text-[#374151] m-0 mb-2'>
 									Um aplicativo relevante e de fácil utilização, que amplia os
 									benefícios oferecidos pela administradora, funcionando como um
 									verdadeiro assistente de bolso e centralizando serviços,
 									informações e orientações essenciais, tais como:
 								</Text>
 
-								<Row className="mb-1">
-									<Column width={16} className="align-top">
-										<Text className="text-[11px] text-[#9CA3AF] leading-[16px] m-0">
+								<Row className='mb-1'>
+									<Column width={16} className='align-top'>
+										<Text className='text-[11px] text-[#9CA3AF] leading-[16px] m-0'>
 											•
 										</Text>
 									</Column>
-									<Column className="align-top">
-										<Text className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<Column className='align-top'>
+										<Text className='text-[11px] leading-[16px] text-[#374151] m-0'>
 											<b>EVITAR NEGATIVA DE SINISTRO</b> – orientações sobre
 											temas como principal condutor, CEP de pernoite, cobertura
 											para condutores entre 18 e 25 anos, deveres do segurado,
@@ -253,28 +253,28 @@ function TemplatePartnershipInviteCondominium({
 										</Text>
 									</Column>
 								</Row>
-								<Row className="mb-1">
-									<Column width={16} className="align-top">
-										<Text className="text-[11px] text-[#9CA3AF] leading-[16px] m-0">
+								<Row className='mb-1'>
+									<Column width={16} className='align-top'>
+										<Text className='text-[11px] text-[#9CA3AF] leading-[16px] m-0'>
 											•
 										</Text>
 									</Column>
-									<Column className="align-top">
-										<Text className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<Column className='align-top'>
+										<Text className='text-[11px] leading-[16px] text-[#374151] m-0'>
 											<b>CONSULTA VEICULAR</b> – informações sobre valor médio
 											da FIPE, multas, gravames, infrações, débitos, IPVA,
 											licenciamento, DPVAT, roubo e sinistros.
 										</Text>
 									</Column>
 								</Row>
-								<Row className="mb-1">
-									<Column width={16} className="align-top">
-										<Text className="text-[11px] text-[#9CA3AF] leading-[16px] m-0">
+								<Row className='mb-1'>
+									<Column width={16} className='align-top'>
+										<Text className='text-[11px] text-[#9CA3AF] leading-[16px] m-0'>
 											•
 										</Text>
 									</Column>
-									<Column className="align-top">
-										<Text className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<Column className='align-top'>
+										<Text className='text-[11px] leading-[16px] text-[#374151] m-0'>
 											<b>ASSISTÊNCIAS</b> – telefones e orientações para
 											solicitar reboque, comunicar sinistro, solicitar
 											substituição de vidros, faróis e lanternas, entre outros
@@ -283,13 +283,13 @@ function TemplatePartnershipInviteCondominium({
 									</Column>
 								</Row>
 								<Row>
-									<Column width={16} className="align-top">
-										<Text className="text-[11px] text-[#9CA3AF] leading-[16px] m-0">
+									<Column width={16} className='align-top'>
+										<Text className='text-[11px] text-[#9CA3AF] leading-[16px] m-0'>
 											•
 										</Text>
 									</Column>
-									<Column className="align-top">
-										<Text className="text-[11px] leading-[16px] text-[#374151] m-0">
+									<Column className='align-top'>
+										<Text className='text-[11px] leading-[16px] text-[#374151] m-0'>
 											<b>ORIENTAÇÃO EM CASO DE SINISTRO</b> – informações sobre
 											como agir, para onde ligar, quais providências tomar e
 											como proceder em situações que envolvam vítimas.
@@ -298,15 +298,15 @@ function TemplatePartnershipInviteCondominium({
 								</Row>
 							</Section>
 
-							<Section className="mb-4">
-								<Text className="text-[12px] font-bold text-primary m-0 mb-1.5">
+							<Section className='mb-4'>
+								<Text className='text-[12px] font-bold text-primary m-0 mb-1.5'>
 									2. BENEFÍCIOS PARA A ADMINISTRADORA DE CONDOMÍNIOS
 								</Text>
 
-								<Text className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								<Text className='text-[11px] font-bold text-[#374151] m-0 mb-0.5'>
 									PROTEÇÃO PATRIMONIAL
 								</Text>
-								<Text className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								<Text className='text-[11px] leading-[16px] text-[#374151] m-0 mb-2'>
 									Amplie o seu leque de benefícios, oferecendo aos condôminos a
 									possibilidade de proteger seus patrimônios particulares por
 									meio de uma parceria com a XCAR Corretora de Seguros, com
@@ -314,27 +314,27 @@ function TemplatePartnershipInviteCondominium({
 									exclusivos na contratação ou renovação de seguros.
 								</Text>
 
-								<Text className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								<Text className='text-[11px] font-bold text-[#374151] m-0 mb-0.5'>
 									COMISSIONAMENTO VITALÍCIO
 								</Text>
-								<Text className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								<Text className='text-[11px] leading-[16px] text-[#374151] m-0 mb-2'>
 									Percentual sobre os ganhos da corretora decorrentes das
 									indicações de clientes que resultem na efetiva contratação de
 									seguros, conforme as condições estabelecidas na parceria.
 								</Text>
 
-								<Text className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								<Text className='text-[11px] font-bold text-[#374151] m-0 mb-0.5'>
 									CUSTO DE IMPLANTAÇÃO
 								</Text>
-								<Text className="text-[11px] leading-[16px] text-[#374151] m-0 mb-2">
+								<Text className='text-[11px] leading-[16px] text-[#374151] m-0 mb-2'>
 									Sem qualquer custo financeiro ou necessidade de estrutura
 									operacional adicional por parte da administradora.
 								</Text>
 
-								<Text className="text-[11px] font-bold text-[#374151] m-0 mb-0.5">
+								<Text className='text-[11px] font-bold text-[#374151] m-0 mb-0.5'>
 									ACESSO AO APLICATIVO PARA PARCEIROS
 								</Text>
-								<Text className="text-[11px] leading-[16px] text-[#374151] m-0">
+								<Text className='text-[11px] leading-[16px] text-[#374151] m-0'>
 									Aplicativo dedicado à administradora de condomínios,
 									permitindo o acompanhamento das adesões realizadas e o acesso
 									a relatórios financeiros referentes às indicações e aos
@@ -342,11 +342,11 @@ function TemplatePartnershipInviteCondominium({
 								</Text>
 							</Section>
 
-							<Section className="mb-6">
-								<Text className="text-[12px] font-bold text-primary m-0 mb-1.5">
+							<Section className='mb-6'>
+								<Text className='text-[12px] font-bold text-primary m-0 mb-1.5'>
 									CONSIDERAÇÕES FINAIS
 								</Text>
-								<Text className="text-[11px] leading-[16px] text-[#374151] m-0">
+								<Text className='text-[11px] leading-[16px] text-[#374151] m-0'>
 									Coloco-me à disposição para esclarecer eventuais dúvidas e
 									apresentar, de forma detalhada, o funcionamento do programa,
 									suas condições e os benefícios que a parceria poderá
@@ -355,46 +355,46 @@ function TemplatePartnershipInviteCondominium({
 							</Section>
 
 							{whatsappUrl && (
-								<Section className="mb-6 text-center">
+								<Section className='mb-6 text-center'>
 									<Button
 										href={whatsappUrl}
-										className="rounded bg-[#25D366] px-6 py-3 text-[12px] font-bold text-white"
+										className='rounded bg-[#25D366] px-6 py-3 text-[12px] font-bold text-white'
 									>
 										Falar pelo WhatsApp
 									</Button>
 								</Section>
 							)}
 
-							<Text className="text-[11px] leading-[16px] text-[#374151] m-0 mb-4">
+							<Text className='text-[11px] leading-[16px] text-[#374151] m-0 mb-4'>
 								Atenciosamente,
 							</Text>
 
-							<Section className="pt-16 border-t border-solid border-[#D1D5DB]">
-								<Text className="text-[11px] leading-[16px] text-[#374151] m-0">
+							<Section className='pt-16 border-t border-solid border-[#D1D5DB]'>
+								<Text className='text-[11px] leading-[16px] text-[#374151] m-0'>
 									Fernando Luiz Malheiros de Sena
 								</Text>
-								<Text className="text-[11px] leading-[16px] text-muted m-0 mb-3">
+								<Text className='text-[11px] leading-[16px] text-muted m-0 mb-3'>
 									Diretor – XCAR Corretora de Seguros
 								</Text>
-								<Text className="text-[11px] leading-[16px] text-muted m-0 mb-3">
+								<Text className='text-[11px] leading-[16px] text-muted m-0 mb-3'>
 									(81) 98696-1991 - (81) 3229-1728
 								</Text>
-								<Text className="text-[9px] tracking-wide text-muted uppercase m-0 mb-1.5">
+								<Text className='text-[9px] tracking-wide text-muted uppercase m-0 mb-1.5'>
 									Seguradoras parceiras
 								</Text>
 								<InsurerLogoGrid />
 							</Section>
 						</Section>
 
-						<Section className="px-10 py-4 border-t border-solid border-[#E5E7EB]">
+						<Section className='px-10 py-4 border-t border-solid border-[#E5E7EB]'>
 							<Row>
 								<Column>
-									<Text className="text-[10px] text-muted m-0">
+									<Text className='text-[10px] text-muted m-0'>
 										XCAR CORRETORA DE SEGUROS
 									</Text>
 								</Column>
-								<Column align="right">
-									<Text className="text-[10px] text-muted m-0">
+								<Column align='right'>
+									<Text className='text-[10px] text-muted m-0'>
 										segwise.com.br
 									</Text>
 								</Column>

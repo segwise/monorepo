@@ -1,5 +1,5 @@
-import type { Environment } from '@/@types/environment';
 import Constants from 'expo-constants';
+import type { Environment } from '@/@types/environment';
 import { SchemaEnvironment } from './schemas/environment';
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl;

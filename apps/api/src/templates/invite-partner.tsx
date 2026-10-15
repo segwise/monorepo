@@ -34,7 +34,7 @@ function InvitePartnerEmail({
 	const year = new Date().getFullYear();
 
 	return (
-		<Html lang="pt-BR">
+		<Html lang='pt-BR'>
 			<Head />
 			<Preview>
 				{confirmOnly

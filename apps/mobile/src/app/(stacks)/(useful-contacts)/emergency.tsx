@@ -1,4 +1,3 @@
-import { usefulContacts } from '@/configs/consts/useful-contacts';
 import { SymbolView } from 'expo-symbols';
 import {
 	Linking,
@@ -7,6 +6,7 @@ import {
 	TouchableOpacity,
 	View,
 } from 'react-native';
+import { usefulContacts } from '@/configs/consts/useful-contacts';
 
 function Item({ title, value }: (typeof usefulContacts)[0]) {
 	function call() {

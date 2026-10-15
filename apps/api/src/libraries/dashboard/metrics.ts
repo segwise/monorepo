@@ -1,5 +1,5 @@
-import type { Database } from '@/@types/database';
 import { Prisma } from '@segwise/database/client';
+import type { Database } from '@/@types/database';
 import type { DayRange } from './range';
 
 // Mesmo produtor ignorado pelas contagens de apólices em analytics/policies

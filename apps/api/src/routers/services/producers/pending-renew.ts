@@ -1,6 +1,6 @@
+import { StatusInvitation } from '@segwise/database/enums';
 import type { Server } from '@/@types/server';
 import { buildAcceptInvitationUrl } from '@/functions/hostname/build-accept-invitation-url';
-import { StatusInvitation } from '@segwise/database/enums';
 import { InvitePartnerEmail } from '../../../templates/invite-partner';
 
 // Convites não têm um job que marca "expired" automaticamente — o vencimento

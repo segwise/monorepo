@@ -1,7 +1,3 @@
-import { isCompany } from '@/configs/consts/company';
-import { api } from '@/libraries/api';
-import { cn } from '@/libraries/classname';
-import { storage } from '@/libraries/storage';
 import { Feather } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -17,6 +13,10 @@ import {
 	TouchableOpacity,
 	View,
 } from 'react-native';
+import { isCompany } from '@/configs/consts/company';
+import { api } from '@/libraries/api';
+import { cn } from '@/libraries/classname';
+import { storage } from '@/libraries/storage';
 
 const LIMIT = 10;
 

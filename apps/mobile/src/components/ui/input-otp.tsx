@@ -1,6 +1,6 @@
-import { cn } from '@/libraries/classname';
 import { useEffect, useRef, useState } from 'react';
 import { type KeyboardTypeOptions, TextInput, View } from 'react-native';
+import { cn } from '@/libraries/classname';
 
 interface InputOTPProps extends React.ComponentPropsWithoutRef<typeof View> {
 	className?: string;

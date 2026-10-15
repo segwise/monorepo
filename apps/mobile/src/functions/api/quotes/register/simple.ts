@@ -1,9 +1,9 @@
-import { api } from '@/libraries/api';
 import type {
 	QuoteSimpleCustomRegister,
 	QuoteSimpleRegister,
 } from '@segwise/core/types';
 import { XiorError } from 'xior';
+import { api } from '@/libraries/api';
 
 async function submitQuoteSimple(props: QuoteSimpleRegister) {
 	try {

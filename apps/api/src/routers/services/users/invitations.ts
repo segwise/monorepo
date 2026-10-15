@@ -1,9 +1,9 @@
 import type { StaffRole } from '@segwise/core';
 import { canManageStaffRole, translateStaffRole } from '@segwise/core';
+import { Role, StatusInvitation } from '@segwise/database/enums';
 import type { Context, Server } from '@/@types/server';
 import { buildAcceptInvitationUrl } from '@/functions/hostname/build-accept-invitation-url';
 import { getUsersActor } from '@/functions/users/context';
-import { Role, StatusInvitation } from '@segwise/database/enums';
 import { InvitePartnerEmail } from '../../../templates/invite-partner';
 
 const INVITATION_EXPIRES_IN_MS = 1000 * 60 * 60 * 24 * 30;

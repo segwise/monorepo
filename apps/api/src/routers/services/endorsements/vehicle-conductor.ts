@@ -1,10 +1,10 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaEndorsementVehicleConductor } from '@segwise/core/schemas';
+import { EndorsementType } from '@segwise/database/enums';
 import { differenceInYears } from 'date-fns';
 import type { Server } from '@/@types/server';
 import { documentByCPF } from '@/functions/document/by-cpf';
 import { captureEndorsementState } from '@/functions/endorsements/snapshot';
-import { EndorsementType } from '@segwise/database/enums';
 
 function registerRoutersServicesEndorsementsVehicleConductor(server: Server) {
 	server.get('/vehicle-conductor', async (ctx) => {

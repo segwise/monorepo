@@ -1,6 +1,6 @@
 import type { SafeDetails } from '@segwise/core';
-import type { selectPrisma } from '@/db-adapters/safe/details';
 import type { Prisma, VehicleUsage } from '@segwise/database/client';
+import type { selectPrisma } from '@/db-adapters/safe/details';
 
 function serializer(
 	props: Prisma.SafeGetPayload<{

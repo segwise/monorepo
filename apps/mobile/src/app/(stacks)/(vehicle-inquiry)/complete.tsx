@@ -1,14 +1,14 @@
-import { Button } from '@/components/ui/button';
-import { isCompany } from '@/configs/consts/company';
-import { api } from '@/libraries/api';
-import { cn } from '@/libraries/classname';
-import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 import { maskPlate } from '@segwise/core/masks';
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { DollarSignIcon, InfoIcon } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import { Button } from '@/components/ui/button';
+import { isCompany } from '@/configs/consts/company';
+import { api } from '@/libraries/api';
+import { cn } from '@/libraries/classname';
+import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 
 function VehicleInquiryCompleteScreen() {
 	const { push, back } = useRouter();

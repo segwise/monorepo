@@ -1,5 +1,5 @@
-import type { Server } from '@/@types/server';
 import { StatusInvitation } from '@segwise/database/enums';
+import type { Server } from '@/@types/server';
 
 function registerRoutersServicesProducersPendingDelete(server: Server) {
 	server.delete('/pending/:id', async (ctx) => {

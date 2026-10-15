@@ -1,10 +1,10 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsProducerSimple } from '@segwise/core';
 import type { ProducerListItem } from '@segwise/core/types';
-import { fromZonedTime } from 'date-fns-tz';
-import type { Server } from '@/@types/server.d';
 import { Prisma } from '@segwise/database/client';
 import { Role, StatusInvitation } from '@segwise/database/enums';
+import { fromZonedTime } from 'date-fns-tz';
+import type { Server } from '@/@types/server.d';
 import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 import { selectPrisma } from '@/libraries/database/adapters/producer/simple';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';

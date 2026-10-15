@@ -1,7 +1,7 @@
-import { fetchApi } from '@/functions/api';
 import type { MarketplaceSignIn } from '@segwise/core/types';
 import { useMutation } from '@tanstack/react-query';
 import type { XiorError } from 'xior';
+import { fetchApi } from '@/functions/api';
 
 const useMarketplaceSignIn = () =>
 	useMutation<

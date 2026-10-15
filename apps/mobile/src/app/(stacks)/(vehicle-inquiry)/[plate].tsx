@@ -1,15 +1,3 @@
-import { Button } from '@/components/ui/button';
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { isCompany } from '@/configs/consts/company';
-import { api } from '@/libraries/api';
-import { cn } from '@/libraries/classname';
-import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 import { maskPlate } from '@segwise/core/masks';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -30,6 +18,18 @@ import {
 	View,
 } from 'react-native';
 import { useMMKVObject } from 'react-native-mmkv';
+import { Button } from '@/components/ui/button';
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { isCompany } from '@/configs/consts/company';
+import { api } from '@/libraries/api';
+import { cn } from '@/libraries/classname';
+import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 
 function VehicleInquiryPlateScreen() {
 	const { push, back } = useRouter();
@@ -53,8 +53,7 @@ function VehicleInquiryPlateScreen() {
 		},
 	});
 
-	const { data: amountSearchVehicleComplete } =
-		useGetAmountSearchVehicleComplete();
+	useGetAmountSearchVehicleComplete();
 
 	useEffect(() => {
 		if (isSuccess && data) {

@@ -1,6 +1,6 @@
-import { api } from '@/libraries/api';
 import type { QuoteSimple } from '@segwise/core';
 import { SchemaPlate } from '@segwise/core/schemas';
+import { api } from '@/libraries/api';
 
 async function isSafePlate(
 	plate: string,

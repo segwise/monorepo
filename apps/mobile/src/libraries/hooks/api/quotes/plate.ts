@@ -1,6 +1,6 @@
-import { fetchApi } from '@/functions/api';
 import { SchemaPlate } from '@segwise/core/schemas';
 import { useQuery } from '@tanstack/react-query';
+import { fetchApi } from '@/functions/api';
 
 const useQuoteIsPlate = (plate: string) =>
 	useQuery({

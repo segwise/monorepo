@@ -1,8 +1,8 @@
-import { requiredReading } from '@/configs/consts/required-reading';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Fragment } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { requiredReading } from '@/configs/consts/required-reading';
 
 function RequiredReadingScreen() {
 	const { reading } = useLocalSearchParams<{

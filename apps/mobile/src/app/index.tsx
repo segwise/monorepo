@@ -1,15 +1,15 @@
-import LOGO from '@/assets/images/logo/segwise.png';
-import LOGO_XCAR from '@/assets/images/logo/xcar-light-full.png';
-import BACKGROUND_MAP from '@/assets/images/splash-screen/background-map.png';
-import { isCompany } from '@/configs/consts/company';
-import { attributeReferral } from '@/functions/attribute-referral';
-import { cn } from '@/libraries/classname';
 import { Image, ImageBackground } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { useMMKVBoolean } from 'react-native-mmkv';
 import Svg, { Circle, G } from 'react-native-svg';
+import LOGO from '@/assets/images/logo/segwise.png';
+import LOGO_XCAR from '@/assets/images/logo/xcar-light-full.png';
+import BACKGROUND_MAP from '@/assets/images/splash-screen/background-map.png';
+import { isCompany } from '@/configs/consts/company';
+import { attributeReferral } from '@/functions/attribute-referral';
+import { cn } from '@/libraries/classname';
 
 function IndexScreen() {
 	const [isLoading, setIsLoading] = useState<boolean>(false);

@@ -1,4 +1,3 @@
-import { fetchApi } from '@/functions/api';
 import type {
 	ResponseDataCursor,
 	SafeRegistration,
@@ -6,6 +5,7 @@ import type {
 } from '@segwise/core/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { XiorError } from 'xior';
+import { fetchApi } from '@/functions/api';
 
 const useSafes = () =>
 	useQuery<Awaited<ReturnType<typeof fetchApi.safes.listining>>, XiorError>({

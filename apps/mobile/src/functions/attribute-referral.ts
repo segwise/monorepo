@@ -1,7 +1,7 @@
-import { api } from '@/libraries/api';
-import { storage } from '@/libraries/storage';
 import { getLocales } from 'expo-localization';
 import { Platform } from 'react-native';
+import { api } from '@/libraries/api';
+import { storage } from '@/libraries/storage';
 
 async function attributeReferral() {
 	try {

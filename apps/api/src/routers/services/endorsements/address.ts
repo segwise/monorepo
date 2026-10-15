@@ -1,9 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaEndorsementAddress } from '@segwise/core/schemas';
+import { EndorsementType } from '@segwise/database/enums';
 import type { Server } from '@/@types/server';
 import { captureEndorsementState } from '@/functions/endorsements/snapshot';
-
-import { EndorsementType } from '@segwise/database/enums';
 
 function registerRoutersServicesEndorsementsAddress(server: Server) {
 	server.post(

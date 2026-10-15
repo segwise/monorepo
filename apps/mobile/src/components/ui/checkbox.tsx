@@ -1,8 +1,8 @@
-import { isCompany } from '@/configs/consts/company';
-import { cn } from '@/libraries/classname';
 import * as CheckboxPrimitive from '@rn-primitives/checkbox';
 import { SymbolView } from 'expo-symbols';
 import { Platform } from 'react-native';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
 
 const DEFAULT_HIT_SLOP = 24;
 

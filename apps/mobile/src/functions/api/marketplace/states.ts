@@ -1,5 +1,5 @@
-import { api } from '@/libraries/api';
 import { XiorError } from 'xior';
+import { api } from '@/libraries/api';
 
 async function states() {
 	try {

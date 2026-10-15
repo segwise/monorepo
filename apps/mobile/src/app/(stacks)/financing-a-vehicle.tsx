@@ -1,3 +1,27 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { maskCPF, maskPhone } from '@segwise/core/masks';
+import { SchemaQuoteFinancingRegister } from '@segwise/core/schemas';
+import type { QuoteFinancingRegister } from '@segwise/core/types';
+import { Stack, useRouter } from 'expo-router';
+import type { SymbolViewProps } from 'expo-symbols';
+import { SymbolView } from 'expo-symbols';
+import { Fragment, useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import {
+	ActivityIndicator,
+	Keyboard,
+	Text,
+	type TextInputProps,
+	useWindowDimensions,
+	View,
+} from 'react-native';
+import CurrencyInput from 'react-native-currency-input';
+import {
+	KeyboardAwareScrollView,
+	type KeyboardAwareScrollViewRef,
+} from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -13,29 +37,6 @@ import { isCompany } from '@/configs/consts/company';
 import { cn } from '@/libraries/classname';
 import { useFinancingRegister } from '@/libraries/hooks/api/financing/register';
 import { storage } from '@/libraries/storage';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { maskCPF, maskPhone } from '@segwise/core/masks';
-import { SchemaQuoteFinancingRegister } from '@segwise/core/schemas';
-import type { QuoteFinancingRegister } from '@segwise/core/types';
-import { Stack, useRouter } from 'expo-router';
-import type { SymbolViewProps } from 'expo-symbols';
-import { SymbolView } from 'expo-symbols';
-import { Fragment, useRef, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import {
-	ActivityIndicator,
-	Keyboard,
-	Text,
-	useWindowDimensions,
-	View,
-} from 'react-native';
-import CurrencyInput from 'react-native-currency-input';
-import {
-	KeyboardAwareScrollView,
-	type KeyboardAwareScrollViewRef,
-} from 'react-native-keyboard-controller';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 
 interface LabelProps {
 	title: string;
@@ -267,7 +268,7 @@ function RequestQuoteFinancing() {
 										onChangeValue={(value: number | null) =>
 											field.onChange(value ?? null)
 										}
-										renderTextInput={(props: any) => (
+										renderTextInput={(props: TextInputProps) => (
 											<Input {...props} label='Valor do Veículo' />
 										)}
 									/>
@@ -303,7 +304,7 @@ function RequestQuoteFinancing() {
 										onChangeValue={(value: number | null) =>
 											field.onChange(value ?? null)
 										}
-										renderTextInput={(props: any) => (
+										renderTextInput={(props: TextInputProps) => (
 											<Input {...props} label='Valor de Entrada ( Opcional )' />
 										)}
 									/>

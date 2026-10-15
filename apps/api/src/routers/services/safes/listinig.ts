@@ -3,12 +3,12 @@ import {
 	SchemaSearchParamsSafeRegistration,
 	SchemaSearchParamsSafeSimple,
 } from '@segwise/core/schemas';
+import { type Prisma, StatusSafe } from '@segwise/database/client';
 import { set } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/simple';
 import { serializer } from '@/db-serializers/safe/simple';
-import { type Prisma, StatusSafe } from '@segwise/database/client';
 import { notTestProducer } from '@/libraries/dashboard/metrics';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 import { buildSafeSimpleWhere } from './build-safe-simple-where';

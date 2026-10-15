@@ -1,7 +1,7 @@
 import type { SchemaQuoteRegister } from '@segwise/core';
+import type { VehicleExchange, VehicleUsage } from '@segwise/database/enums';
 import type z from 'zod';
 import type { Server } from '@/@types/server.d';
-import type { VehicleExchange, VehicleUsage } from '@segwise/database/enums';
 import { notTestProducer } from '@/libraries/dashboard/metrics';
 
 function registerRoutersServicesQuotesByPlate(server: Server) {

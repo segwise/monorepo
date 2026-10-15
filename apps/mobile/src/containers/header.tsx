@@ -1,6 +1,3 @@
-import LOGO from '@/assets/images/logo/segwise.png';
-import LOGO_XCAR from '@/assets/images/logo/xcar-light-full.png';
-import { cn } from '@/libraries/classname';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
@@ -13,6 +10,9 @@ import {
 	View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LOGO from '@/assets/images/logo/segwise.png';
+import LOGO_XCAR from '@/assets/images/logo/xcar-light-full.png';
+import { cn } from '@/libraries/classname';
 
 // @ts-expect-error
 const isCompany = Constants.expoConfig?.extra.company;

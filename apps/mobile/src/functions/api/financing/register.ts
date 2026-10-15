@@ -1,6 +1,6 @@
-import { api } from '@/libraries/api';
 import type { QuoteFinancingRegister } from '@segwise/core/types';
 import { XiorError } from 'xior';
+import { api } from '@/libraries/api';
 
 async function submitFinancing(props: QuoteFinancingRegister) {
 	try {

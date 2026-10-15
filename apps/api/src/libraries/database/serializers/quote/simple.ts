@@ -1,6 +1,6 @@
 import type { QuoteSimple } from '@segwise/core/types';
-import type { selectPrisma } from '@/db-adapters/quote/simple';
 import type { Prisma } from '@segwise/database/client';
+import type { selectPrisma } from '@/db-adapters/quote/simple';
 
 function serializer(
 	props: Prisma.QuoteGetPayload<{

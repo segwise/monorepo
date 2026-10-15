@@ -1,5 +1,5 @@
-import { api } from '@/libraries/api';
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/libraries/api';
 
 const useGetAmountSearchVehicleComplete = () =>
 	useQuery({

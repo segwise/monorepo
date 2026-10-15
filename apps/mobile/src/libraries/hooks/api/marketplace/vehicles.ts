@@ -1,4 +1,3 @@
-import { fetchApi } from '@/functions/api';
 import type {
 	MarketplaceVehicle,
 	MarketplaceVehicleRegisterForm,
@@ -7,6 +6,7 @@ import type {
 } from '@segwise/core/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { XiorError } from 'xior';
+import { fetchApi } from '@/functions/api';
 
 const useMarketplaceListining = (props: SearchParamsMarketplaceSimpleProps) =>
 	useQuery<

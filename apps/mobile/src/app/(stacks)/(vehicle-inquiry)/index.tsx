@@ -1,8 +1,3 @@
-import { Button } from '@/components/ui/button';
-import { InputOTP } from '@/components/ui/input-otp';
-import { isCompany } from '@/configs/consts/company';
-import { cn } from '@/libraries/classname';
-import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 import { Feather } from '@expo/vector-icons';
 import { maskPlate } from '@segwise/core/masks';
 import { capitalizeFirstLetters } from '@segwise/core/utils';
@@ -11,6 +6,11 @@ import { Link } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useMMKVObject } from 'react-native-mmkv';
+import { Button } from '@/components/ui/button';
+import { InputOTP } from '@/components/ui/input-otp';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
+import { useGetAmountSearchVehicleComplete } from '@/libraries/hooks/api/get-amount-search-vehicle-complete';
 
 function VehicleInquiryScreen() {
 	const [plate, setPlate] = useState<string>('');
@@ -28,8 +28,7 @@ function VehicleInquiryScreen() {
 		[histories],
 	);
 
-	const { data: amountSearchVehicleComplete } =
-		useGetAmountSearchVehicleComplete();
+	useGetAmountSearchVehicleComplete();
 
 	const isValid = isPlate(plate);
 

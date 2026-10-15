@@ -1,5 +1,5 @@
-import type { ReactElement } from 'react';
 import type { MarketingTemplate } from '@segwise/database/enums';
+import type { ReactElement } from 'react';
 import { TemplatePartnershipInviteAccounting } from '../../templates/partnership-invite/accounting';
 import { TemplatePartnershipInviteCondominium } from '../../templates/partnership-invite/condominium';
 

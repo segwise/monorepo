@@ -1,8 +1,8 @@
 import { SchemaPaymentType } from '@segwise/core';
 import type { PaymentSimple } from '@segwise/core/types';
+import type { Prisma } from '@segwise/database/client';
 import type { SerializerProps } from '@/@types/serializer';
 import type { selectPrisma } from '@/db-adapters/payment/simple';
-import type { Prisma } from '@segwise/database/client';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 
 function serializer(

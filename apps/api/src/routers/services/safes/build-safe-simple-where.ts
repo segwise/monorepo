@@ -1,11 +1,11 @@
 import { isCNPJ, isCPF, isPhone, isPlate, maskNumber } from '@segwise/core';
 import type { SchemaSearchParamsSafeSimple } from '@segwise/core/schemas';
+import { type Prisma, Role } from '@segwise/database/client';
 import { endOfDay, startOfDay, subYears } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import type z from 'zod';
 import type { Context } from '@/@types/server';
 import { expirationRange } from '@/functions/date/expiration-range';
-import { type Prisma, Role } from '@segwise/database/client';
 import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 
 type SafeSimpleQuery = z.infer<typeof SchemaSearchParamsSafeSimple> & {

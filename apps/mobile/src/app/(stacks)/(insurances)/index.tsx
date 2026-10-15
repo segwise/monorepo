@@ -1,10 +1,3 @@
-import CAR from '@/assets/images/car-insurances.png';
-import { Input, InputError } from '@/components/ui/input';
-import { toast } from '@/components/ui/toast';
-import { isCompany } from '@/configs/consts/company';
-import { cn } from '@/libraries/classname';
-import { useSafesRegistration } from '@/libraries/hooks/api/safe';
-import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
 	maskCNPJ,
@@ -23,6 +16,13 @@ import { Controller, useForm } from 'react-hook-form';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import CAR from '@/assets/images/car-insurances.png';
+import { Input, InputError } from '@/components/ui/input';
+import { toast } from '@/components/ui/toast';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
+import { useSafesRegistration } from '@/libraries/hooks/api/safe';
+import { storage } from '@/libraries/storage';
 
 function InsurancesScreen() {
 	const { bottom } = useSafeAreaInsets();

@@ -1,6 +1,6 @@
 import { isCNPJ, isCPF } from '@segwise/core';
-import type { Context } from '@/@types/server';
 import { Role } from '@segwise/database/enums';
+import type { Context } from '@/@types/server';
 
 type Input = {
 	name: string;

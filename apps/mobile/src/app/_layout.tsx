@@ -2,10 +2,6 @@ import '@/styles/globals.css';
 
 import 'react-native-reanimated';
 
-import { Toasts } from '@/components/ui/toast';
-import { Providers } from '@/contexts/providers';
-import { environment } from '@/libraries/environment';
-import { NAV_THEME } from '@/libraries/theme';
 import { HotUpdater } from '@hot-updater/react-native';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
@@ -17,6 +13,10 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { Toasts } from '@/components/ui/toast';
+import { Providers } from '@/contexts/providers';
+import { environment } from '@/libraries/environment';
+import { NAV_THEME } from '@/libraries/theme';
 
 SplashScreen.preventAutoHideAsync();
 

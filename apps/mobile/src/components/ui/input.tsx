@@ -1,4 +1,3 @@
-import { cn } from '@/libraries/classname';
 import {
 	Platform,
 	Text,
@@ -6,6 +5,7 @@ import {
 	type TextInputProps,
 	View,
 } from 'react-native';
+import { cn } from '@/libraries/classname';
 import { Label } from './label';
 
 function Input({

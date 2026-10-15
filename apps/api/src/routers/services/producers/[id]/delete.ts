@@ -1,5 +1,5 @@
-import type { Server } from '@/@types/server';
 import { StatusMember } from '@segwise/database/enums';
+import type { Server } from '@/@types/server';
 
 // Exclui produtor/parceiro. Se já existe cotação/proposta vinculada a ele
 // (FK Restrict + histórico), suspende em vez de apagar.

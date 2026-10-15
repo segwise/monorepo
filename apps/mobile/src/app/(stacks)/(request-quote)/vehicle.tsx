@@ -1,31 +1,3 @@
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from '@/components/ui/dialog';
-import { Input, InputError } from '@/components/ui/input';
-import {
-	NativeSelectScrollView,
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { toast } from '@/components/ui/toast';
-import { isCompany } from '@/configs/consts/company';
-import { cn } from '@/libraries/classname';
-import { useInsuranceCompaniesSimple } from '@/libraries/hooks/api/insurance-companies/simple';
-import { useQuoteIsPlate } from '@/libraries/hooks/api/quotes/plate';
-import { useQuoteSimpleRegister } from '@/libraries/hooks/api/quotes/register/simple';
-import { storage } from '@/libraries/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { TriggerRef } from '@rn-primitives/select';
 import {
@@ -63,6 +35,34 @@ import {
 } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
+import { Input, InputError } from '@/components/ui/input';
+import {
+	NativeSelectScrollView,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { toast } from '@/components/ui/toast';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
+import { useInsuranceCompaniesSimple } from '@/libraries/hooks/api/insurance-companies/simple';
+import { useQuoteIsPlate } from '@/libraries/hooks/api/quotes/plate';
+import { useQuoteSimpleRegister } from '@/libraries/hooks/api/quotes/register/simple';
+import { storage } from '@/libraries/storage';
 
 interface LabelProps {
 	title: string;

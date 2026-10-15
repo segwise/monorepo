@@ -12,12 +12,12 @@ function TemplateWorksiteAllianz({ leadId }: { leadId?: string } = {}) {
 	}
 
 	return (
-		<html lang="pt-BR">
+		<html lang='pt-BR'>
 			<head>
-				<meta charSet="utf-8" />
-				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<meta charSet='utf-8' />
+				<meta name='viewport' content='width=device-width, initial-scale=1' />
 				<title>Worksite Allianz — XCAR CORRETORA DE SEGUROS / SEGWISE</title>
-				<script src="https://cdn.tailwindcss.com"></script>
+				<script src='https://cdn.tailwindcss.com'></script>
 				<script
 					dangerouslySetInnerHTML={{
 						__html: `
@@ -35,15 +35,15 @@ function TemplateWorksiteAllianz({ leadId }: { leadId?: string } = {}) {
 						`,
 					}}
 				/>
-				<link rel="preconnect" href="https://fonts.googleapis.com" />
+				<link rel='preconnect' href='https://fonts.googleapis.com' />
 				<link
-					rel="preconnect"
-					href="https://fonts.gstatic.com"
-					crossOrigin="anonymous"
+					rel='preconnect'
+					href='https://fonts.gstatic.com'
+					crossOrigin='anonymous'
 				/>
 				<link
-					href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
-					rel="stylesheet"
+					href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'
+					rel='stylesheet'
 				/>
 				<style>{`
 					body { font-family: 'Inter', Arial, sans-serif; }
@@ -52,97 +52,97 @@ function TemplateWorksiteAllianz({ leadId }: { leadId?: string } = {}) {
 					}
 				`}</style>
 			</head>
-			<body className="bg-white m-0">
-				<div className="mx-auto max-w-[680px]">
-					<div className="flex items-center justify-between px-10 py-5 break-inside-avoid">
+			<body className='bg-white m-0'>
+				<div className='mx-auto max-w-[680px]'>
+					<div className='flex items-center justify-between px-10 py-5 break-inside-avoid'>
 						<img
 							src={ALLIANZ_LOGO}
-							alt="Allianz"
+							alt='Allianz'
 							width={110}
 							height={28}
-							className="object-contain"
+							className='object-contain'
 						/>
 						<img
 							src={SEGWISE_LOGO}
-							alt="SEGWISE"
+							alt='SEGWISE'
 							width={110}
 							height={26}
-							className="object-contain"
+							className='object-contain'
 							style={{ filter: 'invert(1)' }}
 						/>
 					</div>
-					<div className="px-10">
-						<p className="text-[12px] font-bold text-[#374151] m-0 mb-1">
+					<div className='px-10'>
+						<p className='text-[12px] font-bold text-[#374151] m-0 mb-1'>
 							Ao Responsável pelo Departamento de Recursos Humanos
 						</p>
-						<p className="text-[12px] text-[#374151] m-0 mb-6">
+						<p className='text-[12px] text-[#374151] m-0 mb-6'>
 							Prezado(a) Senhor(a),
 						</p>
-						<h1 className="text-[18px] font-bold text-allianzBlue leading-tight m-0 mb-5">
+						<h1 className='text-[18px] font-bold text-allianzBlue leading-tight m-0 mb-5'>
 							Worksite Allianz – Uma ótima oportunidade de levar descontos e
 							benefícios aos colaboradores da sua empresa
 						</h1>
-						<div className="relative rounded-lg overflow-hidden mb-5 break-inside-avoid">
+						<div className='relative rounded-lg overflow-hidden mb-5 break-inside-avoid'>
 							<img
 								src={HERO_IMAGE}
-								alt="Worksite Allianz"
-								className="w-full h-[160px] object-cover"
+								alt='Worksite Allianz'
+								className='w-full h-[160px] object-cover'
 							/>
-							<div className="absolute inset-0 bg-allianzBlue/40" />
-							<div className="absolute left-6 bottom-5">
-								<p className="text-[9px] font-semibold text-white uppercase tracking-wide m-0 mb-1">
+							<div className='absolute inset-0 bg-allianzBlue/40' />
+							<div className='absolute left-6 bottom-5'>
+								<p className='text-[9px] font-semibold text-white uppercase tracking-wide m-0 mb-1'>
 									Seguros com mais benefícios
 								</p>
-								<p className="text-[22px] font-bold text-white leading-none m-0">
+								<p className='text-[22px] font-bold text-white leading-none m-0'>
 									Worksite Allianz
 								</p>
 							</div>
 						</div>
-						<p className="text-[12px] leading-[19px] text-[#374151] m-0 mb-3">
+						<p className='text-[12px] leading-[19px] text-[#374151] m-0 mb-3'>
 							Meu nome é <b>Fernando Luiz Malheiros de Sena</b>, diretor da{' '}
 							<b>XCAR CORRETORA DE SEGUROS / SEGWISE</b> e gostaria de oferecer
 							a sua empresa: o programa <b>Worksite Allianz</b>.
 						</p>
-						<p className="text-[12px] leading-[19px] text-[#374151] m-0 mb-3">
+						<p className='text-[12px] leading-[19px] text-[#374151] m-0 mb-3'>
 							O Worksite Allianz trata-se de um conjunto de produtos da Allianz
 							Seguros com <b>descontos diferenciados</b> para colaboradores
 							(extensivo a cônjuges, pais e filhos) disponível para empresas com
 							mais de 50 colaboradores.
 						</p>
-						<p className="text-[12px] leading-[19px] text-[#374151] m-0 mb-3">
+						<p className='text-[12px] leading-[19px] text-[#374151] m-0 mb-3'>
 							O programa vem para ampliar os benefícios que sua empresa já
 							oferece sem qualquer custo para implantação.
 						</p>
-						<p className="text-[12px] leading-[19px] text-[#374151] m-0 mb-3">
+						<p className='text-[12px] leading-[19px] text-[#374151] m-0 mb-3'>
 							Por meio do Worksite Allianz, seus colaboradores poderão contratar
 							os seguintes seguros: <b>Auto, Moto, Residência, Vida e Viagem</b>
 							, aproveitando os descontos diferenciados, benefícios e toda a
 							proteção exclusiva da Allianz Seguros.
 						</p>
-						<p className="text-[12px] leading-[19px] text-[#374151] m-0 mb-8">
+						<p className='text-[12px] leading-[19px] text-[#374151] m-0 mb-8'>
 							Com o Worksite Allianz, são muito mais benefícios para os
 							colaboradores da sua empresa. Coloco-me à disposição para
 							esclarecer eventuais dúvidas e apresentar mais detalhes sobre o
 							programa.
 						</p>
-						<div className="pb-6 break-inside-avoid">
-							<p className="text-[12px] text-[#374151] m-0 mb-5">
+						<div className='pb-6 break-inside-avoid'>
+							<p className='text-[12px] text-[#374151] m-0 mb-5'>
 								Atenciosamente,
 							</p>
-							<p className="text-[12px] font-bold text-allianzBlue m-0">
+							<p className='text-[12px] font-bold text-allianzBlue m-0'>
 								Fernando Luiz Malheiros de Sena
 							</p>
-							<p className="text-[11px] text-muted m-0">Diretor Geral</p>
-							<p className="text-[11px] text-muted m-0">
+							<p className='text-[11px] text-muted m-0'>Diretor Geral</p>
+							<p className='text-[11px] text-muted m-0'>
 								Fones: (81) 98696-1991 &nbsp;-&nbsp; (81) 3229-1728
 							</p>
-							<p className="text-[11px] text-muted m-0">
+							<p className='text-[11px] text-muted m-0'>
 								XCAR CORRETORA DE SEGUROS / SEGWISE
 							</p>
 						</div>
 					</div>
-					<div className="bg-[#F4F6FB] px-10 py-5 border-t border-solid border-[#E5E7EB]">
-						<p className="text-[8px] leading-[12px] text-muted m-0">
+					<div className='bg-[#F4F6FB] px-10 py-5 border-t border-solid border-[#E5E7EB]'>
+						<p className='text-[8px] leading-[12px] text-muted m-0'>
 							Allianz Seguros S.A., CNPJ: 61.573.796/0001-66, Rua Eugênio de
 							Medeiros nº 303, ands. 1-parte, 2 ao 9, 15 e 16, Pinheiros, São
 							Paulo - CEP: 05425-000. Processos SUSEP nº 15414.002216/2004-57,

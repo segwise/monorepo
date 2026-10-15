@@ -1,5 +1,3 @@
-import { isCompany } from '@/configs/consts/company';
-import { cn } from '@/libraries/classname';
 import { openURL } from 'expo-linking';
 import { type Href, useRouter } from 'expo-router';
 import { Fragment } from 'react';
@@ -12,6 +10,8 @@ import {
 	type ViewStyle,
 } from 'react-native';
 import z from 'zod';
+import { isCompany } from '@/configs/consts/company';
+import { cn } from '@/libraries/classname';
 
 type ButtonGridVariant =
 	| { href: Href; onPress?: never }

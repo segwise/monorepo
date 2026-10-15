@@ -1,20 +1,3 @@
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Input, InputError } from '@/components/ui/input';
-import {
-	NativeSelectScrollView,
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
-import { toast } from '@/components/ui/toast';
-import { isCompany } from '@/configs/consts/company';
-import states from '@/data/states.json';
-import { api } from '@/libraries/api';
-import { cn } from '@/libraries/classname';
-import { storage } from '@/libraries/storage';
 import { ToastPosition } from '@backpackapp-io/react-native-toast';
 import { Feather } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,6 +33,23 @@ import {
 } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { XiorError } from 'xior';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Input, InputError } from '@/components/ui/input';
+import {
+	NativeSelectScrollView,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
+import { toast } from '@/components/ui/toast';
+import { isCompany } from '@/configs/consts/company';
+import states from '@/data/states.json';
+import { api } from '@/libraries/api';
+import { cn } from '@/libraries/classname';
+import { storage } from '@/libraries/storage';
 
 const company = Constants.expoConfig?.extra?.company?.id;
 
@@ -290,7 +290,6 @@ function BuyAndSell() {
 		}
 	}, [modalRegion]);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: useEffect
 	useEffect(() => {
 		const handler = BackHandler.addEventListener(
 			'hardwareBackPress',

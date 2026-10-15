@@ -1,9 +1,9 @@
+import { type Href, useRouter } from 'expo-router';
+import { Text, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { isCompany } from '@/configs/consts/company';
 import { whatToDo } from '@/configs/consts/what-to-do';
 import { cn } from '@/libraries/classname';
-import { type Href, useRouter } from 'expo-router';
-import { Text, View } from 'react-native';
 
 interface ItemProps {
 	title: string;

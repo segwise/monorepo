@@ -1,5 +1,5 @@
-import type { Context } from '@/@types/server';
 import { Role } from '@segwise/database/enums';
+import type { Context } from '@/@types/server';
 
 type Outcome =
 	// Acesso confirmado agora.
