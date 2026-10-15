@@ -1,0 +1,47 @@
+{
+	"compilerOptions": {
+		"target": "ES2017",
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"allowJs": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"noEmit": true,
+		"esModuleInterop": true,
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"jsx": "react-jsx",
+		"incremental": true,
+		"plugins": [
+			{
+				"name": "next"
+			}
+		],
+		"paths": {
+			"@/*": ["./src/*"],
+			"@/public/*": ["./public/*"],
+			"@/@types/*": ["./src/@types/*"],
+			"@/styles": ["./src/styles/globals.css"],
+			"@/styles/*": ["./src/styles/*"],
+			"@/fonts/*": ["./src/assets/fonts/*"],
+			"@/utils": ["./src/libraries/utils"],
+			"@/hooks/*": ["./src/libraries/hooks/*"],
+			"@/helpers/*": ["./src/libraries/helpers/*"],
+			"@/schemas/*": ["./src/libraries/schemas/*"],
+			"@/providers/*": ["./src/providers/*"],
+			"@/auth": ["./src/libraries/auth"],
+			"@/data/*": ["./src/data/*"],
+			"@/config/*": ["./src/config/*"],
+			"@/cards/*": ["./src/containers/cards/*"],
+			"@/charts/*": ["./src/containers/charts/*"]
+		}
+	},
+	"include": [
+		"next-env.d.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		".next/types/**/*.ts",
+		".next/dev/types/**/*.ts"	],
+	"exclude": ["node_modules"]
+}
