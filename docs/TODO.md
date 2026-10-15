@@ -64,8 +64,9 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
   o monorepo está em `github.com/segwise/monorepo` (push feito).
 - [x] CI rodando no GitHub e branch protection (`protect-main`) exigindo o check `CI` (repo público).
 - [ ] **Kodus** self-hosted no Dokploy como quality gate (configurar o GitHub App e as regras).
-- [ ] **CD híbrido**: imagens no GHCR (api + 3 variantes do backoffice) + webhook/API do
-  Dokploy; mobile via EAS Build + hot-updater por workflow.
+- [ ] **Configurar o CD** (variáveis/segredo do GitHub, pacotes do GHCR públicos, `applicationId` de
+  cada serviço) e fazer o primeiro deploy à mão — passo a passo em `docs/MONOREPO.md#cicd`.
+- [ ] **CD do mobile** (EAS Build + hot-updater por workflow) e **health check pós-deploy** no CD.
 - [ ] **Confirmar no Dokploy** que `NEXT_PUBLIC_ROLE_SYSTEM` do serviço do painel interno é
   `admin` (o compose antigo dizia `backoffice`, que dá 404 nas rotas) e ajustar as
   configurações de build/compose do Dokploy para o contexto na raiz do monorepo.

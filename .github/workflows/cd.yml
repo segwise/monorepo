@@ -1,0 +1,153 @@
+name: CD
+
+# Depois que o CI passa na main: builda as imagens, publica no GHCR e manda o Dokploy
+# puxar a nova versão. Também pode ser disparado à mão (deploy ou rollback de um SHA).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Commit a buildar e publicar (vazio = HEAD da main)'
+        required: false
+        type: string
+      deploy:
+        description: 'Disparar o deploy no Dokploy depois de publicar'
+        required: false
+        type: boolean
+        default: true
+
+# Um deploy por vez; um novo run espera o anterior terminar (não cancela deploy em andamento).
+concurrency:
+  group: cd
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  meta:
+    name: Resolver commit
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+      tag: ${{ steps.resolve.outputs.tag }}
+      image_prefix: ${{ steps.resolve.outputs.image_prefix }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.sha || 'main' }}
+      - id: resolve
+        run: |
+          sha="$(git rev-parse HEAD)"
+          {
+            echo "sha=${sha}"
+            echo "tag=sha-${sha:0:7}"
+            # GHCR exige minúsculas
+            echo "image_prefix=ghcr.io/${GITHUB_REPOSITORY,,}"
+          } >> "$GITHUB_OUTPUT"
+
+  images:
+    name: Imagem (${{ matrix.name }})
+    needs: meta
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            dockerfile: apps/api/Dockerfile
+            build_args: ''
+          - name: backoffice-admin
+            dockerfile: apps/backoffice/Dockerfile
+            build_args: NEXT_PUBLIC_ROLE_SYSTEM=admin
+          - name: backoffice-customer
+            dockerfile: apps/backoffice/Dockerfile
+            build_args: NEXT_PUBLIC_ROLE_SYSTEM=customer
+          - name: backoffice-producer
+            dockerfile: apps/backoffice/Dockerfile
+            build_args: NEXT_PUBLIC_ROLE_SYSTEM=producer
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.meta.outputs.sha }}
+
+      - name: Exigir NEXT_PUBLIC_API_URL (backoffice)
+        if: ${{ startsWith(matrix.name, 'backoffice') && vars.NEXT_PUBLIC_API_URL == '' }}
+        run: |
+          echo '::error::Defina a variável de repositório NEXT_PUBLIC_API_URL (URL pública da API): ela é embutida no build do backoffice.'
+          exit 1
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ needs.meta.outputs.image_prefix }}/${{ matrix.name }}:${{ needs.meta.outputs.tag }}
+            ${{ needs.meta.outputs.image_prefix }}/${{ matrix.name }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ needs.meta.outputs.sha }}
+          # NEXT_PUBLIC_* é embutido no build do Next: a URL da API vem de uma variável do repositório.
+          build-args: |
+            ${{ matrix.build_args }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,scope=${{ matrix.name }},mode=max
+
+  deploy:
+    name: Deploy (${{ matrix.name }})
+    needs: [meta, images]
+    # Só roda com o Dokploy configurado e (no disparo manual) se o deploy foi pedido.
+    if: ${{ vars.DOKPLOY_URL != '' && (github.event_name != 'workflow_dispatch' || inputs.deploy) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: production
+    strategy:
+      # API primeiro; se ela falhar, os backoffices não sobem (dependem do contrato da API).
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        include:
+          - name: api
+            app_var: DOKPLOY_APP_API
+          - name: backoffice-admin
+            app_var: DOKPLOY_APP_ADMIN
+          - name: backoffice-customer
+            app_var: DOKPLOY_APP_CUSTOMER
+          - name: backoffice-producer
+            app_var: DOKPLOY_APP_PRODUCER
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.meta.outputs.sha }}
+
+      # Permite migrar um serviço por vez: sem o ID do app, o serviço é ignorado.
+      - name: Deploy no Dokploy
+        if: ${{ vars[matrix.app_var] != '' }}
+        env:
+          DOKPLOY_URL: ${{ vars.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          APPLICATION_ID: ${{ vars[matrix.app_var] }}
+          IMAGE: ${{ needs.meta.outputs.image_prefix }}/${{ matrix.name }}:${{ needs.meta.outputs.tag }}
+        run: bash scripts/dokploy-deploy.sh
+
+      - name: Serviço ignorado (sem applicationId configurado)
+        if: ${{ vars[matrix.app_var] == '' }}
+        run: echo "::notice::${{ matrix.app_var }} não está definida; ${{ matrix.name }} não foi implantado."

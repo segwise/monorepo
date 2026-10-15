@@ -198,13 +198,60 @@ Consequências de ser público: o código e o histórico são visíveis a qualqu
 em runners do GitHub são gratuitos; **nunca** commitar segredos (use GitHub Secrets). Se o repo
 voltar a ser privado, o ruleset deixa de ser aplicado até o upgrade para GitHub Team.
 
+### CD (`.github/workflows/cd.yml`) — implementado, falta configurar o Dokploy
+
+Dispara quando o **CI termina com sucesso na `main`** (`workflow_run`) ou à mão
+(`workflow_dispatch`, com `sha` opcional para rollback e `deploy` para só publicar imagens).
+
+1. **images** — builda e publica no GHCR, em paralelo: `api`, `backoffice-admin`,
+   `backoffice-customer`, `backoffice-producer`
+   (`ghcr.io/segwise/monorepo/<nome>:sha-<7 chars>` e `:latest`). O backoffice embute
+   `NEXT_PUBLIC_ROLE_SYSTEM` (por variante) e `NEXT_PUBLIC_API_URL` (variável do repo) no build.
+2. **deploy** — um serviço por vez, **api primeiro** (se falhar, os backoffices não sobem):
+   `scripts/dokploy-deploy.sh` chama a API do Dokploy (`application.saveDockerProvider` com a
+   imagem da versão e depois `application.deploy`). O Dokploy executa de forma assíncrona, então
+   o workflow **não detecta** deploy que falhe depois (ex.: migration quebrada no
+   `entrypoint.sh` do api). Fica pendente um health check pós-deploy.
+   O job só roda se a variável `DOKPLOY_URL` existir, e cada serviço só é implantado se o seu
+   `DOKPLOY_APP_*` existir — dá para migrar um serviço por vez.
+
+**Configuração (uma vez):**
+
+```bash
+# variáveis do repositório (não são segredo)
+gh variable set NEXT_PUBLIC_API_URL --body 'https://<url-publica-da-api>'
+gh variable set DOKPLOY_URL         --body 'https://<seu-dokploy>'
+gh variable set DOKPLOY_APP_API       --body '<applicationId da api>'
+gh variable set DOKPLOY_APP_ADMIN     --body '<applicationId do backoffice admin>'
+gh variable set DOKPLOY_APP_CUSTOMER  --body '<applicationId do customer>'
+gh variable set DOKPLOY_APP_PRODUCER  --body '<applicationId do producer>'
+# segredo: o gh pede o valor no terminal (não passe o token na linha de comando)
+gh secret set DOKPLOY_API_KEY
+```
+
+- O token vem de Dokploy → *Profile → API/CLI*; os `applicationId` de `GET <dokploy>/api/project.all`
+  (header `x-api-key`).
+- **Visibilidade das imagens no GHCR**: pacotes novos nascem **privados**. Como o repo é público,
+  torne cada pacote público uma vez (GitHub → *Packages → <pacote> → Package settings → Change
+  visibility*) para o Dokploy puxar sem credenciais. Alternativa: manter privado e cadastrar o
+  GHCR em *Dokploy → Registry* (`ghcr.io`, usuário e um token clássico com `read:packages`).
+- No Dokploy, cada serviço continua sendo uma **Application**; o script troca a fonte para a imagem
+  Docker automaticamente. As envs e domínios do serviço ficam como estão. O Redis (cache/queue) do
+  api continua separado (fora do CD).
+- O deploy usa o *environment* `production` do GitHub; dá para exigir aprovação manual em
+  *Settings → Environments → production → Required reviewers* (disponível em repo público).
+- **Rollback**: *Actions → CD → Run workflow* com o `sha` anterior.
+
+**Ainda não validado:** a execução real contra o seu Dokploy (corpo exato de
+`saveDockerProvider` nessa versão). O primeiro deploy deve ser feito à mão pelo *Run workflow*
+e conferido nos logs.
+
 ### Ainda a fazer
 
 - **Quality gate**: Kodus **self-hosted no Dokploy** (GitHub App + regras); depois exigir a
   review/check dele no ruleset.
-- **CD híbrido**: no merge em `main`, o Actions builda as imagens (api e as 3 variantes do
-  backoffice), publica no **GHCR** e aciona o webhook/API do Dokploy, que só puxa a imagem.
-  Mobile: EAS Build + hot-updater por workflow quando `apps/mobile/**` mudar.
+- **CD do mobile**: EAS Build + hot-updater por workflow quando `apps/mobile/**` mudar.
+- **Health check pós-deploy** no CD (hoje o workflow não detecta deploy que falhe depois).
 
 ## Origem deste repositório
 
