@@ -3,7 +3,7 @@
 Endossos alteram a proposta (`Safe`) e são registrados em `Endorsement`. Tipos
 (`EndorsementType`): `vehicle_driver` (placa/veículo e/ou principal condutor),
 `address` (CEP de pernoite), `franchise` e `cancellation`. Rotas em
-`backend/src/routers/services/endorsements/` (`/endorsements/:safeId/...`).
+`apps/api/src/routers/services/endorsements/` (`/endorsements/:safeId/...`).
 
 ## Reversão
 

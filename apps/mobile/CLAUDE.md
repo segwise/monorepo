@@ -1,10 +1,10 @@
-# application — CLAUDE.md
+# mobile — CLAUDE.md (`@segwise/mobile`)
 
-App mobile (Expo/React Native) voltado ao segurado final. Nome do pacote é
-literalmente `segwise` (`package.json` → `name: "segwise"`).
+App mobile (Expo/React Native) voltado ao segurado final. Nome do pacote
+é `@segwise/mobile` (a pasta antiga se chamava `application`).
 
 Contexto do sistema inteiro (arquitetura, domínio, convenções comuns): ver
-[`../CLAUDE.md`](../CLAUDE.md) e [`../docs/`](../docs/) — leia antes de mexer aqui.
+[`../../CLAUDE.md`](../../CLAUDE.md) e [`../../docs/`](../../docs/) — leia antes de mexer aqui.
 
 ## Stack
 
@@ -33,7 +33,7 @@ automatizados.
 
 - `app/(stacks)/` — grupos de rotas por área de negócio: `(buying-and-selling)`,
   `(insurances)`, `(request-quote)`, `(required-reading)`, `(useful-contacts)`,
-  `(vehicle-inquiry)`, `(what-to-do)`. Ver [`../docs/DOMAIN.md`](../docs/DOMAIN.md)
+  `(vehicle-inquiry)`, `(what-to-do)`. Ver [`../../docs/DOMAIN.md`](../../docs/DOMAIN.md)
   para o que cada área cobre.
 - `containers/home/` — composição da tela inicial.
 - `components/ui/` — design system local (base @rn-primitives).
@@ -53,14 +53,14 @@ automatizados.
 ## Integração com o backend
 
 `src/libraries/api.ts` + `environment.ts` são o único ponto de saída HTTP.
-Envs relevantes: `EXPO_PUBLIC_API_URL` (aponta para `../backend`) e
+Envs relevantes: `EXPO_PUBLIC_API_URL` (aponta para `apps/api`) e
 `EXPO_PUBLIC_COMPANY_ID` (multi-tenant por empresa — confirmar com o backend
 o que esse ID representa antes de assumir).
 
 ## Depende de @segwise/core
 
 Mesma regra do `backoffice`: schemas/tipos/máscaras/validadores vêm do
-`@segwise/core`. Ver [`../core/CLAUDE.md`](../core/CLAUDE.md).
+`@segwise/core` (`workspace:*`). Ver [`../../packages/core/CLAUDE.md`](../../packages/core/CLAUDE.md).
 
 ## OTA updates (hot-updater)
 
@@ -71,7 +71,22 @@ Mudanças que exigem novo código nativo (nova lib nativa, mudança em
 Tenha isso em mente ao avaliar se uma mudança pode ser hotfixada via
 hot-updater ou exige submissão às lojas.
 
+## Monorepo: React próprio e dependências explícitas
+
+- O React do mobile vem do catalog `mobile` (raiz): versão **exata** exigida pelo
+  React Native/Expo, independente dos apps web. Para subir o Expo, altere só esse
+  catalog (ver [`../../docs/MONOREPO.md`](../../docs/MONOREPO.md#react-por-plataforma-catalogs)).
+- O Bun usa linker isolado: **declare no `package.json` do mobile tudo que importar**
+  (ex.: `@expo/vector-icons`, `expo-file-system`, `@react-navigation/native-stack`).
+  Hoisting não existe aqui; não ative `linker = "hoisted"` (quebra o NativeWind).
+- Uploads multipart: `new File(uri)` do `expo-file-system` + `fetch` de `expo/fetch`
+  (ainda a validar em dispositivo real).
+- `bun run typecheck` e `bun run lint` (Biome na raiz) precisam passar.
+- `expo prebuild` gera `ios/` e `android/` (gitignored, muito grandes). Xcode 27 exige
+  `IPHONEOS_DEPLOYMENT_TARGET=16.0` na linha de comando por causa de pods antigos.
+
 ## Deploy
 
-`bun run deploy` só faz `git add/commit/push` — não builda nem publica nada
-sozinho. Não rodar sem confirmação explícita do usuário.
+Não há script `deploy`. Builds de loja via EAS (rodar a partir de `apps/mobile`) e
+updates OTA via hot-updater — nenhum dos dois foi validado ainda no monorepo. Não
+disparar build/publicação sem confirmação explícita do usuário.

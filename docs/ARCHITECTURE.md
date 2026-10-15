@@ -2,13 +2,15 @@
 
 ## Visão geral
 
-Insurtech de seguros automotivos. Quatro repositórios irmãos, sem monorepo
-técnico (sem workspaces/turborepo) — a integração é feita via um pacote npm
-privado (`@segwise/core`) e via HTTP contra uma API central (`backend`).
+Insurtech de seguros automotivos. Um monorepo (Bun workspaces + Turborepo) com
+três apps (`api`, `backoffice`, `mobile`) e dois pacotes internos (`@segwise/core`,
+`@segwise/database`). Os clientes falam com a API central (`apps/api`) por HTTP;
+o contrato de dados é compartilhado via `@segwise/core` (`workspace:*`). Detalhes de
+ferramentas e comandos em [`MONOREPO.md`](MONOREPO.md).
 
 ```
 ┌─────────────┐     ┌──────────────┐
-│  backoffice │     │ application  │   clientes HTTP
+│  backoffice │     │    mobile    │   clientes HTTP
 │  (Next.js)  │     │(Expo/React   │
 │             │     │   Native)    │
 └──────┬──────┘     └──────┬───────┘
@@ -19,7 +21,7 @@ privado (`@segwise/core`) e via HTTP contra uma API central (`backend`).
        └──────────────┬─────────────┘
                        ▼
                  ┌───────────┐
-                 │  backend  │  (Hono + Bun)
+                 │    api    │  (Hono + Bun)
                  │           │──imports @segwise/core também
                  └─────┬─────┘
                         │
@@ -30,34 +32,35 @@ privado (`@segwise/core`) e via HTTP contra uma API central (`backend`).
                                              Transfeera/Pix, Resend)
 ```
 
-`core` não roda como serviço — é uma lib publicada no GitHub Packages
-(`https://npm.pkg.github.com`), consumida na mesma versão (`^1.1.446` no
-momento deste documento) pelos outros três.
+`core` não roda como serviço — é um pacote interno (`packages/core`), consumido por
+`workspace:*` pelos três apps (sem publicação nem versionamento). O `database`
+(`packages/database`) também é interno e só é usado pelo `api`.
 
-## Papel de cada repositório
+## Papel de cada app/pacote
 
-### core
+### packages/core
 Lib TS pura. Exporta subpaths: `.`, `./schemas`, `./types`, `./masks`,
 `./valids`, `./translate`, `./utils`. Contém o contrato de dados do domínio
 de seguros (ver [`DOMAIN.md`](DOMAIN.md)) e utilitários de validação/máscara
 de documentos brasileiros (CPF, CNPJ, placa, CEP). Não tem infraestrutura
 própria (sem Docker) porque não é executável.
 
-### backend
+### apps/api
 API central. Stack: Hono (framework HTTP) + Bun (runtime, roda TS nativo,
-sem transpile) + Prisma 7 com `@prisma/adapter-pg` (PostgreSQL). É o único
-repo com banco de dados — nenhum outro repo persiste dados diretamente.
+sem transpile) + Prisma 7 com `@prisma/adapter-pg` (PostgreSQL). O banco
+(schema, migrations e client) vive em `packages/database`; é o único app que o usa —
+nenhum outro persiste dados diretamente.
 
-Integrações externas do backend:
+Integrações externas do `api`:
 - **PostgreSQL** via `DATABASE_URL` — dados transacionais (Prisma).
 - **Redis** via `CACHE_URL` — cache e sessões do better-auth (serviço `cache`, `maxmemory 512mb` +
   `volatile-lru`: só expulsa chaves com TTL, preservando consultas pagas de CPF/CNPJ sem TTL).
 - **Redis** via `QUEUE_URL` — filas BullMQ (serviço `queue`, `maxmemory-policy noeviction`).
 - **MinIO** (S3-compatible) — armazenamento de arquivos/PDFs.
 - **Ollama** (`OLLAMA_BASE_URL`/`AI_BASE_URL` no compose) — LLM self-hosted.
-  - Extração de dados de PDF — propostas (`backend/src/routers/services/safes/extract-pdf.ts`)
+  - Extração de dados de PDF — propostas (`apps/api/src/routers/services/safes/extract-pdf.ts`)
     e endossos (`endorsements/extract-pdf.ts`). A orquestração é compartilhada em
-    `backend/src/libraries/ai/pdf-extraction.ts`. O modelo é chamado via **9Router**
+    `apps/api/src/libraries/ai/pdf-extraction.ts`. O modelo é chamado via **9Router**
     (`AI_BASE_URL`, compatível com OpenAI; `GET /models` lista os modelos). Etapas, da
     mais rápida para a mais completa; resposta inválida (Zod) escala para a próxima
     em vez de repetir o prompt, e só erro transitório (rede, 408/409/429, 5xx) é
@@ -106,11 +109,11 @@ Integrações externas do backend:
 - **Transfeera** — pagamentos via Pix, incluindo split de pagamento entre
   partes (`TRANSFEERA_PAYMENT_SPLIT_PIX*`).
 - Deep links para apps mobile: `IOS_APP_URL`/`ANDROID_APP_URL` (app
-  `application` deste conjunto) e `IOS_XCAR_APP_URL`/`ANDROID_XCAR_APP_URL`
-  (um segundo app "xcar", irmão de produto, que **não está** entre os 4
-  diretórios deste workspace — se precisar dele, pergunte ao usuário onde fica).
+  `mobile` deste monorepo) e `IOS_XCAR_APP_URL`/`ANDROID_XCAR_APP_URL`
+  (um segundo app "xcar", irmão de produto, que **não está** neste
+  monorepo — se precisar dele, pergunte ao usuário onde fica).
 
-### backoffice
+### apps/backoffice
 Next.js 16 / React 19, App Router. **Uma única base de código, três
 deployments** diferenciados só pela env var `NEXT_PUBLIC_ROLE_SYSTEM`
 (`admin` | `customer` | `producer`), ver `docker-compose.yml` — três
@@ -120,9 +123,9 @@ serviços a partir do mesmo `Dockerfile`, cada um com esse build arg distinto:
 - `producer` → portal do produtor/corretor.
 
 Roteamento em `src/app/{admin,customer,producer}/(auth|dashboard)`, refletindo
-os três papéis dentro do mesmo repo.
+os três papéis dentro do mesmo app.
 
-### application
+### apps/mobile
 App mobile (Expo/React Native, Expo Router) voltado ao segurado final.
 Features: cotação de seguro, indicação/referral (`attribute-referral.ts`,
 `share-app.ts`), anúncios, consulta de veículo. Build via EAS; atualizações
@@ -138,36 +141,37 @@ usando um helper que vem do `core` (`cookies-relevant.ts`). Cada role
 (`admin`/`customer`/`producer`) tem seu próprio fluxo de auth dentro do
 mesmo Next.js app (`(auth)` route groups).
 
-`application` ainda não foi confirmado se usa `better-auth` — checar
+`mobile` ainda não foi confirmado se usa `better-auth` — checar
 `src/libraries/storage` e o fluxo de login do app antes de assumir.
 
 ## Deploy e infraestrutura
 
-- **Sem CI/CD**: nenhum `.github/workflows` em nenhum dos 4 repos.
-- **backend** e **backoffice**: Dockerfile multi-stage (build com Bun),
-  publicados numa rede Docker externa `dokploy-network` → indica orquestração
-  via [Dokploy](https://dokploy.com) (PaaS self-hosted), provavelmente
-  configurado para redeployar a partir do `git push` feito pelo script
-  `deploy` do `package.json`.
-- **application**: sem Docker (é app mobile). Build/submit via `eas.json`
+- **CI/CD**: ainda não implementado (não há `.github/workflows`). O plano — CI no
+  GitHub Actions com Kodus como quality gate e CD híbrido com Dokploy — está em
+  [`MONOREPO.md`](MONOREPO.md#cicd-planejado).
+- **api** e **backoffice**: Dockerfile multi-stage (Bun + `turbo prune`), buildado
+  com **contexto na raiz do monorepo** (`docker build -f apps/<app>/Dockerfile .`),
+  publicados numa rede Docker externa `dokploy-network` → orquestração via
+  [Dokploy](https://dokploy.com) (PaaS self-hosted). O backoffice gera três
+  serviços a partir do mesmo Dockerfile (`NEXT_PUBLIC_ROLE_SYSTEM` =
+  `admin` | `customer` | `producer`). O `entrypoint.sh` do api aplica as
+  migrations (`prisma migrate deploy`) ao subir.
+- **mobile**: sem Docker (é app mobile). Build/submit via `eas.json`
   (perfis development/preview/production). Updates OTA via `hot-updater`
   (bucket S3 próprio, fora do fluxo de loja).
-- **core**: sem infra — só publica no GitHub Packages via `bun publish`.
+- **core** e **database**: sem infra própria — são pacotes internos.
 
-## Convenção de "deploy" (script npm, não é deploy de verdade sozinho)
+## Deploy é uma ação do usuário
 
-Em `backend`, `backoffice` e `application`, o script `deploy` do `package.json`
-apenas faz commit + push (`git add . && git commit -m '...' && git push`).
-**Isso dispara o deploy real via Dokploy observando o repositório**, não é
-um script que builda/sobe nada localmente. Tenha isso em mente: rodar
-`bun run deploy` sem que o usuário peça é equivalente a fazer um push para
-produção — trate com o mesmo cuidado que um `git push` normal (peça
-confirmação antes).
+Os antigos scripts `deploy` (`git add . && git commit && git push`) foram removidos.
+Subir uma versão (push para a branch que o Dokploy observa, disparo manual no
+Dokploy, ou — no futuro — o merge que aciona o CD) é uma ação com efeito em
+produção: **peça confirmação antes**, nunca faça por conta própria.
 
 ## O que verificar antes de confiar cegamente neste documento
 
-Este documento foi escrito a partir de uma inspeção do código em
-2026-09-23. Antes de tomar decisões arquiteturais importantes com base
-nele, confirme que os arquivos citados (`docker-compose.yml`,
-`.env.example`, `package.json` de cada repo) ainda dizem o mesmo — o
-sistema evolui e este arquivo pode ficar desatualizado.
+Este documento foi escrito a partir de uma inspeção do código em 2026-09-23 e
+atualizado na migração para monorepo (2026-10). Antes de tomar decisões
+arquiteturais importantes com base nele, confirme que os arquivos citados
+(`docker-compose.yml`, `.env.example`, `package.json` de cada app) ainda dizem o
+mesmo — o sistema evolui e este arquivo pode ficar desatualizado.

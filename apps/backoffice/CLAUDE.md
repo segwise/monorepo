@@ -6,7 +6,7 @@ Painel web Next.js. **Uma base de código, três deployments** controlados por
 lembre que o impacto é nos três públicos ao mesmo tempo.
 
 Contexto do sistema inteiro (arquitetura, domínio, convenções comuns): ver
-[`../CLAUDE.md`](../CLAUDE.md) e [`../docs/`](../docs/) — leia antes de mexer aqui.
+[`../../CLAUDE.md`](../../CLAUDE.md) e [`../../docs/`](../../docs/) — leia antes de mexer aqui.
 
 ## Stack
 
@@ -78,25 +78,36 @@ Busca só é aplicada com Enter ou clique na lupa (nunca a cada tecla). Use
 (`MarketingSearch`, listas filtradas no cliente). O termo é enviado como `?search=` ao backend (busca sempre no
 servidor via `parseSearch` do backend, com índice; nunca filtrando o que já foi
 carregado). Detalhes em
-[`../docs/CONVENTIONS.md`](../docs/CONVENTIONS.md).
+[`../../docs/CONVENTIONS.md`](../../docs/CONVENTIONS.md).
 
 ## Integração com o backend
 
 `src/libraries/api.ts` é o único ponto de saída HTTP. Toda chamada nova à
 API deve passar por ele (não criar `fetch` solto). A env `NEXT_PUBLIC_API_URL`
-aponta para o `backend` deste workspace (`../backend`).
+aponta para o `api` deste monorepo (`apps/api`).
 
 ## Depende de @segwise/core
 
 Schemas, tipos, máscaras, validadores e traduções vêm de `@segwise/core`
-(`^1.1.447` no momento). Se faltar algo lá que você precisa (e que também
-seria útil no `backend` ou `application`), adicione no `core` primeiro — ver
-[`../core/CLAUDE.md`](../core/CLAUDE.md).
+(`workspace:*`, sem versão publicada). Se faltar algo lá que você precisa (e que também
+seria útil no `api` ou `mobile`), adicione no `core` primeiro — ver
+[`../../packages/core/CLAUDE.md`](../../packages/core/CLAUDE.md).
 
 ## Docker / deploy
 
-`Dockerfile` multi-stage: build com Bun → output standalone do Next → runtime
-Node 22 alpine. `docker-compose.yml` builda os três serviços (`backoffice`,
-`customer`, `producer`) a partir do mesmo Dockerfile com build args
-diferentes, todos na rede externa `dokploy-network`. `bun run deploy` faz
-push real (Dokploy redeploya a partir do git) — não rodar sem confirmação.
+`Dockerfile` multi-stage: `turbo prune` + build com Bun → output standalone do Next
+(`outputFileTracingRoot` na raiz; servidor em `apps/backoffice/server.js`) →
+runtime Node 22 alpine. Buildado com **contexto na raiz do monorepo**
+(`docker build -f apps/backoffice/Dockerfile --build-arg NEXT_PUBLIC_ROLE_SYSTEM=admin ...`).
+`docker-compose.yml` builda os três serviços (`backoffice`, `customer`, `producer`) a
+partir do mesmo Dockerfile com build args diferentes — o valor de
+`NEXT_PUBLIC_ROLE_SYSTEM` do serviço do painel interno é **`admin`** —, todos na
+rede externa `dokploy-network`. Não há mais script `deploy`; subir versão é ação do
+usuário — não fazer sem confirmação.
+
+## Typecheck e lint
+
+`bun run typecheck` roda `next typegen && tsc --noEmit` (gera os tipos do Next que
+o `tsc` precisa). Não rode junto com `next build` (ambos escrevem em `.next/types`);
+o Turbo já serializa (`apps/backoffice/turbo.json`). Lint via Biome (config na raiz,
+aqui só ativa os domínios `next`/`react`).

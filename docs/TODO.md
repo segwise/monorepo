@@ -14,14 +14,14 @@ Produtores antes de começar a trabalhar nela.
   como `id: _id` (não usada) — hoje ele sempre abre o dialog de **cadastro**
   vazio, mesmo clicando para "ver" um produtor existente. Falta implementar
   view/edit real usando esse `id`.
-  Arquivo: `backoffice/src/containers/dialogs/producers/register.tsx`
-  (chamado a partir de `backoffice/src/containers/tables/producers/simple.tsx`).
+  Arquivo: `apps/backoffice/src/containers/dialogs/producers/register.tsx`
+  (chamado a partir de `apps/backoffice/src/containers/tables/producers/simple.tsx`).
 
 - [ ] **Dropdown de ações ("...") na tabela está vazio.**
   `<DropdownMenuContent align='end' />` sem nenhum `DropdownMenuItem` —
   botão existe mas não faz nada. Definir quais ações fazem sentido aqui
   (editar, desativar, reenviar convite, etc.) antes de implementar.
-  Arquivo: `backoffice/src/containers/tables/producers/simple.tsx`.
+  Arquivo: `apps/backoffice/src/containers/tables/producers/simple.tsx`.
 
 - [ ] **Status "Ativo" fixo/hardcoded na tabela**, não reflete o estado real
   do produtor. Hoje o fluxo é: `POST /producers` cria um `User` + um
@@ -30,15 +30,15 @@ Produtores antes de começar a trabalhar nela.
   "Ativo". Verificar se há como diferenciar `Member` (aceito) de
   `Invitation` (pendente) na resposta de `/producers/simple` e refletir
   isso na UI.
-  Arquivos: `backoffice/src/containers/tables/producers/simple.tsx`,
-  `backend/src/routers/services/producers/listinig.ts`.
+  Arquivos: `apps/backoffice/src/containers/tables/producers/simple.tsx`,
+  `apps/api/src/routers/services/producers/listinig.ts`.
 
 - [ ] **Select "Tipo de Pagamento" só oferece a opção "Mensal"** — as
   opções semanal (`weekly`) e quinzenal (`bi_weekly`) de
   `SchemaProducerTypeOfPayment` estão comentadas no JSX. Confirmar se é
   intencional (regra de negócio) ou só um corte temporário, e reabilitar se
   fizer sentido.
-  Arquivo: `backoffice/src/containers/dialogs/producers/register.tsx`
+  Arquivo: `apps/backoffice/src/containers/dialogs/producers/register.tsx`
   (linhas do `<Select>` de `typeOfPayment`).
 
 - [x] ~~**Bug: `register.ts` (fluxo do admin) pode apagar um usuário
@@ -56,15 +56,42 @@ Produtores antes de começar a trabalhar nela.
   `SchemaProducerPublicRegister`); sem PIX não há como pagar a comissão. Decidir se
   deve ser obrigatória.
 
+## Migração para monorepo (pendências)
+
+Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
+
+- [ ] **Criar o repositório no GitHub**, configurar o `remote`, fazer o primeiro push e
+  arquivar os 4 repositórios antigos (`core`, `backend`, `backoffice`, `application`).
+- [ ] **CI no GitHub Actions** (install, `turbo run lint typecheck build` com `--affected`,
+  cache do Turbo, validação das migrations) + **Kodus** self-hosted no Dokploy como
+  quality gate + branch protection em `main`.
+- [ ] **CD híbrido**: imagens no GHCR (api + 3 variantes do backoffice) + webhook/API do
+  Dokploy; mobile via EAS Build + hot-updater por workflow.
+- [ ] **Confirmar no Dokploy** que `NEXT_PUBLIC_ROLE_SYSTEM` do serviço do painel interno é
+  `admin` (o compose antigo dizia `backoffice`, que dá 404 nas rotas) e ajustar as
+  configurações de build/compose do Dokploy para o contexto na raiz do monorepo.
+- [ ] **Testar em dispositivo real o upload de fotos** (`File` do `expo-file-system` +
+  `fetch` de `expo/fetch`): nome e `Content-Type` do arquivo chegando no servidor
+  (`apps/mobile/src/functions/api/marketplace/vehicles.ts`, `register-update.tsx`).
+- [ ] **Validar EAS Build e hot-updater** no monorepo (rodar a partir de `apps/mobile`;
+  `eas.json` fixa `bun 1.3.10`, a raiz usa 1.4.2).
+- [ ] **Abrir o app** no emulador/simulador (os builds nativos Android/iOS compilam, mas o
+  app não foi executado).
+- [ ] **Xcode 27**: pods com deployment target antigo (SDWebImage 9.0, RNSVG 12.4) quebram o
+  build iOS; hoje só passa forçando `IPHONEOS_DEPLOYMENT_TARGET=16.0`.
+- [ ] **Expo**: alinhar `react-native` (0.83.4 → 0.83.10) e `react-native-worklets`
+  (0.7.2 → 0.7.4) com `expo install --check`.
+- [ ] Apagar `apps/mobile/ios` e `apps/mobile/android` gerados (gitignored, ~4,5 GB) quando
+  não forem necessários.
+
 ## Outros pontos em aberto (não confirmados, do levantamento inicial do sistema)
 
 Ver [`ARCHITECTURE.md`](ARCHITECTURE.md) — seção de incertezas:
 
-- [ ] Confirmar se `application` usa `better-auth` ou outro mecanismo de auth.
+- [ ] Confirmar se `mobile` usa `better-auth` ou outro mecanismo de auth.
 - [ ] Confirmar o que exatamente `EXPO_PUBLIC_COMPANY_ID` representa.
 - [ ] Localizar/entender o app "xcar" (mencionado via `IOS_XCAR_APP_URL` /
-  `ANDROID_XCAR_APP_URL` no `.env.example` do backend) — não está entre os
-  4 diretórios deste workspace.
+  `ANDROID_XCAR_APP_URL` no `.env.example` do `apps/api`) — não está neste monorepo.
 
 ---
 

@@ -1,21 +1,22 @@
-# Convenções comuns aos 4 repositórios
+# Convenções comuns aos apps e pacotes do monorepo
 
 ## Runtime e ferramentas
 
-- **Bun** é o runtime/gerenciador de pacotes em todos os repos (não usar npm/yarn/pnpm).
+- **Bun** é o runtime/gerenciador de pacotes em todo o monorepo (não usar npm/yarn/pnpm).
   Instale dependências com `bun install`, rode scripts com `bun run <script>`.
-- **Biome** é o linter/formatter em todos os repos (não ESLint, não Prettier).
-  Rode `biome check` (lint) e `biome format --write` (format). Indentação por
-  padrão: tab, largura 2. Aspas simples em JS/TS/JSX (ver `biome.json` de
-  cada repo para confirmar overrides).
+- **Biome** é o linter/formatter em todo o monorepo (não ESLint, não Prettier), com
+  versão única e configuração em `biome.json` na raiz (cada pacote só estende e
+  sobrescreve o que difere). Rode `bun run lint` (Turbo) e `bun run format`.
+  Padrão: indentação por tab, aspas simples em JS/TS/JSX. Lint sem erros é
+  pré-requisito (vai ser o gate do CI).
 - **TypeScript** em todos, sem exceção — não introduzir JS puro.
 - **Zod v4** para validação de esquema em todos.
 - **date-fns + date-fns-tz** para manipulação de datas — não usar `Date` nativo
   para cálculos, nem `moment`/`dayjs`.
 
-## Estrutura de pastas (padrão repetido em backend/backoffice/application)
+## Estrutura de pastas (padrão repetido em api/backoffice/mobile)
 
-Os três repos executáveis compartilham uma convenção de pastas dentro de `src/`:
+Os três apps compartilham uma convenção de pastas dentro de `src/`:
 
 - `libraries/` — infraestrutura interna (cliente HTTP, auth, cache, storage,
   schemas locais, hooks de dados).
@@ -31,32 +32,29 @@ estrutura ad-hoc.
 ## @segwise/core — regra de dependência
 
 Sempre que precisar de um tipo, schema Zod, máscara de input, validador de
-documento (CPF/CNPJ/placa/CEP) ou tradução de enum que **mais de um repo vai
+documento (CPF/CNPJ/placa/CEP) ou tradução de enum que **mais de um app vai
 usar**, isso pertence ao `core`, não a uma cópia local. Ver
-[`ARCHITECTURE.md`](ARCHITECTURE.md#regra-de-ouro-do-monorepo-lógico) e
-`core/CLAUDE.md` para o fluxo de publicação.
+[`../CLAUDE.md`](../CLAUDE.md#regra-de-ouro-do-monorepo) e
+`packages/core/CLAUDE.md` para o fluxo de alteração.
 
-Se o tipo/schema é usado só dentro de um único repo (ex.: um schema de
+Se o tipo/schema é usado só dentro de um único app (ex.: um schema de
 formulário específico de uma tela do backoffice), ele fica local em
-`src/libraries/schemas` daquele repo — não precisa subir para o `core`.
+`src/libraries/schemas` daquele app — não precisa subir para o `core`.
 
 ## Commits e deploy
 
-- Commits neste projeto historicamente não seguem Conventional Commits de
-  forma rigorosa nos repos de app (mensagens genéricas via script `deploy`).
-  O `core` é exceção: `deploy:patch/minor/major` gera mensagens
-  `chore: release vX.Y.Z` automaticamente.
-- **Nunca rode `bun run deploy`** (em backend/backoffice/application) nem
-  `bun run deploy:patch|minor|major` (em core) sem confirmação explícita do
-  usuário — esses scripts fazem push real e, no caso do core, publicam um
-  pacote e atualizam os outros 3 repos automaticamente. Ver
-  [`ARCHITECTURE.md`](ARCHITECTURE.md#convenção-de-deploy-script-npm-não-é-deploy-de-verdade-sozinho).
+- Commits neste projeto historicamente não seguem Conventional Commits de forma
+  rigorosa. Prefira mensagens objetivas (`feat:`, `fix:`, `chore:`, `build:`,
+  `style:`, `refactor:`), um assunto por commit.
+- Não há mais scripts `deploy` (add/commit/push) nem publicação do `core`.
+  **Nunca faça push ou dispare deploy sem confirmação explícita do usuário** —
+  ver [`ARCHITECTURE.md`](ARCHITECTURE.md#deploy-é-uma-ação-do-usuário).
 
 ## Variáveis de ambiente
 
-Cada repo tem um `.env.example` na raiz — é a fonte de verdade de quais envs
+Cada app tem um `.env.example` na raiz da sua pasta — é a fonte de verdade de quais envs
 existem. Nunca commitar um `.env` real. Ao adicionar uma nova env var,
-atualize o `.env.example` correspondente no mesmo commit.
+atualize o `.env.example` do app correspondente no mesmo commit.
 
 ## Campo de busca em listagens (backoffice)
 
@@ -75,7 +73,7 @@ digitado em cima do que já foi carregado: isso só enxerga a primeira
 consulta/página. Filtros secundários (status, perfil, UF...) podem ser no
 cliente apenas enquanto a lista vier inteira numa resposta só.
 
-Critério único (`parseSearch`, em `backend/src/functions/search/parse-search.ts`):
+Critério único (`parseSearch`, em `apps/api/src/functions/search/parse-search.ts`):
 CPF/CNPJ/celular comparados pelos dígitos, e-mail por prefixo (`startsWith`,
 minúsculo) e o restante como `contains` + `mode: 'insensitive'` (ILIKE
 `%x%`). **Não use o `search` (full-text) do Prisma**: ele gera
@@ -115,8 +113,8 @@ registros), velocidade e peso no banco:
 - Os índices GIN trigram existem só nas migrations (o Prisma não os declara no
   `schema.prisma`). Por isso nunca rode `prisma migrate dev` para gerar
   migration sem revisar o SQL: ele pode propor remover esses índices. Use
-  `db:migrate:local` (deploy de migrations existentes).
-- Migrations só no banco local (ver `backend/CLAUDE.md`); a produção recebe pelo
+  `bun run db:migrate:local` (deploy de migrations existentes).
+- Migrations só no banco local (ver `apps/api/CLAUDE.md`; o schema e as migrations ficam em `packages/database`); a produção recebe pelo
   deploy.
 
 ## Datas e colunas `@db.Date` (regra)
@@ -164,7 +162,7 @@ GitHub Actions, etc.) antes de estruturar.
 
 ## Rotas protegidas × rotas públicas do app (regra)
 
-O app do segurado (`application`) usa algumas rotas **sem login**:
+O app do segurado (`mobile`) usa algumas rotas **sem login**:
 `GET /safes/simple?ids=…`, `GET /safes/simple/registration`,
 `GET /safes/simple/plate/:placa`, `POST /quotes/simple`,
 `GET /quotes/simple/plate/:placa`, `/marketplace`, `/producers/public*`.

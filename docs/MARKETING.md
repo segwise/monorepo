@@ -10,8 +10,8 @@ Menu "Marketing" no sidebar do portal `customer`. Primeira feature: **Campanhas*
   America/Sao_Paulo) + lista de contatos própria.
 - **Contato** = nome, e-mail e celular (opcional). Pertence a uma campanha
   (mesmo e-mail pode estar em campanhas diferentes).
-- **Modelos** ficam no código: `backend/src/templates/partnership-invite/*`
-  (React Email), registrados em `backend/src/libraries/marketing/templates.ts`.
+- **Modelos** ficam no código: `apps/api/src/templates/partnership-invite/*`
+  (React Email), registrados em `apps/api/src/libraries/marketing/templates.ts`.
   Modelo novo = componente novo + valor em `enum MarketingTemplate`
   (`schema.prisma`) + `MarketingTemplate` em `core/schemas/marketing` + entrada
   no registro. Hoje: contabilidade e administradora de condomínio.
@@ -78,7 +78,7 @@ Menu "Marketing" no sidebar do portal `customer`. Primeira feature: **Campanhas*
 
 ## Substitui
 
-`backend/src/routers/services/emails.ts` (`/send-email/*`, disparo manual com
+`apps/api/src/routers/services/emails.ts` (`/send-email/*`, disparo manual com
 contatos fixos no código). Pode ser removido depois de importar aquelas listas
 para campanhas.
 

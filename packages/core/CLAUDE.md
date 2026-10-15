@@ -1,17 +1,17 @@
 # core — CLAUDE.md (`@segwise/core`)
 
-Lib TypeScript compartilhada, publicada como pacote npm privado no GitHub
-Packages. É o **contrato de dados** entre `backend`, `backoffice` e
-`application` — não roda como serviço, não tem infraestrutura própria.
+Lib TypeScript compartilhada, pacote interno do monorepo (`workspace:*`, **sem
+publicação**). É o **contrato de dados** entre `api`, `backoffice` e
+`mobile` — não roda como serviço, não tem infraestrutura própria.
 
-Contexto do sistema inteiro: ver [`../CLAUDE.md`](../CLAUDE.md) e
-[`../docs/`](../docs/) — em especial [`../docs/DOMAIN.md`](../docs/DOMAIN.md)
+Contexto do sistema inteiro: ver [`../../CLAUDE.md`](../../CLAUDE.md) e
+[`../../docs/`](../../docs/) — em especial [`../../docs/DOMAIN.md`](../../docs/DOMAIN.md)
 para o glossário de domínio que os `types`/`schemas` deste pacote representam.
 
 ## Stack
 
 TypeScript puro, buildado com `tsc` + `tsc-alias`. Peer dependencies: `zod`,
-`date-fns`, `typescript` (mesmas versões que os 3 repos consumidores esperam
+`date-fns`, `typescript` (mesmas versões que os 3 apps consumidores esperam
 ter compatíveis). Dependências próprias: `decimal.js` (cálculo monetário
 preciso), `date-fns-tz`.
 
@@ -25,41 +25,32 @@ preciso), `date-fns-tz`.
 | `valids/` | `@segwise/core/valids` | Validadores: `cnpj`, `cpf`, `date`, `phone`, `plate`, `postal-code`. |
 | `translate/` | `@segwise/core/translate` | Tradução de enums de domínio para português (labels de UI): `payment`, `producer`, `profession`, `quote`, `safe` (status, commission), `vehicle`, `utils`. |
 | `utils/` | `@segwise/core/utils` | Funções de negócio: cálculo de parcela/percentual, geração de referral, filtros de data padrão, `cookies-relevant.ts` (usado pelo `backoffice` para repassar cookies de auth ao backend). |
-| `scripts/bump-version.ts` | — (uso interno) | Versionamento semântico usado pelos scripts `deploy:*`. |
 
 ## Regra: o que vai para o core vs. o que fica local
 
 **Vai para o core** quando o tipo/schema/máscara/tradução é usado (ou vai ser
-usado) por mais de um dos repos consumidores — normalmente `backend` +
-pelo menos um cliente (`backoffice`/`application`), porque é isso que garante
+usado) por mais de um dos apps consumidores — normalmente `api` +
+pelo menos um cliente (`backoffice`/`mobile`), porque é isso que garante
 que o payload que o backend envia bate com o que o cliente espera.
 
-**Fica local** (em `src/libraries/schemas` de cada repo) quando é específico
+**Fica local** (em `src/libraries/schemas` de cada app) quando é específico
 de uma tela/formulário de um único app e não representa um conceito de
 domínio compartilhado (ex.: um schema de filtro de UI só do backoffice).
 
-## Fluxo de alteração e publicação
+## Fluxo de alteração
 
 ```
-cd core
-# 1. editar src/... (schemas, types, masks, valids, translate ou utils)
-# 2. build local para conferir tipos antes de publicar:
-bun run build
-
-# 3. publicar — escolha patch/minor/major conforme semver:
-bun run deploy:patch   # ou deploy:minor / deploy:major
+# 1. editar packages/core/src/... (schemas, types, masks, valids, translate ou utils)
+# 2. conferir tipos de tudo que consome o core (o Turbo builda o core antes):
+bunx turbo run typecheck lint
 ```
 
-O que `deploy:*` faz, em ordem: `build` → `bump-version` (atualiza
-`package.json`) → commit `chore: release vX.Y.Z` → tag git → push (branch +
-tags) → `bun publish` (GitHub Packages) → `update-external`, que roda
-`bun update @segwise/core` dentro de `../backend`, `../backoffice` e
-`../application` automaticamente.
-
-**Isso é uma ação com efeito em 4 repositórios de uma vez** (publica um
-pacote público-privado e faz push em 3 outros repos). Nunca rodar
-`bun run deploy:*` sem confirmação explícita do usuário — trate como um
-`git push` + release, não como um comando local inofensivo.
+Não há publicação, bump de versão nem `bun update`: o `core` é consumido por
+`workspace:*`, então a alteração no `core` e nos apps que a usam entra no **mesmo
+commit/PR**. Os apps resolvem os subpaths pelo `dist/` do core (`exports` do
+`package.json`), por isso o core precisa estar buildado — `bun run build` ou
+qualquer tarefa do Turbo com `^build` faz isso. Ao mexer no core, se algo parecer
+"desatualizado" no app, rebuilde: `bunx turbo run build --filter=@segwise/core`.
 
 ## Ao adicionar algo novo
 
@@ -68,6 +59,5 @@ pacote público-privado e faz push em 3 outros repos). Nunca rodar
 - Se adicionar um novo domínio (pasta nova em `schemas/`/`types/`), replique
   o padrão dos domínios existentes (`quotes`, `safes`, etc.) incluindo
   `register/` quando fizer sentido (schema de criação vs. schema completo).
-- Depois de publicar, os 3 repos consumidores já são atualizados pelo
-  próprio `deploy:*` — não precisa rodar `bun update @segwise/core`
-  manualmente neles, a menos que o `update-external` falhe.
+- Depois de alterar, rode `bunx turbo run typecheck` na raiz: ele valida o core e
+  todos os apps que o importam.

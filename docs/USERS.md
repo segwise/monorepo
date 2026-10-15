@@ -5,7 +5,7 @@ perfil e suspender/reativar. Produtores e parceiros ficam em **Produtores**, nã
 
 ## Perfis e hierarquia
 
-Definidos uma vez em `core/src/utils/user-roles.ts` (o backend aplica, a tela só oferece o
+Definidos uma vez em `packages/core/src/utils/user-roles.ts` (o backend aplica, a tela só oferece o
 que o backend aceitaria):
 
 | Perfil | Nível | Acessa a tela | Cadastra/altera |

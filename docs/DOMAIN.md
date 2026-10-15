@@ -1,8 +1,8 @@
 # Glossário de domínio — seguros automotivos
 
-Baseado nos models do Prisma (`backend/prisma/schema.prisma`) e nos schemas/
-tipos/traduções do `core` (`core/src/{schemas,types,translate}`). Os nomes em
-português são as traduções exibidas na UI (`core/src/translate`); os nomes em
+Baseado nos models do Prisma (`packages/database/prisma/schema.prisma`) e nos schemas/
+tipos/traduções do `core` (`packages/core/src/{schemas,types,translate}`). Os nomes em
+português são as traduções exibidas na UI (`packages/core/src/translate`); os nomes em
 inglês são os usados no código (models, tipos, rotas).
 
 | Termo no código | Significado |
@@ -24,14 +24,14 @@ inglês são os usados no código (models, tipos, rotas).
 
 ## Papéis de usuário (roles)
 
-Refletidos em `backoffice/src/app/{admin,customer,producer}` e nos três
+Refletidos em `apps/backoffice/src/app/{admin,customer,producer}` e nos três
 serviços do `docker-compose.yml` do backoffice:
 
 - **admin** — equipe interna Segwise, acesso amplo.
-- **customer** — segurado/cliente final (também atendido pelo app `application`).
+- **customer** — segurado/cliente final (também atendido pelo app `mobile`).
 - **producer** — produtor/corretor que vende e gerencia apólices dos seus clientes.
 
-## Áreas de negócio no app mobile (`application`)
+## Áreas de negócio no app mobile
 
 Grupos de rotas em `src/app/(stacks)/`:
 - `(buying-and-selling)` — compra e venda de veículos (marketplace).
@@ -54,7 +54,7 @@ alinhamento com o `core`, que é a fonte de verdade dos tipos.
 O usuário é criado já no cadastro; o `Member` só nasce no aceite do convite (quando
 confirma o e-mail e define a senha). Enquanto isso o login continua bloqueado, mas ele
 **já recebe cotações e propostas**: o código de indicação (`resolveProducerByReferral`,
-`backend/src/functions/producers/`) resolve também pelo convite pendente, e o seletor
+`apps/api/src/functions/producers/`) resolve também pelo convite pendente, e o seletor
 `GET /producers/simple/full` lista quem tem convite pendente. Cotações e propostas
 guardam `producerId` = id do usuário, então nada muda no aceite.
 
