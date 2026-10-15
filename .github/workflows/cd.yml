@@ -112,42 +112,32 @@ jobs:
           cache-to: type=gha,scope=${{ matrix.name }},mode=max
 
   deploy:
-    name: Deploy (${{ matrix.name }})
+    name: Deploy (Dokploy compose)
     needs: [meta, images]
     # Só roda com o Dokploy configurado e (no disparo manual) se o deploy foi pedido.
-    if: ${{ vars.DOKPLOY_URL != '' && (github.event_name != 'workflow_dispatch' || inputs.deploy) }}
+    if: ${{ vars.DOKPLOY_URL != '' && vars.DOKPLOY_COMPOSE_ID != '' && (github.event_name != 'workflow_dispatch' || inputs.deploy) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: production
-    strategy:
-      # API primeiro; se ela falhar, os backoffices não sobem (dependem do contrato da API).
-      fail-fast: true
-      max-parallel: 1
-      matrix:
-        include:
-          - name: api
-            app_var: DOKPLOY_APP_API
-          - name: backoffice
-            app_var: DOKPLOY_APP_ADMIN
-          - name: customer
-            app_var: DOKPLOY_APP_CUSTOMER
-          - name: producer
-            app_var: DOKPLOY_APP_PRODUCER
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.meta.outputs.sha }}
 
-      # Permite migrar um serviço por vez: sem o ID do app, o serviço é ignorado.
+      # O compose (deploy/docker-compose.yml) usa as imagens :latest com pull_policy: always:
+      # o deploy baixa a versão que acabou de ser publicada e recria só o que mudou.
       - name: Deploy no Dokploy
-        if: ${{ vars[matrix.app_var] != '' }}
         env:
           DOKPLOY_URL: ${{ vars.DOKPLOY_URL }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
-          APPLICATION_ID: ${{ vars[matrix.app_var] }}
-          IMAGE: ${{ needs.meta.outputs.image_prefix }}/${{ matrix.name }}:${{ needs.meta.outputs.tag }}
+          COMPOSE_ID: ${{ vars.DOKPLOY_COMPOSE_ID }}
         run: bash scripts/dokploy-deploy.sh
 
-      - name: Serviço ignorado (sem applicationId configurado)
-        if: ${{ vars[matrix.app_var] == '' }}
-        run: echo "::notice::${{ matrix.app_var }} não está definida; ${{ matrix.name }} não foi implantado."
+  # Aviso (não falha) quando o Dokploy ainda não está configurado.
+  deploy-skipped:
+    name: Deploy ignorado
+    needs: [meta, images]
+    if: ${{ vars.DOKPLOY_URL == '' || vars.DOKPLOY_COMPOSE_ID == '' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "::notice::DOKPLOY_URL e/ou DOKPLOY_COMPOSE_ID não definidas; imagens publicadas, deploy não disparado."

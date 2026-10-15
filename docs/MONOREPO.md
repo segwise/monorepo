@@ -135,8 +135,8 @@ docker build -f apps/backoffice/Dockerfile \
   (`admin` = backoffice interno; `backoffice` **não** é um valor válido — dá 404
   em todas as rotas porque o proxy reescreve para `/${ROLE}/...` e a pasta é
   `src/app/admin`.) O valor é embutido no build (`NEXT_PUBLIC_*`).
-- Os `docker-compose.yml` de cada app apontam para a raiz
-  (`context: ../..`, `dockerfile: apps/<app>/Dockerfile`).
+- Em produção quem sobe as imagens é o compose único `deploy/docker-compose.yml` (usa as imagens
+  publicadas no GHCR, não faz `build`); ver a seção de CD abaixo.
 
 ## Mobile (Expo)
 
@@ -209,46 +209,69 @@ Dispara quando o **CI termina com sucesso na `main`** (`workflow_run`) ou à mã
    `ghcr.io/segwise/producer`, cada uma com as tags `sha-<7 chars>` e `latest`. As imagens do
    Next embutem `NEXT_PUBLIC_ROLE_SYSTEM` (por variante) e `NEXT_PUBLIC_API_URL` (variável do repo)
    no build. As imagens são **`linux/amd64`** (runner do GitHub): o servidor do Dokploy precisa
-   ser x86_64.
-2. **deploy** — um serviço por vez, **api primeiro** (se falhar, os backoffices não sobem):
-   `scripts/dokploy-deploy.sh` chama a API do Dokploy (`application.saveDockerProvider` com a
-   imagem da versão e depois `application.deploy`). O Dokploy executa de forma assíncrona, então
-   o workflow **não detecta** deploy que falhe depois (ex.: migration quebrada no
-   `entrypoint.sh` do api). Fica pendente um health check pós-deploy.
-   O job só roda se a variável `DOKPLOY_URL` existir, e cada serviço só é implantado se o seu
-   `DOKPLOY_APP_*` existir — dá para migrar um serviço por vez.
+   ser x86_64. Os pacotes publicados a partir deste repo público ficam **públicos** (verificado
+   com `docker manifest inspect` sem login), então o Dokploy puxa sem credenciais.
+2. **deploy** — uma única chamada `compose.deploy` na API do Dokploy
+   (`scripts/dokploy-deploy.sh`). O Dokploy executa de forma assíncrona, então o workflow
+   **não detecta** deploy que falhe depois (ex.: migration quebrada no `entrypoint.sh` do api;
+   o `docker compose` marca o api como não saudável). Fica pendente um health check pós-deploy.
+   O job só roda se `DOKPLOY_URL` e `DOKPLOY_COMPOSE_ID` existirem.
+
+#### Stack de produção: um compose só (`deploy/docker-compose.yml`)
+
+Um compose com `api`, `backoffice`, `customer`, `producer` e os dois Redis (`cache` e `queue`,
+em rede interna sem acesso externo). O **Postgres fica fora** (Database do Dokploy ou externo):
+o ciclo de vida do banco não deve acompanhar o deploy da aplicação.
+
+- **Versão atômica**: api e os 3 backoffices sobem juntos, na mesma versão do contrato
+  (`@segwise/core`).
+- As imagens são `:latest` com `pull_policy: always`: cada `docker compose up -d` baixa a
+  versão nova e **recria só os serviços cuja imagem mudou** (os Redis não são recriados e
+  mantêm os dados — verificado). **Rollback**: *Actions → CD → Run workflow* com o `sha`
+  desejado (rebuilda do cache e republica `latest`).
+- Healthchecks: api (qualquer resposta HTTP; `start_period` de 90 s cobre as migrations), backoffices
+  (`/sign-in`) e Redis; os backoffices esperam a api ficar saudável (`depends_on`).
+- As variáveis da aba *Environment* do Dokploy vão para um `.env` e **não chegam sozinhas aos
+  containers**: o compose referencia cada `${VAR}`. A lista está em `deploy/.env.example`, e o CI
+  falha se o compose usar uma variável que não esteja documentada lá. Opcionais numéricas
+  (`AI_REQUEST_TIMEOUT_MS`, `AI_MAX_TEXT_CHARS`, `AI_MAX_COMPLETION_TOKENS`) têm default igual ao
+  do código (vazio viraria `0`); `CUSTOMER_PORTAL_URL` cai para `APPLICATION_URL`.
+- Testado localmente: os 6 serviços ficam saudáveis, as 63 migrations são aplicadas pelo
+  entrypoint, os backoffices sobem só depois da api, e o backoffice **não** resolve o nome do
+  Redis (rede interna isolada). O CI valida o arquivo (`docker compose config`).
+- Limitação: o deploy é `docker compose up`, não Swarm — um serviço que muda é recriado, com
+  alguns segundos fora do ar (a documentação do Dokploy não descreve zero downtime para
+  compose; não foi medido). Reverter um serviço isolado deixa de ser possível (reverte-se a stack).
 
 **Configuração (uma vez):**
 
+1. **No Dokploy**: criar um serviço *Docker Compose* (no projeto da Segwise) com fonte **Git**
+   (`https://github.com/segwise/monorepo`, branch `main`, caminho `./deploy/docker-compose.yml`),
+   **Auto Deploy desligado** (quem dispara é o CD) e **Isolated Deployment desligado** (não foi
+   testado com o roteamento). Preencher a aba *Environment* com as variáveis de
+   `deploy/.env.example`. Em *Domains*, um domínio por serviço, porta `3000`: `api`,
+   `backoffice`, `customer`, `producer`.
+2. **No GitHub**:
+
 ```bash
-# variáveis do repositório (não são segredo)
-gh variable set NEXT_PUBLIC_API_URL --body 'https://<url-publica-da-api>'
-gh variable set DOKPLOY_URL         --body 'https://<seu-dokploy>'
-gh variable set DOKPLOY_APP_API       --body '<applicationId da api>'
-gh variable set DOKPLOY_APP_ADMIN     --body '<applicationId do backoffice admin>'
-gh variable set DOKPLOY_APP_CUSTOMER  --body '<applicationId do customer>'
-gh variable set DOKPLOY_APP_PRODUCER  --body '<applicationId do producer>'
+gh variable set DOKPLOY_URL        --body 'https://<seu-dokploy>'
+gh variable set DOKPLOY_COMPOSE_ID --body '<composeId>'      # GET <dokploy>/api/project.all
 # segredo: o gh pede o valor no terminal (não passe o token na linha de comando)
-gh secret set DOKPLOY_API_KEY
+gh secret set DOKPLOY_API_KEY                                 # token: Dokploy → Profile → API/CLI
 ```
 
-- O token vem de Dokploy → *Profile → API/CLI*; os `applicationId` de `GET <dokploy>/api/project.all`
-  (header `x-api-key`).
-- **Visibilidade das imagens no GHCR**: os pacotes publicados a partir deste repo público
-  ficam **públicos** (verificado com `docker pull` anônimo), então o Dokploy puxa sem
-  credenciais. Se algum pacote ficar privado (ou o repo voltar a ser privado), torne-o público em
-  *Packages → <pacote> → Package settings → Change visibility*, ou cadastre o GHCR em
-  *Dokploy → Registry* (`ghcr.io`, usuário e um token clássico com `read:packages`).
-- No Dokploy, cada serviço continua sendo uma **Application**; o script troca a fonte para a imagem
-  Docker automaticamente. As envs e domínios do serviço ficam como estão. O Redis (cache/queue) do
-  api continua separado (fora do CD).
-- O deploy usa o *environment* `production` do GitHub; dá para exigir aprovação manual em
-  *Settings → Environments → production → Required reviewers* (disponível em repo público).
-- **Rollback**: *Actions → CD → Run workflow* com o `sha` anterior.
+   (`NEXT_PUBLIC_API_URL` já está definida.) O deploy usa o *environment* `production` do
+   GitHub; dá para exigir aprovação manual em *Settings → Environments → production → Required
+   reviewers*.
+3. **Corte dos Applications atuais**: subir o compose com domínios temporários, testar
+   (login, fila, upload) e só então trocar os domínios; manter os Applications antigos
+   parados por alguns dias como plano de volta. Os Redis do compose começam vazios (o cache
+   se recompõe; jobs BullMQ pendentes no Redis antigo precisam terminar antes do corte).
+   O primeiro deploy deve ser feito à mão (*Run workflow*) e conferido nos logs.
 
-**Ainda não validado:** a execução real contra o seu Dokploy (corpo exato de
-`saveDockerProvider` nessa versão). O primeiro deploy deve ser feito à mão pelo *Run workflow*
-e conferido nos logs.
+**Ainda não validado:** a execução real contra o seu Dokploy (a chamada `compose.deploy` e o
+fluxo da fonte Git nessa versão); só foi testada contra um servidor falso e o compose rodou
+localmente com imagens construídas aqui.
 
 ### Ainda a fazer
 

@@ -116,8 +116,9 @@ Integrações externas do `api`:
 ### apps/backoffice
 Next.js 16 / React 19, App Router. **Uma única base de código, três
 deployments** diferenciados só pela env var `NEXT_PUBLIC_ROLE_SYSTEM`
-(`admin` | `customer` | `producer`), ver `docker-compose.yml` — três
-serviços a partir do mesmo `Dockerfile`, cada um com esse build arg distinto:
+(`admin` | `customer` | `producer`), ver `deploy/docker-compose.yml` — três
+serviços (imagens `backoffice`, `customer` e `producer`) buildados do mesmo `Dockerfile`, cada
+um com esse build arg distinto:
 - `admin` → backoffice interno (painel da corretora).
 - `customer` → portal do segurado/cliente.
 - `producer` → portal do produtor/corretor.
@@ -149,13 +150,13 @@ mesmo Next.js app (`(auth)` route groups).
 - **CI/CD**: ainda não implementado (não há `.github/workflows`). O plano — CI no
   GitHub Actions com Kodus como quality gate e CD híbrido com Dokploy — está em
   [`MONOREPO.md`](MONOREPO.md#cicd-planejado).
-- **api** e **backoffice**: Dockerfile multi-stage (Bun + `turbo prune`), buildado
-  com **contexto na raiz do monorepo** (`docker build -f apps/<app>/Dockerfile .`),
-  publicados numa rede Docker externa `dokploy-network` → orquestração via
-  [Dokploy](https://dokploy.com) (PaaS self-hosted). O backoffice gera três
-  serviços a partir do mesmo Dockerfile (`NEXT_PUBLIC_ROLE_SYSTEM` =
-  `admin` | `customer` | `producer`). O `entrypoint.sh` do api aplica as
-  migrations (`prisma migrate deploy`) ao subir.
+- **api** e **backoffice**: Dockerfile multi-stage (Bun + `turbo prune`), buildado com
+  **contexto na raiz do monorepo** (`docker build -f apps/<app>/Dockerfile .`). O CD publica as
+  imagens no GHCR (`ghcr.io/segwise/{api,backoffice,customer,producer}`) e o Dokploy roda **um
+  compose único** (`deploy/docker-compose.yml`: api, backoffice, customer, producer e os dois
+  Redis `cache`/`queue` em rede interna) numa rede Docker externa `dokploy-network`. O Postgres
+  fica fora do compose. O `entrypoint.sh` do api aplica as migrations (`prisma migrate deploy`)
+  ao subir. Detalhes em [`MONOREPO.md`](MONOREPO.md#cicd).
 - **mobile**: sem Docker (é app mobile). Build/submit via `eas.json`
   (perfis development/preview/production). Updates OTA via `hot-updater`
   (bucket S3 próprio, fora do fluxo de loja).
@@ -164,8 +165,8 @@ mesmo Next.js app (`(auth)` route groups).
 ## Deploy é uma ação do usuário
 
 Os antigos scripts `deploy` (`git add . && git commit && git push`) foram removidos.
-Subir uma versão (push para a branch que o Dokploy observa, disparo manual no
-Dokploy, ou — no futuro — o merge que aciona o CD) é uma ação com efeito em
+Subir uma versão (o merge na `main` que aciona o CD, ou o disparo manual do workflow
+CD / do deploy no Dokploy) é uma ação com efeito em
 produção: **peça confirmação antes**, nunca faça por conta própria.
 
 ## O que verificar antes de confiar cegamente neste documento
@@ -173,5 +174,5 @@ produção: **peça confirmação antes**, nunca faça por conta própria.
 Este documento foi escrito a partir de uma inspeção do código em 2026-09-23 e
 atualizado na migração para monorepo (2026-10). Antes de tomar decisões
 arquiteturais importantes com base nele, confirme que os arquivos citados
-(`docker-compose.yml`, `.env.example`, `package.json` de cada app) ainda dizem o
+(`deploy/docker-compose.yml`, `.env.example`, `package.json` de cada app) ainda dizem o
 mesmo — o sistema evolui e este arquivo pode ficar desatualizado.
