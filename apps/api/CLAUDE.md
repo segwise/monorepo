@@ -168,8 +168,8 @@ Transfeera (Pix/split de pagamento). Nunca commitar segredos — só
 (`docker build -f apps/api/Dockerfile .`); roda como usuário não-root e tem
 `entrypoint.sh` (aplica `prisma migrate deploy` via `packages/database` e sobe o
 servidor). Em produção o compose é o `deploy/docker-compose.yml` da raiz (api + backoffices +
-`cache` e `queue` Redis em rede interna isolada + rede externa `dokploy-network`, usando as
-imagens do GHCR); o Postgres fica fora dele. Não há mais script `deploy`:
+Redis de `cache` em rede interna isolada + rede externa `dokploy-network`, usando as imagens
+do GHCR); o Postgres e o Redis da fila (BullMQ) são Databases do Dokploy, fora dele. Não há mais script `deploy`:
 subir versão é ação do usuário (ver [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#deploy-é-uma-ação-do-usuário)) —
 nunca rodar `migrate reset` ou `migrate deploy` contra produção sem confirmação.
 ## Busca em listagens

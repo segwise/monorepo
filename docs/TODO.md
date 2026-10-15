@@ -68,6 +68,10 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
   Auto Deploy desligado), preencher o Environment, definir `DOKPLOY_URL`, `DOKPLOY_COMPOSE_ID`
   e o segredo `DOKPLOY_API_KEY` no GitHub, cortar os Applications atuais e fazer o primeiro
   deploy à mão — passo a passo em `docs/MONOREPO.md#cicd`.
+- [x] Reconciliar os schedulers do BullMQ no boot (`apps/api/src/libraries/marketing/reconcile.ts`).
+- [ ] **Configurar o Redis da fila no Dokploy**: comando personalizado
+  `--appendonly yes --maxmemory-policy noeviction` e *Volume Backup* para o S3 (fora do horário de
+  pico; avaliar *Turn off Container* contra inconsistência de AOF), e testar a restauração.
 - [ ] **CD do mobile** (EAS Build + hot-updater por workflow) e **health check pós-deploy** no CD.
 - [ ] **Confirmar no Dokploy** que `NEXT_PUBLIC_ROLE_SYSTEM` do serviço do painel interno é
   `admin` (o compose antigo dizia `backoffice`, que dá 404 nas rotas) e ajustar as

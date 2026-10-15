@@ -20,10 +20,18 @@ Menu "Marketing" no sidebar do portal `customer`. Primeira feature: **Campanhas*
 
 ## Agendamento (BullMQ)
 
-- Fila `marketing` em um Redis próprio (`QUEUE_URL`, serviço `queue` no
-  `deploy/docker-compose.yml`), separado do cache (`CACHE_URL`): a fila roda com
+- Fila `marketing` em um Redis próprio (`QUEUE_URL`: Database Redis do Dokploy, **fora** do
+  `deploy/docker-compose.yml`), separado do cache (`CACHE_URL`): a fila roda com AOF e
   `maxmemory-policy noeviction` para nunca perder jobs por falta de memória.
-- Cada campanha ativa tem um *job scheduler* `campaign:<id>` (cron). Criar,
+  **Reconciliação no boot** (`libraries/marketing/reconcile.ts`, chamada em `src/index.ts`): a cada
+  subida da api o Redis da fila é refeito a partir do banco — campanha ativa ganha/atualiza o
+  scheduler, campanha pausada perde o dela, e scheduler `campaign:*` sem campanha no banco
+  (órfão: campanha apagada, inclusive por cascata ao excluir a corretora, ou backup antigo do
+  Redis restaurado) é removido. Assim perder ou restaurar o Redis não deixa campanha sem envio
+  nem dispara campanha apagada. Schedulers que não começam com `campaign:` não são tocados.
+- Cada campanha ativa tem um *job scheduler* `campaign:<id>` (cron). O ID do scheduler no BullMQ é
+  o `key` (o `id` volta vazio em `getJobSchedulers()`); `removeJobScheduler` aceita esse `key` e
+  devolve `false`, sem erro, se ele não existir. Criar,
   editar, pausar ou excluir a campanha sincroniza o scheduler
   (`libraries/marketing/queue.ts`).
 - O worker roda no mesmo processo do backend (`libraries/marketing/worker.ts`,

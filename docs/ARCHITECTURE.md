@@ -55,7 +55,8 @@ Integrações externas do `api`:
 - **PostgreSQL** via `DATABASE_URL` — dados transacionais (Prisma).
 - **Redis** via `CACHE_URL` — cache e sessões do better-auth (serviço `cache`, `maxmemory 512mb` +
   `volatile-lru`: só expulsa chaves com TTL, preservando consultas pagas de CPF/CNPJ sem TTL).
-- **Redis** via `QUEUE_URL` — filas BullMQ (serviço `queue`, `maxmemory-policy noeviction`).
+- **Redis** via `QUEUE_URL` — filas BullMQ. É um Database Redis do Dokploy **fora do compose**
+  (AOF + `maxmemory-policy noeviction`), para o ciclo de vida e o backup não dependerem do deploy.
 - **MinIO** (S3-compatible) — armazenamento de arquivos/PDFs.
 - **Ollama** (`OLLAMA_BASE_URL`/`AI_BASE_URL` no compose) — LLM self-hosted.
   - Extração de dados de PDF — propostas (`apps/api/src/routers/services/safes/extract-pdf.ts`)
@@ -153,9 +154,9 @@ mesmo Next.js app (`(auth)` route groups).
 - **api** e **backoffice**: Dockerfile multi-stage (Bun + `turbo prune`), buildado com
   **contexto na raiz do monorepo** (`docker build -f apps/<app>/Dockerfile .`). O CD publica as
   imagens no GHCR (`ghcr.io/segwise/{api,backoffice,customer,producer}`) e o Dokploy roda **um
-  compose único** (`deploy/docker-compose.yml`: api, backoffice, customer, producer e os dois
-  Redis `cache`/`queue` em rede interna) numa rede Docker externa `dokploy-network`. O Postgres
-  fica fora do compose. O `entrypoint.sh` do api aplica as migrations (`prisma migrate deploy`)
+  compose único** (`deploy/docker-compose.yml`: api, backoffice, customer, producer e o Redis `cache` em rede
+  interna) numa rede Docker externa `dokploy-network`. O **Postgres e o Redis da fila ficam fora do
+  compose**, como Databases do Dokploy (backup e ciclo de vida independentes do deploy). O `entrypoint.sh` do api aplica as migrations (`prisma migrate deploy`)
   ao subir. Detalhes em [`MONOREPO.md`](MONOREPO.md#cicd).
 - **mobile**: sem Docker (é app mobile). Build/submit via `eas.json`
   (perfis development/preview/production). Updates OTA via `hot-updater`
