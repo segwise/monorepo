@@ -219,9 +219,27 @@ Dispara quando o **CI termina com sucesso na `main`** (`workflow_run`) ou à mã
 
 #### Stack de produção: um compose só (`deploy/docker-compose.yml`)
 
-Um compose com `api`, `backoffice`, `customer`, `producer` e os dois Redis (`cache` e `queue`,
-em rede interna sem acesso externo). O **Postgres fica fora** (Database do Dokploy ou externo):
-o ciclo de vida do banco não deve acompanhar o deploy da aplicação.
+Um compose com `api`, `backoffice`, `customer`, `producer` e o Redis de `cache` (em rede interna
+sem acesso externo). Ficam **fora do compose**, como *Databases* do Dokploy, o **Postgres** e o
+**Redis da fila do BullMQ**: o ciclo de vida e o backup deles não devem acompanhar o deploy da
+aplicação (um `compose down -v` ou uma recriação nunca toca nos dados).
+
+- **Postgres**: Database Postgres do Dokploy + *Backups* agendados para um destino S3
+  (*Settings → Destinations*). É o caso documentado de backup dedicado de banco.
+- **Redis da fila**: Database Redis do Dokploy com AOF (`--appendonly yes`) e
+  `--maxmemory-policy noeviction` (exigência do BullMQ), configurados em *Advanced* (campo de
+  args/comando — a documentação oficial não detalha onde; confira na UI). `QUEUE_URL` usa o
+  host interno e a senha que o Dokploy mostra. **Backup**: a documentação oficial não confirma
+  backup dedicado para Redis; veja se o Database tem aba *Backups*. Sem ela, o AOF protege de
+  reinício e queda do container, mas não de perda do disco/servidor. Isso importa: os
+  schedulers das campanhas só são sincronizados ao criar/editar/pausar/excluir (sem
+  reconciliação no boot), então perder a fila faz as campanhas ativas pararem de enviar em silêncio.
+- **Cache** (no compose): volume nomeado `cache-data` com AOF, porque guarda consultas pagas de
+  CPF/CNPJ sem TTL. Por ser volume nomeado de um compose, aceita *Volume Backup* do Dokploy
+  (a doc recomenda desligar o container durante o backup para evitar inconsistência).
+- **Pub/Sub**: não há uso hoje, então não foi adicionado. Quando precisar: um serviço novo no
+  compose, ou reaproveitar o `cache` (pub/sub não guarda chaves, então a política de eviction
+  não interfere).
 
 - **Versão atômica**: api e os 3 backoffices sobem juntos, na mesma versão do contrato
   (`@segwise/core`).
@@ -236,16 +254,20 @@ o ciclo de vida do banco não deve acompanhar o deploy da aplicação.
   falha se o compose usar uma variável que não esteja documentada lá. Opcionais numéricas
   (`AI_REQUEST_TIMEOUT_MS`, `AI_MAX_TEXT_CHARS`, `AI_MAX_COMPLETION_TOKENS`) têm default igual ao
   do código (vazio viraria `0`); `CUSTOMER_PORTAL_URL` cai para `APPLICATION_URL`.
-- Testado localmente: os 6 serviços ficam saudáveis, as 63 migrations são aplicadas pelo
-  entrypoint, os backoffices sobem só depois da api, e o backoffice **não** resolve o nome do
-  Redis (rede interna isolada). O CI valida o arquivo (`docker compose config`).
+- Testado localmente (com Postgres e Redis externos descartáveis, como serão os Databases do
+  Dokploy): os 5 serviços ficam saudáveis, as 63 migrations são aplicadas pelo entrypoint, a api
+  cria as chaves `bull:marketing:*` no Redis externo da fila, os backoffices sobem só depois
+  da api e o backoffice **não** resolve o nome do Redis de cache (rede interna isolada). O CI
+  valida o arquivo (`docker compose config`).
 - Limitação: o deploy é `docker compose up`, não Swarm — um serviço que muda é recriado, com
   alguns segundos fora do ar (a documentação do Dokploy não descreve zero downtime para
   compose; não foi medido). Reverter um serviço isolado deixa de ser possível (reverte-se a stack).
 
 **Configuração (uma vez):**
 
-1. **No Dokploy**: criar um serviço *Docker Compose* (no projeto da Segwise) com fonte **Git**
+1. **No Dokploy**: antes do compose, criar os dois *Databases* (Postgres com *Backup* para S3, e
+   Redis da fila com AOF + `noeviction`) e anotar o host interno e a senha de cada um para
+   `DATABASE_URL` e `QUEUE_URL`. Depois criar um serviço *Docker Compose* (no projeto da Segwise) com fonte **Git**
    (`https://github.com/segwise/monorepo`, branch `main`, caminho `./deploy/docker-compose.yml`),
    **Auto Deploy desligado** (quem dispara é o CD) e **Isolated Deployment desligado** (não foi
    testado com o roteamento). Preencher a aba *Environment* com as variáveis de
@@ -265,8 +287,11 @@ gh secret set DOKPLOY_API_KEY                                 # token: Dokploy �
    reviewers*.
 3. **Corte dos Applications atuais**: subir o compose com domínios temporários, testar
    (login, fila, upload) e só então trocar os domínios; manter os Applications antigos
-   parados por alguns dias como plano de volta. Os Redis do compose começam vazios (o cache
-   se recompõe; jobs BullMQ pendentes no Redis antigo precisam terminar antes do corte).
+   parados por alguns dias como plano de volta. O cache do compose começa vazio (as
+   consultas pagas de CPF/CNPJ serão cobradas de novo, a menos que se migre o volume). O Redis da
+   fila é um Database novo: os jobs pendentes no antigo precisam terminar antes do corte, e os
+   schedulers das campanhas ativas precisam ser recriados (salvar cada campanha ativa), porque
+   não há reconciliação no boot.
    O primeiro deploy deve ser feito à mão (*Run workflow*) e conferido nos logs.
 
 **Ainda não validado:** a execução real contra o seu Dokploy (a chamada `compose.deploy` e o
