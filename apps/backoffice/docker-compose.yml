@@ -1,8 +1,8 @@
 services:
   backoffice:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: apps/backoffice/Dockerfile
       args:
         NEXT_PUBLIC_ROLE_SYSTEM: backoffice
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
@@ -19,8 +19,8 @@ services:
 
   customer:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: apps/backoffice/Dockerfile
       args:
         NEXT_PUBLIC_ROLE_SYSTEM: customer
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
@@ -37,8 +37,8 @@ services:
 
   producer:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: apps/backoffice/Dockerfile
       args:
         NEXT_PUBLIC_ROLE_SYSTEM: producer
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}

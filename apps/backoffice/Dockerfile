@@ -1,40 +1,38 @@
-
+# Contexto de build: raiz do monorepo
+#   docker build -f apps/backoffice/Dockerfile --build-arg NEXT_PUBLIC_ROLE_SYSTEM=backoffice .
 FROM node:22.14-alpine AS base
-
-WORKDIR /app
-
-RUN npm install -g bun@1.3.2
-
-FROM base AS builder
-
-WORKDIR /app
-
-COPY package.json bun.lock* .npmrc ./
-
-RUN bun install --frozen-lockfile
-
-COPY . .
-
-RUN bun run build
+RUN npm install -g bun@1.4.2
 
 FROM base AS pruner
-
 WORKDIR /app
+RUN npm install -g turbo@^2
+COPY . .
+RUN turbo prune @segwise/backoffice --docker
 
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/bun.lock* ./
-COPY --from=builder /app/.npmrc ./
+FROM base AS builder
+WORKDIR /app
+COPY --from=pruner /app/out/json/ .
+RUN bun install --frozen-lockfile
+COPY --from=pruner /app/out/full/ .
 
-RUN bun install --production --frozen-lockfile
+ARG NEXT_PUBLIC_ROLE_SYSTEM
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_ROLE_SYSTEM=$NEXT_PUBLIC_ROLE_SYSTEM \
+    NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_TELEMETRY_DISABLED=1
 
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
+RUN bun run --cwd packages/core build \
+ && bun run --cwd apps/backoffice build
 
 FROM node:22.14.0-alpine AS runner
-
 WORKDIR /app
 
-COPY --from=pruner /app ./
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1
 
-CMD ["node", "server.js"]
+# standalone com outputFileTracingRoot na raiz: o server.js fica em apps/backoffice/
+COPY --from=builder /app/apps/backoffice/.next/standalone ./
+COPY --from=builder /app/apps/backoffice/.next/static ./apps/backoffice/.next/static
+COPY --from=builder /app/apps/backoffice/public ./apps/backoffice/public
+
+CMD ["node", "apps/backoffice/server.js"]

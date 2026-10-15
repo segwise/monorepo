@@ -1,19 +1,22 @@
+# Contexto de build: raiz do monorepo
+#   docker build -f apps/api/Dockerfile .
 FROM oven/bun:1.4.2-alpine AS base
 
-FROM base AS deps
+FROM base AS pruner
 WORKDIR /app
-
-COPY package.json bun.lock* .npmrc ./
-
-RUN bun install --frozen-lockfile
+RUN bun add -g turbo@^2
+COPY . .
+RUN turbo prune @segwise/api --docker
 
 FROM base AS builder
 WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-RUN bun run db:generate
+COPY --from=pruner /app/out/json/ .
+RUN bun install --frozen-lockfile
+COPY --from=pruner /app/out/full/ .
+# generate não conecta no banco; a URL só precisa existir para o prisma.config.ts
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
+RUN bun run --cwd packages/core build \
+ && bun run --cwd packages/database generate
 
 FROM base AS runner
 WORKDIR /app
@@ -43,23 +46,11 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 ENV PLAYWRIGHT_BROWSERS_PATH=0 \
     CHROMIUM_PATH=/usr/bin/chromium-browser
 
-COPY --from=builder --chown=appuser:appgroup /app/package.json ./
-COPY --from=builder --chown=appuser:appgroup /app/bun.lock* ./
-COPY --from=builder --chown=appuser:appgroup /app/.npmrc ./
-
-COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
-
-COPY --from=builder --chown=appuser:appgroup /app/src ./src
-
-COPY --from=builder --chown=appuser:appgroup /app/prisma ./prisma
-COPY --from=builder --chown=appuser:appgroup /app/prisma.config.ts ./
-COPY --from=builder --chown=appuser:appgroup /app/tsconfig.json ./
-
-COPY --from=builder --chown=appuser:appgroup /app/generated ./generated
-
-COPY --from=builder --chown=appuser:appgroup /app/entrypoint.sh ./
+COPY --from=builder --chown=appuser:appgroup /app ./
 
 RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser
+
+WORKDIR /app/apps/api
 
 USER appuser
 
