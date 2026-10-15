@@ -21,10 +21,10 @@ env:
 jobs:
   verify:
     name: Lint, typecheck e build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -32,13 +32,13 @@ jobs:
         with:
           bun-version: 1.4.2
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: .turbo
           key: turbo-${{ runner.os }}-${{ github.sha }}
@@ -59,7 +59,7 @@ jobs:
 
   database:
     name: Prisma (validate + migrations)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     services:
       postgres:
@@ -76,13 +76,13 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:ci@localhost:5432/postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
@@ -102,7 +102,7 @@ jobs:
 
   docker:
     name: Docker build (${{ matrix.app }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
@@ -112,9 +112,9 @@ jobs:
       matrix:
         app: [api, backoffice]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: changes
         with:
           filters: |
@@ -127,12 +127,12 @@ jobs:
               - '.dockerignore'
               - '.github/workflows/ci.yml'
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
         if: github.event_name != 'pull_request' || steps.changes.outputs.docker == 'true'
 
       - name: Build da imagem (sem publicar)
         if: github.event_name != 'pull_request' || steps.changes.outputs.docker == 'true'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: apps/${{ matrix.app }}/Dockerfile
@@ -148,7 +148,7 @@ jobs:
     name: CI
     if: always()
     needs: [verify, database, docker]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Todos os jobs passaram?
         run: |
