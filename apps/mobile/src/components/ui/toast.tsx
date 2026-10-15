@@ -52,4 +52,4 @@ toast.error = (message: string, options?: Omit<ToastOptions, 'styles'>) =>
 		},
 	});
 
-export { toast, Toasts };
+export { Toasts, toast };

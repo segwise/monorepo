@@ -40,5 +40,5 @@ const useActionRequired = () =>
 			).data,
 	});
 
+export type { ActionRequiredGroup, ActionRequiredItem, ActionRequiredKind };
 export { useActionRequired };
-export type { ActionRequiredItem, ActionRequiredGroup, ActionRequiredKind };

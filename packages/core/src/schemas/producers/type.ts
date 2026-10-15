@@ -140,12 +140,12 @@ function refineProducerPaymentDays(
 }
 
 export {
-	SchemaProducerType,
-	SchemaProducerAreaOfActivity,
-	SchemaProducerTypeOfPayment,
-	SchemaProducerStartOfProductionPayment,
-	SchemaProducerSecondStartOfProductionPayment,
-	SchemaProducerStartOfProductionPaymentDays,
 	getProducerSecondPaymentDays,
 	refineProducerPaymentDays,
+	SchemaProducerAreaOfActivity,
+	SchemaProducerSecondStartOfProductionPayment,
+	SchemaProducerStartOfProductionPayment,
+	SchemaProducerStartOfProductionPaymentDays,
+	SchemaProducerType,
+	SchemaProducerTypeOfPayment,
 };

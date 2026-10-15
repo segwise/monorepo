@@ -37,8 +37,8 @@ function periodRanges(
 }
 
 export {
-	SchemaDashboardPeriod,
-	SchemaDashboardMetricKind,
-	requireBrokerId,
 	periodRanges,
+	requireBrokerId,
+	SchemaDashboardMetricKind,
+	SchemaDashboardPeriod,
 };

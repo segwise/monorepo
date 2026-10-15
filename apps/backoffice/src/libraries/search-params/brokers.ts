@@ -9,4 +9,4 @@ const useSearchParams = () =>
 
 type SearchParamsProps = ReturnType<typeof useSearchParams>[0];
 
-export { useSearchParams, type SearchParamsProps };
+export { type SearchParamsProps, useSearchParams };

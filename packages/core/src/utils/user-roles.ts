@@ -58,11 +58,11 @@ function canManageStaffRole(actor: unknown, target: unknown): boolean {
 }
 
 export {
-	STAFF_ROLES,
-	STAFF_ROLE_RANK,
 	assignableStaffRoles,
 	canAccessUsers,
 	canManageStaffRole,
 	isStaffRole,
+	STAFF_ROLE_RANK,
+	STAFF_ROLES,
 	type StaffRole,
 };

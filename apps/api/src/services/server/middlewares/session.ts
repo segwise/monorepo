@@ -68,4 +68,4 @@ const replaceSession: MiddlewareHandler = async (ctx, next) => {
 	return await next();
 };
 
-export { sessionMiddleware, requireSession, replaceSession };
+export { replaceSession, requireSession, sessionMiddleware };

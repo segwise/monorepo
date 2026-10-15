@@ -25,4 +25,5 @@ function maskMoney(value: string) {
 
 	return `R$ ${formatted}`;
 }
+
 export { maskMoney };

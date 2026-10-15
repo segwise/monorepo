@@ -227,10 +227,10 @@ async function deleteMatch(ip: string, hash?: string | null) {
 
 export {
 	buildFingerprint,
-	buildRedisKey,
 	buildRedisIpKey,
+	buildRedisKey,
 	cacheClick,
+	deleteMatch,
 	extractIp,
 	findMatch,
-	deleteMatch,
 };

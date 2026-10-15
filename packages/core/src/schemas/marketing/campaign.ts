@@ -42,7 +42,7 @@ const SchemaMarketingCampaign = z
 	});
 
 export {
-	SchemaMarketingTemplate,
-	SchemaMarketingFrequency,
 	SchemaMarketingCampaign,
+	SchemaMarketingFrequency,
+	SchemaMarketingTemplate,
 };

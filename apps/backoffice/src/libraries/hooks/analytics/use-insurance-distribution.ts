@@ -30,5 +30,5 @@ const useInsuranceDistribution = (period: ResolvedPeriod) =>
 		},
 	});
 
-export { useInsuranceDistribution };
 export type { InsuranceDistributionItem, InsuranceDistributionResponse };
+export { useInsuranceDistribution };

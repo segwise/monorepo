@@ -1,4 +1,16 @@
 {
 	"root": false,
-	"extends": "//"
+	"extends": "//",
+	"overrides": [
+		{
+			"includes": ["**/*.svg"],
+			"linter": {
+				"rules": {
+					"a11y": {
+						"noSvgWithoutTitle": "off"
+					}
+				}
+			}
+		}
+	]
 }

@@ -54,9 +54,9 @@ function TableSafesHeaderFilters() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const isSearchParams =
-		!!searchParams.insuranceCompanies?.length ||
-		!!searchParams.modality?.length ||
-		!!searchParams.producers?.length ||
+		searchParams.insuranceCompanies?.length ||
+		searchParams.modality?.length ||
+		searchParams.producers?.length ||
 		searchParams.renewal === true ||
 		searchParams.renewal === false ||
 		!searchParams.effectivedAt
@@ -222,7 +222,7 @@ function FilterEffectivedAt() {
 			cursor: null,
 			...(date === null
 				? null
-				: !!date.from && !!date.to && isSameDay(date.from, date.to)
+				: date.from && date.to && isSameDay(date.from, date.to)
 					? {
 							effectivedAt: {
 								start: startOfDay(date.from),

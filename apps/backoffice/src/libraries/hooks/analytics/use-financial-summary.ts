@@ -21,5 +21,5 @@ const useFinancialSummary = () =>
 			).data,
 	});
 
-export { useFinancialSummary };
 export type { FinancialSummaryResponse };
+export { useFinancialSummary };

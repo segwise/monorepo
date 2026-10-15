@@ -1,7 +1,7 @@
 import { format, isValid, parse } from 'date-fns';
 
 function isDateString(value: string) {
-	if (!value || value.length !== 10) {
+	if (value?.length !== 10) {
 		return false;
 	}
 

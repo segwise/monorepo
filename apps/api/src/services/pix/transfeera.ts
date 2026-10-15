@@ -25,4 +25,4 @@ transfeera.interceptors.request.use(async (request) => {
 	return request;
 });
 
-export { transfeeraAuth, transfeera };
+export { transfeera, transfeeraAuth };

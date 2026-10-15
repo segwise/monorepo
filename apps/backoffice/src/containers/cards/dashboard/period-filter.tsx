@@ -209,5 +209,5 @@ function formatDateRange(range: DateRange): string {
 	return `${formatter.format(range.from)} – ${formatter.format(range.to)}`;
 }
 
-export { PeriodFilterProvider, usePeriodFilter, formatDateRange };
-export type { PeriodPreset, ComparisonMode, DateRange, ResolvedPeriod };
+export type { ComparisonMode, DateRange, PeriodPreset, ResolvedPeriod };
+export { formatDateRange, PeriodFilterProvider, usePeriodFilter };

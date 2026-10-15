@@ -30,5 +30,5 @@ const useProducersRanking = (period: ResolvedPeriod, limit = 5) =>
 		},
 	});
 
-export { useProducersRanking };
 export type { ProducerRankingItem, ProducersRankingResponse };
+export { useProducersRanking };

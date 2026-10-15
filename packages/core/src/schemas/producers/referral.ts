@@ -21,7 +21,7 @@ const SchemaProducerReferralResponse = z.object({
 });
 
 export {
-	SchemaReferral,
 	SchemaProducerReferral,
 	SchemaProducerReferralResponse,
+	SchemaReferral,
 };

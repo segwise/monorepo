@@ -21,4 +21,4 @@ const SchemaDocument = z.object({
 	birth: SchemaDate,
 });
 
-export { SchemaDocument, SchemaCPFOrCNPJ };
+export { SchemaCPFOrCNPJ, SchemaDocument };

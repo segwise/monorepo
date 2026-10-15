@@ -13,4 +13,4 @@ type QuoteSimpleCustomRegister = z.infer<
 	typeof SchemaQuoteSimpleCustomRegister
 >;
 
-export type { QuoteRegister, QuoteSimpleRegister, QuoteSimpleCustomRegister };
+export type { QuoteRegister, QuoteSimpleCustomRegister, QuoteSimpleRegister };

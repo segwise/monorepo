@@ -227,4 +227,4 @@ const SchemaSafeRegister = z
 		},
 	);
 
-export { SchemaSafeRegister, SchemaSafeCommission };
+export { SchemaSafeCommission, SchemaSafeRegister };

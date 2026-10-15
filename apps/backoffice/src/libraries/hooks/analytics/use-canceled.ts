@@ -39,5 +39,5 @@ const useCanceled = (period: ResolvedPeriod, limit = 8) =>
 			).data,
 	});
 
+export type { CanceledComparison, CanceledItem, CanceledResponse };
 export { useCanceled };
-export type { CanceledItem, CanceledResponse, CanceledComparison };

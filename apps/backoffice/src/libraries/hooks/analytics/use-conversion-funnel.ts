@@ -28,5 +28,5 @@ const useConversionFunnel = (period: ResolvedPeriod) =>
 		},
 	});
 
+export type { ConversionFunnelResponse, ConversionFunnelStage };
 export { useConversionFunnel };
-export type { ConversionFunnelStage, ConversionFunnelResponse };

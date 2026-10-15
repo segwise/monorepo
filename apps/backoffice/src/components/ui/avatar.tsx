@@ -45,4 +45,4 @@ const AvatarFallback = forwardRef<
 ));
 AvatarFallback.displayName = Fallback.displayName;
 
-export { Avatar, AvatarImage, AvatarFallback };
+export { Avatar, AvatarFallback, AvatarImage };

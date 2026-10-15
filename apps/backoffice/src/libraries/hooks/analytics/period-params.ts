@@ -18,4 +18,4 @@ function periodKey(period: ResolvedPeriod) {
 	];
 }
 
-export { periodParams, periodKey };
+export { periodKey, periodParams };

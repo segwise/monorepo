@@ -14,7 +14,7 @@ type ProducerStartOfProductionPayment = z.infer<
 >;
 
 export type {
+	ProducerStartOfProductionPayment,
 	ProducerType,
 	ProducerTypeOfPayment,
-	ProducerStartOfProductionPayment,
 };

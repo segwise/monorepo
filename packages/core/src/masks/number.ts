@@ -14,4 +14,4 @@ function maskDecimal(value: string) {
 	return cleaned;
 }
 
-export { maskNumber, maskDecimal };
+export { maskDecimal, maskNumber };

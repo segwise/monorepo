@@ -28,5 +28,5 @@ const useOperationalKpis = (period: ResolvedPeriod) =>
 			).data,
 	});
 
-export { useOperationalKpis };
 export type { OperationalKpi, OperationalKpisResponse };
+export { useOperationalKpis };

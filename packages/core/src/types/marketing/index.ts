@@ -39,9 +39,9 @@ type MarketingContact = {
 };
 
 export type {
+	MarketingCampaign,
 	MarketingCampaignInput,
+	MarketingContact,
 	MarketingContactInput,
 	MarketingTemplateOption,
-	MarketingCampaign,
-	MarketingContact,
 };

@@ -459,9 +459,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				setValue(
 					'receivables.award',
 					// @ts-expect-error
-					props.receivables.award
-						.toString()
-						.replace('.', ','),
+					props.receivables.award.toString().replace('.', ','),
 				);
 			}
 
@@ -470,9 +468,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				setValue(
 					'receivables.franchise',
 					// @ts-expect-error
-					props.receivables.franchise
-						.toString()
-						.replace('.', ','),
+					props.receivables.franchise.toString().replace('.', ','),
 				);
 			}
 
@@ -515,7 +511,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 
 		isSubmitting.current = true;
 
-		(!id ? mutate : !!id && renewal ? mutate : update)(props, {
+		(!id ? mutate : id && renewal ? mutate : update)(props, {
 			onSettled() {
 				isSubmitting.current = false;
 			},
@@ -523,7 +519,7 @@ function FormProposalRegister({ id }: { id?: string }) {
 				toast.success(
 					(
 						data.message ||
-						`${!id ? 'Cadastrado' : !!id && renewal ? 'Cadastrado' : 'Atualizado'} com sucesso`
+						`${!id ? 'Cadastrado' : id && renewal ? 'Cadastrado' : 'Atualizado'} com sucesso`
 					).toUpperCase(),
 				);
 
@@ -2118,10 +2114,10 @@ function FormProposalRegister({ id }: { id?: string }) {
 				className='w-full'
 				disabled={isMutation || isUpdation}
 				textPending={
-					!id ? 'Salvando' : !!id && renewal ? 'Salvando' : 'Atualizando'
+					!id ? 'Salvando' : id && renewal ? 'Salvando' : 'Atualizando'
 				}
 			>
-				<SaveIcon /> {!id ? 'Salvar' : !!id && renewal ? 'Salvar' : 'Atualizar'}{' '}
+				<SaveIcon /> {!id ? 'Salvar' : id && renewal ? 'Salvar' : 'Atualizar'}{' '}
 				Registro
 			</Button>
 		</Fragment>

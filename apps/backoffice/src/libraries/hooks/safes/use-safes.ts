@@ -36,4 +36,4 @@ const useSafesById = (id?: string) =>
 		enabled: !!id,
 	});
 
-export { useSafesSimple, useSafesById };
+export { useSafesById, useSafesSimple };

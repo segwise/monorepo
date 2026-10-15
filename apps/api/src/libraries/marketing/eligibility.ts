@@ -34,4 +34,4 @@ async function countEligibleContacts(
 	});
 }
 
-export { RESEND_WINDOW_DAYS, findEligibleContacts, countEligibleContacts };
+export { countEligibleContacts, findEligibleContacts, RESEND_WINDOW_DAYS };

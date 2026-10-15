@@ -187,16 +187,16 @@ function cappedTotal(months: number[]) {
 }
 
 export {
+	cappedTotal,
 	EXCLUDED_PRODUCER_ID,
+	type MetricKind,
+	type MetricPoint,
+	median,
+	metricSeries,
+	monthlyTotals,
 	notTestProducer,
 	paymentNotTestProducer,
-	cappedTotal,
-	median,
-	monthlyTotals,
-	metricSeries,
 	productionWhere,
 	quotesWhere,
 	sumSeries,
-	type MetricKind,
-	type MetricPoint,
 };

@@ -169,4 +169,4 @@ const SchemaQuoteSimpleCustomRegister = z.object({
 	}),
 });
 
-export { SchemaQuoteSimpleRegister, SchemaQuoteSimpleCustomRegister };
+export { SchemaQuoteSimpleCustomRegister, SchemaQuoteSimpleRegister };

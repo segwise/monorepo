@@ -291,12 +291,12 @@ const useEndorsementCancel = () =>
 	});
 
 export {
-	useEndorsements,
-	useEndorsementPercentage,
-	useEndorsementVehicleConductorQuery,
-	useEndorsementVehicleConductor,
-	useEndorsementRevert,
 	useEndorsementAddress,
-	useEndorsementFranchise,
 	useEndorsementCancel,
+	useEndorsementFranchise,
+	useEndorsementPercentage,
+	useEndorsementRevert,
+	useEndorsements,
+	useEndorsementVehicleConductor,
+	useEndorsementVehicleConductorQuery,
 };

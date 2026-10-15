@@ -44,4 +44,4 @@ function translateGarageSchool(garage: GarageSchool) {
 	}
 }
 
-export { translateGarage, translateGarageWork, translateGarageSchool };
+export { translateGarage, translateGarageSchool, translateGarageWork };

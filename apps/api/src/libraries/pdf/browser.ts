@@ -17,7 +17,7 @@ async function getBrowser(): Promise<Browser> {
 		throw new Error('Servidor está desligando');
 	}
 
-	if (!browserInstance || !browserInstance.isConnected()) {
+	if (!browserInstance?.isConnected()) {
 		browserInstance = await chromium.launch({
 			headless: true,
 			...(environment.NODE_ENV !== 'development' && {

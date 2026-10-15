@@ -90,6 +90,6 @@ async function confirmProducerInvitation(
 }
 
 export {
-	type Outcome as ConfirmProducerInvitationOutcome,
 	confirmProducerInvitation,
+	type Outcome as ConfirmProducerInvitationOutcome,
 };

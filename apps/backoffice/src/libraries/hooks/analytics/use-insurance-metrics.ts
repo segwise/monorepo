@@ -42,10 +42,10 @@ const useInsuranceMetric = (
 			).data,
 	});
 
-export { useInsuranceMetric };
 export type {
 	InsuranceMetricKind,
 	InsuranceMetricResponse,
-	MetricSeriesPoint,
 	MetricComparison,
+	MetricSeriesPoint,
 };
+export { useInsuranceMetric };

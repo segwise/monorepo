@@ -22,5 +22,5 @@ const useYearlyProjection = (kind: InsuranceMetricKind) =>
 			).data,
 	});
 
-export { useYearlyProjection };
 export type { YearlyProjectionResponse };
+export { useYearlyProjection };

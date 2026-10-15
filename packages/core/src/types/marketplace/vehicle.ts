@@ -26,10 +26,10 @@ type MarketplaceVehicleTransmission = z.infer<
 type MarketplaceVehicleStatus = z.infer<typeof SchemaMarketplaceVehicleStatus>;
 
 export type {
+	MarketplaceVehicle,
+	MarketplaceVehicleEdit,
+	MarketplaceVehicleFuel,
+	MarketplaceVehicleRegisterForm,
 	MarketplaceVehicleStatus,
 	MarketplaceVehicleTransmission,
-	MarketplaceVehicleFuel,
-	MarketplaceVehicleEdit,
-	MarketplaceVehicle,
-	MarketplaceVehicleRegisterForm,
 };

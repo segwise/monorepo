@@ -15,4 +15,4 @@ const SchemaGarageSchool = z.enum(
 	'Tipo inválido',
 );
 
-export { SchemaGarage, SchemaGarageWork, SchemaGarageSchool };
+export { SchemaGarage, SchemaGarageSchool, SchemaGarageWork };

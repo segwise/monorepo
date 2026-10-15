@@ -48,4 +48,4 @@ function percentChange(current: number, reference: number) {
 	return reference === 0 ? 0 : (current - reference) / reference;
 }
 
-export { buildRange, dayKey, percentChange, type DayRange };
+export { buildRange, type DayRange, dayKey, percentChange };

@@ -8,8 +8,8 @@ const FALLBACK_URL = 'https://segwise.com.br';
 
 export {
 	APP_STORE_URL,
-	PLAY_STORE_URL,
 	APP_STORE_XCAR_URL,
-	PLAY_STORE_XCAR_URL,
 	FALLBACK_URL,
+	PLAY_STORE_URL,
+	PLAY_STORE_XCAR_URL,
 };

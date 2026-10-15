@@ -47,5 +47,5 @@ const useNextPeriodProjection = (
 		},
 	});
 
-export { useNextPeriodProjection };
 export type { NextPeriodProjectionResponse };
+export { useNextPeriodProjection };

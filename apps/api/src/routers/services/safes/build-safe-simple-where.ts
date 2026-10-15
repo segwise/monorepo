@@ -176,5 +176,5 @@ async function buildSafeSimpleWhere(
 	return { where, brokerId, orderBy, effectiveEffectivedAt };
 }
 
-export { buildSafeSimpleWhere, ORDER_BY, ORDER_BY_SEARCH };
 export type { SafeSimpleQuery };
+export { buildSafeSimpleWhere, ORDER_BY, ORDER_BY_SEARCH };

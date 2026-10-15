@@ -953,7 +953,7 @@ function ProducerDashboard() {
 							<Clock className='h-3 w-3 text-amber-300' />
 							<span className='text-xs text-amber-300 font-medium'>
 								Pagamento previsto para{' '}
-								{period?.paymentDate || !!data?.dateOfReceipt
+								{period?.paymentDate || data?.dateOfReceipt
 									? format(data?.dateOfReceipt as Date, 'dd/MM/yyyy')
 									: '--/--/-----'}
 							</span>

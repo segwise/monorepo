@@ -42,4 +42,4 @@ const SchemaProducerInternalUpdate = z
 	})
 	.superRefine(refineProducerPaymentDays);
 
-export { SchemaProducerPartnerUpdate, SchemaProducerInternalUpdate };
+export { SchemaProducerInternalUpdate, SchemaProducerPartnerUpdate };

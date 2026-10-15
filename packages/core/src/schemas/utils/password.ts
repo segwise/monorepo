@@ -52,12 +52,12 @@ const SchemaPasswordConfirm = z.intersection(
 );
 
 export {
-	SchemaPasswordDefault,
 	SchemaPassword,
 	SchemaPasswordConfirm,
-	SchemaPasswordLengthMin,
-	SchemaPasswordLengthMax,
-	SchemaPasswordIncludeUppercase,
+	SchemaPasswordDefault,
 	SchemaPasswordIncludeNumber,
 	SchemaPasswordIncludeSpecial,
+	SchemaPasswordIncludeUppercase,
+	SchemaPasswordLengthMax,
+	SchemaPasswordLengthMin,
 };

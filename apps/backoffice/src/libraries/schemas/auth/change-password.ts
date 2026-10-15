@@ -25,4 +25,4 @@ const SchemaAuthChangePassword = z
 
 type AuthChangePassword = z.infer<typeof SchemaAuthChangePassword>;
 
-export { SchemaAuthChangePassword, type AuthChangePassword };
+export { type AuthChangePassword, SchemaAuthChangePassword };

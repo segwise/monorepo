@@ -218,4 +218,4 @@ function rankFipeCandidates(
 	return { ranked: scored, strategy };
 }
 
-export { type FipeCandidate, type ScoredCandidate, rankFipeCandidates };
+export { type FipeCandidate, rankFipeCandidates, type ScoredCandidate };

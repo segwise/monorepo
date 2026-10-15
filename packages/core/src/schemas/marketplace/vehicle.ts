@@ -148,13 +148,13 @@ const SchemaMarketplaceVehicleEditForm =
 
 export {
 	SchemaMarketplaceVehicle,
-	SchemaMarketplaceVehicleFuel,
-	SchemaMarketplaceVehicleTransmission,
-	SchemaMarketplaceVehicleStatus,
-	SchemaMarketplaceVehicleEditForm,
-	SchemaMarketplaceVehicleRegisterForm,
-	SchemaMarketplaceVehicleDirection,
-	SchemaMarketplaceVehicleFeatures,
 	SchemaMarketplaceVehicleConservations,
+	SchemaMarketplaceVehicleDirection,
+	SchemaMarketplaceVehicleEditForm,
+	SchemaMarketplaceVehicleFeatures,
 	SchemaMarketplaceVehicleFinancialState,
+	SchemaMarketplaceVehicleFuel,
+	SchemaMarketplaceVehicleRegisterForm,
+	SchemaMarketplaceVehicleStatus,
+	SchemaMarketplaceVehicleTransmission,
 };

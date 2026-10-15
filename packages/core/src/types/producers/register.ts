@@ -24,10 +24,10 @@ type ProducerPartnerUpdate = z.infer<typeof SchemaProducerPartnerUpdate>;
 type ProducerInternalUpdate = z.infer<typeof SchemaProducerInternalUpdate>;
 
 export type {
-	ProducerRegister,
-	ProducerRegisterResponse,
-	ProducerPublicRegister,
-	ProducerRegisterInternal,
-	ProducerPartnerUpdate,
 	ProducerInternalUpdate,
+	ProducerPartnerUpdate,
+	ProducerPublicRegister,
+	ProducerRegister,
+	ProducerRegisterInternal,
+	ProducerRegisterResponse,
 };

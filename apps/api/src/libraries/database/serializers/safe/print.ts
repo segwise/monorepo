@@ -45,5 +45,5 @@ function serializer(
 	} satisfies SafePrintRow;
 }
 
-export { serializer };
 export type { SafePrintRow };
+export { serializer };

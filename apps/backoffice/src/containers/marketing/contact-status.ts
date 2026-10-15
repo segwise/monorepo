@@ -75,9 +75,9 @@ function statusDateOf(
 }
 
 export {
+	type ContactStatus,
 	STATUS_BADGE,
 	STATUS_DATE_LABEL,
 	statusDateOf,
 	statusOf,
-	type ContactStatus,
 };

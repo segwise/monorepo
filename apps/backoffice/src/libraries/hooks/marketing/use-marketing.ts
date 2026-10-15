@@ -206,14 +206,14 @@ const useMarketingContactRemove = (campaignId: string) =>
 	});
 
 export {
-	useMarketingTemplates,
-	useMarketingCampaigns,
-	useMarketingCampaignSave,
 	useMarketingCampaignDelete,
+	useMarketingCampaignSave,
 	useMarketingCampaignSend,
-	useMarketingContacts,
+	useMarketingCampaigns,
 	useMarketingContactAdd,
-	useMarketingContactSend,
-	useMarketingContactsPrint,
 	useMarketingContactRemove,
+	useMarketingContactSend,
+	useMarketingContacts,
+	useMarketingContactsPrint,
+	useMarketingTemplates,
 };

@@ -338,6 +338,7 @@ function NativeSelectScrollView({
 
 export {
 	NativeSelectScrollView,
+	type Option,
 	Select,
 	SelectContent,
 	SelectGroup,
@@ -348,5 +349,4 @@ export {
 	SelectSeparator,
 	SelectTrigger,
 	SelectValue,
-	type Option,
 };

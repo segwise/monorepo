@@ -58,9 +58,9 @@ async function enqueueCampaignNow(campaignId: string, contactIds?: string[]) {
 
 export {
 	connection,
-	marketingQueue,
-	MARKETING_QUEUE,
-	syncCampaignSchedule,
-	removeCampaignSchedule,
 	enqueueCampaignNow,
+	MARKETING_QUEUE,
+	marketingQueue,
+	removeCampaignSchedule,
+	syncCampaignSchedule,
 };

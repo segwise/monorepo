@@ -38,4 +38,4 @@ function buildWhatsappUrl(phone: string, message?: string | null) {
 	return url.toString();
 }
 
-export { marketingTemplates, buildWhatsappUrl };
+export { buildWhatsappUrl, marketingTemplates };

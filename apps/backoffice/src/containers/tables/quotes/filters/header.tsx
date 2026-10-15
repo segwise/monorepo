@@ -50,9 +50,9 @@ function TableQuotesHeaderFilters() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const isSearchParams =
-		!!searchParams.insuranceCompanies?.length ||
-		!!searchParams.modality?.length ||
-		!!searchParams.producers?.length ||
+		searchParams.insuranceCompanies?.length ||
+		searchParams.modality?.length ||
+		searchParams.producers?.length ||
 		searchParams.renewal === true ||
 		searchParams.renewal === false ||
 		!searchParams.requestedAt
@@ -211,7 +211,7 @@ function FilterrequestedAt() {
 
 	function onChange() {
 		setSearchParams({
-			...(!!date.from && !!date.to && isSameDay(date.from, date.to)
+			...(date.from && date.to && isSameDay(date.from, date.to)
 				? {
 						requestedAt: date.from.toISOString(),
 					}
