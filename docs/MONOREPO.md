@@ -226,14 +226,15 @@ aplicação (um `compose down -v` ou uma recriação nunca toca nos dados).
 
 - **Postgres**: Database Postgres do Dokploy + *Backups* agendados para um destino S3
   (*Settings → Destinations*). É o caso documentado de backup dedicado de banco.
-- **Redis da fila**: Database Redis do Dokploy com AOF (`--appendonly yes`) e
-  `--maxmemory-policy noeviction` (exigência do BullMQ), configurados em *Advanced* (campo de
-  args/comando — a documentação oficial não detalha onde; confira na UI). `QUEUE_URL` usa o
-  host interno e a senha que o Dokploy mostra. **Backup**: a documentação oficial não confirma
-  backup dedicado para Redis; veja se o Database tem aba *Backups*. Sem ela, o AOF protege de
-  reinício e queda do container, mas não de perda do disco/servidor. Isso importa: os
-  schedulers das campanhas só são sincronizados ao criar/editar/pausar/excluir (sem
-  reconciliação no boot), então perder a fila faz as campanhas ativas pararem de enviar em silêncio.
+- **Redis da fila**: Database Redis **gerenciado** do Dokploy, com *comando personalizado*
+  (*Advanced → Run Command*) `--appendonly yes --maxmemory-policy noeviction` (exigência do
+  BullMQ). `QUEUE_URL` usa o host interno e a senha que o Dokploy mostra. **Backup**: *Volume
+  Backup* do volume de dados do Redis para o S3, agendado fora do horário de pico. A documentação do
+  Dokploy avisa que copiar um volume com o serviço escrevendo pode gerar inconsistência e
+  recomenda a opção *Turn off Container* (a fila fica fora do ar durante o backup; o BullMQ do
+  api reconecta sozinho). Isso importa: os schedulers das campanhas só são sincronizados ao
+  criar/editar/pausar/excluir (sem reconciliação no boot), então perder a fila faz as
+  campanhas ativas pararem de enviar em silêncio.
 - **Cache** (no compose): volume nomeado `cache-data` com AOF, porque guarda consultas pagas de
   CPF/CNPJ sem TTL. Por ser volume nomeado de um compose, aceita *Volume Backup* do Dokploy
   (a doc recomenda desligar o container durante o backup para evitar inconsistência).

@@ -72,8 +72,9 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
   hoje o scheduler `campaign:<id>` só é criado/atualizado ao salvar a campanha; se o Redis da fila
   for perdido, as campanhas ativas param de enviar em silêncio. No boot, chamar
   `syncCampaignSchedule` para cada campanha ativa (o `upsertJobScheduler` é idempotente).
-- [ ] **Confirmar backup do Redis da fila** no Dokploy (aba *Backups* do Database Redis ou outra
-  estratégia) e **onde configurar os args** `--appendonly yes --maxmemory-policy noeviction`.
+- [ ] **Configurar o Redis da fila no Dokploy**: comando personalizado
+  `--appendonly yes --maxmemory-policy noeviction` e *Volume Backup* para o S3 (fora do horário de
+  pico; avaliar *Turn off Container* contra inconsistência de AOF), e testar a restauração.
 - [ ] **CD do mobile** (EAS Build + hot-updater por workflow) e **health check pós-deploy** no CD.
 - [ ] **Confirmar no Dokploy** que `NEXT_PUBLIC_ROLE_SYSTEM` do serviço do painel interno é
   `admin` (o compose antigo dizia `backoffice`, que dá 404 nas rotas) e ajustar as
