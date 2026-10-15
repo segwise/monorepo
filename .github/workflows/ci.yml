@@ -1,0 +1,157 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: '1'
+  # O build do backoffice embute NEXT_PUBLIC_* — valores fictícios, só para compilar.
+  NEXT_PUBLIC_ROLE_SYSTEM: admin
+  NEXT_PUBLIC_API_URL: http://localhost:3000
+
+jobs:
+  verify:
+    name: Lint, typecheck e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+
+      - run: bun install --frozen-lockfile
+
+      # Em PR roda só o que mudou em relação à base; em push na main roda tudo.
+      - name: turbo run lint typecheck build (afetados)
+        if: github.event_name == 'pull_request'
+        env:
+          TURBO_SCM_BASE: origin/${{ github.base_ref }}
+        run: bunx turbo run lint typecheck build --affected --cache-dir=.turbo
+
+      - name: turbo run lint typecheck build (tudo)
+        if: github.event_name != 'pull_request'
+        run: bunx turbo run lint typecheck build --cache-dir=.turbo
+
+  database:
+    name: Prisma (validate + migrations)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:ci@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - run: bun install --frozen-lockfile --filter @segwise/database
+
+      - name: prisma validate
+        working-directory: packages/database
+        run: bun x --bun prisma validate
+
+      # Aplica TODAS as migrations do zero: pega SQL quebrado, ordem errada e
+      # CREATE INDEX CONCURRENTLY junto de outros comandos na mesma migration.
+      - name: prisma migrate deploy (banco vazio)
+        working-directory: packages/database
+        run: bun x --bun prisma migrate deploy
+
+  docker:
+    name: Docker build (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [api, backoffice]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            docker:
+              - 'apps/${{ matrix.app }}/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'bun.lock'
+              - 'turbo.json'
+              - '.dockerignore'
+
+      - uses: docker/setup-buildx-action@v3
+        if: github.event_name != 'pull_request' || steps.changes.outputs.docker == 'true'
+
+      - name: Build da imagem (sem publicar)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.docker == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: false
+          build-args: |
+            NEXT_PUBLIC_ROLE_SYSTEM=admin
+            NEXT_PUBLIC_API_URL=http://localhost:3000
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,scope=${{ matrix.app }},mode=max
+
+  # Único check obrigatório na branch protection: passa se nenhum job falhou.
+  ci:
+    name: CI
+    if: always()
+    needs: [verify, database, docker]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Todos os jobs passaram?
+        run: |
+          echo '${{ toJSON(needs) }}'
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            exit 1
+          fi

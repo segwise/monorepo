@@ -93,11 +93,12 @@ feito pelo usuário.
 ## O que NÃO existe hoje (atenção ao propor mudanças)
 
 - **Sem testes automatizados**.
-- **CI/CD em implantação**: ainda não há `.github/workflows`. O plano é CI no
-  GitHub Actions (quality gate com Kodus) e CD híbrido com Dokploy — ver
-  [`docs/MONOREPO.md`](docs/MONOREPO.md#cicd-planejado). Enquanto isso, o deploy
-  é manual e feito pelo usuário (o Dokploy builda os Dockerfiles do monorepo).
-  Os antigos scripts `deploy` (add/commit/push) **foram removidos**.
+- **CD e quality gate em implantação**: o CI (lint, typecheck, build, Prisma e Docker)
+  existe em `.github/workflows/ci.yml`; faltam o Kodus (quality gate), a branch
+  protection e o CD híbrido com Dokploy — ver [`docs/MONOREPO.md`](docs/MONOREPO.md#cicd).
+  Enquanto isso, o deploy é manual e feito pelo usuário (o Dokploy builda os
+  Dockerfiles do monorepo). Os antigos scripts `deploy` (add/commit/push)
+  **foram removidos**.
 - **Sem README** — este conjunto de `CLAUDE.md` e `docs/` é a documentação oficial.
 
 Se o trabalho envolver adicionar testes ou README, trate como uma decisão de

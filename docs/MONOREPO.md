@@ -164,21 +164,34 @@ token foi **revogado**, e o histórico deste monorepo foi reescrito sem
 mais `.npmrc` nem registry privado. `.env*` está no `.gitignore` (só
 `.env.example` é versionado).
 
-## CI/CD (planejado)
+## CI/CD
 
-Ainda não implementado — decisões já tomadas:
+Repositório: `github.com/segwise/monorepo`.
 
-- **CI**: GitHub Actions. `bun install --frozen-lockfile` + `turbo run lint
-  typecheck build` (com `--affected` em PR), cache do Turbo via `actions/cache`
-  (sem remote cache por enquanto), validação das migrations Prisma contra um
-  Postgres de serviço.
-- **Quality gate**: Kodus **self-hosted no Dokploy** + os checks do CI como
-  *required status checks* em `main`.
-- **CD híbrido**: no merge em `main`, o Actions builda as imagens (api e as 3
-  variantes do backoffice), publica no **GHCR** e aciona o webhook/API do
-  Dokploy, que só puxa a imagem. Mobile: EAS Build + hot-updater por workflow
-  quando `apps/mobile/**` mudar.
-- Pré-requisito: criar o repositório no GitHub e configurar o `remote`.
+### CI (implementado em `.github/workflows/ci.yml`)
+
+Roda em PR e em push na `main`. Jobs:
+
+- **verify** — `bun install --frozen-lockfile` + `turbo run lint typecheck build`. Em PR usa
+  `--affected` (base `origin/<base_ref>`); em push na main roda tudo. Cache do Bun e do
+  Turbo (`.turbo`) via `actions/cache` (sem remote cache por enquanto).
+- **database** — `prisma validate` + `prisma migrate deploy` do zero num Postgres de serviço
+  (pega SQL quebrado, ordem errada e `CONCURRENTLY` junto de outros comandos). Não usa
+  `migrate diff`: os índices GIN trigram existem só nas migrations e dariam falso positivo.
+- **docker** — build (sem publicar) das imagens `api` e `backoffice`, só quando algo relevante
+  muda em PR (`dorny/paths-filter`); sempre na main.
+- **ci** — agregador; é o **único check obrigatório** a configurar na branch protection.
+
+O workflow foi validado com `actionlint` e as mesmas tarefas rodaram em clone limpo; a
+**primeira execução real no GitHub ainda não aconteceu**.
+
+### Ainda a fazer
+
+- **Quality gate**: Kodus **self-hosted no Dokploy** + branch protection em `main` exigindo o
+  check `CI` (e a review do Kodus).
+- **CD híbrido**: no merge em `main`, o Actions builda as imagens (api e as 3 variantes do
+  backoffice), publica no **GHCR** e aciona o webhook/API do Dokploy, que só puxa a imagem.
+  Mobile: EAS Build + hot-updater por workflow quando `apps/mobile/**` mudar.
 
 ## Origem deste repositório
 

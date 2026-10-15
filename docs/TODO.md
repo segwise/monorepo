@@ -60,11 +60,11 @@ Produtores antes de começar a trabalhar nela.
 
 Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
 
-- [ ] **Criar o repositório no GitHub**, configurar o `remote`, fazer o primeiro push e
-  arquivar os 4 repositórios antigos (`core`, `backend`, `backoffice`, `application`).
-- [ ] **CI no GitHub Actions** (install, `turbo run lint typecheck build` com `--affected`,
-  cache do Turbo, validação das migrations) + **Kodus** self-hosted no Dokploy como
-  quality gate + branch protection em `main`.
+- [ ] **Arquivar os 4 repositórios antigos** (`core`, `backend`, `backoffice`, `application`) —
+  o monorepo está em `github.com/segwise/monorepo` (push feito).
+- [ ] **Primeira execução real do CI** no GitHub (`.github/workflows/ci.yml` ainda não rodou lá)
+  e **branch protection** em `main` exigindo o check `CI`.
+- [ ] **Kodus** self-hosted no Dokploy como quality gate (configurar o GitHub App e as regras).
 - [ ] **CD híbrido**: imagens no GHCR (api + 3 variantes do backoffice) + webhook/API do
   Dokploy; mobile via EAS Build + hot-updater por workflow.
 - [ ] **Confirmar no Dokploy** que `NEXT_PUBLIC_ROLE_SYSTEM` do serviço do painel interno é
