@@ -1,0 +1,147 @@
+import LOGO from '@/assets/images/logo/segwise.png';
+import LOGO_XCAR from '@/assets/images/logo/xcar-light-full.png';
+import BACKGROUND_MAP from '@/assets/images/splash-screen/background-map.png';
+import { isCompany } from '@/configs/consts/company';
+import { attributeReferral } from '@/functions/attribute-referral';
+import { cn } from '@/libraries/classname';
+import { Image, ImageBackground } from 'expo-image';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { Text, useWindowDimensions, View } from 'react-native';
+import { useMMKVBoolean } from 'react-native-mmkv';
+import Svg, { Circle, G } from 'react-native-svg';
+
+function IndexScreen() {
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+
+	const [isFirstView] = useMMKVBoolean('first-view');
+
+	const { width, height } = useWindowDimensions();
+
+	const { replace } = useRouter();
+
+	const navigation = useCallback(() => {
+		if (!isLoading) {
+			return;
+		}
+
+		if (isCompany) {
+			replace('/(stacks)/home');
+		} else {
+			replace(!isFirstView ? '/(stacks)/request-referral' : '/(stacks)/home');
+		}
+	}, [replace, isLoading, isFirstView]);
+
+	useEffect(() => {
+		setTimeout(() => {
+			navigation();
+		}, 3000);
+	}, [navigation]);
+
+	useEffect(() => {
+		if (!isFirstView) {
+			attributeReferral().finally(() => {
+				setIsLoading(true);
+			});
+		} else {
+			setIsLoading(true);
+		}
+	}, [isFirstView]);
+
+	return (
+		<View
+			className={cn('bg-primary size-full', isCompany && 'bg-primary-xcar')}
+		>
+			<ImageBackground
+				source={BACKGROUND_MAP}
+				contentFit='contain'
+				contentPosition='center'
+				style={{
+					width,
+					height,
+				}}
+				allowDownscaling={false}
+				accessible={false}
+			>
+				<View className='flex flex-col items-center justify-between py-10 absolute inset-0 z-10 size-full'>
+					<View />
+					<Image
+						source={isCompany ? LOGO_XCAR : LOGO}
+						contentFit='contain'
+						contentPosition='center'
+						style={{
+							width,
+							height: isCompany ? width / 5 : width / 10,
+						}}
+						allowDownscaling={false}
+						accessible={false}
+						priority='high'
+					/>
+					<View />
+					<Text
+						allowFontScaling={false}
+						className={cn(
+							'text-base text-white text-center absolute bottom-10',
+							width <= 400 && 'bottom-0',
+						)}
+					>
+						Todos os Direitos Reservados
+					</Text>
+				</View>
+				<View
+					className={cn(
+						'absolute inset-0 z-0 pb-52 items-center justify-center',
+						width <= 400 && 'pb-[10.5rem]',
+					)}
+				>
+					<Svg width={width} height={height} viewBox='0 0 430 603' fill='none'>
+						<Circle
+							opacity='0.57'
+							cx='216'
+							cy='401'
+							r='71.5'
+							stroke='#FFFFFF'
+						/>
+						<Circle
+							opacity='0.4'
+							cx='216'
+							cy='401'
+							r='120.5'
+							stroke='white'
+							strokeOpacity='0.7'
+						/>
+						<G filter='url(#filter0_f_0_1)'>
+							<Circle
+								cx='216'
+								cy='401'
+								r='169.5'
+								stroke='white'
+								strokeOpacity='0.2'
+							/>
+						</G>
+						<G filter='url(#filter1_f_0_1)'>
+							<Circle
+								cx='216'
+								cy='401'
+								r='228.5'
+								stroke='white'
+								strokeOpacity='0.2'
+							/>
+						</G>
+						<G filter='url(#filter2_f_0_1)'>
+							<Circle
+								cx='215.5'
+								cy='400.5'
+								r='297'
+								stroke='white'
+								strokeOpacity='0.2'
+							/>
+						</G>
+					</Svg>
+				</View>
+			</ImageBackground>
+		</View>
+	);
+}
+
+export default IndexScreen;
