@@ -1,0 +1,70 @@
+import { Hono } from 'hono';
+import { trimTrailingSlash } from 'hono/trailing-slash';
+import type { AppBindings } from '@/@types/server.d';
+import { environment } from '@/libraries/environment';
+import { authMiddleware } from '@/server/middlewares/auth';
+import { browserMiddleware } from '@/server/middlewares/browser';
+import { cacheMiddleware } from '@/server/middlewares/cache';
+import { corsMiddleware } from '@/server/middlewares/cors';
+import { databaseMiddleware } from '@/server/middlewares/database';
+import { emailMiddleware } from '@/server/middlewares/email';
+import { environmentMiddleware } from '@/server/middlewares/environment';
+import { errorMiddleware } from '@/server/middlewares/error';
+import { transfeeraMiddleware } from '@/server/middlewares/pix/transfeera';
+import {
+	replaceSession,
+	sessionMiddleware,
+} from '@/server/middlewares/session';
+import { storageMiddleware } from '@/server/middlewares/storage';
+import { timezoneMiddleware } from './middlewares/timezone';
+
+const server = new Hono<AppBindings>({
+	strict: true,
+	...(environment.NODE_ENV === 'development' && {
+		getPath: (req) => {
+			const host = req.headers.get('host') || '';
+
+			const domain = host.split(':')[0]?.split('.').shift();
+
+			const subdomain = domain === 'localhost' ? 'services' : domain;
+
+			if (!subdomain || !['api', 'services'].includes(subdomain)) {
+				return '/__invalid_host__';
+			}
+
+			const url = new URL(req.url);
+			const path = url.pathname === '/' ? '' : url.pathname;
+
+			const fullPath = `/${subdomain}${path}`;
+
+			return fullPath;
+		},
+	}),
+});
+
+server.use(trimTrailingSlash());
+
+server.use(corsMiddleware);
+
+server.use(environmentMiddleware);
+
+server.use(timezoneMiddleware);
+
+server.use(replaceSession);
+
+server.use(cacheMiddleware);
+server.use(databaseMiddleware);
+server.use(emailMiddleware);
+
+server.use(storageMiddleware);
+
+server.use(authMiddleware);
+server.use(sessionMiddleware);
+
+server.use(browserMiddleware);
+
+server.use(transfeeraMiddleware);
+
+server.onError(errorMiddleware);
+
+export { server };

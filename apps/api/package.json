@@ -1,0 +1,59 @@
+{
+	"name": "backend",
+	"module": "src/index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "bun --bun run --watch src/index.ts",
+		"start": "bun --bun run src/index.ts",
+		"auth:generate": "bun x --bun @better-auth/cli generate --config src/services/auth/index.ts",
+		"auth:migrate": "bun x --bun @better-auth/cli migrate --config src/services/auth/index.ts",
+		"db:generate": "bun x --bun prisma generate",
+		"db:migrate:dev": "bun x --bun prisma migrate dev",
+		"db:migrate:local": "bun scripts/db-local.ts migrate dev",
+		"db:status:local": "bun scripts/db-local.ts migrate status",
+		"db:local": "bun scripts/db-local.ts",
+		"db:migrate:reset": "bun x --bun prisma migrate reset",
+		"db:deploy": "bun x --bun prisma migrate deploy",
+		"db:seed": "bun --bun prisma db seed",
+		"deploy": "git add . && git commit -m 'commit automatic' && git push && clear"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.7",
+		"@react-email/ui": "^6.9.2",
+		"@types/bun": "latest",
+		"@types/headroom": "^0.12.5",
+		"prisma": "^7.10.0"
+	},
+	"peerDependencies": {
+		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"@bull-board/api": "^9.10.2",
+		"@bull-board/hono": "^9.10.2",
+		"@faker-js/faker": "^10.6.0",
+		"@hono/zod-validator": "^0.7.6",
+		"@prisma/adapter-pg": "^7.10.0",
+		"@prisma/client": "^7.10.0",
+		"@segwise/core": "^1.1.472",
+		"better-auth": "^1.7.1",
+		"bullmq": "^6.3.10",
+		"date-fns": "^4.4.0",
+		"date-fns-tz": "^3.2.0",
+		"handlebars": "^4.7.9",
+		"headroom": "^0.0.1",
+		"hono": "^4.13.4",
+		"ioredis": "^5.11.1",
+		"openai": "^7.9.0",
+		"pdf-lib": "^1.17.1",
+		"pdf-parse": "^2.4.5",
+		"playwright": "^1.62.1",
+		"quick-lru": "^7.3.0",
+		"react-email": "^6.9.3",
+		"remove": "^0.1.5",
+		"resend": "^6.22.1",
+		"ua-parser-js": "^2.0.10",
+		"xior": "^0.8.4",
+		"zod": "^4.4.3"
+	}
+}

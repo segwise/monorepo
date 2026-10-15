@@ -1,0 +1,217 @@
+import type { Session } from 'better-auth';
+import type { Context } from '@/@types/server';
+import { Role } from '@/generated/prisma/enums';
+
+const pathnameIgnoresSession = [
+	'/auth/reset-password',
+	'/auth/verify-email',
+	'/auth/sign-out',
+	'/auth/profile',
+];
+
+function sessionCookieName(env: string, prefix?: string) {
+	const suffix = prefix ? `${prefix}.` : '';
+	return env === 'production'
+		? `__Secure-${suffix}auth.session_token`
+		: `__Secure-${suffix}${env}.auth.session_token`;
+}
+
+function auxCookieName(env: string, kind: 'session_data' | 'dont_remember') {
+	return env === 'production'
+		? `__Secure-auth.${kind}`
+		: `__Secure-${env}.auth.${kind}`;
+}
+
+const clientAppToPrefix: Record<'admin' | 'producer' | 'customer', string> = {
+	admin: 'backoffice',
+	producer: 'producer',
+	customer: 'customer',
+};
+
+async function responseReplaceSession(response: Response, ctx: Context) {
+	const XClientApp = (ctx.req.header('x-client-app') ||
+		ctx.req.raw.headers.get('x-client-app')) as
+		| 'admin'
+		| 'producer'
+		| 'customer';
+
+	const shouldIgnoreSession = pathnameIgnoresSession.some(
+		(ignoredPath) =>
+			ctx.req.url.includes(ignoredPath) || ctx.req.url.startsWith(ignoredPath),
+	);
+
+	const session = shouldIgnoreSession
+		? null
+		: ((await response.clone().json()) as {
+				token: string;
+				user: {
+					id: string;
+					role: Role;
+				};
+				session: Session & {
+					brokerRole?: Role | null;
+				};
+			});
+
+	const setCookies = response.headers.getSetCookie();
+
+	const role = session?.user?.role || ctx?.session?.role;
+	const roleBroker =
+		session?.session?.brokerRole ||
+		ctx?.session?.brokerRole ||
+		session?.user?.role === Role.customer
+			? session?.token || session?.session?.token
+				? await ctx.database.session
+						.findUnique({
+							where: {
+								token: session?.token || session?.session?.token,
+							},
+							select: {
+								activeBroker: {
+									select: {
+										members: {
+											where: {
+												userId: session?.user?.id || ctx?.session?.id,
+											},
+											select: {
+												role: true,
+											},
+										},
+									},
+								},
+							},
+						})
+						.then((response) => response?.activeBroker?.members[0]?.role)
+				: undefined
+			: undefined;
+
+	const isBackoffice =
+		role === Role.admin ||
+		role === Role.manager ||
+		role === Role.finance ||
+		role === Role.counter;
+
+	const isCustomer =
+		roleBroker === Role.producer ? false : role === Role.customer;
+
+	const isProducer = roleBroker === Role.producer;
+
+	if (session) {
+		async function logOut() {
+			const cloneResponse = response.clone();
+
+			const responseSignOut = await ctx.auth.api.signOut({
+				headers: cloneResponse.headers,
+				asResponse: true,
+			});
+
+			return new Response(
+				JSON.stringify({
+					code: 'INVALID_EMAIL_OR_PASSWORD',
+					message: 'E-mail ou senha inválidos',
+				}),
+				{
+					...responseSignOut,
+					status: 401,
+					statusText: 'Unauthorized',
+				},
+			);
+		}
+
+		if (isBackoffice && XClientApp !== 'admin') {
+			return await logOut();
+		}
+
+		if (isCustomer && XClientApp !== 'customer') {
+			return await logOut();
+		}
+
+		if (isProducer && XClientApp !== 'producer') {
+			return await logOut();
+		}
+	}
+
+	if (setCookies.length) {
+		const modifiedCookies = setCookies.map((cookieStr) => {
+			let cookie = cookieStr;
+
+			if (isBackoffice || isCustomer || isProducer) {
+				if (isBackoffice) {
+					if (ctx.environment.NODE_ENV === 'production') {
+						cookie = cookie.replace(
+							'__Secure-auth.session_token',
+							'__Secure-backoffice.auth.session_token',
+						);
+					} else {
+						cookie = cookie.replace(
+							`__Secure-${ctx.environment.NODE_ENV}.auth.session_token`,
+							`__Secure-backoffice.${ctx.environment.NODE_ENV}.auth.session_token`,
+						);
+					}
+				}
+
+				if (isProducer) {
+					if (ctx.environment.NODE_ENV === 'production') {
+						cookie = cookie.replace(
+							'__Secure-auth.session_token',
+							'__Secure-producer.auth.session_token',
+						);
+					} else {
+						cookie = cookie.replace(
+							`__Secure-${ctx.environment.NODE_ENV}.auth.session_token`,
+							`__Secure-producer.${ctx.environment.NODE_ENV}.auth.session_token`,
+						);
+					}
+				}
+
+				if (isCustomer && !isProducer) {
+					if (ctx.environment.NODE_ENV === 'production') {
+						cookie = cookie.replace(
+							'__Secure-auth.session_token',
+							'__Secure-customer.auth.session_token',
+						);
+					} else {
+						cookie = cookie.replace(
+							`__Secure-${ctx.environment.NODE_ENV}.auth.session_token`,
+							`__Secure-customer.${ctx.environment.NODE_ENV}.auth.session_token`,
+						);
+					}
+				}
+			}
+
+			return cookie;
+		});
+
+		response.headers.delete('set-cookie');
+
+		modifiedCookies.forEach((ctx) => {
+			response.headers.append('set-cookie', ctx);
+		});
+	}
+
+	if (ctx.req.url?.includes('/auth/sign-out')) {
+		response.headers.delete('set-cookie');
+
+		const isProd = ctx.environment.NODE_ENV === 'production';
+
+		const prefix = XClientApp ? clientAppToPrefix[XClientApp] : undefined;
+
+		const domain = isProd ? '.segwise.com.br' : 'localhost';
+
+		if (prefix) {
+			const cookiesToClear = [
+				`${sessionCookieName(ctx.environment.NODE_ENV, prefix)}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
+				`${auxCookieName(ctx.environment.NODE_ENV, 'session_data')}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
+				`${auxCookieName(ctx.environment.NODE_ENV, 'dont_remember')}=; Max-Age=0; Domain=${domain}; Path=/; HttpOnly; Secure; SameSite=Lax`,
+			];
+
+			cookiesToClear.forEach((cookieStr) => {
+				response.headers.append('set-cookie', cookieStr);
+			});
+		}
+	}
+
+	return response;
+}
+
+export { responseReplaceSession };

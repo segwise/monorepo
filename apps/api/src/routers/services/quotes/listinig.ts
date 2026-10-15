@@ -1,0 +1,297 @@
+import { zValidator } from '@hono/zod-validator';
+import { SchemaSearchParamsQuoteSimple } from '@segwise/core/schemas';
+import type { Server } from '@/@types/server.d';
+import { selectPrisma } from '@/db-adapters/quote/simple';
+import { serializer } from '@/db-serializers/quote/simple';
+import { timestampRange } from '@/functions/date/timestamp-range';
+import { type Prisma, Role } from '@/generated/prisma/client';
+import {
+	EXCLUDED_PRODUCER_ID,
+	notTestProducer,
+} from '@/libraries/dashboard/metrics';
+import { serializerCursor } from '@/libraries/database/serializers/cursor';
+
+function registerRoutersServicesQuotesSimpleListining(server: Server) {
+	server.get(
+		'/simple',
+		zValidator('query', SchemaSearchParamsQuoteSimple),
+		async (ctx) => {
+			const brokerId = ctx.session.brokerId;
+
+			const {
+				cursor,
+				limit,
+				search,
+				producers,
+				insuranceCompanies,
+				brokers,
+				requestedAt,
+				modality,
+				status,
+				renewal,
+			} = ctx.req.valid('query');
+
+			const pageMargins = 2;
+
+			const where: Prisma.QuoteWhereInput = {
+				...(!!brokerId && {
+					brokerId,
+				}),
+				...(ctx.session.role !== Role.customer &&
+					!!brokers?.length && {
+						broker: {
+							id: {
+								in: brokers,
+							},
+						},
+					}),
+				...(!!renewal && {
+					renewal,
+				}),
+				...(!!search && {
+					OR: [
+						{
+							insured: {
+								name: {
+									contains: search.trim(),
+									mode: 'insensitive',
+								},
+							},
+						},
+						{
+							temporaryInsured: {
+								name: {
+									contains: search.trim(),
+									mode: 'insensitive',
+								},
+							},
+						},
+					],
+				}),
+				...(!!producers?.length && {
+					producerId: {
+						in: producers.filter((id) => id !== EXCLUDED_PRODUCER_ID),
+					},
+				}),
+				// AND: não pode ser `OR` direto, que colidiria com o `OR` da busca.
+				AND: [
+					{
+						OR: [
+							{ producerId: { not: EXCLUDED_PRODUCER_ID } },
+							{ producerId: null },
+						],
+					},
+				],
+				...(!!insuranceCompanies?.length && {
+					insuranceCompanyId: {
+						in: insuranceCompanies,
+					},
+				}),
+				requestedAt: timestampRange(requestedAt, ctx.timezone),
+				...(!!modality && {
+					modality: {
+						in: modality,
+					},
+				}),
+				...(!!status && {
+					status: {
+						in: status,
+					},
+				}),
+			};
+
+			const [quotes, total, itemsBefore] = await ctx.database.$transaction([
+				ctx.database.quote.findMany({
+					where,
+					...(cursor && {
+						cursor: {
+							id: cursor,
+						},
+					}),
+					take: (limit as number) + 1,
+					orderBy: {
+						id: 'desc',
+					},
+					select: selectPrisma,
+					relationLoadStrategy: 'join',
+				}),
+				ctx.database.quote.count({ where }),
+				cursor
+					? ctx.database.quote.count({
+							where: {
+								...where,
+								id: { gt: cursor },
+							},
+						})
+					: ctx.database.quote.count({
+							where: {
+								...where,
+								id: { in: [] },
+							},
+							take: 0,
+						}),
+			]);
+
+			const currentPage = cursor
+				? Math.floor(itemsBefore / (limit as number)) + 1
+				: 1;
+
+			const totalPages = Math.ceil(total / (limit as number));
+
+			const nextCursor = quotes[limit as number]?.id || null;
+
+			let previousCursor = !quotes.length
+				? null
+				: !cursor
+					? null
+					: (await ctx.database.quote
+							.findFirst({
+								where,
+								cursor: {
+									id: quotes[0]?.id,
+								},
+								orderBy: {
+									id: 'asc',
+								},
+								skip: limit as number,
+								select: {
+									id: true,
+								},
+							})
+							.then((response) => response?.id)) || null;
+
+			if (cursor === previousCursor) {
+				previousCursor = null;
+			}
+
+			const pages: Record<
+				number | 'first' | 'last' | 'count',
+				string | number | null
+			> = {
+				first: null,
+				last: null,
+				count: totalPages,
+			};
+
+			pages[currentPage] = currentPage === 1 ? null : (cursor as string);
+
+			let tempCursorForward = nextCursor;
+			for (let i = 1; i <= pageMargins; i++) {
+				if (!tempCursorForward) break;
+
+				const pageNum = currentPage + i;
+				pages[pageNum] = tempCursorForward;
+
+				if (i < pageMargins) {
+					const batchForward = await ctx.database.quote.findFirst({
+						where,
+						cursor: { id: tempCursorForward },
+						skip: limit as number,
+						orderBy: { id: 'desc' },
+						select: { id: true },
+					});
+
+					tempCursorForward = batchForward?.id || null;
+				}
+			}
+
+			if (currentPage > 1 && previousCursor) {
+				const pageNumPrev1 = currentPage - 1;
+
+				pages[pageNumPrev1] = pageNumPrev1 === 1 ? null : previousCursor;
+
+				let tempCursorBackward = previousCursor;
+				const maxBack = Math.min(pageMargins, currentPage - 1);
+
+				for (let d = 2; d <= maxBack; d++) {
+					const batchBackward = await ctx.database.quote.findFirst({
+						where,
+						cursor: { id: tempCursorBackward },
+						skip: limit as number,
+						orderBy: { id: 'asc' },
+						select: { id: true },
+					});
+
+					const furtherPrev = batchBackward?.id || null;
+					if (!furtherPrev) break;
+
+					const pageNum = currentPage - d;
+
+					pages[pageNum] = pageNum === 1 ? null : furtherPrev;
+
+					tempCursorBackward = furtherPrev;
+				}
+			}
+
+			const skipGetLastPage = (total % (limit as number)) - 1;
+
+			const lastPage = await ctx.database.quote.findFirst({
+				where,
+				orderBy: { id: 'asc' },
+				skip: skipGetLastPage >= 0 ? skipGetLastPage : (limit as number) - 1,
+				select: { id: true },
+			});
+
+			if (lastPage?.id) {
+				pages.last = lastPage.id;
+			}
+
+			const pageQuotes = quotes.slice(0, limit as number);
+
+			return ctx.json(
+				serializerCursor(pageQuotes.map(serializer), {
+					total,
+					...(!!previousCursor && {
+						previous: previousCursor,
+					}),
+					...(!!nextCursor && {
+						next: nextCursor,
+					}),
+					...(!!pages && {
+						pages,
+					}),
+				}),
+				200,
+			);
+		},
+	);
+
+	server.get(
+		'/simple/plate/:plate{^[A-Za-z]{3}[0-9][A-Za-z0-9][0-9]{2}$}',
+		async (ctx) => {
+			const { plate } = ctx.req.param();
+
+			const where: Prisma.QuoteWhereInput = {
+				quoteVehicle: {
+					plate: plate.replace('-', '').toLowerCase(),
+				},
+				AND: [notTestProducer],
+			};
+
+			const quote = await ctx.database.quote.findFirst({
+				where,
+				select: selectPrisma,
+				relationLoadStrategy: 'join',
+			});
+
+			if (!quote) {
+				return ctx.json(
+					{
+						message: 'Cotação não encontrada',
+					},
+					404,
+				);
+			}
+
+			return ctx.json(
+				{
+					type: 'quote',
+					...serializer(quote),
+				},
+				200,
+			);
+		},
+	);
+}
+
+export { registerRoutersServicesQuotesSimpleListining };

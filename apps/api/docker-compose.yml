@@ -1,0 +1,90 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: ${PORT}
+      NODE_ENV: ${NODE_ENV}
+      APPLICATION_URL: ${APPLICATION_URL}
+      BASE_URL: ${BASE_URL}
+      AUTH_SECRET: ${AUTH_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      CACHE_URL: redis://cache:6379
+      QUEUE_URL: redis://queue:6379
+      AI_BASE_URL: ${AI_BASE_URL}
+      AI_MODEL: ${AI_MODEL}
+      AI_API_KEY: ${AI_API_KEY}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET}
+      APIPLACAS_TOKEN: ${APIPLACAS_TOKEN}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      CPFCNPJ_TOKEN: ${CPFCNPJ_TOKEN}
+      PLACA_FIPE_TOKEN: ${PLACA_FIPE_TOKEN}
+      AMOUNT_SEARCH_VEHICLE_COMPLETE: ${AMOUNT_SEARCH_VEHICLE_COMPLETE}
+      TRANSFEERA_CLIENT_SECRET: ${TRANSFEERA_CLIENT_SECRET}
+      TRANSFEERA_CLIENT_SECRET_USER: ${TRANSFEERA_CLIENT_SECRET_USER}
+      TRANSFEERA_PAYMENT_PIX_KEY: ${TRANSFEERA_PAYMENT_PIX_KEY}
+      TRANSFEERA_PAYMENT_SPLIT_PIX_TYPE: ${TRANSFEERA_PAYMENT_SPLIT_PIX_TYPE}
+      TRANSFEERA_PAYMENT_SPLIT_PIX: ${TRANSFEERA_PAYMENT_SPLIT_PIX}
+      IOS_APP_URL: ${IOS_APP_URL}
+      ANDROID_APP_URL: ${ANDROID_APP_URL}
+      IOS_XCAR_APP_URL: ${IOS_XCAR_APP_URL}
+      ANDROID_XCAR_APP_URL: ${ANDROID_XCAR_APP_URL}
+    networks:
+      - internal-network
+      - dokploy-network
+    depends_on:
+      - cache
+      - queue
+    restart: unless-stopped
+
+  cache:
+    image: redis:8
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --save
+      - "60"
+      - "1"
+      - --maxmemory
+      - 512mb
+      - --maxmemory-policy
+      - volatile-lru
+    volumes:
+      - cache-data:/data
+    networks:
+      - internal-network
+    restart: unless-stopped
+
+  queue:
+    image: redis:8
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --save
+      - "60"
+      - "1"
+      - --maxmemory-policy
+      - noeviction
+    volumes:
+      - queue-data:/data
+    networks:
+      - internal-network
+    restart: unless-stopped
+
+networks:
+  internal-network:
+    driver: bridge
+    internal: true
+  dokploy-network:
+    external: true
+
+volumes:
+  cache-data:
+  queue-data:

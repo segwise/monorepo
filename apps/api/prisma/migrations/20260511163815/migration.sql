@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "insureds" ALTER COLUMN "birth" DROP NOT NULL,
+ALTER COLUMN "age" DROP NOT NULL,
+ALTER COLUMN "marital_status" DROP NOT NULL;
