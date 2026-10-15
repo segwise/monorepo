@@ -6,7 +6,7 @@ import {
 import { addYears } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
-import type { Prisma } from '@/generated/prisma/client';
+import type { Prisma } from '@segwise/database/client';
 import { buildSafeSimpleWhere } from '@/routers/services/safes/build-safe-simple-where';
 
 // Mesmo filtro da listagem de propostas (buildSafeSimpleWhere), então

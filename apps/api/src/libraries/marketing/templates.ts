@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import type { MarketingTemplate } from '@/generated/prisma/enums';
+import type { MarketingTemplate } from '@segwise/database/enums';
 import { TemplatePartnershipInviteAccounting } from '../../templates/partnership-invite/accounting';
 import { TemplatePartnershipInviteCondominium } from '../../templates/partnership-invite/condominium';
 

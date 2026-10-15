@@ -1,5 +1,5 @@
 import type { Context } from '@/@types/server';
-import { Role } from '@/generated/prisma/enums';
+import { Role } from '@segwise/database/enums';
 
 type Outcome =
 	// Acesso confirmado agora.

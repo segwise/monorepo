@@ -9,7 +9,7 @@ import type { Xior } from 'xior';
 import type { Database } from '@/@types/database';
 import type { Environment } from '@/@types/environment';
 import type { auth } from '@/auth';
-import type { Role } from '@/generated/prisma/enums';
+import type { Role } from '@segwise/database/enums';
 import type { acquirePage } from '@/libraries/pdf/browser';
 import type { server } from '@/server';
 

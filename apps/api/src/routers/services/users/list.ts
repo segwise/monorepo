@@ -10,7 +10,7 @@ import {
 	parseSearch,
 } from '@/functions/search/parse-search';
 import { getUsersActor } from '@/functions/users/context';
-import { Role, StatusInvitation } from '@/generated/prisma/enums';
+import { Role, StatusInvitation } from '@segwise/database/enums';
 
 function userSearchConditions(parsed: ParsedSearch) {
 	if (parsed.kind === 'document') {

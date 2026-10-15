@@ -1,6 +1,6 @@
 import { cookiesAuthRelevant } from '@segwise/core';
 import type { MiddlewareHandler } from '@/@types/server.d';
-import type { Role } from '@/generated/prisma/enums';
+import type { Role } from '@segwise/database/enums';
 
 const sessionMiddleware: MiddlewareHandler = async (ctx, next) => {
 	const session = await ctx.auth.api.getSession({

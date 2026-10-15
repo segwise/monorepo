@@ -1,6 +1,6 @@
 import { isCNPJ, isCPF } from '@segwise/core';
 import type { Context } from '@/@types/server';
-import { Role } from '@/generated/prisma/enums';
+import { Role } from '@segwise/database/enums';
 
 type Input = {
 	name: string;

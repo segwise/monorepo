@@ -7,7 +7,7 @@ import { subMonths, subYears } from 'date-fns';
 import z from 'zod';
 import type { Server } from '@/@types/server';
 import { timestampRange } from '@/functions/date/timestamp-range';
-import { type Prisma, Role } from '@/generated/prisma/client';
+import { type Prisma, Role } from '@segwise/database/client';
 import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 
 function registerRoutersServicesAnalyticsQuotesCount(server: Server) {

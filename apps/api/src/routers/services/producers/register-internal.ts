@@ -4,7 +4,7 @@ import { XiorError } from 'xior';
 import type { Server } from '@/@types/server';
 import { findOrCreateProducerUser } from '@/functions/producers/find-or-create-producer-user';
 import { generateUniqueReferral } from '@/functions/producers/generate-unique-referral';
-import { Role } from '@/generated/prisma/enums';
+import { Role } from '@segwise/database/enums';
 
 // Cadastro de PRODUTOR interno — sem área de atuação, sem mensagem
 // promocional e sem pedir código de indicação (gerado automático aqui).

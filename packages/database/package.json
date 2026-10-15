@@ -1,0 +1,30 @@
+{
+	"name": "@segwise/database",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./client": "./generated/prisma/client.ts",
+		"./enums": "./generated/prisma/enums.ts",
+		"./models": "./generated/prisma/models.ts",
+		"./internal/prismaNamespace": "./generated/prisma/internal/prismaNamespace.ts"
+	},
+	"scripts": {
+		"generate": "bun x --bun prisma generate",
+		"migrate:dev": "bun x --bun prisma migrate dev",
+		"migrate:local": "bun scripts/db-local.ts migrate dev",
+		"status:local": "bun scripts/db-local.ts migrate status",
+		"local": "bun scripts/db-local.ts",
+		"migrate:reset": "bun x --bun prisma migrate reset",
+		"deploy": "bun x --bun prisma migrate deploy",
+		"seed": "bun --bun prisma db seed"
+	},
+	"dependencies": {
+		"@prisma/client": "^7.10.0"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"dotenv": "^17.4.2",
+		"prisma": "^7.10.0"
+	}
+}

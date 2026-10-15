@@ -10,7 +10,7 @@ import { buildAcceptInvitationUrl } from '@/functions/hostname/build-accept-invi
 import { generateUniqueReferral } from '@/functions/producers/generate-unique-referral';
 import { getUsersActor } from '@/functions/users/context';
 import { assertCpfAvailable } from '@/functions/users/cpf';
-import { Role, StatusInvitation, StatusMember } from '@/generated/prisma/enums';
+import { Role, StatusInvitation, StatusMember } from '@segwise/database/enums';
 import { InvitePartnerEmail } from '../../../templates/invite-partner';
 
 const INVITATION_EXPIRES_IN_MS = 1000 * 60 * 60 * 24 * 30;

@@ -1,5 +1,5 @@
 import type { Context } from '@/@types/server';
-import { Role, StatusInvitation } from '@/generated/prisma/enums';
+import { Role, StatusInvitation } from '@segwise/database/enums';
 
 type Resolved = {
 	userId: string;

@@ -9,7 +9,7 @@ import {
 	confirmProducerInvitation,
 } from '@/functions/invitations/confirm-producer-invitation';
 import { responseReplaceSession } from '@/functions/response/replace-session';
-import { Role } from '@/generated/prisma/enums';
+import { Role } from '@segwise/database/enums';
 
 function registerRoutersServicesUtilsAcceptInvitation(server: Server) {
 	const base = server.basePath('/accept-invitation');

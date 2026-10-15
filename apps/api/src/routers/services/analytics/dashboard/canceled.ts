@@ -2,7 +2,7 @@ import { zValidator } from '@hono/zod-validator';
 import z from 'zod';
 import type { Database } from '@/@types/database';
 import type { Server } from '@/@types/server';
-import type { Prisma } from '@/generated/prisma/client';
+import type { Prisma } from '@segwise/database/client';
 import { EXCLUDED_PRODUCER_ID } from '@/libraries/dashboard/metrics';
 import { type DayRange, percentChange } from '@/libraries/dashboard/range';
 import { periodRanges, requireBrokerId, SchemaDashboardPeriod } from './query';

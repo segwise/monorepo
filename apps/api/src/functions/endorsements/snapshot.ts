@@ -1,5 +1,5 @@
 import type { Database } from '@/@types/database';
-import type { EndorsementType } from '@/generated/prisma/enums';
+import type { EndorsementType } from '@segwise/database/enums';
 
 // Reversão de endossos.
 //

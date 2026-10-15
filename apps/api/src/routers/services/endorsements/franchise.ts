@@ -3,7 +3,7 @@ import { SchemaEndorsementFranchise } from '@segwise/core/schemas';
 import type { Server } from '@/@types/server';
 import { captureEndorsementState } from '@/functions/endorsements/snapshot';
 
-import { EndorsementType } from '@/generated/prisma/enums';
+import { EndorsementType } from '@segwise/database/enums';
 
 function registerRoutersServicesEndorsementsFranchise(server: Server) {
 	server.post(

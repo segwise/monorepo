@@ -1,7 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaMarketplaceSignIn } from '@segwise/core';
 import type { Server } from '@/@types/server';
-import { StatusSafe } from '@/generated/prisma/enums';
+import { StatusSafe } from '@segwise/database/enums';
 import { notTestProducer } from '@/libraries/dashboard/metrics';
 
 function registerRoutersServicesMarketplaceAuth(server: Server) {

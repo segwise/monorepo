@@ -1,7 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import type { Database } from '@/@types/database';
 import type { Server } from '@/@types/server';
-import { Prisma } from '@/generated/prisma/client';
+import { Prisma } from '@segwise/database/client';
 import {
 	EXCLUDED_PRODUCER_ID,
 	paymentNotTestProducer,

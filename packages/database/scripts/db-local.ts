@@ -6,7 +6,7 @@ const file = Bun.file(new URL('../.env.dev-migrate', import.meta.url).pathname);
 
 if (!(await file.exists())) {
 	console.error(
-		'Falta backend/.env.dev-migrate com DATABASE_URL do banco local.',
+		'Falta packages/database/.env.dev-migrate com DATABASE_URL do banco local.',
 	);
 	process.exit(1);
 }

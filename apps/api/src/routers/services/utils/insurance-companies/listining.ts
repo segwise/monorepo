@@ -1,7 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsInsuranceCompanySimple } from '@segwise/core';
 import type { Server } from '@/@types/server.d';
-import type { Prisma } from '@/generated/prisma/client';
+import type { Prisma } from '@segwise/database/client';
 import { selectPrisma as selectPrismaSimple } from '@/libraries/database/adapters/insurance-company/simple';
 import { serializer as serializerSimple } from '@/libraries/database/serializers/insurance-company/simple';
 

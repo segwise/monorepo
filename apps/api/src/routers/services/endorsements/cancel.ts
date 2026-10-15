@@ -3,7 +3,7 @@ import { SchemaEndorsementCancel } from '@segwise/core/schemas';
 import type { Server } from '@/@types/server';
 import { captureEndorsementState } from '@/functions/endorsements/snapshot';
 
-import { EndorsementType, StatusSafe } from '@/generated/prisma/enums';
+import { EndorsementType, StatusSafe } from '@segwise/database/enums';
 
 const CANCELED_BY_ENDORSEMENT_MESSAGE = 'Cancelado por endosso';
 

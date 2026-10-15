@@ -7,7 +7,7 @@ import { selectPrisma as selectPrismaBrokerPublic } from '@/db-adapters/broker/p
 import { serializer as serializerBrokerPublic } from '@/db-serializers/broker/public';
 import { buildAcceptInvitationUrl } from '@/functions/hostname/build-accept-invitation-url';
 import { findOrCreateProducerUser } from '@/functions/producers/find-or-create-producer-user';
-import { Role, TypeOfProductionPayment } from '@/generated/prisma/enums';
+import { Role, TypeOfProductionPayment } from '@segwise/database/enums';
 import { InvitePartnerEmail } from '../../../templates/invite-partner';
 
 const SchemaBrokerSlugParam = z.object({

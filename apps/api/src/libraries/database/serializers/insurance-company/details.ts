@@ -1,7 +1,7 @@
 import type { InsuranceCompany } from '@segwise/core/types';
 import type { SerializerProps } from '@/@types/serializer';
 import type { selectPrisma } from '@/db-adapters/insurance-company/details';
-import type { Prisma } from '@/generated/prisma/client';
+import type { Prisma } from '@segwise/database/client';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 
 function serializer(

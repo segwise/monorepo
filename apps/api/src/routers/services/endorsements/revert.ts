@@ -7,8 +7,8 @@ import {
 	matchesState,
 	type SafeState,
 } from '@/functions/endorsements/snapshot';
-import type { Prisma } from '@/generated/prisma/client';
-import { Role, type StatusSafe } from '@/generated/prisma/enums';
+import type { Prisma } from '@segwise/database/client';
+import { Role, type StatusSafe } from '@segwise/database/enums';
 
 class RevertError extends Error {
 	constructor(

@@ -5,7 +5,7 @@ import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/payment/simple';
 import { serializer } from '@/db-serializers/payment/simple';
 import { timestampRange } from '@/functions/date/timestamp-range';
-import type { Prisma } from '@/generated/prisma/client';
+import type { Prisma } from '@segwise/database/client';
 import { paymentNotTestProducer } from '@/libraries/dashboard/metrics';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 

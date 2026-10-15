@@ -2,7 +2,7 @@ import { zValidator } from '@hono/zod-validator';
 import { SchemaSearchParamsMarketplaceSimple } from '@segwise/core';
 import z from 'zod';
 import type { Server } from '@/@types/server.d';
-import type { Prisma } from '@/generated/prisma/client';
+import type { Prisma } from '@segwise/database/client';
 import { selectPrisma } from '@/libraries/database/adapters/marketplace/vehicle/simple';
 import { serializerCursor } from '@/libraries/database/serializers/cursor';
 import { serializer } from '@/libraries/database/serializers/marketplace/vehicle/simple';

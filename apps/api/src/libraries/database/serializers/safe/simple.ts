@@ -1,6 +1,6 @@
 import type { SafeSimple } from '@segwise/core';
 import type { selectPrisma } from '@/db-adapters/safe/simple';
-import type { Prisma } from '@/generated/prisma/client';
+import type { Prisma } from '@segwise/database/client';
 
 function serializer(
 	props: Prisma.SafeGetPayload<{

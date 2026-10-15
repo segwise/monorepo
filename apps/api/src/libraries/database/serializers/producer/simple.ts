@@ -4,7 +4,7 @@ import type {
 	Prisma,
 	TypeOfProduction,
 	TypeOfProductionPayment,
-} from '@/generated/prisma/client';
+} from '@segwise/database/client';
 import type { selectPrisma } from '@/libraries/database/adapters/producer/simple';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 

@@ -8,7 +8,7 @@ import {
 import type { Server } from '@/@types/server';
 import { getUsersActor } from '@/functions/users/context';
 import { assertCpfAvailable } from '@/functions/users/cpf';
-import { Role, StatusMember } from '@/generated/prisma/enums';
+import { Role, StatusMember } from '@segwise/database/enums';
 
 function registerRoutersServicesUsersUpdate(server: Server) {
 	// Alterar nome, celular e perfil de um membro da equipe.

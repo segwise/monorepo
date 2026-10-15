@@ -1,6 +1,6 @@
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
-import type { MarketingFrequency } from '@/generated/prisma/enums';
+import type { MarketingFrequency } from '@segwise/database/enums';
 import { environment } from '@/libraries/environment';
 
 const MARKETING_QUEUE = 'marketing';

@@ -4,7 +4,7 @@ import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/quote/simple';
 import { serializer } from '@/db-serializers/quote/simple';
 import { timestampRange } from '@/functions/date/timestamp-range';
-import { type Prisma, Role } from '@/generated/prisma/client';
+import { type Prisma, Role } from '@segwise/database/client';
 import {
 	EXCLUDED_PRODUCER_ID,
 	notTestProducer,
