@@ -47,7 +47,7 @@ jobs:
             echo "sha=${sha}"
             echo "tag=sha-${sha:0:7}"
             # GHCR exige minúsculas
-            echo "image_prefix=ghcr.io/${GITHUB_REPOSITORY,,}"
+            echo "image_prefix=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
           } >> "$GITHUB_OUTPUT"
 
   images:
@@ -65,13 +65,13 @@ jobs:
           - name: api
             dockerfile: apps/api/Dockerfile
             build_args: ''
-          - name: backoffice-admin
+          - name: backoffice
             dockerfile: apps/backoffice/Dockerfile
             build_args: NEXT_PUBLIC_ROLE_SYSTEM=admin
-          - name: backoffice-customer
+          - name: customer
             dockerfile: apps/backoffice/Dockerfile
             build_args: NEXT_PUBLIC_ROLE_SYSTEM=customer
-          - name: backoffice-producer
+          - name: producer
             dockerfile: apps/backoffice/Dockerfile
             build_args: NEXT_PUBLIC_ROLE_SYSTEM=producer
     steps:
@@ -79,8 +79,8 @@ jobs:
         with:
           ref: ${{ needs.meta.outputs.sha }}
 
-      - name: Exigir NEXT_PUBLIC_API_URL (backoffice)
-        if: ${{ startsWith(matrix.name, 'backoffice') && vars.NEXT_PUBLIC_API_URL == '' }}
+      - name: Exigir NEXT_PUBLIC_API_URL (apps Next)
+        if: ${{ matrix.name != 'api' && vars.NEXT_PUBLIC_API_URL == '' }}
         run: |
           echo '::error::Defina a variável de repositório NEXT_PUBLIC_API_URL (URL pública da API): ela é embutida no build do backoffice.'
           exit 1
@@ -127,11 +127,11 @@ jobs:
         include:
           - name: api
             app_var: DOKPLOY_APP_API
-          - name: backoffice-admin
+          - name: backoffice
             app_var: DOKPLOY_APP_ADMIN
-          - name: backoffice-customer
+          - name: customer
             app_var: DOKPLOY_APP_CUSTOMER
-          - name: backoffice-producer
+          - name: producer
             app_var: DOKPLOY_APP_PRODUCER
     steps:
       - uses: actions/checkout@v7

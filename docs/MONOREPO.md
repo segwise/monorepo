@@ -124,7 +124,7 @@ docker build -f apps/api/Dockerfile -t segwise-api .
 docker build -f apps/backoffice/Dockerfile \
   --build-arg NEXT_PUBLIC_ROLE_SYSTEM=admin \
   --build-arg NEXT_PUBLIC_API_URL=https://api.exemplo.com \
-  -t segwise-backoffice-admin .
+  -t segwise-backoffice .
 ```
 
 - **api**: o `entrypoint.sh` roda `prisma migrate deploy` (pelo
@@ -203,10 +203,13 @@ voltar a ser privado, o ruleset deixa de ser aplicado até o upgrade para GitHub
 Dispara quando o **CI termina com sucesso na `main`** (`workflow_run`) ou à mão
 (`workflow_dispatch`, com `sha` opcional para rollback e `deploy` para só publicar imagens).
 
-1. **images** — builda e publica no GHCR, em paralelo: `api`, `backoffice-admin`,
-   `backoffice-customer`, `backoffice-producer`
-   (`ghcr.io/segwise/monorepo/<nome>:sha-<7 chars>` e `:latest`). O backoffice embute
-   `NEXT_PUBLIC_ROLE_SYSTEM` (por variante) e `NEXT_PUBLIC_API_URL` (variável do repo) no build.
+1. **images** — builda e publica no GHCR, em paralelo, quatro imagens (a imagem do `backoffice`
+   é a variante `admin`; `customer` e `producer` são as outras duas variantes do mesmo app):
+   `ghcr.io/segwise/api`, `ghcr.io/segwise/backoffice`, `ghcr.io/segwise/customer` e
+   `ghcr.io/segwise/producer`, cada uma com as tags `sha-<7 chars>` e `latest`. As imagens do
+   Next embutem `NEXT_PUBLIC_ROLE_SYSTEM` (por variante) e `NEXT_PUBLIC_API_URL` (variável do repo)
+   no build. As imagens são **`linux/amd64`** (runner do GitHub): o servidor do Dokploy precisa
+   ser x86_64.
 2. **deploy** — um serviço por vez, **api primeiro** (se falhar, os backoffices não sobem):
    `scripts/dokploy-deploy.sh` chama a API do Dokploy (`application.saveDockerProvider` com a
    imagem da versão e depois `application.deploy`). O Dokploy executa de forma assíncrona, então
@@ -231,10 +234,11 @@ gh secret set DOKPLOY_API_KEY
 
 - O token vem de Dokploy → *Profile → API/CLI*; os `applicationId` de `GET <dokploy>/api/project.all`
   (header `x-api-key`).
-- **Visibilidade das imagens no GHCR**: pacotes novos nascem **privados**. Como o repo é público,
-  torne cada pacote público uma vez (GitHub → *Packages → <pacote> → Package settings → Change
-  visibility*) para o Dokploy puxar sem credenciais. Alternativa: manter privado e cadastrar o
-  GHCR em *Dokploy → Registry* (`ghcr.io`, usuário e um token clássico com `read:packages`).
+- **Visibilidade das imagens no GHCR**: os pacotes publicados a partir deste repo público
+  ficam **públicos** (verificado com `docker pull` anônimo), então o Dokploy puxa sem
+  credenciais. Se algum pacote ficar privado (ou o repo voltar a ser privado), torne-o público em
+  *Packages → <pacote> → Package settings → Change visibility*, ou cadastre o GHCR em
+  *Dokploy → Registry* (`ghcr.io`, usuário e um token clássico com `read:packages`).
 - No Dokploy, cada serviço continua sendo uma **Application**; o script troca a fonte para a imagem
   Docker automaticamente. As envs e domínios do serviço ficam como estão. O Redis (cache/queue) do
   api continua separado (fora do CD).
