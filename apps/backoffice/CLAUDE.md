@@ -1,7 +1,7 @@
 # backoffice — CLAUDE.md
 
 Painel web Next.js. **Uma base de código, três deployments** controlados por
-`NEXT_PUBLIC_ROLE_SYSTEM` (`backoffice` | `customer` | `producer`) — veja
+`NEXT_PUBLIC_ROLE_SYSTEM` (`admin` | `customer` | `producer`) — veja
 `docker-compose.yml`. Antes de mudar algo "global" (layout, providers, auth),
 lembre que o impacto é nos três públicos ao mesmo tempo.
 

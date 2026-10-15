@@ -4,7 +4,7 @@ services:
       context: ../..
       dockerfile: apps/backoffice/Dockerfile
       args:
-        NEXT_PUBLIC_ROLE_SYSTEM: backoffice
+        NEXT_PUBLIC_ROLE_SYSTEM: admin
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     environment:
       PORT: ${PORT}
@@ -12,7 +12,7 @@ services:
       NEXT_TELEMETRY_DISABLED: 1
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      NEXT_PUBLIC_ROLE_SYSTEM: backoffice
+      NEXT_PUBLIC_ROLE_SYSTEM: admin
     networks:
       - dokploy-network
     restart: unless-stopped

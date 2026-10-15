@@ -11,10 +11,9 @@ RUN turbo prune @segwise/api --docker
 FROM base AS builder
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/bunfig.toml ./
 RUN bun install --frozen-lockfile
 COPY --from=pruner /app/out/full/ .
-# generate não conecta no banco; a URL só precisa existir para o prisma.config.ts
-ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
 RUN bun run --cwd packages/core build \
  && bun run --cwd packages/database generate
 

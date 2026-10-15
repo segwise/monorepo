@@ -16,7 +16,7 @@
 		"@react-email/ui": "^6.9.2",
 		"@types/bun": "latest",
 		"@types/headroom": "^0.12.5",
-		"@types/react": "^19.2.18"
+		"@types/react": "catalog:"
 	},
 	"peerDependencies": {
 		"typescript": "^5.9.3"
@@ -42,8 +42,8 @@
 		"pdf-parse": "^2.4.5",
 		"playwright": "^1.62.1",
 		"quick-lru": "^7.3.0",
-		"react": "^19.2.8",
-		"react-dom": "^19.2.8",
+		"react": "catalog:",
+		"react-dom": "catalog:",
 		"react-email": "^6.9.3",
 		"remove": "^0.1.5",
 		"resend": "^6.22.1",

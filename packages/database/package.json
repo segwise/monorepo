@@ -10,7 +10,7 @@
 		"./internal/prismaNamespace": "./generated/prisma/internal/prismaNamespace.ts"
 	},
 	"scripts": {
-		"generate": "bun x --bun prisma generate",
+		"generate": "DATABASE_URL=${DATABASE_URL:-postgresql://generate:generate@localhost:5432/generate} bun x --bun prisma generate",
 		"migrate:dev": "bun x --bun prisma migrate dev",
 		"migrate:local": "bun scripts/db-local.ts migrate dev",
 		"status:local": "bun scripts/db-local.ts migrate status",

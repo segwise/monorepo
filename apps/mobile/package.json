@@ -8,7 +8,8 @@
 		"prebuild": "expo prebuild --clean",
 		"android": "expo run:android",
 		"ios": "expo run:ios",
-		"lint": "biome check"
+		"lint": "biome check",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@backpackapp-io/react-native-toast": "^0.15.1",
@@ -49,8 +50,8 @@
 		"expo-system-ui": "~55.0.15",
 		"lucide-react-native": "^1.14.0",
 		"nativewind": "^4.2.2",
-		"react": "19.2.0",
-		"react-dom": "19.2.0",
+		"react": "catalog:",
+		"react-dom": "catalog:",
 		"react-hook-form": "^7.71.2",
 		"react-native": "0.83.4",
 		"react-native-currency-input": "^1.1.1",
@@ -70,7 +71,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.6",
-		"@types/react": "~19.2.14",
+		"@types/react": "catalog:",
 		"babel-preset-expo": "~55.0.10",
 		"hot-updater": "^0.35.0",
 		"prettier-plugin-tailwindcss": "^0.5.14",

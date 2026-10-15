@@ -113,9 +113,9 @@ Integrações externas do backend:
 ### backoffice
 Next.js 16 / React 19, App Router. **Uma única base de código, três
 deployments** diferenciados só pela env var `NEXT_PUBLIC_ROLE_SYSTEM`
-(`backoffice` | `customer` | `producer`), ver `docker-compose.yml` — três
+(`admin` | `customer` | `producer`), ver `docker-compose.yml` — três
 serviços a partir do mesmo `Dockerfile`, cada um com esse build arg distinto:
-- `backoffice` → admin interno.
+- `admin` → backoffice interno (painel da corretora).
 - `customer` → portal do segurado/cliente.
 - `producer` → portal do produtor/corretor.
 
