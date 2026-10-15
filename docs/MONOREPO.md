@@ -232,9 +232,9 @@ aplicação (um `compose down -v` ou uma recriação nunca toca nos dados).
   Backup* do volume de dados do Redis para o S3, agendado fora do horário de pico. A documentação do
   Dokploy avisa que copiar um volume com o serviço escrevendo pode gerar inconsistência e
   recomenda a opção *Turn off Container* (a fila fica fora do ar durante o backup; o BullMQ do
-  api reconecta sozinho). Isso importa: os schedulers das campanhas só são sincronizados ao
-  criar/editar/pausar/excluir (sem reconciliação no boot), então perder a fila faz as
-  campanhas ativas pararem de enviar em silêncio.
+  api reconecta sozinho). Mesmo assim, a api **reconcilia os schedulers das campanhas a cada boot**
+  (`docs/MARKETING.md`), então perder ou restaurar o Redis da fila não deixa campanha sem envio
+  nem ressuscita campanha apagada.
 - **Cache** (no compose): volume nomeado `cache-data` com AOF, porque guarda consultas pagas de
   CPF/CNPJ sem TTL. Por ser volume nomeado de um compose, aceita *Volume Backup* do Dokploy
   (a doc recomenda desligar o container durante o backup para evitar inconsistência).
@@ -291,8 +291,7 @@ gh secret set DOKPLOY_API_KEY                                 # token: Dokploy �
    parados por alguns dias como plano de volta. O cache do compose começa vazio (as
    consultas pagas de CPF/CNPJ serão cobradas de novo, a menos que se migre o volume). O Redis da
    fila é um Database novo: os jobs pendentes no antigo precisam terminar antes do corte, e os
-   schedulers das campanhas ativas precisam ser recriados (salvar cada campanha ativa), porque
-   não há reconciliação no boot.
+   schedulers das campanhas ativas são recriados sozinhos pela reconciliação do boot da api.
    O primeiro deploy deve ser feito à mão (*Run workflow*) e conferido nos logs.
 
 **Ainda não validado:** a execução real contra o seu Dokploy (a chamada `compose.deploy` e o

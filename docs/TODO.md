@@ -68,10 +68,7 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
   Auto Deploy desligado), preencher o Environment, definir `DOKPLOY_URL`, `DOKPLOY_COMPOSE_ID`
   e o segredo `DOKPLOY_API_KEY` no GitHub, cortar os Applications atuais e fazer o primeiro
   deploy à mão — passo a passo em `docs/MONOREPO.md#cicd`.
-- [ ] **Reconciliar os schedulers do BullMQ no boot** (`apps/api/src/libraries/marketing/queue.ts`):
-  hoje o scheduler `campaign:<id>` só é criado/atualizado ao salvar a campanha; se o Redis da fila
-  for perdido, as campanhas ativas param de enviar em silêncio. No boot, chamar
-  `syncCampaignSchedule` para cada campanha ativa (o `upsertJobScheduler` é idempotente).
+- [x] Reconciliar os schedulers do BullMQ no boot (`apps/api/src/libraries/marketing/reconcile.ts`).
 - [ ] **Configurar o Redis da fila no Dokploy**: comando personalizado
   `--appendonly yes --maxmemory-policy noeviction` e *Volume Backup* para o S3 (fora do horário de
   pico; avaliar *Turn off Container* contra inconsistência de AOF), e testar a restauração.
