@@ -95,7 +95,8 @@ feito pelo usuário.
 - **Sem testes automatizados**.
 - **CD e quality gate em implantação**: o CI (lint, typecheck, build, Prisma e Docker)
   existe em `.github/workflows/ci.yml` e a `main` é protegida (ruleset `protect-main`: PR +
-  check `CI` verde, sem push direto); faltam o Kodus (quality gate) e o CD híbrido com Dokploy — ver [`docs/MONOREPO.md`](docs/MONOREPO.md#cicd).
+  check `CI` verde, sem push direto); o CD (`.github/workflows/cd.yml`: imagens no GHCR + deploy via API do Dokploy) está
+  escrito mas depende de configurar variáveis/segredo e o Dokploy; falta o Kodus (quality gate) — ver [`docs/MONOREPO.md`](docs/MONOREPO.md#cicd).
   Enquanto isso, o deploy é manual e feito pelo usuário (o Dokploy builda os
   Dockerfiles do monorepo). Os antigos scripts `deploy` (add/commit/push)
   **foram removidos**.
