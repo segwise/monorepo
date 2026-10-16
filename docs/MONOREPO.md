@@ -230,10 +230,15 @@ imagem própria (`ghcr.io/segwise/pdf`): o Chromium fica numa camada estável (s
 muda) e a api deixa de carregá-lo. `POST /render` recebe `{ html, options }` e devolve o PDF; um contexto
 novo por pedido, sem JavaScript e sem rede; limite de concorrência com fila; token Bearer (`PDF_TOKEN`).
 O CI (`smoke-pdf`) sobe a imagem numa rede Docker `--internal` com as restrições de produção, confere 401
-sem token, PDF com token, uid não-root e que o container **não alcança a internet**. Esta etapa só publica
-a imagem e testa o serviço; a api e o compose passam a usá-lo na etapa seguinte. **Primeira publicação:** o
-GHCR cria o pacote `pdf` como privado; marque como público (Package settings → Change visibility) antes
-de colocá-lo no compose, como foi feito com `api`/`backoffice`.
+sem token, PDF com token, uid não-root e que o container **não alcança a internet**. A api chama o serviço por
+`libraries/pdf/client.ts` (`PDF_SERVICE_URL` + `PDF_SERVICE_TOKEN`; uma nova tentativa em falha de conexão
+ou 503). No compose o `pdf` fica só na rede `pdf-network` (`internal: true`, compartilhada com a api), sem
+Traefik, com `mem_limit` 1,5 GB e `pids_limit` 256: um PDF descontrolado derruba só ele. A api não tem
+mais Chromium, Playwright, `shm_size` nem variáveis XDG, e saíram as dependências sem uso
+(`@faker-js/faker`, `headroom`, `remove`). `PDF_TOKEN` é obrigatório nas variáveis do Dokploy (`${PDF_TOKEN:?}`
+no compose: sem ele o deploy falha antes de mexer em qualquer container). O pacote `ghcr.io/segwise/pdf`
+precisa estar público no GHCR (como `api`/`backoffice`). Os parágrafos abaixo sobre sandbox, `/dev/shm` e
+`tmpfs` do Chromium valem agora para o serviço `pdf`, não para a api.
 
 O **primeiro deploy** depois destas mudanças baixa as camadas novas (bases e Chromium); os seguintes voltam a
 ser incrementais.

@@ -3,7 +3,6 @@ import { trimTrailingSlash } from 'hono/trailing-slash';
 import type { AppBindings } from '@/@types/server.d';
 import { environment } from '@/libraries/environment';
 import { authMiddleware } from '@/server/middlewares/auth';
-import { browserMiddleware } from '@/server/middlewares/browser';
 import { cacheMiddleware } from '@/server/middlewares/cache';
 import { corsMiddleware } from '@/server/middlewares/cors';
 import { databaseMiddleware } from '@/server/middlewares/database';
@@ -64,8 +63,6 @@ server.use(storageMiddleware);
 
 server.use(authMiddleware);
 server.use(sessionMiddleware);
-
-server.use(browserMiddleware);
 
 server.use(transfeeraMiddleware);
 

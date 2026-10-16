@@ -11,7 +11,7 @@ produção o Chromium do Alpine) + `zod`. Sem framework HTTP: `node:http`.
 
 ## Comandos
 ```
-bun run dev        # node --watch src/index.ts (use CHROMIUM_PATH=<chromium> se não houver o do Playwright)
+bun run dev        # porta 3100 (a api usa 3000); use CHROMIUM_PATH=<chromium> se não houver o do Playwright
 bun run typecheck
 bun run lint
 ```

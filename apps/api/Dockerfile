@@ -3,7 +3,7 @@
 #
 # Camadas pensadas para o deploy baixar pouco: o node_modules (grande, só muda quando o lockfile
 # muda) fica numa camada própria, ANTES do código (pequeno, muda a cada commit). Só dependências
-# de produção vão para a imagem (sem Biome, turbo, TypeScript, @react-email/ui + next etc.).
+# de produção vão para a imagem (sem Biome, turbo, TypeScript, @react-email/ui + next etc.) e sem navegador.
 #
 # Imagem base FIXADA POR DIGEST (cadeia de suprimentos: a tag pode mudar sem aviso). O Dependabot
 # (.github/dependabot.yml) abre PR para atualizar o digest; para subir à mão:
@@ -45,39 +45,10 @@ FROM base AS runner
 WORKDIR /app
 
 # Patches de segurança do Alpine publicados depois da imagem base (ex.: OpenSSL), em camada própria
-# e pequena, antes do Chromium.
+# e pequena. O Chromium (PDF) não vive mais aqui: é o serviço apps/pdf, em outra imagem e rede.
 RUN apk upgrade --no-cache
 
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ttf-freefont \
-    ca-certificates \
-    libstdc++ \
-    udev \
-    dbus \
-    mesa-gl \
-    libx11 \
-    libxcomposite \
-    libxdamage \
-    libxrandr \
-    libxkbcommon \
-    libxshmfence \
-    alsa-lib
-
 RUN addgroup -S -g 10001 appgroup && adduser -S -u 10001 -G appgroup appuser
-
-ENV PLAYWRIGHT_BROWSERS_PATH=0 \
-    CHROMIUM_PATH=/usr/bin/chromium-browser
-
-# O Chromium (a partir da versão 152, Alpine 3.24) aborta na inicialização (SIGTRAP, "crashpad_handler:
-# --database is required") se não conseguir criar o diretório padrão de configuração/crash dumps
-# (~/.config/chromium). Com a raiz só leitura do compose isso falha, então o diretório vai para o /tmp
-# (tmpfs gravável, descartado a cada reinício). Descoberto pelo job smoke-api do CI.
-ENV XDG_CONFIG_HOME=/tmp/.config \
-    XDG_CACHE_HOME=/tmp/.cache
 
 # O código e as dependências pertencem ao root e são só leitura para o usuário da aplicação: um
 # processo comprometido não consegue alterar o próprio código nem as bibliotecas.
@@ -90,7 +61,7 @@ COPY --from=prod-deps /app/packages/database/node_modules ./packages/database/no
 # 2) código + build do core + client Prisma gerado (camada pequena, muda a cada commit)
 COPY --from=builder /artifact/ ./
 
-# Único diretório gravável do usuário (no compose o resto do sistema de arquivos é só leitura).
+# Diretório gravável do usuário (no compose o resto do sistema de arquivos é só leitura).
 RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser
 
 WORKDIR /app/apps/api

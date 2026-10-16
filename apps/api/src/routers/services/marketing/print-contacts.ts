@@ -4,6 +4,7 @@ import hbs from 'handlebars';
 import { PDFDocument } from 'pdf-lib';
 import z from 'zod';
 import type { Server } from '@/@types/server';
+import { renderPdf } from '@/libraries/pdf/client';
 import { PDF_STYLES } from '@/libraries/pdf/styles.generated';
 
 // Lista para conferência manual em papel: só nome, e-mail e celular, mais
@@ -146,18 +147,12 @@ function registerRoutersServicesMarketingPrintContacts(server: Server) {
 				rows,
 			});
 
-			const { page, release } = await ctx.browser();
-
 			try {
-				await page.setContent(content, {
-					waitUntil: 'networkidle',
-					timeout: 120000,
-				});
-
-				const pdfBuffer = await page.pdf({
+				const pdfBuffer = await renderPdf(content, {
 					format: 'A4',
 					printBackground: true,
 					margin: { left: '6px', top: '6px', right: '6px', bottom: '6px' },
+					timeoutMs: 120000,
 				});
 
 				const pdf = await PDFDocument.load(pdfBuffer);
@@ -174,8 +169,6 @@ function registerRoutersServicesMarketingPrintContacts(server: Server) {
 				});
 			} catch {
 				return ctx.json({ message: 'Erro ao gerar PDF' }, 500);
-			} finally {
-				await release();
 			}
 		},
 	);

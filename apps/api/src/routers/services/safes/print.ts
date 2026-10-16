@@ -7,6 +7,7 @@ import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/print';
 import { serializer } from '@/db-serializers/safe/print';
+import { renderPdf } from '@/libraries/pdf/client';
 import { PDF_STYLES } from '@/libraries/pdf/styles.generated';
 import { buildSafeSimpleWhere } from './build-safe-simple-where';
 
@@ -191,26 +192,14 @@ function registerRoutersServicesSafesPrint(server: Server) {
 				rows,
 			});
 
-			const { page, release } = await ctx.browser();
-
 			try {
-				await page.setContent(content, {
-					// Sem teto de registros, uma corretora grande pode gerar uma
-					// tabela enorme — timeout generoso para dar tempo do Chromium
-					// montar o layout inteiro antes de desistir.
-					waitUntil: 'networkidle',
-					timeout: 120000,
-				});
-
-				const pdfBuffer = await page.pdf({
+				// Sem teto de registros, uma corretora grande pode gerar uma tabela enorme: timeout
+				// generoso para dar tempo do Chromium montar o layout inteiro antes de desistir.
+				const pdfBuffer = await renderPdf(content, {
 					format: 'A4',
 					printBackground: true,
-					margin: {
-						left: '6px',
-						top: '6px',
-						right: '6px',
-						bottom: '6px',
-					},
+					margin: { left: '6px', top: '6px', right: '6px', bottom: '6px' },
+					timeoutMs: 120000,
 				});
 
 				const pdf = await PDFDocument.load(pdfBuffer);
@@ -231,8 +220,6 @@ function registerRoutersServicesSafesPrint(server: Server) {
 				});
 			} catch {
 				return ctx.json({ message: 'Erro ao gerar PDF' }, 500);
-			} finally {
-				await release();
 			}
 		},
 	);

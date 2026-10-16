@@ -10,7 +10,6 @@ import type { Xior } from 'xior';
 import type { Database } from '@/@types/database';
 import type { Environment } from '@/@types/environment';
 import type { auth } from '@/auth';
-import type { acquirePage } from '@/libraries/pdf/browser';
 import type { server } from '@/server';
 
 type Server = typeof server;
@@ -33,7 +32,6 @@ type Variables = {
 		brokerRole?: Role | null;
 		brokerStatus?: 'active' | 'suspended' | 'deleted' | null;
 	};
-	browser: Awaited<typeof acquirePage>;
 	transfeera: Xior;
 	timezone: string;
 };
