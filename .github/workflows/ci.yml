@@ -289,6 +289,22 @@ jobs:
           '
           docker exec api bun -e "$script"
 
+      # Só roda quando algum passo falha: mostra a versão do Chromium e o erro real dele (o Playwright
+      # só reporta "browser has been closed").
+      - name: Diagnóstico do Chromium (só em falha)
+        if: failure()
+        run: |
+          echo "== versão"; docker exec api chromium-browser --version 2>&1 | head -2
+          echo "== playwright"; docker exec api bun -e 'console.log(require("playwright-core/package.json").version)' 2>&1 | head -2
+          echo "== chromium direto, headless, mesmas restrições"
+          docker exec api chromium-browser --headless --no-sandbox --disable-setuid-sandbox --disable-gpu --dump-dom about:blank 2>&1 | grep -vE 'dbus|DEPRECATED' | head -20 || true
+          echo "== playwright com DEBUG=pw:browser"
+          docker exec -e DEBUG=pw:browser api bun -e '
+            const { chromium } = require("playwright");
+            try { const b = await chromium.launch({ headless: true, executablePath: "/usr/bin/chromium-browser", args: ["--no-sandbox", "--disable-setuid-sandbox"] }); await b.close(); console.log("launch ok"); }
+            catch (e) { console.log("LAUNCH FALHOU:", String(e.message).split("\n").slice(0, 3).join(" | ")); }
+          ' 2>&1 | grep -vE 'dbus|DEPRECATED' | tail -25 | cut -c1-300 || true
+
       - name: Sem erros de permissão nos logs
         if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
         run: |
