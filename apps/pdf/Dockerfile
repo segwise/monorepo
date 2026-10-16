@@ -6,13 +6,16 @@
 # vinha com outra versão e arrastava LLVM, mesa, ffmpeg e GTK: ~800 MB descomprimidos). Base Debian
 # slim porque o headless shell é glibc.
 #
-# Camadas da mais estável para a mais volátil: bibliotecas do sistema -> Node -> navegador ->
+# Runtime: Bun (como a api, o backoffice e o migrate; o Bun 1.4 suporta o Playwright). O headless shell
+# é glibc, então a base é Debian e o binário é o do Bun glibc (imagem oven/bun Debian), não o do Alpine.
+#
+# Camadas da mais estável para a mais volátil: bibliotecas do sistema -> Bun -> navegador ->
 # dependências -> código. O servidor baixa o navegador uma vez; deploys seguintes só o código.
 #
 # Imagens base FIXADAS POR DIGEST (cadeia de suprimentos). O Dependabot abre PR para atualizar; à mão:
 #   docker pull debian:trixie-slim && docker image inspect debian:trixie-slim --format '{{index .RepoDigests 0}}'
 FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS bun
-FROM node:24-trixie-slim@sha256:7f486cabe892bff8fef04c0f7da8dba84a560be3e4e2740b7a86afc57ebec315 AS node
+FROM oven/bun:1.4.3-slim@sha256:14a223fa35747ec728bce300ef85888bc5f7958164d15bbba6a54b22b52a3288 AS bun-glibc
 FROM debian:trixie-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f AS debian
 
 FROM bun AS pruner
@@ -30,12 +33,12 @@ RUN bun install --frozen-lockfile --production
 # Baixa o headless shell da versão exata que este playwright-core espera (CDN oficial do Playwright,
 # HTTPS). Fica só o necessário: sem ffmpeg (gravação de vídeo) e só os idiomas en-US e pt-BR da
 # interface do navegador (os outros 218 somam ~48 MB e um PDF não usa nenhum).
-FROM node AS browser
+FROM bun-glibc AS browser
 WORKDIR /app
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/apps/pdf/node_modules ./apps/pdf/node_modules
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN node apps/pdf/node_modules/playwright-core/cli.js install chromium-headless-shell \
+RUN bun apps/pdf/node_modules/playwright-core/cli.js install chromium-headless-shell \
  && rm -rf /ms-playwright/ffmpeg-* \
  && find /ms-playwright -path '*/locales/*.pak' ! -name 'en-US.pak' ! -name 'pt-BR.pak' -delete
 
@@ -84,10 +87,10 @@ RUN apt-get update \
 
 COPY --from=gbm /out/ /usr/lib/x86_64-linux-gnu/
 
-# Só o binário do Node (sem npm, npx, corepack, yarn nem headers): o serviço só executa `node`.
-COPY --from=node /usr/local/bin/node /usr/local/bin/node
+# Só o binário do Bun (glibc): o serviço executa `bun`.
+COPY --from=bun-glibc /usr/local/bin/bun /usr/local/bin/bun
 
-RUN groupadd -g 1000 node && useradd -u 1000 -g node -M -d /home/node -s /usr/sbin/nologin node
+RUN groupadd -g 1000 pdf && useradd -u 1000 -g pdf -M -d /tmp -s /usr/sbin/nologin pdf
 
 COPY --from=browser /ms-playwright /ms-playwright
 
@@ -103,18 +106,18 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# Dependências (pequenas) e depois o código. Tudo do root, só leitura para o usuário `node`.
+# Dependências (pequenas) e depois o código. Tudo do root, só leitura para o usuário `pdf`.
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/apps/pdf/node_modules ./apps/pdf/node_modules
 COPY --from=pruner /app/out/full/apps/pdf/package.json ./apps/pdf/package.json
 COPY --from=pruner /app/out/full/apps/pdf/src ./apps/pdf/src
 
 WORKDIR /app/apps/pdf
-USER node
+USER pdf
 EXPOSE 3000
 
-# O Node 24 executa TypeScript direto (remove os tipos), sem passo de build.
-CMD ["node", "--disable-warning=ExperimentalWarning", "src/index.ts"]
+# O Bun executa TypeScript direto, sem passo de build.
+CMD ["bun", "src/index.ts"]
 
 # SHA do commit desta imagem (header X-App-Version). Por último e só como ENV, para não invalidar
 # camada nenhuma.

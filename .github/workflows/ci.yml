@@ -459,7 +459,7 @@ jobs:
       - name: Sem acesso à internet
         if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
         run: |
-          if docker exec pdf node -e "fetch('https://example.com',{signal:AbortSignal.timeout(5000)}).then(()=>process.exit(0),()=>process.exit(1))"; then
+          if docker exec pdf bun -e "fetch('https://example.com',{signal:AbortSignal.timeout(5000)}).then(()=>process.exit(0),()=>process.exit(1))"; then
             echo "::error::O container do pdf alcançou a internet; a rede interna não está isolando."
             exit 1
           fi
