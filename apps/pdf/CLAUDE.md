@@ -6,8 +6,14 @@ pronto e devolve bytes de PDF. Quem monta o HTML (Handlebars, dados do banco) é
 Contexto do sistema: [`../../CLAUDE.md`](../../CLAUDE.md) e [`../../docs/MONOREPO.md`](../../docs/MONOREPO.md).
 
 ## Stack
-Node 24 (executa TypeScript direto, sem build) + `playwright-core` (navegador do sistema, em
-produção o Chromium do Alpine) + `zod`. Sem framework HTTP: `node:http`.
+Node 24 (executa TypeScript direto, sem build) + `playwright-core` + `zod`. Sem framework HTTP:
+`node:http`. Navegador: o Chrome Headless Shell que o Playwright baixa para a versão do `playwright-core`
+do lockfile (imagem Debian slim; ver o Dockerfile). Para rodar local: `node node_modules/playwright-core/cli.js
+install chromium-headless-shell` (ou aponte `CHROMIUM_PATH` para um Chromium já instalado).
+
+`test/fixtures/` tem o HTML real dos 3 PDFs (cotação, propostas, contatos) com dados de exemplo. O CI
+renderiza as fixtures nesta imagem e na de produção e compara pixel a pixel (job `smoke-pdf`). Se um
+template da api mudar muito, regenere as fixtures.
 
 ## Comandos
 ```
