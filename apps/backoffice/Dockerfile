@@ -3,10 +3,10 @@
 #
 # Imagens base FIXADAS POR DIGEST (cadeia de suprimentos: a tag pode mudar sem aviso). O Dependabot
 # (.github/dependabot.yml) abre PR para atualizar o digest; para subir à mão:
-#   docker pull node:22-alpine && docker image inspect node:22-alpine --format '{{index .RepoDigests 0}}'
+#   docker pull node:24-alpine && docker image inspect node:24-alpine --format '{{index .RepoDigests 0}}'
 FROM oven/bun:1.4.2-alpine@sha256:d888c0ae6c86d7866ff10c5aafdd9077b36aee6455b33dd270fb93c0dd5cef6f AS bun
 
-FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS base
+FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS base
 # bun só nos estágios de build (copiado da imagem oficial, sem `npm install -g`).
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 
@@ -34,7 +34,7 @@ ENV NEXT_PUBLIC_ROLE_SYSTEM=$NEXT_PUBLIC_ROLE_SYSTEM \
 RUN bun run --cwd packages/core build \
  && bun run --cwd apps/backoffice build
 
-FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS runner
+FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS runner
 WORKDIR /app
 
 # Hardening do runtime:
