@@ -52,6 +52,10 @@ services:
     image: ghcr.io/segwise/api:latest
     pull_policy: always
     restart: unless-stopped
+    # No deploy a api recebe SIGTERM e encerra com calma (requisições em andamento, job da fila de
+    # marketing devolvido à fila, conexões fechadas; ver apps/api/src/libraries/shutdown.ts). O padrão
+    # do Docker é 10 s antes do SIGKILL; a api força a saída aos 25 s.
+    stop_grace_period: 30s
     # tmpfs com teto de tamanho: sem `size`, um tmpfs pode chegar a metade da RAM do servidor.
     tmpfs:
       - /tmp:size=256m

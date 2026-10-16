@@ -1,5 +1,6 @@
-import { Worker } from 'bullmq';
+import { DelayedError, type Job, Worker } from 'bullmq';
 import { format } from 'date-fns';
+import { isStopping } from '@/libraries/lifecycle';
 import { database } from '@/services/database';
 import { email } from '@/services/email';
 import { findEligibleContacts } from './eligibility';
@@ -9,6 +10,8 @@ import { buildWhatsappUrl, marketingTemplates } from './templates';
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function sendCampaign(
+	job: Job,
+	token: string | undefined,
 	campaignId: string,
 	manual: boolean,
 	contactIds?: string[],
@@ -33,6 +36,14 @@ async function sendCampaign(
 	let sent = 0;
 
 	for (const contact of contacts) {
+		// Processo parando (deploy): em vez de cortar o envio no meio, devolve o job para a fila com
+		// alguns segundos de atraso. O container novo retoma; a elegibilidade pula quem já recebeu (cada
+		// envio fica em marketingDelivery), então ninguém recebe duas vezes.
+		if (isStopping()) {
+			await job.moveToDelayed(Date.now() + 5_000, token);
+			throw new DelayedError();
+		}
+
 		const { data, error } = await email.emails.send(
 			{
 				from: 'XCAR Corretora <parceria@emails.xcarcorretora.com.br>',
@@ -72,9 +83,11 @@ async function sendCampaign(
 
 const marketingWorker = new Worker(
 	MARKETING_QUEUE,
-	async (job) => {
+	async (job, token) => {
 		if (job.name === 'send-campaign') {
 			return await sendCampaign(
+				job,
+				token,
 				job.data.campaignId,
 				!!job.data.manual,
 				job.data.contactIds,

@@ -359,6 +359,21 @@ jobs:
             exit 1
           fi
 
+      # Como no deploy: SIGTERM e até 30 s. A api tem de sair sozinha, com código 0, pelo desligamento
+      # gracioso (src/libraries/shutdown.ts), e não pelo SIGKILL do Docker.
+      - name: Desligamento gracioso (SIGTERM)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
+        run: |
+          start=$(date +%s)
+          docker stop -t 30 api >/dev/null
+          elapsed=$(( $(date +%s) - start ))
+          code="$(docker inspect -f '{{.State.ExitCode}}' api)"
+          logs="$(docker logs api 2>&1)"
+          echo "saiu em ${elapsed}s com código ${code}"
+          grep -q "\[shutdown\] concluído" <<<"$logs" || { echo "::error::A api não passou pelo desligamento gracioso."; echo "$logs" | tail -n 20; exit 1; }
+          [ "$code" = "0" ] || { echo "::error::A api saiu com código ${code}."; exit 1; }
+          [ "$elapsed" -lt 25 ] || { echo "::error::O desligamento levou ${elapsed}s."; exit 1; }
+
       - name: Logs da api (em caso de falha)
         if: failure()
         run: docker logs api 2>&1 | tail -n 80 || true
