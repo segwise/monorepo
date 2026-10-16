@@ -14,16 +14,15 @@ RUN bun add -g turbo@^2
 COPY . .
 RUN turbo prune @segwise/database --docker
 
-# O `migrate deploy` só precisa do CLI e das engines. O client do Prisma (runtime de todos os bancos),
-# o Studio e o servidor de banco embutido do `prisma dev` (PGlite) não são usados aqui.
+# Fora da imagem só o que o CLI comprovadamente não carrega: o client do Prisma (o CLI só o cita em
+# textos de template) e o TypeScript (lido só para exibir a versão, dentro de try/catch). O Studio e o
+# `@prisma/dev` ficam: o cli.js do Prisma os carrega na inicialização, mesmo para o `migrate deploy`
+# (testado: sem o studio-core o CLI nem abre). Tipos, source maps e markdown também saem.
 FROM base AS deps
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
 RUN bun install --frozen-lockfile --production \
  && rm -rf node_modules/.bun/@prisma+client@* \
-           node_modules/.bun/@prisma+studio-core@* \
-           node_modules/.bun/@prisma+dev@* \
-           node_modules/.bun/@electric-sql+pglite@* \
            node_modules/.bun/typescript@* \
  && find node_modules/.bun -type f \( -name '*.d.ts' -o -name '*.d.mts' -o -name '*.d.cts' \
       -o -name '*.map' -o -name '*.md' -o -name '*.markdown' \) -delete
