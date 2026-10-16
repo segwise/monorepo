@@ -30,7 +30,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.3
 
       - uses: actions/cache@v6
         with:
@@ -80,7 +80,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.3
 
       - uses: actions/cache@v6
         with:
@@ -143,6 +143,180 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,scope=${{ matrix.app }},mode=max
 
+  # Sobe a imagem REAL da api com as mesmas restrições de produção (raiz só leitura, sem capabilities,
+  # shm_size, tmpfs) contra Postgres e Redis de serviço e confere o que o build sozinho não pega:
+  # migrations no entrypoint, boot, rota com banco, header de versão e geração de PDF no Chromium
+  # (a base do Alpine/Chromium muda quando a imagem do Bun muda).
+  smoke-api:
+    name: Smoke da imagem da API
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      pull-requests: read
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dorny/paths-filter@v4
+        id: changes
+        with:
+          filters: |
+            api:
+              - 'apps/api/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'bun.lock'
+              - 'turbo.json'
+              - '.dockerignore'
+              - '.github/workflows/ci.yml'
+
+      - uses: docker/setup-buildx-action@v4
+        if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
+
+      # Reaproveita o cache do job "Docker build (api)" (mesmo escopo); aqui só carrega a imagem.
+      - name: Build da imagem (carregada no daemon)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          load: true
+          tags: segwise-api:ci
+          build-args: |
+            GIT_SHA=ci-${{ github.sha }}
+          cache-from: type=gha,scope=api
+
+      - name: Subir a api com as restrições de produção
+        if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
+        run: |
+          cat > "$RUNNER_TEMP/api.env" <<'EOF'
+          NODE_ENV=production
+          PORT=3000
+          APPLICATION_URL=http://localhost:3556
+          BASE_URL=http://localhost:3000
+          AUTH_SECRET=ci-secret-ci-secret-ci-secret-1234
+          DATABASE_URL=postgresql://postgres:ci@localhost:5432/postgres
+          CACHE_URL=redis://localhost:6379
+          QUEUE_URL=redis://localhost:6379
+          AI_BASE_URL=http://localhost:1
+          AI_MODEL=x
+          AI_MODEL_VISION=x
+          AI_API_KEY=x
+          MINIO_ENDPOINT=http://localhost:9000
+          MINIO_ACCESS_KEY=x
+          MINIO_SECRET_KEY=x
+          RESEND_API_KEY=re_ci
+          APIPLACAS_TOKEN=x
+          CPFCNPJ_TOKEN=x
+          PLACA_FIPE_TOKEN=x
+          AMOUNT_SEARCH_VEHICLE_COMPLETE=1
+          TRANSFEERA_CLIENT_SECRET=x
+          TRANSFEERA_CLIENT_SECRET_USER=x
+          TRANSFEERA_PAYMENT_PIX_KEY=x
+          TRANSFEERA_PAYMENT_SPLIT_PIX_TYPE=x
+          TRANSFEERA_PAYMENT_SPLIT_PIX=x
+          EOF
+          docker run -d --name api --network host \
+            --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+            --shm-size 256m \
+            --tmpfs /tmp:size=256m \
+            --tmpfs /home/appuser/.cache:size=128m,uid=10001,gid=10001 \
+            --env-file "$RUNNER_TEMP/api.env" \
+            segwise-api:ci
+
+      - name: Aguardar o boot (migrations + servidor)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
+        run: |
+          for i in $(seq 1 60); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/services/marketplace || true)"
+            if [ "$code" = "200" ]; then echo "api respondeu 200 após ~$((i * 2))s"; exit 0; fi
+            if [ "$(docker inspect -f '{{.State.Running}}' api)" != "true" ]; then break; fi
+            sleep 2
+          done
+          echo "::error::A api não respondeu 200 em /services/marketplace (último HTTP ${code:-000})."
+          exit 1
+
+      - name: Header X-App-Version, migrations e usuário não-root
+        if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
+        run: |
+          version="$(curl -s -D - -o /dev/null http://localhost:3000/ | tr -d '\r' | awk -F': ' 'tolower($1)=="x-app-version"{print $2}')"
+          expected="ci-${GITHUB_SHA}"
+          echo "X-App-Version: ${version} (esperado ${expected})"
+          [ "$version" = "$expected" ] || { echo "::error::X-App-Version não confere."; exit 1; }
+          logs="$(docker logs api 2>&1)"  # em variável: com pipefail, `grep -q` encerra cedo e daria SIGPIPE
+          grep -q "All migrations have been successfully applied" <<<"$logs" \
+            || { echo "::error::O entrypoint não aplicou as migrations."; exit 1; }
+          uid="$(docker exec api id -u)"
+          [ "$uid" = "10001" ] || { echo "::error::A api não roda como uid 10001 (uid=$uid)."; exit 1; }
+          echo "migrations ok, uid ${uid}"
+
+      # O Chromium roda com as mesmas flags do código (api/src/libraries/pdf/browser.ts), sob raiz só
+      # leitura e sem capabilities.
+      - name: PDF no Chromium
+        if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
+        run: |
+          script='
+            const { chromium } = require("playwright");
+            const b = await chromium.launch({ headless: true, executablePath: "/usr/bin/chromium-browser", args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+            const p = await b.newPage();
+            await p.setContent("<h1>Proposta - acentuação ção</h1>");
+            const pdf = await p.pdf({ format: "A4" });
+            await b.close();
+            const magic = Buffer.from(pdf.subarray(0, 5)).toString();
+            console.log("PDF:", pdf.length, "bytes,", magic);
+            if (magic !== "%PDF-" || pdf.length < 1000) process.exit(1);
+          '
+          docker exec api bun -e "$script"
+
+      # Só roda quando algum passo falha: mostra a versão do Chromium e o erro real dele (o Playwright
+      # só reporta "browser has been closed").
+      - name: Diagnóstico do Chromium (só em falha)
+        if: failure()
+        run: |
+          echo "== versão"; docker exec api chromium-browser --version 2>&1 | head -2
+          echo "== playwright"; docker exec api bun -e 'console.log(require("playwright-core/package.json").version)' 2>&1 | head -2
+          echo "== chromium direto, headless, mesmas restrições"
+          docker exec api chromium-browser --headless --no-sandbox --disable-setuid-sandbox --disable-gpu --dump-dom about:blank 2>&1 | grep -vE 'dbus|DEPRECATED' | head -20 || true
+          echo "== playwright com DEBUG=pw:browser"
+          docker exec -e DEBUG=pw:browser api bun -e '
+            const { chromium } = require("playwright");
+            try { const b = await chromium.launch({ headless: true, executablePath: "/usr/bin/chromium-browser", args: ["--no-sandbox", "--disable-setuid-sandbox"] }); await b.close(); console.log("launch ok"); }
+            catch (e) { console.log("LAUNCH FALHOU:", String(e.message).split("\n").slice(0, 3).join(" | ")); }
+          ' 2>&1 | grep -vE 'dbus|DEPRECATED' | tail -25 | cut -c1-300 || true
+
+      - name: Sem erros de permissão nos logs
+        if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
+        run: |
+          if docker logs api 2>&1 | grep -iE 'EACCES|permission denied|EROFS|read-only file system'; then
+            echo "::error::A api registrou erro de permissão/leitura (ver acima): falta um tmpfs ou volume no compose?"
+            exit 1
+          fi
+
+      - name: Logs da api (em caso de falha)
+        if: failure()
+        run: docker logs api 2>&1 | tail -n 80 || true
+
   compose:
     name: Compose (deploy/)
     runs-on: ubuntu-24.04
@@ -170,7 +344,7 @@ jobs:
   ci:
     name: CI
     if: always()
-    needs: [verify, database, docker, compose]
+    needs: [verify, database, docker, smoke-api, compose]
     runs-on: ubuntu-24.04
     steps:
       - name: Todos os jobs passaram?

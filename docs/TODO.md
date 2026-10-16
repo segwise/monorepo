@@ -94,7 +94,7 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
   `fetch` de `expo/fetch`): nome e `Content-Type` do arquivo chegando no servidor
   (`apps/mobile/src/functions/api/marketplace/vehicles.ts`, `register-update.tsx`).
 - [ ] **Validar EAS Build e hot-updater** no monorepo (rodar a partir de `apps/mobile`;
-  `eas.json` fixa `bun 1.3.10`, a raiz usa 1.4.2).
+  `eas.json` fixa `bun 1.3.10`, a raiz usa 1.4.3).
 - [ ] **Abrir o app** no emulador/simulador (os builds nativos Android/iOS compilam, mas o
   app não foi executado).
 - [ ] **Xcode 27**: pods com deployment target antigo (SDWebImage 9.0, RNSVG 12.4) quebram o
