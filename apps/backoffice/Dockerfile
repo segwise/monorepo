@@ -32,8 +32,12 @@ ENV NEXT_PUBLIC_ROLE_SYSTEM=$NEXT_PUBLIC_ROLE_SYSTEM \
     APP_VERSION=$GIT_SHA \
     NEXT_TELEMETRY_DISABLED=1
 
+# O `sharp` (otimização do next/image) vem nas duas variantes de libc; o runtime é Alpine (musl) e só
+# carrega a `linuxmusl`. A variante glibc (~18 MB de libvips) sai do standalone.
 RUN bun run --cwd packages/core build \
- && bun run --cwd apps/backoffice build
+ && bun run --cwd apps/backoffice build \
+ && rm -rf apps/backoffice/.next/standalone/node_modules/.bun/@img+sharp-linux-x64@* \
+           apps/backoffice/.next/standalone/node_modules/.bun/@img+sharp-libvips-linux-x64@*
 
 # Runtime: Alpine limpo + só o binário do Node (copiado da imagem oficial, mesma versão do build). A
 # imagem node:alpine traz npm, npx, corepack, yarn e headers numa camada da base; apagá-los numa camada

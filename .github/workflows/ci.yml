@@ -465,6 +465,10 @@ jobs:
           done
           echo "GET /sign-in -> HTTP ${code}"
           case "$code" in 2??|3??) ;; *) echo "::error::O backoffice não respondeu 2xx/3xx em /sign-in (HTTP ${code:-000})."; exit 1 ;; esac
+          # Otimização de imagem do next/image (usa o sharp/libvips da imagem).
+          img="$(curl -s -o /dev/null -w '%{http_code} %{content_type}' 'http://localhost:3000/_next/image?url=%2Fimages%2Flogo.png&w=64&q=100')"
+          echo "GET /_next/image -> ${img}"
+          case "$img" in "200 image/"*) ;; *) echo "::error::A otimização de imagem do Next (sharp) falhou: ${img}"; exit 1 ;; esac
           uid="$(docker exec web id -u)"
           [ "$uid" = "1000" ] || { echo "::error::O backoffice não roda como uid 1000 (uid=$uid)."; exit 1; }
           echo "node $(docker exec web node --version), uid ${uid}"
