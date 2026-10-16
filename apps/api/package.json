@@ -16,9 +16,7 @@
 		"@react-email/ui": "^6.9.2",
 		"@types/bun": "latest",
 		"@types/react": "catalog:web",
-		"tailwindcss": "^3.4.19"
-	},
-	"peerDependencies": {
+		"tailwindcss": "^3.4.19",
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {

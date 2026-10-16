@@ -240,6 +240,16 @@ no compose: sem ele o deploy falha antes de mexer em qualquer container). O paco
 precisa estar público no GHCR (como `api`/`backoffice`). Os parágrafos abaixo sobre sandbox, `/dev/shm` e
 `tmpfs` do Chromium valem agora para o serviço `pdf`, não para a api.
 
+**Imagem da api enxuta + imagem de migrations.** O `node_modules` de produção da api passa por
+`apps/api/scripts/prune-node-modules.ts` (apaga os pacotes que o código não alcança: CLI do react-email,
+`next`/`sharp` do peer opcional do better-auth, TypeScript), pelo corte do client do Prisma (só o compilador de
+queries do PostgreSQL), dos binários nativos glibc (a imagem é musl) e de `.d.ts`/`.map`/`.md`. O estágio
+`verify` do Dockerfile empacota a api com `bun build` contra o resultado: se faltar algo que o código importa,
+o build da imagem falha. As migrations ganharam imagem própria (`packages/database/Dockerfile`,
+`ghcr.io/segwise/migrate`), testada no `smoke-api` (aplica todas as migrations num banco vazio). Nesta etapa a
+api ainda roda `migrate deploy` no entrypoint; a troca para um serviço `migrate` no compose (e a saída do CLI
+do Prisma da api) vem na etapa seguinte, depois de o pacote `migrate` ficar público no GHCR.
+
 O **primeiro deploy** depois destas mudanças baixa as camadas novas (bases e Chromium); os seguintes voltam a
 ser incrementais.
 
