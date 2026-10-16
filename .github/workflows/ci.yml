@@ -163,7 +163,8 @@ jobs:
 
   # Sobe a imagem REAL da api com as mesmas restrições de produção (raiz só leitura, sem capabilities,
   # tmpfs) contra Postgres e Redis de serviço e confere o que o build sozinho não pega: migrations no
-  # entrypoint, boot, rota com banco e header de versão. (O PDF é testado no job smoke-pdf.)
+  # imagem `migrate` (como no compose, antes da api), boot, rota com banco e header de versão. (O PDF é
+  # testado no job smoke-pdf.)
   smoke-api:
     name: Smoke da imagem da API
     runs-on: ubuntu-24.04
@@ -299,7 +300,7 @@ jobs:
             --env-file "$RUNNER_TEMP/api.env" \
             segwise-api:ci
 
-      - name: Aguardar o boot (migrations + servidor)
+      - name: Aguardar o boot
         if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
         run: |
           for i in $(seq 1 60); do
@@ -311,20 +312,20 @@ jobs:
           echo "::error::A api não respondeu 200 em /services/marketplace (último HTTP ${code:-000})."
           exit 1
 
-      - name: Header X-App-Version, migrations e usuário não-root
+      - name: Header X-App-Version, sem CLI do Prisma e usuário não-root
         if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
         run: |
           version="$(curl -s -D - -o /dev/null http://localhost:3000/ | tr -d '\r' | awk -F': ' 'tolower($1)=="x-app-version"{print $2}')"
           expected="ci-${GITHUB_SHA}"
           echo "X-App-Version: ${version} (esperado ${expected})"
           [ "$version" = "$expected" ] || { echo "::error::X-App-Version não confere."; exit 1; }
-          logs="$(docker logs api 2>&1)"  # em variável: com pipefail, `grep -q` encerra cedo e daria SIGPIPE
-          # O banco já foi migrado pela imagem migrate: o entrypoint da api só confere que não há pendências.
-          grep -qE "No pending migrations to apply|All migrations have been successfully applied" <<<"$logs" \
-            || { echo "::error::O entrypoint não rodou o migrate deploy."; exit 1; }
+          # As migrations são da imagem `migrate`: o CLI do Prisma não pode estar na imagem da api.
+          if docker exec api sh -c 'ls -d /app/node_modules/.bun/prisma@* 2>/dev/null'; then
+            echo "::error::O CLI do Prisma voltou para a imagem da api (ver scripts/prune-node-modules.ts)."; exit 1
+          fi
           uid="$(docker exec api id -u)"
           [ "$uid" = "10001" ] || { echo "::error::A api não roda como uid 10001 (uid=$uid)."; exit 1; }
-          echo "migrations ok, uid ${uid}"
+          echo "sem CLI do Prisma, uid ${uid}"
 
       - name: Sem erros de permissão nos logs
         if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'

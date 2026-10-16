@@ -16,10 +16,10 @@ RUN bun add -g turbo@^2
 COPY . .
 RUN turbo prune @segwise/api --docker
 
-# Só dependências de produção (o runtime ainda precisa do prisma CLI para o `migrate deploy` do
-# entrypoint: por isso ele é `dependency` do @segwise/database), enxugadas:
-#  - scripts/prune-node-modules.ts: apaga os pacotes que o código não alcança (CLI do react-email,
-#    `next`/`sharp` do peer opcional do better-auth, TypeScript...). Detalhes e lista no próprio script;
+# Só dependências de produção, enxugadas:
+#  - scripts/prune-node-modules.ts: apaga os pacotes que o código não alcança (CLI do Prisma, que só
+#    as migrations usam e vive na imagem `migrate`; CLI do react-email; `next`/`sharp` do peer opcional
+#    do better-auth; TypeScript...). Detalhes e lista no próprio script;
 #  - do client do Prisma fica só o compilador de queries do PostgreSQL (o único que o client gerado
 #    importa; os de MySQL, SQLite, SQL Server e CockroachDB somavam ~60 MB);
 #  - binários nativos para glibc: a imagem é Alpine (musl) e só carrega as variantes `-musl`;
@@ -45,8 +45,7 @@ COPY --from=pruner /app/out/full/ .
 RUN bun run --cwd packages/core build \
  && bun run --cwd packages/database generate
 # Código e artefatos de build SEM node_modules: é a camada pequena que muda a cada commit.
-RUN chmod +x apps/api/entrypoint.sh \
- && mkdir /artifact \
+RUN mkdir /artifact \
  && cp package.json /artifact/ \
  && cp -r apps packages /artifact/ \
  && find /artifact -name node_modules -type d -prune -exec rm -rf {} +
@@ -98,7 +97,9 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-ENTRYPOINT ["./entrypoint.sh"]
+# As migrations NÃO rodam aqui: são o serviço `migrate` do compose (packages/database/Dockerfile), que
+# termina antes de a api subir. Sem `bun run` intermediário: o Bun é o PID 1 e recebe o SIGTERM.
+CMD ["bun", "--bun", "src/index.ts"]
 
 # SHA do commit desta imagem: sai no header X-App-Version (ver middlewares/version.ts). Por último
 # (e só como ENV, sem RUN depois) para não invalidar nenhuma camada anterior.

@@ -60,6 +60,10 @@ services:
         condition: service_healthy
       pdf:
         condition: service_healthy
+      # Só sobe (ou é recriada) depois de as migrations terminarem com sucesso. Se uma migration falhar,
+      # o `docker compose up` para aí: a api da versão anterior continua no ar.
+      migrate:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       PORT: '3000'
@@ -104,7 +108,7 @@ services:
       IOS_XCAR_APP_URL: ${IOS_XCAR_APP_URL}
       ANDROID_XCAR_APP_URL: ${ANDROID_XCAR_APP_URL}
     healthcheck:
-      # Qualquer resposta HTTP (até 404) = processo de pé. start_period cobre as migrations do entrypoint.
+      # Qualquer resposta HTTP (até 404) = processo de pé.
       test:
         - CMD
         - bun
@@ -117,6 +121,21 @@ services:
     networks:
       - internal-network
       - pdf-network
+      - dokploy-network
+
+  # Migrations do banco (`prisma migrate deploy`), uma vez a cada deploy, antes da api. Imagem própria
+  # (packages/database/Dockerfile): a api não carrega o CLI do Prisma. Sem migration pendente, só
+  # confere e termina. Na dokploy-network porque o Postgres é um Database do Dokploy.
+  migrate:
+    <<: *hardening
+    image: ghcr.io/segwise/migrate:latest
+    pull_policy: always
+    restart: 'no'
+    tmpfs:
+      - /tmp:size=64m
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    networks:
       - dokploy-network
 
   # HTML -> PDF (Chromium + Playwright), separado da api: imagem própria que quase nunca muda e

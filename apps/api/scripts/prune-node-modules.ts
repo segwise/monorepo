@@ -58,12 +58,12 @@ const EXCLUDED_EDGES: Record<string, string[]> = {
 // (o Bun executa .ts sem ele); entra como peer de vários pacotes.
 const EXCLUDED_PACKAGES = new Set(['typescript']);
 
-// Dependências diretas de um workspace que não vão para a imagem da api (PRUNE_WITHOUT_PRISMA_CLI=1
-// quando as migrations rodam numa imagem própria e a api não precisa mais do CLI do Prisma).
-const EXCLUDED_WORKSPACE_DEPS: Record<string, string[]> =
-	process.env.PRUNE_WITHOUT_PRISMA_CLI === '1'
-		? { 'packages/database': ['prisma'] }
-		: {};
+// Dependências diretas de um workspace que não vão para a imagem da api: o CLI do Prisma é
+// `dependency` do @segwise/database porque a imagem `migrate` (packages/database/Dockerfile) precisa
+// dele; a api só usa o client gerado.
+const EXCLUDED_WORKSPACE_DEPS: Record<string, string[]> = {
+	'packages/database': ['prisma'],
+};
 
 function linksOf(dir: string): string[] {
 	if (!existsSync(dir)) return [];
