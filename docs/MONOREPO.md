@@ -211,10 +211,17 @@ Dispara quando o **CI termina com sucesso na `main`** (`workflow_run`) ou à mã
    no build. As imagens são **`linux/amd64`** (runner do GitHub): o servidor do Dokploy precisa
    ser x86_64. Os pacotes publicados a partir deste repo público ficam **públicos** (verificado
    com `docker manifest inspect` sem login), então o Dokploy puxa sem credenciais.
-2. **deploy** — uma única chamada `compose.deploy` na API do Dokploy
-   (`scripts/dokploy-deploy.sh`). O Dokploy executa de forma assíncrona, então o workflow
-   **não detecta** deploy que falhe depois (ex.: migration quebrada no `entrypoint.sh` do api;
-   o `docker compose` marca o api como não saudável). Fica pendente um health check pós-deploy.
+2. **deploy** — `scripts/dokploy-deploy.sh` chama `compose.deploy` na API do Dokploy (que só
+   responde "Deployment queued") e então **espera o resultado**: consulta `compose.one` até
+   aparecer uma execução nova e ela terminar; se terminar em `error`, o job **falha** (veja o log
+   do deployment no painel do Dokploy). Depois faz um **teste de fumaça** nas URLs da variável de
+   repositório `HEALTHCHECK_URLS` (separadas por espaço; qualquer resposta HTTP < 500 conta, a api
+   devolve 404 em `/`) com até 4 min por URL, porque `up -d` devolve antes de os healthchecks do
+   compose terminarem. Sem `HEALTHCHECK_URLS` só espera o Dokploy.
+   **Segurança**: a resposta de `compose.one` inclui o `env` do compose (todos os segredos) e o log
+   das Actions é público — o script nunca a imprime, só extrai id e status com `jq`. Se os nomes de
+   campo da sua versão do Dokploy forem outros, o timeout imprime os **nomes** dos campos (nunca os
+   valores) para ajustar o `jq`.
    Os três valores (`DOKPLOY_URL`, `DOKPLOY_COMPOSE_ID`, `DOKPLOY_API_KEY`) são **segredos** do
    GitHub, não variáveis: o repo é público e os logs das Actions também, então só um segredo é
    mascarado (`***`) — uma variável exporia o endereço do painel do Dokploy. Como o contexto
@@ -299,16 +306,18 @@ gh secret set DOKPLOY_COMPOSE_ID --body '<composeId>'         # GET <dokploy>/ap
    schedulers das campanhas ativas são recriados sozinhos pela reconciliação do boot da api.
    O primeiro deploy deve ser feito à mão (*Run workflow*) e conferido nos logs.
 
-**Ainda não validado:** a execução real contra o seu Dokploy (a chamada `compose.deploy` e o
-fluxo da fonte Git nessa versão); só foi testada contra um servidor falso e o compose rodou
-localmente com imagens construídas aqui.
+**Validado**: a chamada `compose.deploy` na sua instância (respondeu `Deployment queued`, com URL,
+composeId e token mascarados no log público). **Ainda não validado**: o acompanhamento do status
+(`compose.one`) contra o Dokploy real — foi testado contra um servidor falso (sucesso, erro, sem
+deployment novo, falha pontual da API, URL com 503, token inválido, sem vazamento de segredo). Dica
+(não verificada): em *Advanced → Command* do compose dá para usar `up -d --remove-orphans --wait`,
+que faz o próprio deploy do Dokploy falhar se os healthchecks não passarem.
 
 ### Ainda a fazer
 
 - **Quality gate**: Kodus **self-hosted no Dokploy** (GitHub App + regras); depois exigir a
   review/check dele no ruleset.
 - **CD do mobile**: EAS Build + hot-updater por workflow quando `apps/mobile/**` mudar.
-- **Health check pós-deploy** no CD (hoje o workflow não detecta deploy que falhe depois).
 
 ## Origem deste repositório
 

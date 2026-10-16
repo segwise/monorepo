@@ -117,7 +117,8 @@ jobs:
     # No disparo manual dá para só publicar as imagens (deploy: false).
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # O script espera o deploy do Dokploy (até 15 min) e as URLs (até 4 min por URL).
+    timeout-minutes: 30
     environment: production
     # URL e composeId também são segredos: o repo é público, e segredos são mascarados nos logs
     # (o contexto `secrets` não existe no `if` do job, por isso a checagem é um passo).
@@ -150,7 +151,12 @@ jobs:
           ref: ${{ needs.meta.outputs.sha }}
 
       # O compose (deploy/docker-compose.yml) usa as imagens :latest com pull_policy: always:
-      # o deploy baixa a versão que acabou de ser publicada e recria só o que mudou.
-      - name: Deploy no Dokploy
+      # o deploy baixa a versão que acabou de ser publicada e recria só o que mudou. O script
+      # dispara o deploy, ESPERA o Dokploy terminar (falha se terminar em erro) e testa as URLs.
+      - name: Deploy no Dokploy e verificação
         if: ${{ steps.config.outputs.configured == 'true' }}
+        env:
+          # URLs públicas (separadas por espaço) que devem responder < 500 após o deploy.
+          # Variável do repo (não segredo: são sites públicos); vazia = só espera o Dokploy.
+          HEALTHCHECK_URLS: ${{ vars.HEALTHCHECK_URLS }}
         run: bash scripts/dokploy-deploy.sh
