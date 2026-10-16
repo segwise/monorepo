@@ -144,8 +144,14 @@ docker build -f apps/backoffice/Dockerfile \
   `better-auth/next-js`, tire essa linha do Dockerfile).
   O compose baixa as imagens **em paralelo** (`Pulling` das 4 juntas): o tempo do pull é o da maior
   imagem, e os backoffices só sobem depois que a api fica saudável (`depends_on`).
-- **backoffice**: Next `standalone` com `outputFileTracingRoot` na raiz; o
-  servidor é `node apps/backoffice/server.js`.
+- **backoffice**: Next `standalone` com `outputFileTracingRoot` na raiz; build no Node 24 e o
+  servidor roda no **Bun** (`bun apps/backoffice/server.js`), na mesma imagem base da api
+  (`oven/bun:1.4.3-alpine`, mesmo digest): no servidor as camadas do Alpine e do Bun são
+  compartilhadas e cada imagem web só traz o app. O Next.js lista o Bun como adaptador verificado
+  (16.2+, https://nextjs.org/docs/app/getting-started/deploying); rodar o standalone no Bun é o caminho
+  do guia de Docker do Bun. O `smoke-web` cobre login, proxy (redirect e header de versão), chunks
+  estáticos, `/images`, `next/image` (sharp) e o healthcheck do compose. Voltar ao Node: runner
+  `node:24-alpine` + `CMD ["node", ...]` e healthcheck do compose com `node`.
 - **`NEXT_PUBLIC_ROLE_SYSTEM` valores válidos: `admin`, `customer`, `producer`.**
   (`admin` = backoffice interno; `backoffice` **não** é um valor válido — dá 404
   em todas as rotas porque o proxy reescreve para `/${ROLE}/...` e a pasta é
