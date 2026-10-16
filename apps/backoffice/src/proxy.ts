@@ -22,6 +22,16 @@ const ALWAYS_PUBLIC_ROUTE_PREFIXES = ['/register/'];
 
 const COOKIE_PREFIX = getCookiePrefix();
 
+// SHA do commit da imagem (ENV APP_VERSION, na última camada do Dockerfile), lido em tempo de execução.
+// Não fica no `headers()` do next.config: aquele valor entra no build, e o build do Next passaria a mudar
+// a cada commit (invalidando o cache do Docker e fazendo o servidor baixar o backoffice de novo mesmo
+// quando só a api mudou). O CD confere este header para saber que a versão nova está no ar.
+function withVersion(response: NextResponse) {
+	response.headers.set('X-App-Version', process.env.APP_VERSION ?? 'unknown');
+
+	return response;
+}
+
 const getSessionCached = unstable_cache(
 	async (cookie: string) => {
 		const sessionCookie = getSessionCookie(
@@ -67,7 +77,7 @@ async function proxy(request: NextRequest) {
 			request.url,
 		);
 
-		return NextResponse.rewrite(redirectTo);
+		return withVersion(NextResponse.rewrite(redirectTo));
 	}
 
 	const session = await getSessionCached(
@@ -76,7 +86,9 @@ async function proxy(request: NextRequest) {
 	);
 
 	if (session && pathname === '/') {
-		return NextResponse.redirect(new URL('/dashboard', request.url));
+		return withVersion(
+			NextResponse.redirect(new URL('/dashboard', request.url)),
+		);
 	}
 
 	const isPublicRoute = PUBLIC_ROUTES.some((route) =>
@@ -86,7 +98,9 @@ async function proxy(request: NextRequest) {
 	);
 
 	if (session && isPublicRoute) {
-		return NextResponse.redirect(new URL('/dashboard', request.url));
+		return withVersion(
+			NextResponse.redirect(new URL('/dashboard', request.url)),
+		);
 	}
 
 	if (!session && isPublicRoute) {
@@ -95,12 +109,12 @@ async function proxy(request: NextRequest) {
 			request.url,
 		);
 
-		return NextResponse.rewrite(redirectTo);
+		return withVersion(NextResponse.rewrite(redirectTo));
 	}
 
 	if (!session && !isPublicRoute) {
 		if (pathname === `/${ACCESS}/sign-in`) {
-			return NextResponse.next();
+			return withVersion(NextResponse.next());
 		}
 
 		const redirectTo = new URL(`/sign-in`, request.url);
@@ -109,7 +123,7 @@ async function proxy(request: NextRequest) {
 			redirectTo.searchParams.set('callbackUrl', pathname);
 		}
 
-		return NextResponse.redirect(redirectTo);
+		return withVersion(NextResponse.redirect(redirectTo));
 	}
 
 	const redirectTo = new URL(
@@ -117,7 +131,7 @@ async function proxy(request: NextRequest) {
 		request.url,
 	);
 
-	return NextResponse.rewrite(redirectTo);
+	return withVersion(NextResponse.rewrite(redirectTo));
 }
 
 // Fora do proxy: rotas internas do Next e os arquivos de `public/` (hoje só `public/images/`). Sem isso,

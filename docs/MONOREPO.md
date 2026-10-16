@@ -343,8 +343,9 @@ Dispara quando o **CI termina com sucesso na `main`** (`workflow_run`) ou à mã
    `#<status>` com o HTTP **exato** esperado (`https://…/sign-in#200`; o fragmento não vai ao
    servidor) — sem sufixo vale qualquer resposta < 500, o que deixa passar um 404 em rota errada.
    **Versão no ar**: a api e o backoffice devolvem o header `X-App-Version` com o SHA do commit
-   da imagem (build-arg `GIT_SHA` → `APP_VERSION`; middleware `version.ts` na api,
-   `headers()` no `next.config.ts`), em toda resposta (200, 404, redirects). O CD passa o SHA
+   da imagem (build-arg `GIT_SHA` → `ENV APP_VERSION` na última camada; middleware `version.ts` na api,
+   `src/proxy.ts` no backoffice, lido em tempo de execução — no build do Next ele invalidaria o cache
+   a cada commit), em toda resposta da api e em toda rota de página do backoffice. O CD passa o SHA
    publicado em `EXPECTED_VERSION` e cada URL só passa quando devolve **esse** SHA: um serviço
    antigo, outro serviço ou um proxy sem o header no domínio reprovam o deploy. Sem
    `HEALTHCHECK_URLS` só espera o Dokploy; sem `EXPECTED_VERSION` só confere o status.
