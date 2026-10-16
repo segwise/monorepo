@@ -54,8 +54,8 @@ bun run db:local -- <comando do prisma>
 Para rodar um app: `bun run --cwd apps/api dev`, `bun run --cwd apps/backoffice dev`
 (precisa de `NEXT_PUBLIC_ROLE_SYSTEM`) ou `bun run --cwd apps/mobile ios|android`.
 
-**Tudo roda no Bun** (`bun --bun` nos scripts: Next em dev/build/start, `tsc`, Biome; api, backoffice,
-migrations e o serviço de PDF em produção). **Exceção: os comandos do Expo** (`expo prebuild`,
+**Tudo roda no Bun** (`bun --bun` nos scripts: Next em dev/build/start, `tsc`, Biome; api, backoffice e
+migrations em produção; o serviço de PDF ainda roda no Node). **Exceção: os comandos do Expo** (`expo prebuild`,
 `expo run:*`, Metro) no `apps/mobile` continuam no Node: o guia oficial do Expo exige Node LTS para o
 `expo prebuild` e não cobre o Metro no Bun (https://github.com/expo/expo/blob/main/docs/pages/guides/using-bun.mdx).
 Mantenha um Node LTS instalado para o mobile.
