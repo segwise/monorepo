@@ -23,13 +23,12 @@ COPY --from=pruner /app/out/json/ .
 RUN bun install --frozen-lockfile
 COPY --from=pruner /app/out/full/ .
 
+# Só o que o build precisa e é igual entre commits (role e URL da API): o SHA do commit NÃO entra aqui,
+# senão o `next build` rodaria de novo a cada commit e as camadas do backoffice nunca seriam reaproveitadas.
 ARG NEXT_PUBLIC_ROLE_SYSTEM
 ARG NEXT_PUBLIC_API_URL
-# SHA do commit: next.config.ts o embute no header X-App-Version (lido no build, não em runtime).
-ARG GIT_SHA=unknown
 ENV NEXT_PUBLIC_ROLE_SYSTEM=$NEXT_PUBLIC_ROLE_SYSTEM \
     NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-    APP_VERSION=$GIT_SHA \
     NEXT_TELEMETRY_DISABLED=1
 
 # O `sharp` (otimização do next/image) vem nas duas variantes de libc; o runtime é Alpine (musl) e só
@@ -72,3 +71,8 @@ USER node
 EXPOSE 3000
 
 CMD ["node", "apps/backoffice/server.js"]
+
+# SHA do commit desta imagem: o proxy (src/proxy.ts) o devolve no header X-App-Version, lido em tempo de
+# execução. Por último e só como ENV, para não invalidar nenhuma camada anterior.
+ARG GIT_SHA=unknown
+ENV APP_VERSION=$GIT_SHA

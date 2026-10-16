@@ -577,6 +577,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_ROLE_SYSTEM=admin
             NEXT_PUBLIC_API_URL=http://localhost:3000
+            GIT_SHA=ci-${{ github.sha }}
           cache-from: type=gha,scope=backoffice
 
       - name: Tamanho da imagem (resumo)
@@ -607,6 +608,10 @@ jobs:
           done
           echo "GET /sign-in -> HTTP ${code}"
           case "$code" in 2??|3??) ;; *) echo "::error::O backoffice não respondeu 2xx/3xx em /sign-in (HTTP ${code:-000})."; exit 1 ;; esac
+          # X-App-Version vem do proxy, em tempo de execução (o CD confere este header em "/").
+          version="$(curl -s -D - -o /dev/null http://localhost:3000/ | tr -d '\r' | awk -F': ' 'tolower($1)=="x-app-version"{print $2}')"
+          echo "X-App-Version: ${version}"
+          [ "$version" = "ci-${GITHUB_SHA}" ] || { echo "::error::X-App-Version não confere (esperado ci-${GITHUB_SHA})."; exit 1; }
           # Arquivos de public/ sem sessão (fora do proxy) e o otimizador do next/image sobre eles (usa o
           # sharp/libvips da imagem).
           for path in '/images/logo.png' '/_next/image?url=%2Fimages%2Flogo.png&w=64&q=100'; do
