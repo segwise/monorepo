@@ -65,11 +65,17 @@ seja, **o build da role `producer` só serve rotas sob `app/producer/`**,
 mesmo o bundle contendo o código das outras duas — uma URL pública pensada
 para o portal do produtor só funciona no domínio/deploy `producer`.
 
-`PUBLIC_ROUTES` (match exato) e `PUBLIC_ROUTE_PREFIXES` (match por prefixo,
+`PUBLIC_ROUTES` (match exato) e `ALWAYS_PUBLIC_ROUTE_PREFIXES` (match por prefixo,
 para rotas com segmento dinâmico tipo `/register/:slug`) no topo do arquivo
 controlam quais paths não exigem sessão. Uma página pública nova sempre
 precisa entrar em um desses dois — senão o proxy redireciona para
 `/sign-in`.
+
+Arquivos de `public/` não passam pelo proxy: o `matcher` (fim do arquivo)
+exclui `images/`. Uma pasta nova em `public/` precisa entrar no matcher,
+senão a URL direta cai no `/sign-in` (sem sessão) ou vira `/<role>/...` (404).
+Imagens importadas no código (`import LOGO from '@/public/images/logo.png'`)
+saem por `/_next/static/media/...` e já eram servidas.
 
 ## Busca em listagens
 

@@ -607,6 +607,13 @@ jobs:
           done
           echo "GET /sign-in -> HTTP ${code}"
           case "$code" in 2??|3??) ;; *) echo "::error::O backoffice não respondeu 2xx/3xx em /sign-in (HTTP ${code:-000})."; exit 1 ;; esac
+          # Arquivos de public/ sem sessão (fora do proxy) e o otimizador do next/image sobre eles (usa o
+          # sharp/libvips da imagem).
+          for path in '/images/logo.png' '/_next/image?url=%2Fimages%2Flogo.png&w=64&q=100'; do
+            res="$(curl -s -o /dev/null -w '%{http_code} %{content_type}' "http://localhost:3000${path}")"
+            echo "GET ${path} -> ${res}"
+            case "$res" in "200 image/"*) ;; *) echo "::error::${path} não devolveu imagem (${res})."; exit 1 ;; esac
+          done
           # O sharp (libvips nativo, usado pelo otimizador do next/image) carrega e gera uma imagem com a
           # variante musl que ficou no standalone.
           docker exec -w /app/apps/backoffice web node -e "

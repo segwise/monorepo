@@ -120,8 +120,12 @@ async function proxy(request: NextRequest) {
 	return NextResponse.rewrite(redirectTo);
 }
 
+// Fora do proxy: rotas internas do Next e os arquivos de `public/` (hoje só `public/images/`). Sem isso,
+// `/images/logo.png` ia para o /sign-in sem sessão e era reescrito para `/admin/images/...` (404) com
+// sessão, e o otimizador do next/image não conseguia ler essas imagens. Nova pasta em `public/`? Inclua
+// aqui.
 export const config = {
-	matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+	matcher: ['/((?!api|_next/static|_next/image|favicon.ico|images/).*)'],
 };
 
 export { proxy };
