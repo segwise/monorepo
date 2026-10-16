@@ -64,7 +64,11 @@ function isAuthorized(request: Request) {
 	);
 }
 
-function json(status: number, body: object, headers: Record<string, string> = {}) {
+function json(
+	status: number,
+	body: object,
+	headers: Record<string, string> = {},
+) {
 	return Response.json(body, {
 		status,
 		headers: { 'X-App-Version': VERSION, ...headers },
