@@ -16,7 +16,7 @@
 	},
 	"scripts": {
 		"build": "bun --bun tsc && bun --bun tsc-alias",
-		"typecheck": "bun --bun tsc --noEmit",
+		"typecheck": "bun check",
 		"lint": "bun --bun biome check"
 	},
 	"exports": {

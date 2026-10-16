@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [api, backoffice, customer, producer]
+        image: [api, backoffice, customer, producer, pdf, migrate]
     steps:
       - name: Varrer ghcr.io/segwise/${{ matrix.image }}:latest
         run: |
@@ -30,3 +30,36 @@ jobs:
             --exit-code 1 \
             --no-progress \
             "ghcr.io/segwise/${{ matrix.image }}:latest"
+
+  # Dependências do lockfile inteiro (inclusive desenvolvimento e mobile, que não vão para as imagens; as
+  # imagens já são cobertas pelo Trivy acima). Falha em vulnerabilidade HIGH/CRITICAL, menos as exceções
+  # abaixo, cada uma com o motivo e quando sai da lista:
+  #  - GHSA-vfj7-8cjw-p6xm (braces <=3.0.3): sem versão corrigida publicada; vem de chokidar/micromatch em
+  #    ferramentas (prisma CLI, tailwind, tsc-alias, Metro), nunca com entrada de usuário.
+  #  - GHSA-86w9-cpqp-85rv (node-forge <=1.4.0): sem versão corrigida; só no CLI do Expo (mobile).
+  #  - GHSA-88fw-hqm2-52qc (hono <4.12.25): só o 4.12.9 que o @hot-updater/aws (mobile) fixa; a api usa
+  #    um hono já corrigido. Sai quando o mobile atualizar o hot-updater.
+  #  - GHSA-vcvr-r3jv-pc5j, GHSA-cjq9-62q9-8jv4 (next 16.3.3): só o next que o @react-email/ui (preview de
+  #    e-mail, devDependency da api) fixa; o backoffice usa um next corrigido e a imagem da api não tem
+  #    next. Sai ao atualizar o @react-email/ui para >= 6.11.3 (ver docs/TODO.md).
+  audit:
+    name: bun audit (lockfile)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
+      - run: bun install --frozen-lockfile
+
+      - name: bun audit (HIGH e CRITICAL)
+        run: |
+          bun audit --audit-level=high \
+            --ignore GHSA-vfj7-8cjw-p6xm \
+            --ignore GHSA-86w9-cpqp-85rv \
+            --ignore GHSA-88fw-hqm2-52qc \
+            --ignore GHSA-vcvr-r3jv-pc5j \
+            --ignore GHSA-cjq9-62q9-8jv4

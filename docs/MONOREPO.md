@@ -21,7 +21,7 @@ nunca entra no bundle deles. Só o `api` fala com o banco.
 |---|---|---|
 | `generate` | `prisma generate` em `@segwise/database` (saída em `generated/`) | — |
 | `build` | `core` (`tsc` + `tsc-alias` → `dist/`), `backoffice` (`next build`) | `^build`, `generate` |
-| `typecheck` | `tsc --noEmit` em cada pacote (no Bun: `bun --bun tsc`) | `^build`, `generate` |
+| `typecheck` | `bun check` em cada pacote (verificador nativo do Bun 1.4.3, port do TypeScript 7; 4–7× mais rápido que o `tsc`) | `^build`, `generate` |
 | `lint` | `biome check` em cada pacote | — |
 | `dev` | servidores de desenvolvimento (não cacheado) | `^build`, `generate` |
 

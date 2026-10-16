@@ -9,7 +9,7 @@
 		"android": "expo run:android",
 		"ios": "expo run:ios",
 		"lint": "bun --bun biome check",
-		"typecheck": "bun --bun tsc --noEmit"
+		"typecheck": "bun check"
 	},
 	"dependencies": {
 		"@backpackapp-io/react-native-toast": "^0.15.1",
