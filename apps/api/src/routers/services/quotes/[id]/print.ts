@@ -12,6 +12,8 @@ import { PDFDocument } from 'pdf-lib';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/libraries/database/adapters/quote/print';
 import { serializer } from '@/libraries/database/serializers/quote/print';
+import { toDataUri } from '@/libraries/pdf/inline-image';
+import { PDF_STYLES } from '@/libraries/pdf/styles.generated';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
 
 const htmlText = `
@@ -21,7 +23,7 @@ const htmlText = `
       <meta http-equiv='X-UA-Compatible' content='IE=edge' />
       <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       <title>{{title}}</title>
-      <script src='https://cdn.tailwindcss.com'></script>
+      <style>${PDF_STYLES}</style>
     </head>
     <body class='flex flex-col h-full p-5'>
       <header class='w-full flex flex-row items-center justify-between gap-10'>
@@ -100,7 +102,7 @@ const htmlText = `
                   <span
                     class='bg-white h-7 px-4 py-1 w-40 truncate text-sm text-black font-extrabold uppercase border border-black border-r-0 flex flex-row items-center gap-3'
                   >
-                    <img src={{insurer.image}} class='w-5 h-5' alt='seguradora' />
+                    {{#if insurer.image}}<img src='{{insurer.image}}' class='w-5 h-5' alt='seguradora' />{{/if}}
                     <span class='truncate'>{{insurer.name}}</span>
                   </span>
                 </div>
@@ -638,7 +640,7 @@ async function compile(
 	quote: Omit<QuotePrint, 'insuranceCompanyId'> & {
 		insuranceCompany: {
 			name: string;
-			icon: string;
+			icon: string | undefined;
 		};
 	},
 ) {
@@ -769,9 +771,8 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 			...(!!quote.insuranceCompany && {
 				insuranceCompany: {
 					name: quote.insuranceCompany.name,
-					icon: getPresignedUrl(
-						ctx.storage.images,
-						quote.insuranceCompany.icon,
+					icon: await toDataUri(
+						getPresignedUrl(ctx.storage.images, quote.insuranceCompany.icon),
 					),
 				},
 			}),

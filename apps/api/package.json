@@ -9,13 +9,15 @@
 		"auth:generate": "bun x --bun @better-auth/cli generate --config src/services/auth/index.ts",
 		"auth:migrate": "bun x --bun @better-auth/cli migrate --config src/services/auth/index.ts",
 		"lint": "biome check",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"pdf:styles": "bun run scripts/build-pdf-styles.ts"
 	},
 	"devDependencies": {
 		"@react-email/ui": "^6.9.2",
 		"@types/bun": "latest",
 		"@types/headroom": "^0.12.5",
-		"@types/react": "catalog:web"
+		"@types/react": "catalog:web",
+		"tailwindcss": "^3.4.19"
 	},
 	"peerDependencies": {
 		"typescript": "^5.9.3"

@@ -7,6 +7,7 @@ import z from 'zod';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/db-adapters/safe/print';
 import { serializer } from '@/db-serializers/safe/print';
+import { PDF_STYLES } from '@/libraries/pdf/styles.generated';
 import { buildSafeSimpleWhere } from './build-safe-simple-where';
 
 // Sem teto de registros por pedido explícito do usuário: a impressão tem
@@ -16,7 +17,7 @@ const htmlText = `
     <head>
       <meta charset='UTF-8' />
       <title>{{title}}</title>
-      <script src='https://cdn.tailwindcss.com'></script>
+      <style>${PDF_STYLES}</style>
     </head>
     <body class='text-black' style='margin: 0; padding: 12px 12px 12px 12px;'>
       <table class='w-full text-xs border-collapse'>

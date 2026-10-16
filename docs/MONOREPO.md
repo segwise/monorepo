@@ -217,6 +217,14 @@ sem `{{{ }}}`/`SafeString`/`noEscape`; o container roda sem root, sem capabiliti
 `kernel.apparmor_restrict_unprivileged_userns`) um `docker run` com `chromiumSandbox: true` e um perfil
 mínimo, e só então ligar no compose com fallback para `--no-sandbox` registrado em log.
 
+**HTML dos PDFs autossuficiente (preparação para separar o Chromium).** As 3 rotas de impressão
+(propostas, cotações, contatos) carregavam `https://cdn.tailwindcss.com` a cada PDF: o PDF dependia da
+internet e do CDN estar no ar. Agora o CSS é compilado de antemão com o Tailwind 3 (mesma versão do CDN) em
+`apps/api/src/libraries/pdf/styles.generated.ts` (gerado por `bun run pdf:styles` em `apps/api`, e o CI
+falha se estiver desatualizado), e o ícone da seguradora vira `data:` URI via `libraries/pdf/inline-image.ts`.
+Verificado renderizando os 3 templates antes e depois com o mesmo Chromium: 0 pixels de diferença. Isso
+permite rodar o renderizador sem rede (próximos passos: `apps/pdf` numa rede interna do compose).
+
 O **primeiro deploy** depois destas mudanças baixa as camadas novas (bases e Chromium); os seguintes voltam a
 ser incrementais.
 
