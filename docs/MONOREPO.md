@@ -215,7 +215,11 @@ Dispara quando o **CI termina com sucesso na `main`** (`workflow_run`) ou à mã
    (`scripts/dokploy-deploy.sh`). O Dokploy executa de forma assíncrona, então o workflow
    **não detecta** deploy que falhe depois (ex.: migration quebrada no `entrypoint.sh` do api;
    o `docker compose` marca o api como não saudável). Fica pendente um health check pós-deploy.
-   O job só roda se `DOKPLOY_URL` e `DOKPLOY_COMPOSE_ID` existirem.
+   Os três valores (`DOKPLOY_URL`, `DOKPLOY_COMPOSE_ID`, `DOKPLOY_API_KEY`) são **segredos** do
+   GitHub, não variáveis: o repo é público e os logs das Actions também, então só um segredo é
+   mascarado (`***`) — uma variável exporia o endereço do painel do Dokploy. Como o contexto
+   `secrets` não existe no `if` do job, o primeiro passo confere a configuração: nenhum segredo
+   definido = só avisa (Dokploy ainda não configurado); configuração **parcial** = falha.
 
 #### Stack de produção: um compose só (`deploy/docker-compose.yml`)
 
@@ -277,10 +281,11 @@ aplicação (um `compose down -v` ou uma recriação nunca toca nos dados).
 2. **No GitHub**:
 
 ```bash
-gh variable set DOKPLOY_URL        --body 'https://<seu-dokploy>'
-gh variable set DOKPLOY_COMPOSE_ID --body '<composeId>'      # GET <dokploy>/api/project.all
-# segredo: o gh pede o valor no terminal (não passe o token na linha de comando)
+# os três são segredos (repo público: mascarados nos logs). Sem --body o gh pede o valor no
+# terminal — prefira assim para o token, para ele não ficar no histórico do shell.
 gh secret set DOKPLOY_API_KEY                                 # token: Dokploy → Profile → API/CLI
+gh secret set DOKPLOY_URL        --body 'https://<seu-dokploy>'
+gh secret set DOKPLOY_COMPOSE_ID --body '<composeId>'         # GET <dokploy>/api/project.all
 ```
 
    (`NEXT_PUBLIC_API_URL` já está definida.) O deploy usa o *environment* `production` do
