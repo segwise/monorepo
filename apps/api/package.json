@@ -8,8 +8,8 @@
 		"start": "bun --bun run src/index.ts",
 		"auth:generate": "bun x --bun @better-auth/cli generate --config src/services/auth/index.ts",
 		"auth:migrate": "bun x --bun @better-auth/cli migrate --config src/services/auth/index.ts",
-		"lint": "biome check",
-		"typecheck": "tsc --noEmit",
+		"lint": "bun --bun biome check",
+		"typecheck": "bun --bun tsc --noEmit",
 		"pdf:styles": "bun run scripts/build-pdf-styles.ts"
 	},
 	"devDependencies": {

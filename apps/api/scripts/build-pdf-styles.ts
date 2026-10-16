@@ -8,7 +8,9 @@ const root = join(import.meta.dir, '..');
 
 const result = Bun.spawnSync(
 	[
-		'bunx',
+		'bun',
+		'--bun',
+		'x',
 		'tailwindcss',
 		'-c',
 		'tailwind.pdf.config.js',
