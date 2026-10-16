@@ -9,6 +9,7 @@ segwise/
 ├── apps/
 │   ├── api/          → @segwise/api — API central (Hono + Bun, usa @segwise/database)
 │   ├── backoffice/   → @segwise/backoffice — Next.js: admin interno + portal do produtor + portal do cliente
+│   ├── pdf/          → @segwise/pdf — serviço HTML→PDF (Chromium + Playwright), isolado da api
 │   └── mobile/       → @segwise/mobile — app mobile (Expo/React Native) do segurado final
 ├── packages/
 │   ├── core/         → @segwise/core — lib compartilhada (schemas, tipos, masks, valids, translate)

@@ -225,6 +225,16 @@ falha se estiver desatualizado), e o ícone da seguradora vira `data:` URI via `
 Verificado renderizando os 3 templates antes e depois com o mesmo Chromium: 0 pixels de diferença. Isso
 permite rodar o renderizador sem rede (próximos passos: `apps/pdf` numa rede interna do compose).
 
+**Serviço `apps/pdf` (Chromium separado da api).** Node 24 + `playwright-core` + Chromium do Alpine, numa
+imagem própria (`ghcr.io/segwise/pdf`): o Chromium fica numa camada estável (só muda quando o Alpine/Chromium
+muda) e a api deixa de carregá-lo. `POST /render` recebe `{ html, options }` e devolve o PDF; um contexto
+novo por pedido, sem JavaScript e sem rede; limite de concorrência com fila; token Bearer (`PDF_TOKEN`).
+O CI (`smoke-pdf`) sobe a imagem numa rede Docker `--internal` com as restrições de produção, confere 401
+sem token, PDF com token, uid não-root e que o container **não alcança a internet**. Esta etapa só publica
+a imagem e testa o serviço; a api e o compose passam a usá-lo na etapa seguinte. **Primeira publicação:** o
+GHCR cria o pacote `pdf` como privado; marque como público (Package settings → Change visibility) antes
+de colocá-lo no compose, como foi feito com `api`/`backoffice`.
+
 O **primeiro deploy** depois destas mudanças baixa as camadas novas (bases e Chromium); os seguintes voltam a
 ser incrementais.
 

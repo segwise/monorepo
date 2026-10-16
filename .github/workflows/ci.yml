@@ -118,7 +118,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [api, backoffice]
+        app: [api, backoffice, pdf]
     steps:
       - uses: actions/checkout@v7
 
@@ -325,6 +325,110 @@ jobs:
         if: failure()
         run: docker logs api 2>&1 | tail -n 80 || true
 
+  # Sobe a imagem REAL do serviço de PDF como em produção: rede interna sem saída para a internet,
+  # raiz só leitura, sem capabilities. Confere o que o build não pega: o Chromium sobe sob essas
+  # restrições, a autenticação, a geração do PDF e que o container realmente não alcança a internet.
+  smoke-pdf:
+    name: Smoke da imagem do PDF
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dorny/paths-filter@v4
+        id: changes
+        with:
+          filters: |
+            pdf:
+              - 'apps/pdf/**'
+              - 'package.json'
+              - 'bun.lock'
+              - 'turbo.json'
+              - '.dockerignore'
+              - '.github/workflows/ci.yml'
+
+      - uses: docker/setup-buildx-action@v4
+        if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
+
+      # Reaproveita o cache do job "Docker build (pdf)" (mesmo escopo); aqui só carrega a imagem.
+      - name: Build da imagem (carregada no daemon)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/pdf/Dockerfile
+          load: true
+          tags: segwise-pdf:ci
+          build-args: |
+            GIT_SHA=ci-${{ github.sha }}
+          cache-from: type=gha,scope=pdf
+
+      - name: Subir o pdf numa rede interna, com as restrições de produção
+        if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
+        run: |
+          docker network create --internal pdfnet
+          docker run -d --name pdf --network pdfnet \
+            --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+            --shm-size 256m \
+            --tmpfs /tmp:size=256m \
+            -e PDF_TOKEN=ci-token-ci-token-1234 \
+            segwise-pdf:ci
+          for i in $(seq 1 30); do
+            [ "$(docker inspect -f '{{.State.Running}}' pdf)" = "true" ] || break
+            if docker run --rm --network pdfnet curlimages/curl:8.11.1 -sf http://pdf:3000/health >/dev/null; then
+              echo "pdf saudável após ~${i}s"; exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::O serviço de PDF não ficou saudável."
+          exit 1
+
+      - name: Autenticação, PDF e uid não-root
+        if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
+        run: |
+          curl_in_net() { docker run --rm --network pdfnet curlimages/curl:8.11.1 "$@"; }
+          body='{"html":"<html><body><h1>Proposta - acentuação ção</h1><img src=\"https://example.com/x.png\"></body></html>"}'
+
+          code="$(curl_in_net -s -o /dev/null -w '%{http_code}' -X POST http://pdf:3000/render -d "$body")"
+          [ "$code" = "401" ] || { echo "::error::Sem token devia dar 401 (deu $code)."; exit 1; }
+
+          out="$(curl_in_net -s -X POST http://pdf:3000/render -H 'Authorization: Bearer ci-token-ci-token-1234' -d "$body" -D - -o /dev/null | tr -d '\r')"
+          grep -qi '^HTTP/.* 200' <<<"$out" || { echo "::error::POST /render não deu 200:"; echo "$out"; exit 1; }
+          grep -qi '^content-type: application/pdf' <<<"$out" || { echo "::error::Resposta não é PDF."; exit 1; }
+          grep -qi "^x-app-version: ci-${GITHUB_SHA}" <<<"$out" || { echo "::error::X-App-Version não confere."; exit 1; }
+
+          magic="$(curl_in_net -s -X POST http://pdf:3000/render -H 'Authorization: Bearer ci-token-ci-token-1234' -d "$body" | head -c 5)"
+          [ "$magic" = "%PDF-" ] || { echo "::error::O corpo não começa com %PDF- (veio '$magic')."; exit 1; }
+
+          uid="$(docker exec pdf id -u)"
+          [ "$uid" = "1000" ] || { echo "::error::O pdf não roda como uid 1000 (uid=$uid)."; exit 1; }
+          echo "pdf ok (401 sem token, PDF com token, uid ${uid})"
+
+      # A rede é `--internal`: o container não pode alcançar a internet (nem a api, nem outro serviço).
+      - name: Sem acesso à internet
+        if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
+        run: |
+          if docker exec pdf node -e "fetch('https://example.com',{signal:AbortSignal.timeout(5000)}).then(()=>process.exit(0),()=>process.exit(1))"; then
+            echo "::error::O container do pdf alcançou a internet; a rede interna não está isolando."
+            exit 1
+          fi
+          echo "sem saída para a internet, como esperado"
+
+      - name: Sem erros de permissão nos logs
+        if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
+        run: |
+          if docker logs pdf 2>&1 | grep -iE 'EACCES|permission denied|EROFS|read-only file system'; then
+            echo "::error::O pdf registrou erro de permissão/leitura: falta um tmpfs no compose?"
+            exit 1
+          fi
+
+      - name: Logs do pdf (em caso de falha)
+        if: failure()
+        run: docker logs pdf 2>&1 | tail -n 80 || true
+
   compose:
     name: Compose (deploy/)
     runs-on: ubuntu-24.04
@@ -352,7 +456,7 @@ jobs:
   ci:
     name: CI
     if: always()
-    needs: [verify, database, docker, smoke-api, compose]
+    needs: [verify, database, docker, smoke-api, smoke-pdf, compose]
     runs-on: ubuntu-24.04
     steps:
       - name: Todos os jobs passaram?
