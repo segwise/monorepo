@@ -4,6 +4,7 @@
 # Imagens base FIXADAS POR DIGEST (cadeia de suprimentos: a tag pode mudar sem aviso). O Dependabot
 # (.github/dependabot.yml) abre PR para atualizar o digest; para subir à mão:
 #   docker pull node:24-alpine && docker image inspect node:24-alpine --format '{{index .RepoDigests 0}}'
+# O runtime é alpine:3.24 (mesma versão do Alpine da imagem do Node) com só o binário do Node.
 FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS bun
 
 FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS base
@@ -34,16 +35,19 @@ ENV NEXT_PUBLIC_ROLE_SYSTEM=$NEXT_PUBLIC_ROLE_SYSTEM \
 RUN bun run --cwd packages/core build \
  && bun run --cwd apps/backoffice build
 
-FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS runner
+# Runtime: Alpine limpo + só o binário do Node (copiado da imagem oficial, mesma versão do build). A
+# imagem node:alpine traz npm, npx, corepack, yarn e headers numa camada da base; apagá-los numa camada
+# posterior não diminui nada (continuam na camada de baixo). O Node só precisa de libstdc++/libgcc.
+# `apk upgrade` traz os patches de segurança do Alpine publicados depois da imagem base.
+FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 AS runner
 WORKDIR /app
 
-# Hardening do runtime:
-#  - `apk upgrade` traz os patches de segurança do Alpine publicados depois da imagem base;
-#  - sem npm, yarn nem corepack: o servidor só executa `node`, e o npm embutido trazia pacotes
-#    vulneráveis (ex.: tar) e uma superfície de ataque que a aplicação não usa.
 RUN apk upgrade --no-cache \
- && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx \
-           /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-*
+ && apk add --no-cache libstdc++ \
+ && addgroup -g 1000 node \
+ && adduser -u 1000 -G node -s /bin/sh -D node
+
+COPY --from=base /usr/local/bin/node /usr/local/bin/node
 
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
