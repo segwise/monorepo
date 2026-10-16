@@ -1,5 +1,4 @@
 import { timingSafeEqual } from 'node:crypto';
-import { createServer, type IncomingMessage } from 'node:http';
 import { z } from 'zod';
 import {
 	BusyError,
@@ -54,27 +53,10 @@ const requestSchema = z.object({
 		}),
 });
 
-class PayloadTooLargeError extends Error {}
-
-async function readBody(request: IncomingMessage) {
-	const chunks: Buffer[] = [];
-	let size = 0;
-
-	for await (const chunk of request) {
-		size += chunk.length;
-
-		if (size > MAX_BODY_BYTES) throw new PayloadTooLargeError();
-
-		chunks.push(chunk);
-	}
-
-	return Buffer.concat(chunks).toString('utf8');
-}
-
-function isAuthorized(request: IncomingMessage) {
+function isAuthorized(request: Request) {
 	if (!TOKEN) return true; // só em desenvolvimento (em produção o boot exige o token)
 
-	const received = Buffer.from(request.headers.authorization ?? '');
+	const received = Buffer.from(request.headers.get('authorization') ?? '');
 	const expected = Buffer.from(`Bearer ${TOKEN}`);
 
 	return (
@@ -82,46 +64,26 @@ function isAuthorized(request: IncomingMessage) {
 	);
 }
 
-const server = createServer(async (request, response) => {
+function json(status: number, body: object, headers: Record<string, string> = {}) {
+	return Response.json(body, {
+		status,
+		headers: { 'X-App-Version': VERSION, ...headers },
+	});
+}
+
+function log(entry: Record<string, unknown>) {
+	console.log(JSON.stringify(entry));
+}
+
+async function handleRender(request: Request) {
 	const started = performance.now();
-	const url = new URL(request.url ?? '/', 'http://localhost');
 
-	function send(
-		status: number,
-		body: string | Uint8Array,
-		type: string,
-		headers = {},
-	) {
-		response.writeHead(status, {
-			'Content-Type': type,
-			'X-App-Version': VERSION,
-			...headers,
-		});
-		response.end(body);
-	}
-
-	function json(status: number, body: object, headers = {}) {
-		send(status, JSON.stringify(body), 'application/json', headers);
+	if (!isAuthorized(request)) {
+		return json(401, { message: 'Não autorizado' });
 	}
 
 	try {
-		if (request.method === 'GET' && url.pathname === '/health') {
-			return (await isBrowserReady())
-				? json(200, { status: 'ok' })
-				: json(503, { status: 'browser indisponível' });
-		}
-
-		if (request.method !== 'POST' || url.pathname !== '/render') {
-			return json(404, { message: 'Não encontrado' });
-		}
-
-		if (!isAuthorized(request)) {
-			return json(401, { message: 'Não autorizado' });
-		}
-
-		const parsed = requestSchema.safeParse(
-			JSON.parse((await readBody(request)) || 'null'),
-		);
+		const parsed = requestSchema.safeParse(await request.json());
 
 		if (!parsed.success) {
 			// Nunca devolve nem registra o HTML: só o caminho e o motivo de cada campo inválido.
@@ -136,38 +98,32 @@ const server = createServer(async (request, response) => {
 
 		const pdf = await renderPdf(parsed.data.html, parsed.data.options);
 
-		console.log(
-			JSON.stringify({
-				route: 'render',
-				status: 200,
-				bytes: pdf.length,
-				ms: Math.round(performance.now() - started),
-			}),
-		);
+		log({
+			route: 'render',
+			status: 200,
+			bytes: pdf.length,
+			ms: Math.round(performance.now() - started),
+		});
 
-		return send(200, pdf, 'application/pdf');
+		return new Response(pdf, {
+			headers: { 'Content-Type': 'application/pdf', 'X-App-Version': VERSION },
+		});
 	} catch (error) {
 		const status =
-			error instanceof PayloadTooLargeError
-				? 413
-				: error instanceof SyntaxError
-					? 400
-					: error instanceof BusyError
-						? 503
-						: error instanceof RenderTimeoutError
-							? 504
-							: 500;
+			error instanceof SyntaxError
+				? 400
+				: error instanceof BusyError
+					? 503
+					: error instanceof RenderTimeoutError
+						? 504
+						: 500;
 
-		console.error(
-			JSON.stringify({
-				route: url.pathname,
-				status,
-				ms: Math.round(performance.now() - started),
-				error: error instanceof Error ? error.message.split('\n')[0] : 'erro',
-			}),
-		);
-
-		if (response.headersSent) return response.destroy();
+		log({
+			route: 'render',
+			status,
+			ms: Math.round(performance.now() - started),
+			error: error instanceof Error ? error.message.split('\n')[0] : 'erro',
+		});
 
 		return json(
 			status,
@@ -178,18 +134,39 @@ const server = createServer(async (request, response) => {
 			status === 503 ? { 'Retry-After': '5' } : {},
 		);
 	}
+}
+
+// Servidor HTTP nativo do Bun: o limite do corpo (413) e as rotas são do próprio Bun.serve.
+const server = Bun.serve({
+	port: PORT,
+	hostname: '0.0.0.0',
+	maxRequestBodySize: MAX_BODY_BYTES,
+	// Acima do pior caso de render (120 s) para não cortar um PDF grande no meio (máximo do Bun: 255 s).
+	idleTimeout: 150,
+	routes: {
+		'/health': {
+			GET: async () =>
+				(await isBrowserReady())
+					? json(200, { status: 'ok' })
+					: json(503, { status: 'browser indisponível' }),
+		},
+		'/render': {
+			POST: handleRender,
+		},
+	},
+	fetch: () => json(404, { message: 'Não encontrado' }),
+	error: (error) => {
+		log({ route: 'error', status: 500, error: error.message.split('\n')[0] });
+
+		return json(500, { message: 'Erro ao gerar PDF' });
+	},
 });
 
-// Tempos do servidor acima do pior caso do render (120 s) para não cortar um PDF grande no meio.
-server.requestTimeout = 150_000;
-server.headersTimeout = 10_000;
-
-server.listen(PORT, '0.0.0.0', () => {
-	console.log(`pdf ouvindo na porta ${PORT} (versão ${VERSION})`);
-});
+console.log(`pdf ouvindo na porta ${server.port} (versão ${VERSION})`);
 
 async function stop() {
-	server.close();
+	// Para de aceitar e espera os pedidos em andamento; depois fecha o Chromium.
+	await server.stop();
 	await shutdown(25_000);
 	process.exit(0);
 }

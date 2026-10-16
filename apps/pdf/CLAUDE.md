@@ -7,7 +7,7 @@ Contexto do sistema: [`../../CLAUDE.md`](../../CLAUDE.md) e [`../../docs/MONOREP
 
 ## Stack
 Bun (executa TypeScript direto, sem build; o Bun 1.4 suporta o Playwright) + `playwright-core` + `zod`.
-Sem framework HTTP: `node:http`. Navegador: o Chrome Headless Shell que o Playwright baixa para a versão do
+Servidor HTTP: `Bun.serve` (rotas, limite de corpo e desligamento nativos). Navegador: o Chrome Headless Shell que o Playwright baixa para a versão do
 `playwright-core` do lockfile (imagem Debian slim + Bun glibc; ver o Dockerfile). Para rodar local: `bun node_modules/playwright-core/cli.js
 install chromium-headless-shell` (ou aponte `CHROMIUM_PATH` para um Chromium já instalado).
 
