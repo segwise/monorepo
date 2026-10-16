@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+    # labeled/unlabeled: a label pdf-visual-change muda o resultado da comparação visual dos PDFs.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
     branches: [main]
 
@@ -332,6 +334,16 @@ jobs:
             GIT_SHA=ci-${{ github.sha }}
           cache-from: type=gha,scope=pdf
 
+      - name: Tamanho da imagem (resumo)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
+        run: |
+          {
+            echo "### Imagem do pdf: $(docker image inspect segwise-pdf:ci --format '{{.Size}}' | awk '{printf "%.0f MB descomprimida", $1/1e6}')"
+            echo '```'
+            docker history --format '{{.Size}}\t{{.CreatedBy}}' segwise-pdf:ci | grep -v '^0B' | cut -c1-120
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Subir o pdf numa rede interna, com as restrições de produção
         if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
         run: |
@@ -382,6 +394,90 @@ jobs:
             exit 1
           fi
           echo "sem saída para a internet, como esperado"
+
+      # Renderiza as 3 fixtures reais (apps/pdf/test/fixtures: cotação, propostas, contatos) nesta imagem
+      # e na que está em produção (ghcr.io/segwise/pdf:latest) e compara pixel a pixel. Mudança de base,
+      # navegador ou fontes que altere o visual aparece aqui antes de chegar ao usuário. Falha com páginas
+      # em número diferente ou mais de 0,5% dos pixels diferentes; os PDFs e PNGs ficam como artefato.
+      # Só em PR (na main, "produção" ainda é a imagem anterior até o CD terminar). Mudança visual
+      # intencional, depois de revisada no artefato: label `pdf-visual-change` no PR (reporta sem falhar).
+      - name: Comparação visual com a imagem em produção
+        if: github.event_name == 'pull_request' && steps.changes.outputs.pdf == 'true'
+        env:
+          ACCEPT_VISUAL_CHANGE: ${{ contains(github.event.pull_request.labels.*.name, 'pdf-visual-change') }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils imagemagick >/dev/null
+          docker run -d --name pdf-prod --network pdfnet \
+            --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+            --shm-size 256m --tmpfs /tmp:size=256m \
+            -e PDF_TOKEN=ci-token-ci-token-1234 \
+            ghcr.io/segwise/pdf:latest
+          for i in $(seq 1 30); do
+            docker run --rm --network pdfnet curlimages/curl:8.11.1 -sf http://pdf-prod:3000/health >/dev/null && break
+            sleep 1
+          done
+
+          out="$RUNNER_TEMP/visual"
+          mkdir -p "$out" && chmod 777 "$out"
+          failed=0
+          {
+            echo "### Comparação visual (esta imagem × produção)"
+            echo "| fixture | páginas | pixels diferentes | fontes (esta) | fontes (produção) |"
+            echo "|---|---|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for f in quote safes contacts; do
+            # "new" = esta imagem (container pdf), "prod" = produção (container pdf-prod).
+            for side in new prod; do
+              svc=pdf; [ "$side" = prod ] && svc=pdf-prod
+              docker run --rm --network pdfnet \
+                -v "$PWD/apps/pdf/test/fixtures:/fx:ro" -v "$out:/out" \
+                curlimages/curl:8.11.1 -sf -X POST "http://${svc}:3000/render" \
+                -H 'Authorization: Bearer ci-token-ci-token-1234' -H 'Content-Type: application/json' \
+                --data-binary "@/fx/${f}.json" -o "/out/${f}-${side}.pdf"
+              pdftoppm -r 72 -png "$out/${f}-${side}.pdf" "$out/${f}-${side}"
+            done
+
+            fonts_new="$(pdffonts "$out/${f}-new.pdf" | awk 'NR>2{print $1}' | sed 's/^[A-Z]*+//' | sort -u | paste -sd ' ')"
+            fonts_prod="$(pdffonts "$out/${f}-prod.pdf" | awk 'NR>2{print $1}' | sed 's/^[A-Z]*+//' | sort -u | paste -sd ' ')"
+            pages_new="$(ls "$out/${f}-new-"*.png | wc -l)"
+            pages_prod="$(ls "$out/${f}-prod-"*.png | wc -l)"
+
+            diff=0; total=0
+            if [ "$pages_new" = "$pages_prod" ]; then
+              for png in "$out/${f}-prod-"*.png; do
+                page="${png##*-}"
+                ae="$(compare -metric AE "$out/${f}-new-${page}" "$png" "$out/${f}-diff-${page}" 2>&1 || true)"
+                diff=$((diff + ${ae%% *}))
+                total=$((total + $(identify -format '%w*%h' "$png")))
+              done
+              pct="$(awk -v d="$diff" -v t="$total" 'BEGIN{printf "%.3f", 100*d/t}')"
+              awk -v p="$pct" 'BEGIN{exit !(p>0.5)}' && failed=1
+            else
+              pct="páginas diferentes"; failed=1
+            fi
+
+            echo "| ${f} | ${pages_new} × ${pages_prod} | ${pct}% | ${fonts_new} | ${fonts_prod} |" >> "$GITHUB_STEP_SUMMARY"
+            echo "${f}: páginas ${pages_new}×${pages_prod}, ${pct}% dos pixels diferentes; fontes [${fonts_new}] × [${fonts_prod}]"
+          done
+
+          if [ "$failed" != 0 ]; then
+            if [ "$ACCEPT_VISUAL_CHANGE" = "true" ]; then
+              echo "::warning::Os PDFs diferem dos de produção; aceito pela label pdf-visual-change."
+            else
+              echo "::error::Os PDFs desta imagem diferem dos de produção (ver o resumo e o artefato pdf-visual). Se a mudança é intencional, adicione a label pdf-visual-change ao PR."
+              exit 1
+            fi
+          fi
+
+      - name: PDFs da comparação visual (artefato)
+        if: always() && github.event_name == 'pull_request' && steps.changes.outputs.pdf == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: pdf-visual
+          path: ${{ runner.temp }}/visual
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Sem erros de permissão nos logs
         if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
