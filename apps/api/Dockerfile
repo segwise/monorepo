@@ -23,7 +23,11 @@ RUN turbo prune @segwise/api --docker
 #  - do client do Prisma fica só o compilador de queries do PostgreSQL (o único que o client gerado
 #    importa; os de MySQL, SQLite, SQL Server e CockroachDB somavam ~60 MB);
 #  - binários nativos para glibc: a imagem é Alpine (musl) e só carrega as variantes `-musl`;
-#  - tipos (.d.ts), source maps e markdown: nada disso é lido em runtime.
+#  - tipos (.d.ts), source maps e markdown: nada disso é lido em runtime;
+#  - builds `*.development.js` (React e afins escolhem o build de produção pelo NODE_ENV=production
+#    desta imagem), o código-fonte TypeScript do SDK da OpenAI (`openai/src`, só para source maps) e os
+#    builds do pdfjs que o pdf-parse não usa (ele carrega só `pdfjs-dist/legacy`; `build/` e o viewer
+#    `web/` sobram). O smoke-api extrai texto e renderiza uma página com o pdf-parse dentro da imagem.
 # O estágio `verify` abaixo prova que o código ainda resolve todos os imports.
 FROM base AS prod-deps
 WORKDIR /app
@@ -35,7 +39,10 @@ RUN bun install --frozen-lockfile --production \
       ! -name 'query_compiler_fast_bg.postgresql.*' -delete \
  && rm -rf node_modules/.bun/*-linux-*-gnu@* \
  && find node_modules/.bun -type f \( -name '*.d.ts' -o -name '*.d.mts' -o -name '*.d.cts' \
-      -o -name '*.map' -o -name '*.md' -o -name '*.markdown' \) -delete
+      -o -name '*.map' -o -name '*.md' -o -name '*.markdown' -o -name '*.development.js' \) -delete \
+ && rm -rf node_modules/.bun/openai@*/node_modules/openai/src \
+           node_modules/.bun/pdfjs-dist@*/node_modules/pdfjs-dist/build \
+           node_modules/.bun/pdfjs-dist@*/node_modules/pdfjs-dist/web
 
 FROM base AS builder
 WORKDIR /app
@@ -60,7 +67,9 @@ COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=prod-deps /app/packages/core/node_modules ./packages/core/node_modules
 COPY --from=prod-deps /app/packages/database/node_modules ./packages/database/node_modules
 COPY --from=builder /artifact/ ./
+# NODE_ENV=production como em runtime: os `require` dos builds de desenvolvimento ficam em ramos mortos.
 RUN cd apps/api && bun build src/index.ts --target=bun --outdir=/tmp/verify --external '@napi-rs/canvas-*' \
+      --define 'process.env.NODE_ENV="production"' --minify-syntax \
  && rm -rf /tmp/verify
 
 FROM base AS runner
