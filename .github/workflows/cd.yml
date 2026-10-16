@@ -114,30 +114,43 @@ jobs:
   deploy:
     name: Deploy (Dokploy compose)
     needs: [meta, images]
-    # Só roda com o Dokploy configurado e (no disparo manual) se o deploy foi pedido.
-    if: ${{ vars.DOKPLOY_URL != '' && vars.DOKPLOY_COMPOSE_ID != '' && (github.event_name != 'workflow_dispatch' || inputs.deploy) }}
+    # No disparo manual dá para só publicar as imagens (deploy: false).
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: production
+    # URL e composeId também são segredos: o repo é público, e segredos são mascarados nos logs
+    # (o contexto `secrets` não existe no `if` do job, por isso a checagem é um passo).
+    env:
+      DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+      DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+      COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
     steps:
+      # Nenhum segredo definido = Dokploy ainda não configurado (só avisa). Parcial = erro.
+      - id: config
+        name: Verificar configuração do Dokploy
+        run: |
+          set=0
+          for name in DOKPLOY_URL DOKPLOY_API_KEY COMPOSE_ID; do
+            if [ -n "${!name}" ]; then set=$((set + 1)); fi
+          done
+          if [ "$set" -eq 3 ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          elif [ "$set" -eq 0 ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Segredos do Dokploy não definidos; imagens publicadas, deploy não disparado."
+          else
+            echo "::error::Configuração parcial: defina os três segredos DOKPLOY_URL, DOKPLOY_COMPOSE_ID e DOKPLOY_API_KEY."
+            exit 1
+          fi
+
       - uses: actions/checkout@v7
+        if: ${{ steps.config.outputs.configured == 'true' }}
         with:
           ref: ${{ needs.meta.outputs.sha }}
 
       # O compose (deploy/docker-compose.yml) usa as imagens :latest com pull_policy: always:
       # o deploy baixa a versão que acabou de ser publicada e recria só o que mudou.
       - name: Deploy no Dokploy
-        env:
-          DOKPLOY_URL: ${{ vars.DOKPLOY_URL }}
-          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
-          COMPOSE_ID: ${{ vars.DOKPLOY_COMPOSE_ID }}
+        if: ${{ steps.config.outputs.configured == 'true' }}
         run: bash scripts/dokploy-deploy.sh
-
-  # Aviso (não falha) quando o Dokploy ainda não está configurado.
-  deploy-skipped:
-    name: Deploy ignorado
-    needs: [meta, images]
-    if: ${{ vars.DOKPLOY_URL == '' || vars.DOKPLOY_COMPOSE_ID == '' }}
-    runs-on: ubuntu-24.04
-    steps:
-      - run: echo "::notice::DOKPLOY_URL e/ou DOKPLOY_COMPOSE_ID não definidas; imagens publicadas, deploy não disparado."

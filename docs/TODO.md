@@ -65,8 +65,8 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
 - [x] CI rodando no GitHub e branch protection (`protect-main`) exigindo o check `CI` (repo público).
 - [ ] **Kodus** self-hosted no Dokploy como quality gate (configurar o GitHub App e as regras).
 - [ ] **Configurar o CD**: criar o compose no Dokploy (fonte Git, `deploy/docker-compose.yml`,
-  Auto Deploy desligado), preencher o Environment, definir `DOKPLOY_URL`, `DOKPLOY_COMPOSE_ID`
-  e o segredo `DOKPLOY_API_KEY` no GitHub, cortar os Applications atuais e fazer o primeiro
+  Auto Deploy desligado), preencher o Environment, definir os segredos `DOKPLOY_URL`,
+  `DOKPLOY_COMPOSE_ID` e `DOKPLOY_API_KEY` no GitHub, cortar os Applications atuais e fazer o primeiro
   deploy à mão — passo a passo em `docs/MONOREPO.md#cicd`.
 - [x] Reconciliar os schedulers do BullMQ no boot (`apps/api/src/libraries/marketing/reconcile.ts`).
 - [ ] **Configurar o Redis da fila no Dokploy**: comando personalizado
