@@ -40,6 +40,14 @@ updates:
       - dependency-name: node
         update-types: ['version-update:semver-major']
 
+  - package-ecosystem: docker
+    directory: /packages/database
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+    ignore:
+      - dependency-name: oven/bun
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

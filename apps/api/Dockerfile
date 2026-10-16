@@ -3,7 +3,7 @@
 #
 # Camadas pensadas para o deploy baixar pouco: o node_modules (grande, só muda quando o lockfile
 # muda) fica numa camada própria, ANTES do código (pequeno, muda a cada commit). Só dependências
-# de produção vão para a imagem (sem Biome, turbo, TypeScript, @react-email/ui + next etc.) e sem navegador.
+# de produção, enxugadas e verificadas, vão para a imagem (ver o estágio prod-deps); sem navegador.
 #
 # Imagem base FIXADA POR DIGEST (cadeia de suprimentos: a tag pode mudar sem aviso). O Dependabot
 # (.github/dependabot.yml) abre PR para atualizar o digest; para subir à mão:
@@ -16,16 +16,26 @@ RUN bun add -g turbo@^2
 COPY . .
 RUN turbo prune @segwise/api --docker
 
-# Só dependências de produção (o runtime precisa do prisma CLI para o `migrate deploy` do
-# entrypoint: por isso ele é `dependency` do @segwise/database).
+# Só dependências de produção (o runtime ainda precisa do prisma CLI para o `migrate deploy` do
+# entrypoint: por isso ele é `dependency` do @segwise/database), enxugadas:
+#  - scripts/prune-node-modules.ts: apaga os pacotes que o código não alcança (CLI do react-email,
+#    `next`/`sharp` do peer opcional do better-auth, TypeScript...). Detalhes e lista no próprio script;
+#  - do client do Prisma fica só o compilador de queries do PostgreSQL (o único que o client gerado
+#    importa; os de MySQL, SQLite, SQL Server e CockroachDB somavam ~60 MB);
+#  - binários nativos para glibc: a imagem é Alpine (musl) e só carrega as variantes `-musl`;
+#  - tipos (.d.ts), source maps e markdown: nada disso é lido em runtime.
+# O estágio `verify` abaixo prova que o código ainda resolve todos os imports.
 FROM base AS prod-deps
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/full/apps/api/scripts/prune-node-modules.ts /tmp/prune-node-modules.ts
 RUN bun install --frozen-lockfile --production \
-    # O better-auth declara `next` como peer opcional e o Bun o liga ao next do lockfile (que vem do
-    # @react-email/ui, devDependency de preview). A api usa o better-auth com Hono e nunca importa
-    # `next` nem `better-auth/next-js`: ~370 MB (next + binários SWC) que só atrasam o pull.
- && rm -rf /app/node_modules/.bun/next@* /app/node_modules/.bun/@next+swc-*
+ && bun /tmp/prune-node-modules.ts /app \
+ && find node_modules/.bun -path '*/@prisma/client/runtime/query_compiler_*' \
+      ! -name 'query_compiler_fast_bg.postgresql.*' -delete \
+ && rm -rf node_modules/.bun/*-linux-*-gnu@* \
+ && find node_modules/.bun -type f \( -name '*.d.ts' -o -name '*.d.mts' -o -name '*.d.cts' \
+      -o -name '*.map' -o -name '*.md' -o -name '*.markdown' \) -delete
 
 FROM base AS builder
 WORKDIR /app
@@ -41,6 +51,19 @@ RUN chmod +x apps/api/entrypoint.sh \
  && cp -r apps packages /artifact/ \
  && find /artifact -name node_modules -type d -prune -exec rm -rf {} +
 
+# Empacota a api (`bun build`, descartado) contra o node_modules ENXUTO: se o prune tirou algo que o
+# código importa, o build da imagem falha aqui em vez de a api quebrar em produção. Os binários
+# nativos do canvas são externos (cada plataforma tem o seu; só o `-musl` existe aqui).
+FROM base AS verify
+WORKDIR /app
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=prod-deps /app/packages/core/node_modules ./packages/core/node_modules
+COPY --from=prod-deps /app/packages/database/node_modules ./packages/database/node_modules
+COPY --from=builder /artifact/ ./
+RUN cd apps/api && bun build src/index.ts --target=bun --outdir=/tmp/verify --external '@napi-rs/canvas-*' \
+ && rm -rf /tmp/verify
+
 FROM base AS runner
 WORKDIR /app
 
@@ -52,11 +75,12 @@ RUN addgroup -S -g 10001 appgroup && adduser -S -u 10001 -G appgroup appuser
 
 # O código e as dependências pertencem ao root e são só leitura para o usuário da aplicação: um
 # processo comprometido não consegue alterar o próprio código nem as bibliotecas.
-# 1) dependências (camada grande e estável) e os links de cada workspace (pequenos)
-COPY --from=prod-deps /app/node_modules ./node_modules
-COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=prod-deps /app/packages/core/node_modules ./packages/core/node_modules
-COPY --from=prod-deps /app/packages/database/node_modules ./packages/database/node_modules
+# 1) dependências (camada grande e estável) e os links de cada workspace (pequenos). Vêm do estágio
+#    `verify`: a imagem só fica pronta se a verificação dos imports passou.
+COPY --from=verify /app/node_modules ./node_modules
+COPY --from=verify /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=verify /app/packages/core/node_modules ./packages/core/node_modules
+COPY --from=verify /app/packages/database/node_modules ./packages/database/node_modules
 
 # 2) código + build do core + client Prisma gerado (camada pequena, muda a cada commit)
 COPY --from=builder /artifact/ ./
