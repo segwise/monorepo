@@ -15,9 +15,9 @@
 		"tsc-alias": "^1.8.16"
 	},
 	"scripts": {
-		"build": "tsc && tsc-alias",
-		"typecheck": "tsc --noEmit",
-		"lint": "biome check"
+		"build": "bun --bun tsc && bun --bun tsc-alias",
+		"typecheck": "bun --bun tsc --noEmit",
+		"lint": "bun --bun biome check"
 	},
 	"exports": {
 		".": {

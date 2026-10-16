@@ -18,7 +18,7 @@
 		"migrate:reset": "bun x --bun prisma migrate reset",
 		"deploy": "bun x --bun prisma migrate deploy",
 		"seed": "bun --bun prisma db seed",
-		"lint": "biome check"
+		"lint": "bun --bun biome check"
 	},
 	"dependencies": {
 		"@prisma/client": "^7.10.0",

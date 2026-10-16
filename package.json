@@ -15,7 +15,7 @@
 		"db:migrate:local": "bun run --cwd packages/database migrate:local",
 		"db:status:local": "bun run --cwd packages/database status:local",
 		"db:local": "bun run --cwd packages/database local",
-		"format": "biome format --write ."
+		"format": "bun --bun biome format --write ."
 	},
 	"devDependencies": {
 		"turbo": "^2.5.0",
