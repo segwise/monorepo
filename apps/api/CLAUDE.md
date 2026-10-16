@@ -165,7 +165,8 @@ Transfeera (Pix/split de pagamento). Nunca commitar segredos — só
 ## Docker / deploy
 `Dockerfile` multi-stage com Bun + `turbo prune` + `prisma generate` + Chromium
 (Playwright), buildado com contexto na raiz do monorepo
-(`docker build -f apps/api/Dockerfile .`); roda como usuário não-root, **só com dependências de produção** (camada de `node_modules` separada da de código,
+(`docker build -f apps/api/Dockerfile .`); roda como usuário não-root (uid 10001) e **raiz só leitura** (graváveis só `/tmp` e `~/.cache`, tmpfs no
+compose — se o app passar a gravar em disco, declare o caminho no `deploy/docker-compose.yml`), **só com dependências de produção** (camada de `node_modules` separada da de código,
 para o deploy baixar pouco — veja `docs/MONOREPO.md`#docker; qualquer pacote que o runtime execute, como o `prisma`
 do `migrate deploy`, precisa ser `dependency`) e tem
 `entrypoint.sh` (aplica `prisma migrate deploy` via `packages/database` e sobe o

@@ -36,11 +36,25 @@ x-web-healthcheck: &web-healthcheck
   retries: 5
   start_period: 20s
 
+# Hardening de runtime (todos os serviços): sem capabilities, sem elevação de privilégio e sistema de
+# arquivos só leitura. Os caminhos que precisam gravar são `tmpfs` (somem a cada reinício).
+x-hardening: &hardening
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  read_only: true
+
 services:
   api:
+    <<: *hardening
     image: ghcr.io/segwise/api:latest
     pull_policy: always
     restart: unless-stopped
+    # Chromium (PDF) grava perfil/temporários em /tmp e no cache do usuário (uid 10001, ver Dockerfile).
+    tmpfs:
+      - /tmp
+      - /home/appuser/.cache:uid=10001,gid=10001
     depends_on:
       cache:
         condition: service_healthy
@@ -100,9 +114,14 @@ services:
       - dokploy-network
 
   backoffice:
+    <<: *hardening
     image: ghcr.io/segwise/backoffice:latest
     pull_policy: always
     restart: unless-stopped
+    # Único caminho que o Next grava em runtime é o cache (uid 1000 = `node`).
+    tmpfs:
+      - /tmp
+      - /app/apps/backoffice/.next/cache:uid=1000,gid=1000
     depends_on:
       api:
         condition: service_healthy
@@ -114,9 +133,14 @@ services:
       - dokploy-network
 
   customer:
+    <<: *hardening
     image: ghcr.io/segwise/customer:latest
     pull_policy: always
     restart: unless-stopped
+    # Único caminho que o Next grava em runtime é o cache (uid 1000 = `node`).
+    tmpfs:
+      - /tmp
+      - /app/apps/backoffice/.next/cache:uid=1000,gid=1000
     depends_on:
       api:
         condition: service_healthy
@@ -128,9 +152,14 @@ services:
       - dokploy-network
 
   producer:
+    <<: *hardening
     image: ghcr.io/segwise/producer:latest
     pull_policy: always
     restart: unless-stopped
+    # Único caminho que o Next grava em runtime é o cache (uid 1000 = `node`).
+    tmpfs:
+      - /tmp
+      - /app/apps/backoffice/.next/cache:uid=1000,gid=1000
     depends_on:
       api:
         condition: service_healthy
@@ -144,6 +173,11 @@ services:
   # Cache e sessões do better-auth: só expulsa chaves com TTL (preserva as consultas pagas de CPF/CNPJ
   # sem TTL, por isso mantém AOF e volume nomeado — que também aceita Volume Backup do Dokploy).
   cache:
+    <<: *hardening
+    # Roda direto como o usuário `redis` da imagem (sem root e sem capabilities): o entrypoint oficial só
+    # troca de usuário quando começa como root, e isso exigiria SETUID/SETGID/SETPCAP. O volume nomeado
+    # `cache-data` já pertence a esse usuário (foi o redis que escreveu os dados).
+    user: '999:999'
     image: redis:8
     restart: unless-stopped
     command:

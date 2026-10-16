@@ -4,7 +4,11 @@
 # Camadas pensadas para o deploy baixar pouco: o node_modules (grande, só muda quando o lockfile
 # muda) fica numa camada própria, ANTES do código (pequeno, muda a cada commit). Só dependências
 # de produção vão para a imagem (sem Biome, turbo, TypeScript, @react-email/ui + next etc.).
-FROM oven/bun:1.4.2-alpine AS base
+#
+# Imagem base FIXADA POR DIGEST (cadeia de suprimentos: a tag pode mudar sem aviso). O Dependabot
+# (.github/dependabot.yml) abre PR para atualizar o digest; para subir à mão:
+#   docker pull oven/bun:1.4.2-alpine && docker image inspect oven/bun:1.4.2-alpine --format '{{index .RepoDigests 0}}'
+FROM oven/bun:1.4.2-alpine@sha256:d888c0ae6c86d7866ff10c5aafdd9077b36aee6455b33dd270fb93c0dd5cef6f AS base
 
 FROM base AS pruner
 WORKDIR /app
@@ -31,13 +35,18 @@ COPY --from=pruner /app/out/full/ .
 RUN bun run --cwd packages/core build \
  && bun run --cwd packages/database generate
 # Código e artefatos de build SEM node_modules: é a camada pequena que muda a cada commit.
-RUN mkdir /artifact \
+RUN chmod +x apps/api/entrypoint.sh \
+ && mkdir /artifact \
  && cp package.json /artifact/ \
  && cp -r apps packages /artifact/ \
  && find /artifact -name node_modules -type d -prune -exec rm -rf {} +
 
 FROM base AS runner
 WORKDIR /app
+
+# Patches de segurança do Alpine publicados depois da imagem base (ex.: OpenSSL), em camada própria
+# e pequena, antes do Chromium.
+RUN apk upgrade --no-cache
 
 RUN apk add --no-cache \
     chromium \
@@ -49,7 +58,6 @@ RUN apk add --no-cache \
     libstdc++ \
     udev \
     dbus \
-    dumb-init \
     mesa-gl \
     libx11 \
     libxcomposite \
@@ -59,20 +67,23 @@ RUN apk add --no-cache \
     libxshmfence \
     alsa-lib
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S -g 10001 appgroup && adduser -S -u 10001 -G appgroup appuser
 
 ENV PLAYWRIGHT_BROWSERS_PATH=0 \
     CHROMIUM_PATH=/usr/bin/chromium-browser
 
+# O código e as dependências pertencem ao root e são só leitura para o usuário da aplicação: um
+# processo comprometido não consegue alterar o próprio código nem as bibliotecas.
 # 1) dependências (camada grande e estável) e os links de cada workspace (pequenos)
-COPY --from=prod-deps --chown=appuser:appgroup /app/node_modules ./node_modules
-COPY --from=prod-deps --chown=appuser:appgroup /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=prod-deps --chown=appuser:appgroup /app/packages/core/node_modules ./packages/core/node_modules
-COPY --from=prod-deps --chown=appuser:appgroup /app/packages/database/node_modules ./packages/database/node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=prod-deps /app/packages/core/node_modules ./packages/core/node_modules
+COPY --from=prod-deps /app/packages/database/node_modules ./packages/database/node_modules
 
 # 2) código + build do core + client Prisma gerado (camada pequena, muda a cada commit)
-COPY --from=builder --chown=appuser:appgroup /artifact/ ./
+COPY --from=builder /artifact/ ./
 
+# Único diretório gravável do usuário (no compose o resto do sistema de arquivos é só leitura).
 RUN mkdir -p /home/appuser/.cache && chown -R appuser:appgroup /home/appuser
 
 WORKDIR /app/apps/api
@@ -84,8 +95,6 @@ ENV TZ=UTC
 ENV PORT=3000
 
 EXPOSE 3000
-
-RUN chmod +x ./entrypoint.sh
 
 ENTRYPOINT ["./entrypoint.sh"]
 

@@ -153,6 +153,47 @@ docker build -f apps/backoffice/Dockerfile \
 - Em produção quem sobe as imagens é o compose único `deploy/docker-compose.yml` (usa as imagens
   publicadas no GHCR, não faz `build`); ver a seção de CD abaixo.
 
+### Hardening das imagens e do runtime
+
+Medido com Trivy (HIGH/CRITICAL com correção disponível): **backoffice 82 vulnerabilidades (8 críticas) → 0;
+api 4 → 0**. O que foi feito:
+
+- **Dependências**: `next` 16.0.3 → **16.3.8** (a 16.0.3 tinha uma CRITICAL e ~11 HIGH; o
+  `package.json` fixa a versão exata, então só atualiza à mão). `mysql2` e `deepmerge-ts` são
+  dependências internas do CLI do Prisma (fixadas por ele) com CVE HIGH: o `overrides` da raiz força as
+  versões corrigidas (`migrate deploy` e `validate` testados com elas). **Remova os `overrides` quando
+  o Prisma subir de versão e já trouxer as corrigidas.**
+- **Imagens base fixadas por digest** (`oven/bun:1.4.2-alpine@sha256:…`, `node:22-alpine@sha256:…`): a
+  tag pode mudar sem aviso. O **Dependabot** (`.github/dependabot.yml`) abre PR semanal para atualizar
+  os digests e as GitHub Actions. O backoffice saiu do Node 22.14.0 (Alpine 3.21) para o 22.23.3 (Alpine
+  3.24); `apk upgrade` no build traz os patches do SO (OpenSSL).
+- **Sem npm/yarn/corepack no runtime do backoffice**: o servidor só executa `node`, e o npm embutido
+  trazia pacotes vulneráveis (`tar`) e superfície de ataque sem uso. O `bun` do build é copiado da imagem
+  oficial (sem `npm install -g`).
+- **Nada roda como root e o código é só leitura**: api como `appuser` (uid/gid fixos 10001), backoffice
+  como `node` (1000), Redis como `redis` (999). Código e `node_modules` pertencem ao root, então um
+  processo comprometido não altera o próprio código nem as bibliotecas.
+- **Compose (`x-hardening`)**: `cap_drop: ALL`, `no-new-privileges` e `read_only: true` em todos os
+  serviços; só `/tmp`, o cache do Chromium (`/home/appuser/.cache`, api) e o cache do Next
+  (`.next/cache`) são `tmpfs` graváveis. **Regra para quem for mexer**: se o app passar a gravar em disco,
+  declare um `tmpfs` ou volume no compose para esse caminho (senão falha com `Read-only file system`).
+- **Testado com as restrições ligadas** (compose local, Postgres e Redis externos): os 5 serviços
+  saudáveis, 63 migrations, rotas com `X-App-Version`, geração de PDF no Chromium, o otimizador de
+  imagens do Next (`sharp`) com escrita de cache, persistência (AOF) do Redis após reiniciar e **0**
+  erros de permissão (`EACCES`/`EROFS`) nos logs. Esse teste pegou um problema: o entrypoint oficial do
+  Redis precisa de `SETPCAP`/`SETUID`/`SETGID` para trocar de usuário, por isso o serviço roda direto
+  como `user: 999:999` (o volume `cache-data` já pertence a esse usuário).
+- **Varredura semanal** (`.github/workflows/security.yml`, Trivy): escaneia as 4 imagens publicadas no GHCR
+  e falha se surgir HIGH/CRITICAL com correção, porque novas CVEs aparecem depois da build. Também roda
+  sob demanda (*Actions → Security → Run workflow*).
+
+**Não feito / limites**: o Chromium da api segue com `--no-sandbox` (como já era; o container sem
+capabilities e com raiz só leitura limita o estrago, mas o sandbox do navegador está desligado e o HTML que
+ele renderiza vem de templates com dados de usuário); `/dev/shm` está no padrão de 64 MB (sem
+`--disable-dev-shm-usage` nem `shm_size`); Node 22 está em manutenção — migrar para o 24 LTS é uma
+mudança de runtime à parte. O **primeiro deploy** depois desta mudança baixa as camadas novas (bases e
+Chromium); os seguintes voltam a ser incrementais.
+
 ## Mobile (Expo)
 
 - Bundle JS: `bunx expo export --platform ios|android` (em `apps/mobile`) —

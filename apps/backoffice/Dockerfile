@@ -1,7 +1,14 @@
 # Contexto de build: raiz do monorepo
-#   docker build -f apps/backoffice/Dockerfile --build-arg NEXT_PUBLIC_ROLE_SYSTEM=backoffice .
-FROM node:22.14-alpine AS base
-RUN npm install -g bun@1.4.2
+#   docker build -f apps/backoffice/Dockerfile --build-arg NEXT_PUBLIC_ROLE_SYSTEM=admin .
+#
+# Imagens base FIXADAS POR DIGEST (cadeia de suprimentos: a tag pode mudar sem aviso). O Dependabot
+# (.github/dependabot.yml) abre PR para atualizar o digest; para subir à mão:
+#   docker pull node:22-alpine && docker image inspect node:22-alpine --format '{{index .RepoDigests 0}}'
+FROM oven/bun:1.4.2-alpine@sha256:d888c0ae6c86d7866ff10c5aafdd9077b36aee6455b33dd270fb93c0dd5cef6f AS bun
+
+FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS base
+# bun só nos estágios de build (copiado da imagem oficial, sem `npm install -g`).
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 
 FROM base AS pruner
 WORKDIR /app
@@ -27,15 +34,33 @@ ENV NEXT_PUBLIC_ROLE_SYSTEM=$NEXT_PUBLIC_ROLE_SYSTEM \
 RUN bun run --cwd packages/core build \
  && bun run --cwd apps/backoffice build
 
-FROM node:22.14.0-alpine AS runner
+FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS runner
 WORKDIR /app
 
-ENV NODE_ENV=production \
-    NEXT_TELEMETRY_DISABLED=1
+# Hardening do runtime:
+#  - `apk upgrade` traz os patches de segurança do Alpine publicados depois da imagem base;
+#  - sem npm, yarn nem corepack: o servidor só executa `node`, e o npm embutido trazia pacotes
+#    vulneráveis (ex.: tar) e uma superfície de ataque que a aplicação não usa.
+RUN apk upgrade --no-cache \
+ && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx \
+           /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-*
 
-# standalone com outputFileTracingRoot na raiz: o server.js fica em apps/backoffice/
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+
+# standalone com outputFileTracingRoot na raiz: o server.js fica em apps/backoffice/.
+# O código pertence ao root e é só leitura para o usuário da aplicação: um processo comprometido
+# não consegue alterar o próprio código.
 COPY --from=builder /app/apps/backoffice/.next/standalone ./
 COPY --from=builder /app/apps/backoffice/.next/static ./apps/backoffice/.next/static
 COPY --from=builder /app/apps/backoffice/public ./apps/backoffice/public
+
+# Único caminho gravável: o cache do Next (no compose é um tmpfs, com o resto do sistema em leitura).
+RUN mkdir -p /app/apps/backoffice/.next/cache && chown -R node:node /app/apps/backoffice/.next/cache
+
+USER node
+EXPOSE 3000
 
 CMD ["node", "apps/backoffice/server.js"]
