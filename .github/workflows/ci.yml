@@ -536,6 +536,97 @@ jobs:
         if: failure()
         run: docker logs pdf 2>&1 | tail -n 80 || true
 
+  # Sobe a imagem REAL do backoffice (a mesma das 3 variantes) com as restrições de produção e confere
+  # que o Node e o Next sobem: o build sozinho não pega uma biblioteca do sistema que falte no runtime.
+  smoke-web:
+    name: Smoke da imagem do backoffice
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dorny/paths-filter@v4
+        id: changes
+        with:
+          filters: |
+            web:
+              - 'apps/backoffice/**'
+              - 'packages/core/**'
+              - 'package.json'
+              - 'bun.lock'
+              - 'turbo.json'
+              - '.dockerignore'
+              - '.github/workflows/ci.yml'
+
+      - uses: docker/setup-buildx-action@v4
+        if: github.event_name != 'pull_request' || steps.changes.outputs.web == 'true'
+
+      # Mesmos build args do job "Docker build (backoffice)": reaproveita o cache dele.
+      - name: Build da imagem (carregada no daemon)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.web == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/backoffice/Dockerfile
+          load: true
+          tags: segwise-web:ci
+          build-args: |
+            NEXT_PUBLIC_ROLE_SYSTEM=admin
+            NEXT_PUBLIC_API_URL=http://localhost:3000
+          cache-from: type=gha,scope=backoffice
+
+      - name: Tamanho da imagem (resumo)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.web == 'true'
+        run: |
+          {
+            echo "### Imagem do backoffice: $(docker image inspect segwise-web:ci --format '{{.Size}}' | awk '{printf "%.0f MB descomprimida", $1/1e6}')"
+            echo '```'
+            docker history --format '{{.Size}}\t{{.CreatedBy}}' segwise-web:ci | grep -v '^0B' | cut -c1-120
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Subir com as restrições de produção e conferir o Next
+        if: github.event_name != 'pull_request' || steps.changes.outputs.web == 'true'
+        run: |
+          docker run -d --name web -p 3000:3000 \
+            --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+            --tmpfs /tmp:size=64m \
+            --tmpfs /app/apps/backoffice/.next/cache:size=256m,uid=1000,gid=1000 \
+            -e NODE_ENV=production -e PORT=3000 -e HOSTNAME=0.0.0.0 \
+            -e NEXT_PUBLIC_API_URL=http://localhost:3000 -e BETTER_AUTH_SECRET=ci-secret-ci-secret-ci-secret-1234 \
+            segwise-web:ci
+          for i in $(seq 1 60); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/sign-in || true)"
+            if [ -n "$code" ] && [ "$code" != "000" ]; then break; fi
+            [ "$(docker inspect -f '{{.State.Running}}' web)" = "true" ] || break
+            sleep 1
+          done
+          echo "GET /sign-in -> HTTP ${code}"
+          case "$code" in 2??|3??) ;; *) echo "::error::O backoffice não respondeu 2xx/3xx em /sign-in (HTTP ${code:-000})."; exit 1 ;; esac
+          # O sharp (libvips nativo, usado pelo otimizador do next/image) carrega e gera uma imagem com a
+          # variante musl que ficou no standalone.
+          docker exec -w /app/apps/backoffice web node -e "
+            const sharp = require(require.resolve('sharp', { paths: [require.resolve('next/package.json')] }));
+            sharp({ create: { width: 8, height: 8, channels: 3, background: '#fff' } }).webp().toBuffer()
+              .then((b) => console.log('sharp ok,', b.length, 'bytes'), (e) => { console.error(e); process.exit(1); });
+          " || { echo "::error::O sharp (next/image) não carregou no runtime."; exit 1; }
+          uid="$(docker exec web id -u)"
+          [ "$uid" = "1000" ] || { echo "::error::O backoffice não roda como uid 1000 (uid=$uid)."; exit 1; }
+          echo "node $(docker exec web node --version), uid ${uid}"
+          if docker exec web sh -c 'command -v npm || command -v npx || command -v yarn || command -v corepack'; then
+            echo "::error::Gerenciador de pacotes presente no runtime."; exit 1
+          fi
+          if docker logs web 2>&1 | grep -iE 'EACCES|permission denied|EROFS|read-only file system|Error loading shared library'; then
+            echo "::error::Erro de permissão ou biblioteca nos logs do backoffice."; exit 1
+          fi
+
+      - name: Logs do backoffice (em caso de falha)
+        if: failure()
+        run: docker logs web 2>&1 | tail -n 80 || true
+
   compose:
     name: Compose (deploy/)
     runs-on: ubuntu-24.04
@@ -563,7 +654,7 @@ jobs:
   ci:
     name: CI
     if: always()
-    needs: [verify, database, docker, smoke-api, smoke-pdf, compose]
+    needs: [verify, database, docker, smoke-api, smoke-pdf, smoke-web, compose]
     runs-on: ubuntu-24.04
     steps:
       - name: Todos os jobs passaram?
