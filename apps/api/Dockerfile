@@ -72,6 +72,13 @@ RUN addgroup -S -g 10001 appgroup && adduser -S -u 10001 -G appgroup appuser
 ENV PLAYWRIGHT_BROWSERS_PATH=0 \
     CHROMIUM_PATH=/usr/bin/chromium-browser
 
+# O Chromium (a partir da versão 152, Alpine 3.24) aborta na inicialização (SIGTRAP, "crashpad_handler:
+# --database is required") se não conseguir criar o diretório padrão de configuração/crash dumps
+# (~/.config/chromium). Com a raiz só leitura do compose isso falha, então o diretório vai para o /tmp
+# (tmpfs gravável, descartado a cada reinício). Descoberto pelo job smoke-api do CI.
+ENV XDG_CONFIG_HOME=/tmp/.config \
+    XDG_CACHE_HOME=/tmp/.cache
+
 # O código e as dependências pertencem ao root e são só leitura para o usuário da aplicação: um
 # processo comprometido não consegue alterar o próprio código nem as bibliotecas.
 # 1) dependências (camada grande e estável) e os links de cada workspace (pequenos)
