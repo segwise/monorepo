@@ -1,0 +1,32 @@
+name: Security
+
+# Varredura semanal (e sob demanda) das imagens PUBLICADAS no GHCR: novas CVEs aparecem depois que a
+# imagem foi construída, então só o CI de cada PR não basta. Falha se houver vulnerabilidade HIGH ou
+# CRITICAL COM correção disponível (--ignore-unfixed evita ruído do que ainda não tem patch).
+on:
+  schedule:
+    - cron: '0 11 * * 1' # segunda-feira, 08:00 em Brasília
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Trivy (${{ matrix.image }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api, backoffice, customer, producer]
+    steps:
+      - name: Varrer ghcr.io/segwise/${{ matrix.image }}:latest
+        run: |
+          docker run --rm aquasec/trivy:0.76.0 image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            --no-progress \
+            "ghcr.io/segwise/${{ matrix.image }}:latest"

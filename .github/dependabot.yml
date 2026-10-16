@@ -1,0 +1,24 @@
+# Mantém atualizados, por PR (que passa pelo CI), o que envelhece sem ninguém ver:
+#  - os digests das imagens base dos Dockerfiles (patches de segurança do Alpine/Node/Bun);
+#  - as versões das GitHub Actions.
+# As dependências npm/bun ficam de fora de propósito: o lockfile é do Bun e os catalogs
+# (React por plataforma) pedem revisão manual.
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: /apps/api
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+
+  - package-ecosystem: docker
+    directory: /apps/backoffice
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies, github-actions]

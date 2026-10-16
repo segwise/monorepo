@@ -83,6 +83,10 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
   esquema interno `http://`. Cosmético (nenhum cliente usa a raiz), mas dá para tratar com uma rota `/`
   explícita ou respeitando `X-Forwarded-Proto`. (Eu havia anotado antes que isso vinha do backend antigo — estava errado.)
 - [ ] Avaliar `--wait` no comando do compose no Dokploy (ver `docs/MONOREPO.md`).
+- [ ] Hardening restante (ver `docs/MONOREPO.md#hardening-das-imagens-e-do-runtime`): Chromium da api sem
+  `--no-sandbox`, `/dev/shm` (`shm_size` ou `--disable-dev-shm-usage`) e migrar o runtime para Node 24 LTS.
+- [ ] Remover os `overrides` de `mysql2`/`deepmerge-ts` (raiz) quando o Prisma subir de versão e já trouxer as
+  versões corrigidas.
 - [ ] **Confirmar no Dokploy** que `NEXT_PUBLIC_ROLE_SYSTEM` do serviço do painel interno é
   `admin` (o compose antigo dizia `backoffice`, que dá 404 nas rotas) e ajustar as
   configurações de build/compose do Dokploy para o contexto na raiz do monorepo.

@@ -33,5 +33,9 @@
 			"@types/react": "^19.2.18",
 			"@types/react-dom": "^19.2.5"
 		}
+	},
+	"overrides": {
+		"mysql2": "3.22.0",
+		"deepmerge-ts": "8.0.2"
 	}
 }
