@@ -3,10 +3,10 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"dev": "PORT=${PORT:-3100} node --disable-warning=ExperimentalWarning --watch src/index.ts",
-		"start": "node --disable-warning=ExperimentalWarning src/index.ts",
-		"lint": "biome check",
-		"typecheck": "tsc --noEmit"
+		"dev": "PORT=${PORT:-3100} bun --watch src/index.ts",
+		"start": "bun src/index.ts",
+		"lint": "bun --bun biome check",
+		"typecheck": "bun --bun tsc --noEmit"
 	},
 	"dependencies": {
 		"playwright-core": "^1.62.1",

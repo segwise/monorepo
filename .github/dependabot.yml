@@ -1,16 +1,12 @@
 # Mantém atualizados, por PR (que passa pelo CI), o que envelhece sem ninguém ver:
-#  - os digests das imagens base dos Dockerfiles (patches de segurança do Alpine/Node);
+#  - os digests das imagens base dos Dockerfiles (patches de segurança do Alpine/Debian);
 #  - as versões das GitHub Actions.
 # As dependências npm/bun ficam de fora de propósito: o lockfile é do Bun e os catalogs
 # (React por plataforma) pedem revisão manual.
 #
 # Ignorados de propósito (cada um já gerou um PR que não devia ser aceito como veio):
-#  - node, saltos de major: as versões ímpares (25, 27…) são "Current", sem LTS e de vida curta. A
-#    imagem do pdf (Node: runtime oficial do Playwright) acompanha o LTS e a troca de major é decisão
-#    manual (ver docs/MONOREPO.md).
-#  - oven/bun: o Bun é o runtime da api, do backoffice e do migrate, e a versão também está fixada no
-#    `packageManager` (package.json)
-#    e no CI (`bun-version`). Subir só o Dockerfile deixaria runtime, CI e lockfile em versões diferentes:
+#  - oven/bun: o Bun é o runtime de todas as imagens (api, backoffice, migrate e pdf) e a versão
+#    também está fixada no `packageManager` (package.json) e no CI (`bun-version`). Subir só o Dockerfile deixaria runtime, CI e lockfile em versões diferentes:
 #    atualize os quatro de uma vez, à mão, e teste a api.
 version: 2
 updates:
@@ -37,8 +33,6 @@ updates:
     labels: [dependencies, docker]
     ignore:
       - dependency-name: oven/bun
-      - dependency-name: node
-        update-types: ['version-update:semver-major']
 
   - package-ecosystem: docker
     directory: /packages/database

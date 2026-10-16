@@ -250,6 +250,12 @@ no compose: sem ele o deploy falha antes de mexer em qualquer container). O paco
 precisa estar público no GHCR (como `api`/`backoffice`). Os parágrafos abaixo sobre sandbox, `/dev/shm` e
 `tmpfs` do Chromium valem agora para o serviço `pdf`, não para a api.
 
+**Atualização do `apps/pdf`:** a imagem passou a Debian slim + o Chrome Headless Shell que o Playwright baixa
+para a versão do lockfile (sem o Chromium do Alpine, que arrastava LLVM/ffmpeg/GTK), e o runtime passou do
+Node ao **Bun** (binário glibc da imagem `oven/bun:1.4.3-slim`; o Bun 1.4 suporta o Playwright). Testado
+localmente: os 3 PDFs das fixtures saem com os mesmos bytes que no Node. O CI compara pixel a pixel com a
+imagem de produção (`smoke-pdf`).
+
 **Imagem da api enxuta + imagem de migrations.** O `node_modules` de produção da api passa por
 `apps/api/scripts/prune-node-modules.ts` (apaga os pacotes que o código não alcança: CLI do react-email,
 `next`/`sharp` do peer opcional do better-auth, TypeScript), pelo corte do client do Prisma (só o compilador de

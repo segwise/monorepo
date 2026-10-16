@@ -160,9 +160,10 @@ services:
       PDF_TOKEN: ${PDF_TOKEN:?defina PDF_TOKEN (openssl rand -hex 32) nas variáveis do Dokploy}
       MAX_CONCURRENCY: '4'
     healthcheck:
+      # Runtime Bun (apps/pdf/Dockerfile): não há `node` no container.
       test:
         - CMD
-        - node
+        - bun
         - -e
         - "fetch('http://127.0.0.1:3000/health',{signal:AbortSignal.timeout(4000)}).then((r)=>process.exit(r.ok?0:1),()=>process.exit(1))"
       interval: 15s
