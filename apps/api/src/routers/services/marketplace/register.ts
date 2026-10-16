@@ -1,6 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import { maskNumber, SchemaMarketplaceRegister } from '@segwise/core';
 import type { Server } from '@/@types/server';
+import { optimizePhoto } from '@/libraries/images/optimize-photo';
 
 function registerRoutersServicesMarketplaceRegister(server: Server) {
 	server.post(
@@ -61,27 +62,17 @@ function registerRoutersServicesMarketplaceRegister(server: Server) {
 
 			const uploadedPhotos: Array<string> = [];
 
-			for (let i = 0; i < imagesBuffers.length; i++) {
-				const photo = imagesBuffers[i];
-
+			for (const [i, photo] of imagesBuffers.entries()) {
 				if (typeof photo === 'string') {
 					uploadedPhotos.push(photo);
 					continue;
 				}
 
-				// @ts-expect-error
-				const ext = photo.type.split('/')[1] ?? 'jpeg';
-				const path = `/marketplace/vehicles/${plate}-${i}.${ext}`;
+				const optimized = await optimizePhoto(photo.buffer, photo.type);
+				const path = `/marketplace/vehicles/${plate}-${i}.${optimized.ext}`;
 
-				// @ts-expect-error
-				const mimeType = photo.type.startsWith('image/')
-					? // @ts-expect-error
-						photo.type
-					: `image/${ext}`;
-
-				// @ts-expect-error
-				await ctx.storage.images.write(path, photo?.buffer, {
-					type: mimeType,
+				await ctx.storage.images.write(path, optimized.bytes, {
+					type: optimized.type,
 					acl: 'public-read',
 				});
 
@@ -224,13 +215,14 @@ function registerRoutersServicesMarketplaceRegister(server: Server) {
 					finalPhotos.push(extractStoragePath(image));
 				} else {
 					const file = image as File;
-					const buffer = await file.arrayBuffer();
-					const mimeType = file.type || 'image/jpeg';
-					const ext = mimeType.split('/')[1] ?? 'jpeg';
-					const path = `/marketplace/vehicles/${plate}-${Date.now()}-${newFileCounter}.${ext}`;
+					const optimized = await optimizePhoto(
+						await file.arrayBuffer(),
+						file.type || 'image/jpeg',
+					);
+					const path = `/marketplace/vehicles/${plate}-${Date.now()}-${newFileCounter}.${optimized.ext}`;
 
-					await ctx.storage.images.write(path, buffer, {
-						type: mimeType.startsWith('image/') ? mimeType : `image/${ext}`,
+					await ctx.storage.images.write(path, optimized.bytes, {
+						type: optimized.type,
 						acl: 'public-read',
 					});
 

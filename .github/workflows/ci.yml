@@ -351,6 +351,24 @@ jobs:
             if (!text.includes("Apolice 12345") || !img.startsWith("data:image/png") || img.length < 500) process.exit(1);
           ' || { echo "::error::O pdf-parse não extraiu texto/imagem dentro da imagem da api."; exit 1; }
 
+      # Fotos do marketplace (src/libraries/images/optimize-photo.ts): Bun.Image no Alpine/musl da imagem
+      # real decodifica JPEG/PNG e grava WebP. Também confere o fallback (entrada inválida volta a original).
+      - name: Bun.Image (otimização de fotos) dentro da imagem
+        if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
+        run: |
+          docker exec api bun -e '
+            const { optimizePhoto } = await import("/app/apps/api/src/libraries/images/optimize-photo.ts");
+            const png = await Bun.file("/app/apps/api/src/templates/assets/images/logo-white.png").arrayBuffer();
+            const jpeg = await new Bun.Image(png).jpeg({ quality: 90 }).bytes();
+            const out = await optimizePhoto(jpeg.buffer, "image/jpeg");
+            const meta = await new Bun.Image(out.bytes).metadata();
+            console.log("jpeg", jpeg.byteLength, "bytes ->", out.type, out.bytes.byteLength, "bytes", JSON.stringify(meta));
+            if (out.type !== "image/webp" || meta.format !== "webp") process.exit(1);
+            const bad = await optimizePhoto(new Uint8Array([1, 2, 3]).buffer, "image/heic");
+            console.log("entrada inválida ->", bad.type, bad.ext);
+            if (bad.type !== "image/heic") process.exit(1);
+          ' || { echo "::error::A otimização de fotos (Bun.Image) falhou dentro da imagem da api."; exit 1; }
+
       - name: Sem erros de permissão nos logs
         if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
         run: |
