@@ -163,7 +163,7 @@ api 4 → 0**. O que foi feito:
   dependências internas do CLI do Prisma (fixadas por ele) com CVE HIGH: o `overrides` da raiz força as
   versões corrigidas (`migrate deploy` e `validate` testados com elas). **Remova os `overrides` quando
   o Prisma subir de versão e já trouxer as corrigidas.**
-- **Imagens base fixadas por digest** (`oven/bun:1.4.2-alpine@sha256:…`, `node:24-alpine@sha256:…`): a
+- **Imagens base fixadas por digest** (`oven/bun:1.4.3-alpine@sha256:…`, `node:24-alpine@sha256:…`): a
   tag pode mudar sem aviso. O **Dependabot** (`.github/dependabot.yml`) abre PR semanal para atualizar
   os digests e as GitHub Actions. O backoffice saiu do Node 22.14.0 (Alpine 3.21) para o 24.22.0 LTS (Alpine
   3.24); `apk upgrade` no build traz os patches do SO (OpenSSL).
@@ -236,7 +236,7 @@ ser incrementais.
   (não mais objetos `{ uri, name, type }`); **ainda falta testar em dispositivo
   real** (nome e `Content-Type` do arquivo no servidor).
 - EAS Build e hot-updater **não foram validados** no monorepo. O `eas.json`
-  fixa `bun 1.3.10` (a raiz usa 1.4.2). Rodar EAS a partir de `apps/mobile`.
+  fixa `bun 1.3.10` (a raiz usa 1.4.3). Rodar EAS a partir de `apps/mobile`.
 
 ## Segurança
 
@@ -262,6 +262,13 @@ Roda em PR e em push na `main`. Jobs:
   `migrate diff`: os índices GIN trigram existem só nas migrations e dariam falso positivo.
 - **docker** — build (sem publicar) das imagens `api` e `backoffice`, só quando algo relevante
   muda em PR (`dorny/paths-filter`); sempre na main.
+- **smoke-api** — sobe a imagem **real** da api com as mesmas restrições de produção (raiz só leitura,
+  `cap_drop: ALL`, `no-new-privileges`, `shm_size`, `tmpfs`) contra Postgres e Redis de serviço e confere:
+  boot e migrations pelo entrypoint, rota com banco (`/services/marketplace` → 200), header
+  `X-App-Version` com o SHA, uid 10001, **geração de PDF no Chromium** e ausência de erros de permissão
+  nos logs. É o que pega, antes do merge, mudanças na base do Alpine/Chromium (que acompanha a imagem do
+  Bun) ou um caminho que passou a gravar em disco sem `tmpfs` no compose. Só roda em PR quando algo
+  relevante muda (`dorny/paths-filter`); sempre na main.
 - **ci** — agregador; é o **único check obrigatório** a configurar na branch protection.
 
 O workflow foi validado com `actionlint` e as mesmas tarefas rodaram em clone limpo; a
@@ -416,6 +423,17 @@ banco (a rota `/marketplace` exercitava); a conexão com o Postgres é garantida
 por isso as URLs ganham até 4 min — e o `cache` não tem URL pública. Dica (não verificada): em
 *Advanced → Command* do compose dá para usar `up -d --remove-orphans --wait`, que faz o próprio
 deploy do Dokploy falhar se algum container ficar *unhealthy*.
+
+### Atualizar o Bun
+
+A versão do Bun vive em **quatro** lugares que precisam andar juntos: `packageManager` (`package.json`),
+`bun-version` nos jobs do `ci.yml` e as imagens `oven/bun:<versão>-alpine@sha256:…` dos dois Dockerfiles
+(`apps/api` — o Bun é o **runtime** da api — e `apps/backoffice`, só para o build). O Dependabot **ignora**
+`oven/bun` de propósito (um PR só no Dockerfile deixaria runtime, CI e lockfile em versões diferentes).
+Para atualizar: `docker pull oven/bun:<nova>-alpine`, pegar o digest
+(`docker image inspect … --format '{{index .RepoDigests 0}}'`), alterar os quatro e deixar o job
+**smoke-api** validar (a imagem do Bun traz o Alpine junto: a 1.4.2 usava o 3.22 e a 1.4.3, o 3.24, com outro
+Chromium). Do mesmo modo, o Dependabot ignora saltos de **major do Node** (as versões ímpares não são LTS).
 
 ### Ainda a fazer
 
