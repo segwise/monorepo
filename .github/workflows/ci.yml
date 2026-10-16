@@ -342,7 +342,7 @@ jobs:
             echo '```'
             docker history --format '{{.Size}}\t{{.CreatedBy}}' segwise-pdf:ci | grep -v '^0B' | cut -c1-120
             echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Subir o pdf numa rede interna, com as restrições de produção
         if: github.event_name != 'pull_request' || steps.changes.outputs.pdf == 'true'
