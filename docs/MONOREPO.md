@@ -129,6 +129,21 @@ docker build -f apps/backoffice/Dockerfile \
 
 - **api**: o `entrypoint.sh` roda `prisma migrate deploy` (pelo
   `packages/database`) e depois `bun run start`. Workdir `/app/apps/api`.
+  **Camadas pensadas para o deploy baixar pouco**: o servidor precisa baixar de novo toda camada que
+  mudou desde o último deploy. Antes, um único `COPY /app` de 1,4 GB juntava o `node_modules`
+  (quase nunca muda) com o código (~10 MB, muda a cada commit), e todo deploy baixava tudo de novo.
+  Agora o Dockerfile tem um estágio `prod-deps` (`bun install --production`, sem Biome, turbo,
+  TypeScript nem `@react-email/ui`) e copia o `node_modules` numa camada própria (~800 MB, só muda
+  quando o lockfile muda), antes do código (~11 MB). Medido localmente: imagem de 2,96 GB → 2,17 GB e,
+  trocando uma linha de código, só a camada de código muda (3 de 18 camadas; as de ~800 MB do
+  `node_modules` e ~740 MB do Chromium ficam idênticas). Duas regras para não quebrar isso:
+  (1) **tudo que o runtime executa precisa ser `dependency`**, não `devDependency` — por isso o
+  `prisma` (CLI do `migrate deploy`) e o `dotenv` ficam em `dependencies` do
+  `@segwise/database`; (2) o estágio remove o `next` e os binários SWC (~370 MB) que o Bun liga como
+  *peer* opcional do `better-auth` — a api nunca importa `next` (se um dia importar
+  `better-auth/next-js`, tire essa linha do Dockerfile).
+  O compose baixa as imagens **em paralelo** (`Pulling` das 4 juntas): o tempo do pull é o da maior
+  imagem, e os backoffices só sobem depois que a api fica saudável (`depends_on`).
 - **backoffice**: Next `standalone` com `outputFileTracingRoot` na raiz; o
   servidor é `node apps/backoffice/server.js`.
 - **`NEXT_PUBLIC_ROLE_SYSTEM` valores válidos: `admin`, `customer`, `producer`.**
@@ -321,9 +336,14 @@ contra um Dokploy falso, sem vazamento de segredo.
 
 **Rotas da api em produção**: a api só responde sob `/services/…` (`basePath('/services')`); em desenvolvimento um `getPath` acrescenta esse prefixo a partir do subdomínio. Com a imagem em modo `production`, `/services/marketplace` dá 200 e `/marketplace` dá 404. No domínio público observou-se o contrário (`/marketplace` → 200, `/services/marketplace` → 404), o que indica que o proxy acrescenta o prefixo (*Internal Path* `/services` do domínio no Dokploy) — a rota pública certa é `/marketplace`. Em outra sondagem, com o domínio respondendo diferente, o mesmo caminho deu 404 e depois 200: um teste de fumaça `< 500` aceita as duas respostas e, enquanto havia um backend antigo no domínio, um `200` não provava nada sobre o compose novo. Daí o status exato (`#200`) e o header de versão.
 
-**`HEALTHCHECK_URLS`** (variável do repo): `https://services.segwise.com.br/marketplace#200` (consulta o
-banco, então cobre api + Postgres) e o `/sign-in#200` de `backoffice`, `customer` e `producer`
-(`*.segwise.com.br`).
+**`HEALTHCHECK_URLS`** (variável do repo): a **raiz** de cada domínio —
+`https://services.segwise.com.br/`, `https://backoffice.segwise.com.br/`,
+`https://customer.segwise.com.br/` e `https://producer.segwise.com.br/`. Como o `X-App-Version` sai em
+toda resposta (inclusive o redirect 307 dos backoffices para `/sign-in` e o 301/404 da api), não
+precisa de rota específica: o que prova o deploy é a **versão**, e o status só precisa ser < 500.
+O sufixo `#<status>` continua disponível para exigir um HTTP exato. Trade-off: a raiz não exercita o
+banco (a rota `/marketplace` exercitava); a conexão com o Postgres é garantida no boot pelo
+`migrate deploy` do entrypoint.
 
 **Limites do teste de fumaça**: o `up -d` devolve antes dos healthchecks do compose terminarem —
 por isso as URLs ganham até 4 min — e o `cache` não tem URL pública. Dica (não verificada): em

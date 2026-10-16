@@ -21,11 +21,11 @@
 		"lint": "biome check"
 	},
 	"dependencies": {
-		"@prisma/client": "^7.10.0"
-	},
-	"devDependencies": {
-		"@types/bun": "latest",
+		"@prisma/client": "^7.10.0",
 		"dotenv": "^17.4.2",
 		"prisma": "^7.10.0"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
 	}
 }

@@ -77,8 +77,11 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
   `{"data":[],"total":0}` (lista vazia). Pode ser legítimo, mas também é o que um Postgres recém-criado
   no Dokploy devolveria — confirme que `DATABASE_URL` aponta para o banco de produção (ou que os dados
   foram migrados) antes de apagar o Application antigo e o banco anterior.
-- [x] O redirect `https://services.segwise.com.br/` → `http://…/services` (301) sumiu depois de desativar o
-  backend antigo (a raiz agora dá 404): vinha dele, não do compose novo.
+- [ ] Baixa prioridade: `https://services.segwise.com.br/` responde **301** para `http://services.segwise.com.br/services`
+  (e `/services` dá 404). Quem faz isso é a **api nova** (o header `X-App-Version` vem na resposta): o proxy
+  acrescenta o prefixo `/services`, o `trimTrailingSlash()` do Hono redireciona `/services/` e a URL sai com o
+  esquema interno `http://`. Cosmético (nenhum cliente usa a raiz), mas dá para tratar com uma rota `/`
+  explícita ou respeitando `X-Forwarded-Proto`. (Eu havia anotado antes que isso vinha do backend antigo — estava errado.)
 - [ ] Avaliar `--wait` no comando do compose no Dokploy (ver `docs/MONOREPO.md`).
 - [ ] **Confirmar no Dokploy** que `NEXT_PUBLIC_ROLE_SYSTEM` do serviço do painel interno é
   `admin` (o compose antigo dizia `backoffice`, que dá 404 nas rotas) e ajustar as
