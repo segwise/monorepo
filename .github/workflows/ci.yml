@@ -653,10 +653,13 @@ jobs:
           uid="$(docker exec web id -u)"
           [ "$uid" = "1000" ] || { echo "::error::O backoffice não roda como uid 1000 (uid=$uid)."; exit 1; }
           echo "bun $(docker exec web bun --version), uid ${uid}"
-          # Runtime é o Bun (sem Node): nada de npm/yarn/corepack.
-          if docker exec web sh -c 'command -v node || command -v npm || command -v npx || command -v yarn || command -v corepack'; then
-            echo "::error::Node ou gerenciador de pacotes presente no runtime."; exit 1
+          # Runtime é o Bun, sem Node de verdade: a imagem do Bun só traz um `node` que aponta para o próprio
+          # bun (bun-node-fallback-bin, para scripts com `#!/usr/bin/env node`). Nada de npm/yarn/corepack.
+          if docker exec web sh -c 'command -v npm || command -v npx || command -v yarn || command -v corepack'; then
+            echo "::error::Gerenciador de pacotes presente no runtime."; exit 1
           fi
+          docker exec web sh -c 'n="$(command -v node)" || exit 0; [ "$(readlink -f "$n")" = "$(readlink -f "$(command -v bun)")" ]' \
+            || { echo "::error::Há um binário de Node de verdade no runtime."; exit 1; }
           # Rota protegida sem sessão: o proxy manda para o /sign-in com o callbackUrl.
           loc="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' http://localhost:3000/dashboard)"
           echo "GET /dashboard -> ${loc}"
