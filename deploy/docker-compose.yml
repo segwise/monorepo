@@ -26,9 +26,10 @@ x-web-environment: &web-environment
   BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
 
 x-web-healthcheck: &web-healthcheck
+  # O runtime das imagens web é o Bun (apps/backoffice/Dockerfile): não há `node` no container.
   test:
     - CMD
-    - node
+    - bun
     - -e
     - "fetch('http://127.0.0.1:3000/sign-in',{redirect:'manual'}).then((r)=>process.exit(r.status<500?0:1),()=>process.exit(1))"
   interval: 15s
@@ -176,7 +177,7 @@ services:
     image: ghcr.io/segwise/backoffice:latest
     pull_policy: always
     restart: unless-stopped
-    # Único caminho que o Next grava em runtime é o cache (uid 1000 = `node`).
+    # Único caminho que o Next grava em runtime é o cache (uid 1000 = usuário `bun` da imagem).
     tmpfs:
       - /tmp:size=64m
       - /app/apps/backoffice/.next/cache:size=256m,uid=1000,gid=1000
@@ -195,7 +196,7 @@ services:
     image: ghcr.io/segwise/customer:latest
     pull_policy: always
     restart: unless-stopped
-    # Único caminho que o Next grava em runtime é o cache (uid 1000 = `node`).
+    # Único caminho que o Next grava em runtime é o cache (uid 1000 = usuário `bun` da imagem).
     tmpfs:
       - /tmp:size=64m
       - /app/apps/backoffice/.next/cache:size=256m,uid=1000,gid=1000
@@ -214,7 +215,7 @@ services:
     image: ghcr.io/segwise/producer:latest
     pull_policy: always
     restart: unless-stopped
-    # Único caminho que o Next grava em runtime é o cache (uid 1000 = `node`).
+    # Único caminho que o Next grava em runtime é o cache (uid 1000 = usuário `bun` da imagem).
     tmpfs:
       - /tmp:size=64m
       - /app/apps/backoffice/.next/cache:size=256m,uid=1000,gid=1000

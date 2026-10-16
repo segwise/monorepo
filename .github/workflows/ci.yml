@@ -645,17 +645,33 @@ jobs:
           done
           # O sharp (libvips nativo, usado pelo otimizador do next/image) carrega e gera uma imagem com a
           # variante musl que ficou no standalone.
-          docker exec -w /app/apps/backoffice web node -e "
+          docker exec -w /app/apps/backoffice web bun -e "
             const sharp = require(require.resolve('sharp', { paths: [require.resolve('next/package.json')] }));
             sharp({ create: { width: 8, height: 8, channels: 3, background: '#fff' } }).webp().toBuffer()
               .then((b) => console.log('sharp ok,', b.length, 'bytes'), (e) => { console.error(e); process.exit(1); });
           " || { echo "::error::O sharp (next/image) não carregou no runtime."; exit 1; }
           uid="$(docker exec web id -u)"
           [ "$uid" = "1000" ] || { echo "::error::O backoffice não roda como uid 1000 (uid=$uid)."; exit 1; }
-          echo "node $(docker exec web node --version), uid ${uid}"
+          echo "bun $(docker exec web bun --version), uid ${uid}"
+          # Runtime é o Bun, sem Node de verdade: a imagem do Bun só traz um `node` que aponta para o próprio
+          # bun (bun-node-fallback-bin, para scripts com `#!/usr/bin/env node`). Nada de npm/yarn/corepack.
           if docker exec web sh -c 'command -v npm || command -v npx || command -v yarn || command -v corepack'; then
             echo "::error::Gerenciador de pacotes presente no runtime."; exit 1
           fi
+          docker exec web sh -c 'n="$(command -v node)" || exit 0; [ "$(readlink -f "$n")" = "$(readlink -f "$(command -v bun)")" ]' \
+            || { echo "::error::Há um binário de Node de verdade no runtime."; exit 1; }
+          # Rota protegida sem sessão: o proxy manda para o /sign-in com o callbackUrl.
+          loc="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' http://localhost:3000/dashboard)"
+          echo "GET /dashboard -> ${loc}"
+          case "$loc" in "307 http://localhost:3000/sign-in?callbackUrl=%2Fdashboard") ;; *) echo "::error::O proxy não redirecionou /dashboard para o login (${loc})."; exit 1 ;; esac
+          # Um chunk JS que a página de login referencia (servido pelo Next, fora do proxy).
+          chunk="$(curl -s http://localhost:3000/sign-in | grep -oE '/_next/static/[^"]+\.js' | head -n 1)"
+          res="$(curl -s -o /dev/null -w '%{http_code} %{content_type}' "http://localhost:3000${chunk}")"
+          echo "GET ${chunk} -> ${res}"
+          case "$res" in "200 application/javascript"*|"200 text/javascript"*) ;; *) echo "::error::Chunk estático não foi servido (${res})."; exit 1 ;; esac
+          # O healthcheck do compose (deploy/docker-compose.yml, x-web-healthcheck) dentro do container.
+          docker exec web bun -e "fetch('http://127.0.0.1:3000/sign-in',{redirect:'manual'}).then((r)=>process.exit(r.status<500?0:1),()=>process.exit(1))" \
+            || { echo "::error::O healthcheck do compose falha dentro do container."; exit 1; }
           if docker logs web 2>&1 | grep -iE 'EACCES|permission denied|EROFS|read-only file system|Error loading shared library'; then
             echo "::error::Erro de permissão ou biblioteca nos logs do backoffice."; exit 1
           fi

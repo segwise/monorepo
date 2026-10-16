@@ -4,7 +4,7 @@
 # Imagens base FIXADAS POR DIGEST (cadeia de suprimentos: a tag pode mudar sem aviso). O Dependabot
 # (.github/dependabot.yml) abre PR para atualizar o digest; para subir à mão:
 #   docker pull node:24-alpine && docker image inspect node:24-alpine --format '{{index .RepoDigests 0}}'
-# O runtime é alpine:3.24 (mesma versão do Alpine da imagem do Node) com só o binário do Node.
+# O build usa o Node; o runtime é a imagem do Bun (a mesma da api).
 FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS bun
 
 FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS base
@@ -38,19 +38,16 @@ RUN bun run --cwd packages/core build \
  && rm -rf apps/backoffice/.next/standalone/node_modules/.bun/@img+sharp-linux-x64@* \
            apps/backoffice/.next/standalone/node_modules/.bun/@img+sharp-libvips-linux-x64@*
 
-# Runtime: Alpine limpo + só o binário do Node (copiado da imagem oficial, mesma versão do build). A
-# imagem node:alpine traz npm, npx, corepack, yarn e headers numa camada da base; apagá-los numa camada
-# posterior não diminui nada (continuam na camada de baixo). O Node só precisa de libstdc++/libgcc.
-# `apk upgrade` traz os patches de segurança do Alpine publicados depois da imagem base.
-FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 AS runner
+# Runtime: Bun, na MESMA imagem base da api e do migrate (mesmo digest). No servidor as camadas do Alpine
+# e do Bun já existem por causa da api, então cada imagem web só traz o próprio app (~17 MB) e o Node
+# (~49 MB comprimidos) sai de vez. O Next.js reconhece o Bun (adaptador verificado desde a 16.2); aqui o
+# `server.js` do standalone roda direto no Bun, o caminho do guia de Docker do Bun. O build continua no
+# Node (estágio builder). Para voltar ao Node: runner `node:24-alpine` e `CMD ["node", ...]`.
+FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS runner
 WORKDIR /app
 
-RUN apk upgrade --no-cache \
- && apk add --no-cache libstdc++ \
- && addgroup -g 1000 node \
- && adduser -u 1000 -G node -s /bin/sh -D node
-
-COPY --from=base /usr/local/bin/node /usr/local/bin/node
+# Patches de segurança do Alpine publicados depois da imagem base.
+RUN apk upgrade --no-cache
 
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
@@ -65,12 +62,13 @@ COPY --from=builder /app/apps/backoffice/.next/static ./apps/backoffice/.next/st
 COPY --from=builder /app/apps/backoffice/public ./apps/backoffice/public
 
 # Único caminho gravável: o cache do Next (no compose é um tmpfs, com o resto do sistema em leitura).
-RUN mkdir -p /app/apps/backoffice/.next/cache && chown -R node:node /app/apps/backoffice/.next/cache
+RUN mkdir -p /app/apps/backoffice/.next/cache && chown -R bun:bun /app/apps/backoffice/.next/cache
 
-USER node
+# Usuário `bun` da imagem base (uid 1000, o mesmo do tmpfs do .next/cache no compose).
+USER bun
 EXPOSE 3000
 
-CMD ["node", "apps/backoffice/server.js"]
+CMD ["bun", "apps/backoffice/server.js"]
 
 # SHA do commit desta imagem: o proxy (src/proxy.ts) o devolve no header X-App-Version, lido em tempo de
 # execução. Por último e só como ENV, para não invalidar nenhuma camada anterior.
