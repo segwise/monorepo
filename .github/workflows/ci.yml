@@ -411,25 +411,27 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
           for f in quote safes contacts; do
-            for svc in pdf pdf-prod; do
+            # "new" = esta imagem (container pdf), "prod" = produção (container pdf-prod).
+            for side in new prod; do
+              svc=pdf; [ "$side" = prod ] && svc=pdf-prod
               docker run --rm --network pdfnet \
                 -v "$PWD/apps/pdf/test/fixtures:/fx:ro" -v "$out:/out" \
                 curlimages/curl:8.11.1 -sf -X POST "http://${svc}:3000/render" \
                 -H 'Authorization: Bearer ci-token-ci-token-1234' -H 'Content-Type: application/json' \
-                --data-binary "@/fx/${f}.json" -o "/out/${f}-${svc}.pdf"
-              pdftoppm -r 72 -png "$out/${f}-${svc}.pdf" "$out/${f}-${svc}"
+                --data-binary "@/fx/${f}.json" -o "/out/${f}-${side}.pdf"
+              pdftoppm -r 72 -png "$out/${f}-${side}.pdf" "$out/${f}-${side}"
             done
 
-            fonts_new="$(pdffonts "$out/${f}-pdf.pdf" | awk 'NR>2{print $1}' | sed 's/^[A-Z]*+//' | sort -u | paste -sd ' ')"
-            fonts_prod="$(pdffonts "$out/${f}-pdf-prod.pdf" | awk 'NR>2{print $1}' | sed 's/^[A-Z]*+//' | sort -u | paste -sd ' ')"
-            pages_new="$(ls "$out/${f}-pdf-"*.png | wc -l)"
-            pages_prod="$(ls "$out/${f}-pdf-prod-"*.png | wc -l)"
+            fonts_new="$(pdffonts "$out/${f}-new.pdf" | awk 'NR>2{print $1}' | sed 's/^[A-Z]*+//' | sort -u | paste -sd ' ')"
+            fonts_prod="$(pdffonts "$out/${f}-prod.pdf" | awk 'NR>2{print $1}' | sed 's/^[A-Z]*+//' | sort -u | paste -sd ' ')"
+            pages_new="$(ls "$out/${f}-new-"*.png | wc -l)"
+            pages_prod="$(ls "$out/${f}-prod-"*.png | wc -l)"
 
             diff=0; total=0
             if [ "$pages_new" = "$pages_prod" ]; then
-              for png in "$out/${f}-pdf-prod-"*.png; do
+              for png in "$out/${f}-prod-"*.png; do
                 page="${png##*-}"
-                ae="$(compare -metric AE "$out/${f}-pdf-${page}" "$png" "$out/${f}-diff-${page}" 2>&1 || true)"
+                ae="$(compare -metric AE "$out/${f}-new-${page}" "$png" "$out/${f}-diff-${page}" 2>&1 || true)"
                 diff=$((diff + ${ae%% *}))
                 total=$((total + $(identify -format '%w*%h' "$png")))
               done
