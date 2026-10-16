@@ -73,8 +73,13 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
   `--appendonly yes --maxmemory-policy noeviction` e *Volume Backup* para o S3 (fora do horário de
   pico; avaliar *Turn off Container* contra inconsistência de AOF), e testar a restauração.
 - [ ] **CD do mobile** (EAS Build + hot-updater por workflow).
-- [ ] Definir a variável `HEALTHCHECK_URLS` (URLs públicas definitivas) quando os domínios do compose
-  estiverem decididos.
+- [ ] **Confirmar que o banco do compose é o que tem os dados**: `GET /marketplace` na api nova devolve
+  `{"data":[],"total":0}` (lista vazia). Pode ser legítimo, mas também é o que um Postgres recém-criado
+  no Dokploy devolveria — confirme que `DATABASE_URL` aponta para o banco de produção (ou que os dados
+  foram migrados) antes de apagar o Application antigo e o banco anterior.
+- [x] O redirect `https://services.segwise.com.br/` → `http://…/services` (301) sumiu depois de desativar o
+  backend antigo (a raiz agora dá 404): vinha dele, não do compose novo.
+- [ ] Avaliar `--wait` no comando do compose no Dokploy (ver `docs/MONOREPO.md`).
 - [ ] **Confirmar no Dokploy** que `NEXT_PUBLIC_ROLE_SYSTEM` do serviço do painel interno é
   `admin` (o compose antigo dizia `backoffice`, que dá 404 nas rotas) e ajustar as
   configurações de build/compose do Dokploy para o contexto na raiz do monorepo.

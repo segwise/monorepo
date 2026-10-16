@@ -105,9 +105,11 @@ jobs:
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ needs.meta.outputs.sha }}
           # NEXT_PUBLIC_* é embutido no build do Next: a URL da API vem de uma variável do repositório.
+          # GIT_SHA vira o header X-App-Version, que o deploy confere para provar a versão no ar.
           build-args: |
             ${{ matrix.build_args }}
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            GIT_SHA=${{ needs.meta.outputs.sha }}
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,scope=${{ matrix.name }},mode=max
 
@@ -156,7 +158,9 @@ jobs:
       - name: Deploy no Dokploy e verificação
         if: ${{ steps.config.outputs.configured == 'true' }}
         env:
-          # URLs públicas (separadas por espaço) que devem responder < 500 após o deploy.
-          # Variável do repo (não segredo: são sites públicos); vazia = só espera o Dokploy.
+          # URLs públicas (separadas por espaço, cada uma com "#<status>" de HTTP exato) a conferir
+          # após o deploy. Variável do repo (não segredo: são sites públicos); vazia = só espera o Dokploy.
           HEALTHCHECK_URLS: ${{ vars.HEALTHCHECK_URLS }}
+          # Cada URL precisa devolver X-App-Version = este SHA (prova que é a versão nova no ar).
+          EXPECTED_VERSION: ${{ needs.meta.outputs.sha }}
         run: bash scripts/dokploy-deploy.sh

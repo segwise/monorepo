@@ -17,6 +17,7 @@ import {
 } from '@/server/middlewares/session';
 import { storageMiddleware } from '@/server/middlewares/storage';
 import { timezoneMiddleware } from './middlewares/timezone';
+import { versionMiddleware } from './middlewares/version';
 
 const server = new Hono<AppBindings>({
 	strict: true,
@@ -41,6 +42,9 @@ const server = new Hono<AppBindings>({
 		},
 	}),
 });
+
+// Primeiro da cadeia: o header sai em toda resposta (inclusive 404 e erros).
+server.use(versionMiddleware);
 
 server.use(trimTrailingSlash());
 

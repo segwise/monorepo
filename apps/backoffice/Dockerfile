@@ -17,8 +17,11 @@ COPY --from=pruner /app/out/full/ .
 
 ARG NEXT_PUBLIC_ROLE_SYSTEM
 ARG NEXT_PUBLIC_API_URL
+# SHA do commit: next.config.ts o embute no header X-App-Version (lido no build, não em runtime).
+ARG GIT_SHA=unknown
 ENV NEXT_PUBLIC_ROLE_SYSTEM=$NEXT_PUBLIC_ROLE_SYSTEM \
     NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    APP_VERSION=$GIT_SHA \
     NEXT_TELEMETRY_DISABLED=1
 
 RUN bun run --cwd packages/core build \

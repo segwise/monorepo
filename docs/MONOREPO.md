@@ -215,9 +215,16 @@ Dispara quando o **CI termina com sucesso na `main`** (`workflow_run`) ou à mã
    responde "Deployment queued") e então **espera o resultado**: consulta `compose.one` até
    aparecer uma execução nova e ela terminar; se terminar em `error`, o job **falha** (veja o log
    do deployment no painel do Dokploy). Depois faz um **teste de fumaça** nas URLs da variável de
-   repositório `HEALTHCHECK_URLS` (separadas por espaço; qualquer resposta HTTP < 500 conta, a api
-   devolve 404 em `/`) com até 4 min por URL, porque `up -d` devolve antes de os healthchecks do
-   compose terminarem. Sem `HEALTHCHECK_URLS` só espera o Dokploy.
+   repositório `HEALTHCHECK_URLS` (separadas por espaço), com até 4 min por URL, porque `up -d`
+   devolve antes de os healthchecks do compose terminarem. Cada entrada leva um sufixo
+   `#<status>` com o HTTP **exato** esperado (`https://…/sign-in#200`; o fragmento não vai ao
+   servidor) — sem sufixo vale qualquer resposta < 500, o que deixa passar um 404 em rota errada.
+   **Versão no ar**: a api e o backoffice devolvem o header `X-App-Version` com o SHA do commit
+   da imagem (build-arg `GIT_SHA` → `APP_VERSION`; middleware `version.ts` na api,
+   `headers()` no `next.config.ts`), em toda resposta (200, 404, redirects). O CD passa o SHA
+   publicado em `EXPECTED_VERSION` e cada URL só passa quando devolve **esse** SHA: um serviço
+   antigo, outro serviço ou um proxy sem o header no domínio reprovam o deploy. Sem
+   `HEALTHCHECK_URLS` só espera o Dokploy; sem `EXPECTED_VERSION` só confere o status.
    **Segurança**: a resposta de `compose.one` inclui o `env` do compose (todos os segredos) e o log
    das Actions é público — o script nunca a imprime, só extrai id e status com `jq`. Se os nomes de
    campo da sua versão do Dokploy forem outros, o timeout imprime os **nomes** dos campos (nunca os
@@ -306,12 +313,22 @@ gh secret set DOKPLOY_COMPOSE_ID --body '<composeId>'         # GET <dokploy>/ap
    schedulers das campanhas ativas são recriados sozinhos pela reconciliação do boot da api.
    O primeiro deploy deve ser feito à mão (*Run workflow*) e conferido nos logs.
 
-**Validado**: a chamada `compose.deploy` na sua instância (respondeu `Deployment queued`, com URL,
-composeId e token mascarados no log público). **Ainda não validado**: o acompanhamento do status
-(`compose.one`) contra o Dokploy real — foi testado contra um servidor falso (sucesso, erro, sem
-deployment novo, falha pontual da API, URL com 503, token inválido, sem vazamento de segredo). Dica
-(não verificada): em *Advanced → Command* do compose dá para usar `up -d --remove-orphans --wait`,
-que faz o próprio deploy do Dokploy falhar se os healthchecks não passarem.
+**Validado no Dokploy real**: `compose.deploy` (responde `Deployment queued`, com URL, composeId e token
+mascarados no log público) e o acompanhamento do status via `compose.one` (campos `deploymentId` e
+`status`: `running` → `done`). Os caminhos de erro (deploy em `error`, sem deployment novo, falha
+pontual da API, URL com 503, token inválido, versão antiga ou ausente, status errado) foram testados
+contra um Dokploy falso, sem vazamento de segredo.
+
+**Rotas da api em produção**: a api só responde sob `/services/…` (`basePath('/services')`); em desenvolvimento um `getPath` acrescenta esse prefixo a partir do subdomínio. Com a imagem em modo `production`, `/services/marketplace` dá 200 e `/marketplace` dá 404. No domínio público observou-se o contrário (`/marketplace` → 200, `/services/marketplace` → 404), o que indica que o proxy acrescenta o prefixo (*Internal Path* `/services` do domínio no Dokploy) — a rota pública certa é `/marketplace`. Em outra sondagem, com o domínio respondendo diferente, o mesmo caminho deu 404 e depois 200: um teste de fumaça `< 500` aceita as duas respostas e, enquanto havia um backend antigo no domínio, um `200` não provava nada sobre o compose novo. Daí o status exato (`#200`) e o header de versão.
+
+**`HEALTHCHECK_URLS`** (variável do repo): `https://services.segwise.com.br/marketplace#200` (consulta o
+banco, então cobre api + Postgres) e o `/sign-in#200` de `backoffice`, `customer` e `producer`
+(`*.segwise.com.br`).
+
+**Limites do teste de fumaça**: o `up -d` devolve antes dos healthchecks do compose terminarem —
+por isso as URLs ganham até 4 min — e o `cache` não tem URL pública. Dica (não verificada): em
+*Advanced → Command* do compose dá para usar `up -d --remove-orphans --wait`, que faz o próprio
+deploy do Dokploy falhar se algum container ficar *unhealthy*.
 
 ### Ainda a fazer
 
