@@ -8,8 +8,8 @@
 		"prebuild": "expo prebuild --clean",
 		"android": "expo run:android",
 		"ios": "expo run:ios",
-		"lint": "biome check",
-		"typecheck": "tsc --noEmit"
+		"lint": "bun --bun biome check",
+		"typecheck": "bun --bun tsc --noEmit"
 	},
 	"dependencies": {
 		"@backpackapp-io/react-native-toast": "^0.15.1",

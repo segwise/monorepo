@@ -44,7 +44,7 @@ bun install                  # instala tudo (um único bun.lock)
 bun run lint                 # turbo run lint (Biome em cada pacote)
 bun run typecheck            # turbo run typecheck
 bun run build                # turbo run build (core, backoffice)
-bun run format               # biome format --write .
+bun run format               # bun --bun biome format --write .
 bun run db:generate          # gera o client Prisma (@segwise/database)
 bun run db:status:local      # estado das migrations no banco LOCAL
 bun run db:migrate:local -- --name nome_da_mudanca
@@ -53,6 +53,12 @@ bun run db:local -- <comando do prisma>
 
 Para rodar um app: `bun run --cwd apps/api dev`, `bun run --cwd apps/backoffice dev`
 (precisa de `NEXT_PUBLIC_ROLE_SYSTEM`) ou `bun run --cwd apps/mobile ios|android`.
+
+**Tudo roda no Bun** (`bun --bun` nos scripts: Next em dev/build/start, `tsc`, Biome; api, backoffice,
+migrations e o serviço de PDF em produção). **Exceção: os comandos do Expo** (`expo prebuild`,
+`expo run:*`, Metro) no `apps/mobile` continuam no Node: o guia oficial do Expo exige Node LTS para o
+`expo prebuild` e não cobre o Metro no Bun (https://github.com/expo/expo/blob/main/docs/pages/guides/using-bun.mdx).
+Mantenha um Node LTS instalado para o mobile.
 Para rodar uma tarefa só de um pacote (com as dependências):
 `bunx turbo run typecheck --filter=@segwise/api`.
 

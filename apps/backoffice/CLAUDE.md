@@ -19,11 +19,11 @@ react-hook-form + zod (`@hookform/resolvers`), @tanstack/react-query, xior
 
 ```
 bun install
-bun run dev      # next dev
-bun run build    # next build
-bun run start    # next start
-bun run lint     # biome check
-bun run format   # biome format --write
+bun run dev      # bun --bun next dev   (tudo no runtime Bun)
+bun run build    # bun --bun next build
+bun run start    # bun --bun next start
+bun run lint     # bun --bun biome check
+bun run format   # bun --bun biome format --write
 ```
 
 Sem `bun run test` — não há testes neste repo.
@@ -117,7 +117,17 @@ usuário — não fazer sem confirmação.
 
 ## Typecheck e lint
 
-`bun run typecheck` roda `next typegen && tsc --noEmit` (gera os tipos do Next que
+`bun run typecheck` roda `next typegen && tsc --noEmit` no Bun (gera os tipos do Next que
 o `tsc` precisa). Não rode junto com `next build` (ambos escrevem em `.next/types`);
 o Turbo já serializa (`apps/backoffice/turbo.json`). Lint via Biome (config na raiz,
 aqui só ativa os domínios `next`/`react`).
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
