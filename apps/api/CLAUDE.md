@@ -170,8 +170,8 @@ Transfeera (Pix/split de pagamento). Nunca commitar segredos — só
 compose — se o app passar a gravar em disco, declare o caminho no `deploy/docker-compose.yml`), **só com dependências de produção** (camada de `node_modules` separada da de código,
 para o deploy baixar pouco — veja `docs/MONOREPO.md`#docker; qualquer pacote que o runtime execute, como o `prisma`
 do `migrate deploy`, precisa ser `dependency`) e tem
-`entrypoint.sh` (aplica `prisma migrate deploy` via `packages/database` e sobe o
-servidor). Em produção o compose é o `deploy/docker-compose.yml` da raiz (api + backoffices +
+`CMD bun --bun src/index.ts` (as migrations são o serviço `migrate` do compose, imagem
+`packages/database/Dockerfile`, que roda antes da api). Em produção o compose é o `deploy/docker-compose.yml` da raiz (api + backoffices +
 Redis de `cache` em rede interna isolada + rede externa `dokploy-network`, usando as imagens
 do GHCR); o Postgres e o Redis da fila (BullMQ) são Databases do Dokploy, fora dele. Não há mais script `deploy`:
 subir versão é ação do usuário (ver [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md#deploy-é-uma-ação-do-usuário)) —

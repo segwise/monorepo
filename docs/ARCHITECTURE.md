@@ -156,8 +156,8 @@ mesmo Next.js app (`(auth)` route groups).
   imagens no GHCR (`ghcr.io/segwise/{api,backoffice,customer,producer}`) e o Dokploy roda **um
   compose único** (`deploy/docker-compose.yml`: api, backoffice, customer, producer e o Redis `cache` em rede
   interna) numa rede Docker externa `dokploy-network`. O **Postgres e o Redis da fila ficam fora do
-  compose**, como Databases do Dokploy (backup e ciclo de vida independentes do deploy). O `entrypoint.sh` do api aplica as migrations (`prisma migrate deploy`)
-  ao subir. Detalhes em [`MONOREPO.md`](MONOREPO.md#cicd).
+  compose**, como Databases do Dokploy (backup e ciclo de vida independentes do deploy). As migrations (`prisma migrate deploy`) rodam no serviço `migrate`
+  (imagem `ghcr.io/segwise/migrate`), que termina antes de a api subir. Detalhes em [`MONOREPO.md`](MONOREPO.md#cicd).
 - **mobile**: sem Docker (é app mobile). Build/submit via `eas.json`
   (perfis development/preview/production). Updates OTA via `hot-updater`
   (bucket S3 próprio, fora do fluxo de loja).

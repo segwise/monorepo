@@ -127,8 +127,8 @@ docker build -f apps/backoffice/Dockerfile \
   -t segwise-backoffice .
 ```
 
-- **api**: o `entrypoint.sh` roda `prisma migrate deploy` (pelo
-  `packages/database`) e depois `bun run start`. Workdir `/app/apps/api`.
+- **api**: `bun --bun src/index.ts` (Workdir `/app/apps/api`). As migrations são outra imagem,
+  `packages/database/Dockerfile` (`ghcr.io/segwise/migrate`), que o compose roda antes da api.
   **Camadas pensadas para o deploy baixar pouco**: o servidor precisa baixar de novo toda camada que
   mudou desde o último deploy. Antes, um único `COPY /app` de 1,4 GB juntava o `node_modules`
   (quase nunca muda) com o código (~10 MB, muda a cada commit), e todo deploy baixava tudo de novo.
@@ -246,9 +246,10 @@ precisa estar público no GHCR (como `api`/`backoffice`). Os parágrafos abaixo 
 queries do PostgreSQL), dos binários nativos glibc (a imagem é musl) e de `.d.ts`/`.map`/`.md`. O estágio
 `verify` do Dockerfile empacota a api com `bun build` contra o resultado: se faltar algo que o código importa,
 o build da imagem falha. As migrations ganharam imagem própria (`packages/database/Dockerfile`,
-`ghcr.io/segwise/migrate`), testada no `smoke-api` (aplica todas as migrations num banco vazio). Nesta etapa a
-api ainda roda `migrate deploy` no entrypoint; a troca para um serviço `migrate` no compose (e a saída do CLI
-do Prisma da api) vem na etapa seguinte, depois de o pacote `migrate` ficar público no GHCR.
+`ghcr.io/segwise/migrate`), testada no `smoke-api` (aplica todas as migrations num banco vazio). No compose, o
+serviço `migrate` roda a cada deploy antes da api (`depends_on: service_completed_successfully`: migration com
+erro interrompe o deploy com a api anterior no ar), e a api não tem mais o CLI do Prisma (o `smoke-api` falha
+se ele voltar). O pacote do GHCR herda a visibilidade pública do repositório.
 
 O **primeiro deploy** depois destas mudanças baixa as camadas novas (bases e Chromium); os seguintes voltam a
 ser incrementais.

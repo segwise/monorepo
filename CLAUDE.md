@@ -74,7 +74,7 @@ Nunca aplique migration no banco do `.env` do `apps/api` (é o remoto/produção
 Em desenvolvimento use sempre o banco local via `bun run db:status:local` /
 `db:migrate:local` — detalhes e salvaguardas em
 [`apps/api/CLAUDE.md`](apps/api/CLAUDE.md#migrations). A produção recebe a
-migration pelo deploy (o `entrypoint.sh` do api roda `prisma migrate deploy`),
+migration pelo deploy (o serviço `migrate` do compose roda `prisma migrate deploy` antes da api),
 feito pelo usuário.
 
 ## Stack comum
