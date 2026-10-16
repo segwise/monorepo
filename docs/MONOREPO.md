@@ -144,14 +144,14 @@ docker build -f apps/backoffice/Dockerfile \
   `better-auth/next-js`, tire essa linha do Dockerfile).
   O compose baixa as imagens **em paralelo** (`Pulling` das 4 juntas): o tempo do pull é o da maior
   imagem, e os backoffices só sobem depois que a api fica saudável (`depends_on`).
-- **backoffice**: Next `standalone` com `outputFileTracingRoot` na raiz; build no Node 24 e o
-  servidor roda no **Bun** (`bun apps/backoffice/server.js`), na mesma imagem base da api
+- **backoffice**: Next `standalone` com `outputFileTracingRoot` na raiz; build (`bun --bun next build`)
+  e servidor (`bun apps/backoffice/server.js`) no **Bun**, na mesma imagem base da api
   (`oven/bun:1.4.3-alpine`, mesmo digest): no servidor as camadas do Alpine e do Bun são
   compartilhadas e cada imagem web só traz o app. O Next.js lista o Bun como adaptador verificado
   (16.2+, https://nextjs.org/docs/app/getting-started/deploying); rodar o standalone no Bun é o caminho
   do guia de Docker do Bun. O `smoke-web` cobre login, proxy (redirect e header de versão), chunks
-  estáticos, `/images`, `next/image` (sharp) e o healthcheck do compose. Voltar ao Node: runner
-  `node:24-alpine` + `CMD ["node", ...]` e healthcheck do compose com `node`.
+  estáticos, `/images`, `next/image` (sharp) e o healthcheck do compose. Voltar ao Node: base
+  `node:24-alpine`, script build sem `bun --bun`, `CMD ["node", ...]` e healthcheck do compose com `node`.
 - **`NEXT_PUBLIC_ROLE_SYSTEM` valores válidos: `admin`, `customer`, `producer`.**
   (`admin` = backoffice interno; `backoffice` **não** é um valor válido — dá 404
   em todas as rotas porque o proxy reescreve para `/${ROLE}/...` e a pasta é
@@ -198,7 +198,11 @@ build local**: o `next build` sob Node 24 usa bem mais memória que sob Node 22 
 3,8 GB passou em 2 de 7 tentativas (no Node 22 passou sempre) e, pior, o *OOM killer* da VM derrubou outros
 containers. No CI (16 GB) não é problema e o servidor só puxa a imagem pronta; para buildar a imagem
 localmente, dê **pelo menos 6 GB** ao Docker. Um teto de heap (`--max-old-space-size`) não ajudou nos
-testes e arrisca quebrar o build no CI, por isso não foi adotado.
+testes e arrisca quebrar o build no CI, por isso não foi adotado. **Atualização:** o backoffice passou a
+buildar e rodar no Bun (ver "backoffice" na seção Docker). Medido num Mac, 3 builds de cada, sem cache:
+Node 23–25 s e pico de 1,30–1,42 GB; Bun 21–30 s e pico de 1,46–1,78 GB. O build no Bun não é mais rápido
+e usa um pouco mais de memória; a escolha é por consistência (pré-render do build e render em runtime no
+mesmo motor). Os 6 GB para o Docker local continuam valendo.
 
 **`/dev/shm` e `tmpfs`**: a api tem `shm_size: 256m` (o padrão do Docker é 64 MB e o Chromium usa
 `/dev/shm` entre processos; o pool tem até 6 contextos). **Precaução, não correção comprovada**: tentei
