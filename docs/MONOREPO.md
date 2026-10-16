@@ -426,6 +426,14 @@ deploy do Dokploy falhar se algum container ficar *unhealthy*.
 
 ### Atualizar o Bun
 
+**Exemplo real do que o `smoke-api` pegou**: ao subir para o Bun 1.4.3 (imagem em Alpine 3.24, com
+**Chromium 152**), os builds passaram e a api subiu, mas o **Chromium abortava na inicialização**
+(`SIGTRAP`, `chrome_crashpad_handler: --database is required`): o Chromium novo não tolera mais não
+conseguir criar o diretório padrão de configuração/crash dumps (`~/.config/chromium`), e com a raiz só
+leitura do compose isso falhava. Em produção isso teria **quebrado todos os PDFs sem que nenhum health
+check percebesse** (a api respondia normalmente). A correção está no Dockerfile da api:
+`XDG_CONFIG_HOME=/tmp/.config` e `XDG_CACHE_HOME=/tmp/.cache` (o `/tmp` é `tmpfs` gravável).
+
 A versão do Bun vive em **quatro** lugares que precisam andar juntos: `packageManager` (`package.json`),
 `bun-version` nos jobs do `ci.yml` e as imagens `oven/bun:<versão>-alpine@sha256:…` dos dois Dockerfiles
 (`apps/api` — o Bun é o **runtime** da api — e `apps/backoffice`, só para o build). O Dependabot **ignora**
