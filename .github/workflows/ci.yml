@@ -158,8 +158,11 @@ jobs:
           build-args: |
             NEXT_PUBLIC_ROLE_SYSTEM=admin
             NEXT_PUBLIC_API_URL=http://localhost:3000
-          cache-from: type=gha,scope=${{ matrix.app }}
-          cache-to: type=gha,scope=${{ matrix.app }},mode=max
+          # api, pdf e migrate buildam igual no CI e no CD: o escopo é compartilhado e o CD reaproveita o que
+          # o CI da main já buildou. O backoffice NÃO: aqui ele usa a URL de API fictícia, e gravar no escopo
+          # do CD sobrescreveria o cache dele (o CD refaria o `next build` a cada deploy). Escopo próprio.
+          cache-from: type=gha,scope=${{ matrix.app == 'backoffice' && 'ci-backoffice' || matrix.app }}
+          cache-to: type=gha,scope=${{ matrix.app == 'backoffice' && 'ci-backoffice' || matrix.app }},mode=max
 
   # Sobe a imagem REAL da api com as mesmas restrições de produção (raiz só leitura, sem capabilities,
   # tmpfs) contra Postgres e Redis de serviço e confere o que o build sozinho não pega: migrations no
@@ -599,7 +602,7 @@ jobs:
             NEXT_PUBLIC_ROLE_SYSTEM=admin
             NEXT_PUBLIC_API_URL=http://localhost:3000
             GIT_SHA=ci-${{ github.sha }}
-          cache-from: type=gha,scope=backoffice
+          cache-from: type=gha,scope=ci-backoffice
 
       - name: Tamanho da imagem (resumo)
         if: github.event_name != 'pull_request' || steps.changes.outputs.web == 'true'
