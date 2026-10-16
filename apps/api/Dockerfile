@@ -56,6 +56,11 @@ ENV NODE_ENV=production
 ENV TZ=UTC
 ENV PORT=3000
 
+# SHA do commit desta imagem: sai no header X-App-Version (ver middlewares/version.ts). Fica no
+# fim do último estágio para não invalidar o cache das camadas de instalação/build.
+ARG GIT_SHA=unknown
+ENV APP_VERSION=$GIT_SHA
+
 EXPOSE 3000
 
 RUN chmod +x ./entrypoint.sh

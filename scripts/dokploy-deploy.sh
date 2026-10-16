@@ -7,9 +7,15 @@
 #   COMPOSE_ID       composeId do compose (GET /api/project.all)
 #
 # Opcionais:
-#   HEALTHCHECK_URLS             URLs públicas (separadas por espaço) que devem responder < 500
-#                                depois do deploy (qualquer resposta HTTP abaixo de 500 conta: a api
-#                                devolve 404 em "/"). Vazio = pula o teste de fumaça.
+#   HEALTHCHECK_URLS             URLs públicas (separadas por espaço) a verificar depois do deploy. Cada
+#                                entrada pode ter um sufixo "#<status>" com o HTTP EXATO esperado, ex.:
+#                                https://x.com/sign-in#200 (o fragmento não é enviado ao servidor). Sem
+#                                sufixo, qualquer resposta abaixo de 500 serve. Prefira o status exato:
+#                                "< 500" deixa passar um 404 numa rota errada. Vazio = pula esta etapa.
+#   EXPECTED_VERSION             SHA do commit que acabou de ser publicado. Se definido, cada URL tem
+#                                que devolver o header "X-App-Version" igual a ele: prova que é a
+#                                versão NOVA respondendo (uma antiga ou outro serviço no domínio
+#                                reprova). Vazio = só confere o status.
 #   DEPLOY_TIMEOUT_SECONDS       espera pelo deploy do Dokploy (padrão 900)
 #   HEALTHCHECK_TIMEOUT_SECONDS  espera pelas URLs (padrão 240)
 #   POLL_INTERVAL_SECONDS        intervalo entre consultas (padrão 10)
@@ -26,6 +32,7 @@ set -euo pipefail
 : "${DOKPLOY_API_KEY:?DOKPLOY_API_KEY não definida}"
 : "${COMPOSE_ID:?COMPOSE_ID não definida}"
 HEALTHCHECK_URLS="${HEALTHCHECK_URLS:-}"
+EXPECTED_VERSION="${EXPECTED_VERSION:-}"
 DEPLOY_TIMEOUT_SECONDS="${DEPLOY_TIMEOUT_SECONDS:-900}"
 HEALTHCHECK_TIMEOUT_SECONDS="${HEALTHCHECK_TIMEOUT_SECONDS:-240}"
 POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-10}"
@@ -108,22 +115,44 @@ if [ -z "${HEALTHCHECK_URLS}" ]; then
 fi
 
 # `up -d` devolve assim que os containers iniciam; os healthchecks do compose ainda podem estar
-# rodando, então as URLs ganham um tempo para responder.
-for url in ${HEALTHCHECK_URLS}; do
-	echo "→ verificando ${url}"
+# rodando (e o container antigo pode demorar a sair), então as URLs ganham um tempo para responder
+# com o status esperado e a versão nova.
+for entry in ${HEALTHCHECK_URLS}; do
+	url="${entry%%#*}"
+	expected_status=""
+	if [[ "${entry}" == *"#"* ]]; then
+		expected_status="${entry##*#}"
+	fi
+
+	echo "→ verificando ${url}${expected_status:+ (esperado HTTP ${expected_status})}"
 	deadline=$((SECONDS + HEALTHCHECK_TIMEOUT_SECONDS))
-	code="000"
 	while :; do
-		code="$(curl --silent --output /dev/null --max-time 15 --write-out '%{http_code}' "${url}" || true)"
-		if [ "${code}" != "000" ] && [ "${code}" -lt 500 ]; then
-			echo "  ${url} → HTTP ${code}"
+		# Cabeçalhos em stdout (-D -) e o status ao final; o corpo é descartado.
+		response="$(curl --silent --output /dev/null --dump-header - --max-time 15 \
+			--write-out 'HTTPCODE:%{http_code}' "${url}" || true)"
+		code="${response##*HTTPCODE:}"
+		version="$(printf '%s' "${response}" | tr -d '\r' |
+			awk -F': ' 'tolower($1) == "x-app-version" { print $2; exit }')"
+
+		if [ -n "${expected_status}" ]; then
+			status_ok=$([ "${code}" = "${expected_status}" ] && echo 1 || echo 0)
+		else
+			status_ok=$([ "${code}" != "000" ] && [ "${code}" -lt 500 ] && echo 1 || echo 0)
+		fi
+		version_ok=1
+		if [ -n "${EXPECTED_VERSION}" ] && [ "${version}" != "${EXPECTED_VERSION}" ]; then
+			version_ok=0
+		fi
+
+		if [ "${status_ok}" = 1 ] && [ "${version_ok}" = 1 ]; then
+			echo "  ${url} → HTTP ${code}${EXPECTED_VERSION:+, versão ${version:0:7}}"
 			break
 		fi
 		if [ "${SECONDS}" -ge "${deadline}" ]; then
-			echo "::error::${url} não respondeu (último HTTP ${code}) em ${HEALTHCHECK_TIMEOUT_SECONDS}s depois do deploy."
+			echo "::error::${url} não ficou correta em ${HEALTHCHECK_TIMEOUT_SECONDS}s: último HTTP ${code}, versão ${version:-ausente}${EXPECTED_VERSION:+ (esperado ${EXPECTED_VERSION})}."
 			exit 1
 		fi
 		sleep "${POLL_INTERVAL_SECONDS}"
 	done
 done
-echo "✔ todas as URLs responderam"
+echo "✔ todas as URLs responderam${EXPECTED_VERSION:+ na versão ${EXPECTED_VERSION:0:7}}"
