@@ -46,6 +46,14 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
+      # O CSS dos PDFs é gerado e versionado (antes vinha do CDN do Tailwind a cada PDF): falha se
+      # alguém mudou classes nos templates sem rodar `bun run pdf:styles` em apps/api.
+      - name: CSS dos PDFs em dia
+        run: |
+          bun run --cwd apps/api pdf:styles
+          git diff --exit-code -- apps/api/src/libraries/pdf/styles.generated.ts \
+            || { echo "::error::Rode 'bun run pdf:styles' em apps/api e comite styles.generated.ts"; exit 1; }
+
       # Em PR roda só o que mudou em relação à base; em push na main roda tudo.
       - name: turbo run lint typecheck build (afetados)
         if: github.event_name == 'pull_request'

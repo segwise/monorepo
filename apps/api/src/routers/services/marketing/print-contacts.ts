@@ -4,6 +4,7 @@ import hbs from 'handlebars';
 import { PDFDocument } from 'pdf-lib';
 import z from 'zod';
 import type { Server } from '@/@types/server';
+import { PDF_STYLES } from '@/libraries/pdf/styles.generated';
 
 // Lista para conferência manual em papel: só nome, e-mail e celular, mais
 // campos em branco (responsável e celular do responsável) e um quadrado para
@@ -13,7 +14,7 @@ const htmlText = `
     <head>
       <meta charset='UTF-8' />
       <title>{{title}}</title>
-      <script src='https://cdn.tailwindcss.com'></script>
+      <style>${PDF_STYLES}</style>
     </head>
     <body class='text-black' style='margin: 0; padding: 12px;'>
       <div class='border border-black px-1 py-0.5 mb-1'>

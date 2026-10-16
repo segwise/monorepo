@@ -1,6 +1,13 @@
 {
 	"root": false,
 	"extends": "//",
+	"files": {
+		"includes": [
+			"**",
+			"!src/libraries/pdf/styles.generated.ts",
+			"!src/libraries/pdf/tailwind.css"
+		]
+	},
 	"overrides": [
 		{
 			"includes": ["**/*.svg"],
