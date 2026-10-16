@@ -306,12 +306,19 @@ gh secret set DOKPLOY_COMPOSE_ID --body '<composeId>'         # GET <dokploy>/ap
    schedulers das campanhas ativas são recriados sozinhos pela reconciliação do boot da api.
    O primeiro deploy deve ser feito à mão (*Run workflow*) e conferido nos logs.
 
-**Validado**: a chamada `compose.deploy` na sua instância (respondeu `Deployment queued`, com URL,
-composeId e token mascarados no log público). **Ainda não validado**: o acompanhamento do status
-(`compose.one`) contra o Dokploy real — foi testado contra um servidor falso (sucesso, erro, sem
-deployment novo, falha pontual da API, URL com 503, token inválido, sem vazamento de segredo). Dica
-(não verificada): em *Advanced → Command* do compose dá para usar `up -d --remove-orphans --wait`,
-que faz o próprio deploy do Dokploy falhar se os healthchecks não passarem.
+**Validado no Dokploy real**: `compose.deploy` (responde `Deployment queued`, com URL, composeId e token
+mascarados no log público), o acompanhamento do status via `compose.one` (campos `deploymentId` e
+`status`: `running` → `done`) e o teste de fumaça das URLs oficiais. A variável de repositório
+`HEALTHCHECK_URLS` está definida com `https://services.segwise.com.br/marketplace` (consulta o banco,
+então cobre api + Postgres) e o `/sign-in` de `backoffice`, `customer` e `producer`
+(`*.segwise.com.br`). Os caminhos de erro (deploy em `error`, sem deployment novo, falha pontual da
+API, URL com 503, token inválido) foram testados contra um Dokploy falso, sem vazamento de segredo.
+
+**Limites do teste de fumaça**: ele não distingue a versão antiga da nova (as duas respondem), e o
+`up -d` devolve antes dos healthchecks do compose terminarem — por isso as URLs ganham até 4 min.
+Dica (não verificada): em *Advanced → Command* do compose dá para usar
+`up -d --remove-orphans --wait`, que faz o próprio deploy do Dokploy falhar se algum container ficar
+*unhealthy* (cobre também o `cache`, que não tem URL pública).
 
 ### Ainda a fazer
 
