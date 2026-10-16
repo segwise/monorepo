@@ -6,7 +6,7 @@
 		"dev": "PORT=${PORT:-3100} bun --watch src/index.ts",
 		"start": "bun src/index.ts",
 		"lint": "bun --bun biome check",
-		"typecheck": "bun --bun tsc --noEmit"
+		"typecheck": "bun check"
 	},
 	"dependencies": {
 		"playwright-core": "^1.62.1",

@@ -54,6 +54,14 @@ bun run db:local -- <comando do prisma>
 Para rodar um app: `bun run --cwd apps/api dev`, `bun run --cwd apps/backoffice dev`
 (precisa de `NEXT_PUBLIC_ROLE_SYSTEM`) ou `bun run --cwd apps/mobile ios|android`.
 
+**Typecheck é o `bun check`** (Bun 1.4.3, mesmas regras do TypeScript 7): o `typescript` 5.9 continua
+instalado para o editor, o `next build` e o build do `core`. Imports de CSS precisam casar com uma
+declaração `*.css` (use o caminho do arquivo, ex.: `@/styles/globals.css`).
+
+**Cadeia de suprimentos** (`bunfig.toml`): `minimumReleaseAge` de 3 dias, então `bun add`/`bun update` não
+pegam versões publicadas há menos tempo (o erro "blocked by minimum-release-age" é esperado; espere o
+prazo). O workflow Security roda `bun audit` toda semana (exceções documentadas no próprio workflow).
+
 **Tudo roda no Bun** (`bun --bun` nos scripts: Next em dev/build/start, `tsc`, Biome; em produção, as
 imagens da api, do backoffice, das migrations e do serviço de PDF). **Exceção: os comandos do Expo** (`expo prebuild`,
 `expo run:*`, Metro) no `apps/mobile` continuam no Node: o guia oficial do Expo exige Node LTS para o

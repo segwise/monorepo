@@ -9,7 +9,7 @@
 		"auth:generate": "bun x --bun @better-auth/cli generate --config src/services/auth/index.ts",
 		"auth:migrate": "bun x --bun @better-auth/cli migrate --config src/services/auth/index.ts",
 		"lint": "bun --bun biome check",
-		"typecheck": "bun --bun tsc --noEmit",
+		"typecheck": "bun check",
 		"pdf:styles": "bun run scripts/build-pdf-styles.ts"
 	},
 	"devDependencies": {

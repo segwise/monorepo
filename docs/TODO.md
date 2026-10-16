@@ -113,6 +113,20 @@ Ver [`ARCHITECTURE.md`](ARCHITECTURE.md) — seção de incertezas:
 - [ ] Localizar/entender o app "xcar" (mencionado via `IOS_XCAR_APP_URL` /
   `ANDROID_XCAR_APP_URL` no `.env.example` do `apps/api`) — não está neste monorepo.
 
+## Dependências (aguardando o `minimumReleaseAge` de 3 dias do `bunfig.toml`)
+
+Publicadas entre 2026-10-13 e 2026-10-15, bloqueadas pela regra até completarem 3 dias. Atualizar a partir
+de **2026-10-19** (`bun update <pacote>` em cada workspace, conferir o CI):
+
+- [ ] `@react-email/ui` → 6.11.3 (devDependency da api): troca o `next@16.3.3` com GHSA-vcvr-r3jv-pc5j
+  (crítica) e GHSA-cjq9-62q9-8jv4 pelo 16.4.1. Depois, **remover essas duas exceções** do `bun audit` em
+  `.github/workflows/security.yml`.
+- [ ] `react-email` 6.11.3, `resend` 6.34.1, `openai` 7.35.0 (api).
+- [ ] `better-auth` 1.7.10 (api e backoffice).
+- [ ] `prisma`, `@prisma/client` e `@prisma/adapter-pg` 7.10.1 juntos (o dist-tag `latest` do `prisma` aponta
+  para um 8.0.0-rc: use a versão explícita).
+- [ ] `turbo` 2.11.9.
+
 ---
 
 Quando um item for resolvido, marcar o checkbox e mover para um changelog

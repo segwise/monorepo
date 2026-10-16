@@ -1,0 +1,5 @@
+[install]
+# Cadeia de suprimentos: só instala versões publicadas há pelo menos 3 dias (259200 s). Pacote
+# comprometido costuma ser detectado e retirado do npm nesse prazo. Vale para `bun add`/`bun update` e
+# para qualquer resolução nova; o `bun install --frozen-lockfile` do CI/Docker usa o que já está no lock.
+minimumReleaseAge = 259200
