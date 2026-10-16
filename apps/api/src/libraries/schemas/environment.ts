@@ -10,6 +10,10 @@ const SchemaEnvironment = z.object({
 	QUEUE_URL: z.url('QUEUE_URL inválido'),
 	BASE_URL: z.url('BASE_URL inválido'),
 	AUTH_SECRET: z.string('AUTH_SECRET inválido'),
+	PDF_SERVICE_URL: z.url('PDF_SERVICE_URL inválido'),
+	PDF_SERVICE_TOKEN: z
+		.string('PDF_SERVICE_TOKEN inválido')
+		.min(16, 'PDF_SERVICE_TOKEN precisa ter ao menos 16 caracteres'),
 	MINIO_ENDPOINT: z.url('MINIO_ENDPOINT inválido'),
 	MINIO_ACCESS_KEY: z.string('MINIO_ACCESS_KEY inválido'),
 	MINIO_SECRET_KEY: z.string('MINIO_SECRET_KEY inválido'),

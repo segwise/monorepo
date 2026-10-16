@@ -83,7 +83,7 @@ Ver [`MONOREPO.md`](MONOREPO.md) para o contexto.
   esquema interno `http://`. Cosmético (nenhum cliente usa a raiz), mas dá para tratar com uma rota `/`
   explícita ou respeitando `X-Forwarded-Proto`. (Eu havia anotado antes que isso vinha do backend antigo — estava errado.)
 - [ ] Avaliar `--wait` no comando do compose no Dokploy (ver `docs/MONOREPO.md`).
-- [ ] Chromium da api sem `--no-sandbox`: tentado e não habilitado (ver `docs/MONOREPO.md#hardening-das-imagens-e-do-runtime`);
+- [ ] Chromium (serviço pdf) sem `--no-sandbox`: tentado e não habilitado (ver `docs/MONOREPO.md#hardening-das-imagens-e-do-runtime`);
   retomar só testando no servidor real do Dokploy (kernel, AppArmor, `seccomp`).
 - [ ] Remover os `overrides` de `mysql2`/`deepmerge-ts` (raiz) quando o Prisma subir de versão e já trouxer as
   versões corrigidas.

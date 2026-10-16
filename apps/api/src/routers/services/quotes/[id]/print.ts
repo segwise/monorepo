@@ -12,6 +12,7 @@ import { PDFDocument } from 'pdf-lib';
 import type { Server } from '@/@types/server.d';
 import { selectPrisma } from '@/libraries/database/adapters/quote/print';
 import { serializer } from '@/libraries/database/serializers/quote/print';
+import { renderPdf } from '@/libraries/pdf/client';
 import { toDataUri } from '@/libraries/pdf/inline-image';
 import { PDF_STYLES } from '@/libraries/pdf/styles.generated';
 import { getPresignedUrl } from '@/libraries/s3/get-presigned-url';
@@ -778,24 +779,13 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 			}),
 		});
 
-		const { page, release } = await ctx.browser();
-
 		try {
-			await page.setContent(content, {
-				waitUntil: 'networkidle',
-				timeout: 15000,
-			});
-
-			const pdfBuffer = await page.pdf({
+			const pdfBuffer = await renderPdf(content, {
 				pageRanges: '1',
 				format: 'A4',
 				printBackground: true,
-				margin: {
-					left: 0,
-					top: 0,
-					right: 0,
-					bottom: 0,
-				},
+				margin: { left: '0px', top: '0px', right: '0px', bottom: '0px' },
+				timeoutMs: 15000,
 			});
 
 			const pdf = await PDFDocument.load(pdfBuffer);
@@ -815,8 +805,6 @@ function registerRoutersServicesQuotesByIdPrint(server: Server) {
 			});
 		} catch {
 			return ctx.json({ message: 'Erro ao gerar PDF' }, 500);
-		} finally {
-			await release();
 		}
 	});
 }
