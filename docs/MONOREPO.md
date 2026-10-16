@@ -163,9 +163,9 @@ api 4 → 0**. O que foi feito:
   dependências internas do CLI do Prisma (fixadas por ele) com CVE HIGH: o `overrides` da raiz força as
   versões corrigidas (`migrate deploy` e `validate` testados com elas). **Remova os `overrides` quando
   o Prisma subir de versão e já trouxer as corrigidas.**
-- **Imagens base fixadas por digest** (`oven/bun:1.4.2-alpine@sha256:…`, `node:22-alpine@sha256:…`): a
+- **Imagens base fixadas por digest** (`oven/bun:1.4.2-alpine@sha256:…`, `node:24-alpine@sha256:…`): a
   tag pode mudar sem aviso. O **Dependabot** (`.github/dependabot.yml`) abre PR semanal para atualizar
-  os digests e as GitHub Actions. O backoffice saiu do Node 22.14.0 (Alpine 3.21) para o 22.23.3 (Alpine
+  os digests e as GitHub Actions. O backoffice saiu do Node 22.14.0 (Alpine 3.21) para o 24.22.0 LTS (Alpine
   3.24); `apk upgrade` no build traz os patches do SO (OpenSSL).
 - **Sem npm/yarn/corepack no runtime do backoffice**: o servidor só executa `node`, e o npm embutido
   trazia pacotes vulneráveis (`tar`) e superfície de ataque sem uso. O `bun` do build é copiado da imagem
@@ -187,12 +187,38 @@ api 4 → 0**. O que foi feito:
   e falha se surgir HIGH/CRITICAL com correção, porque novas CVEs aparecem depois da build. Também roda
   sob demanda (*Actions → Security → Run workflow*).
 
-**Não feito / limites**: o Chromium da api segue com `--no-sandbox` (como já era; o container sem
-capabilities e com raiz só leitura limita o estrago, mas o sandbox do navegador está desligado e o HTML que
-ele renderiza vem de templates com dados de usuário); `/dev/shm` está no padrão de 64 MB (sem
-`--disable-dev-shm-usage` nem `shm_size`); Node 22 está em manutenção — migrar para o 24 LTS é uma
-mudança de runtime à parte. O **primeiro deploy** depois desta mudança baixa as camadas novas (bases e
-Chromium); os seguintes voltam a ser incrementais.
+**Node 24 LTS no backoffice** (`node:24-alpine`, Node 24.22.0; o Next exige só `>=20.9`). **Atenção ao
+build local**: o `next build` sob Node 24 usa bem mais memória que sob Node 22 — numa VM do Docker de
+3,8 GB passou em 2 de 7 tentativas (no Node 22 passou sempre) e, pior, o *OOM killer* da VM derrubou outros
+containers. No CI (16 GB) não é problema e o servidor só puxa a imagem pronta; para buildar a imagem
+localmente, dê **pelo menos 6 GB** ao Docker. Um teto de heap (`--max-old-space-size`) não ajudou nos
+testes e arrisca quebrar o build no CI, por isso não foi adotado.
+
+**`/dev/shm` e `tmpfs`**: a api tem `shm_size: 256m` (o padrão do Docker é 64 MB e o Chromium usa
+`/dev/shm` entre processos; o pool tem até 6 contextos). **Precaução, não correção comprovada**: tentei
+reproduzir queda com uma página pesada (40 canvases de 2400²) e o Chromium aguentou nos 64 MB; o teste com 6
+páginas em paralelo era pesado demais para a VM e foi interrompido. Os `tmpfs` agora têm teto de tamanho
+(`/tmp` 256 MB na api e 64 MB no web, `~/.cache` 128 MB, `.next/cache` 256 MB): sem `size`, um `tmpfs` pode
+chegar a metade da RAM do servidor.
+
+**Sandbox do Chromium (api) — tentado e NÃO habilitado.** O Playwright já passa `--no-sandbox` por padrão
+(`chromiumSandbox: false`) e o código também. Com o `seccomp` padrão do Docker e `cap_drop: ALL` o sandbox
+nem inicia (`Failed to move to new namespace: Operation not permitted`). Um perfil mínimo (padrão do Docker
++ `clone`/`unshare`/`setns`) destravou a criação do namespace, mas o Chromium parou em
+`sys_chroot("/proc/self/fdinfo/")` (ENOENT) na Docker Desktop — depende do kernel, do `/proc` e do AppArmor
+do host, e o servidor de produção não foi testado. O perfil oficial do Playwright liberaria também
+`io_uring` e `socket` sem filtro. Como ligar o sandbox exigiria um perfil `seccomp` próprio (mais
+superfície no kernel para o container inteiro), com fallback e teste no servidor real, e o risco prático é
+baixo, a decisão foi **manter `--no-sandbox`** com as camadas de contenção já feitas. Evidências do risco: o
+Chromium só renderiza HTML montado pela própria api (`page.setContent` nas 3 rotas de impressão: propostas,
+cotações e contatos), nunca navega para URLs de terceiros; os templates usam Handlebars `{{ }}` (escapa HTML)
+sem `{{{ }}}`/`SafeString`/`noEscape`; o container roda sem root, sem capabilities, com raiz só leitura e
+`no-new-privileges`. Para retomar: testar no servidor do Dokploy (`uname -r`, AppArmor
+`kernel.apparmor_restrict_unprivileged_userns`) um `docker run` com `chromiumSandbox: true` e um perfil
+mínimo, e só então ligar no compose com fallback para `--no-sandbox` registrado em log.
+
+O **primeiro deploy** depois destas mudanças baixa as camadas novas (bases e Chromium); os seguintes voltam a
+ser incrementais.
 
 ## Mobile (Expo)
 

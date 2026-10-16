@@ -52,9 +52,13 @@ services:
     pull_policy: always
     restart: unless-stopped
     # Chromium (PDF) grava perfil/temporários em /tmp e no cache do usuário (uid 10001, ver Dockerfile).
+    # O Chromium usa /dev/shm para memória compartilhada entre processos; o padrão do Docker é 64 MB e
+    # páginas grandes (PDFs longos) derrubam a aba ("Aw, Snap"/crash). Tetos nos tmpfs evitam que um
+    # processo descontrolado consuma a RAM do servidor (tmpfs sem `size` pode chegar a metade da RAM).
+    shm_size: 256m
     tmpfs:
-      - /tmp
-      - /home/appuser/.cache:uid=10001,gid=10001
+      - /tmp:size=256m
+      - /home/appuser/.cache:size=128m,uid=10001,gid=10001
     depends_on:
       cache:
         condition: service_healthy
@@ -120,8 +124,8 @@ services:
     restart: unless-stopped
     # Único caminho que o Next grava em runtime é o cache (uid 1000 = `node`).
     tmpfs:
-      - /tmp
-      - /app/apps/backoffice/.next/cache:uid=1000,gid=1000
+      - /tmp:size=64m
+      - /app/apps/backoffice/.next/cache:size=256m,uid=1000,gid=1000
     depends_on:
       api:
         condition: service_healthy
@@ -139,8 +143,8 @@ services:
     restart: unless-stopped
     # Único caminho que o Next grava em runtime é o cache (uid 1000 = `node`).
     tmpfs:
-      - /tmp
-      - /app/apps/backoffice/.next/cache:uid=1000,gid=1000
+      - /tmp:size=64m
+      - /app/apps/backoffice/.next/cache:size=256m,uid=1000,gid=1000
     depends_on:
       api:
         condition: service_healthy
@@ -158,8 +162,8 @@ services:
     restart: unless-stopped
     # Único caminho que o Next grava em runtime é o cache (uid 1000 = `node`).
     tmpfs:
-      - /tmp
-      - /app/apps/backoffice/.next/cache:uid=1000,gid=1000
+      - /tmp:size=64m
+      - /app/apps/backoffice/.next/cache:size=256m,uid=1000,gid=1000
     depends_on:
       api:
         condition: service_healthy
