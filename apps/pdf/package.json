@@ -1,0 +1,19 @@
+{
+	"name": "@segwise/pdf",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "node --disable-warning=ExperimentalWarning --watch src/index.ts",
+		"start": "node --disable-warning=ExperimentalWarning src/index.ts",
+		"lint": "biome check",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"playwright-core": "^1.62.1",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@types/node": "^24.0.0",
+		"typescript": "^5.9.3"
+	}
+}

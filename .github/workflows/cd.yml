@@ -65,6 +65,9 @@ jobs:
           - name: api
             dockerfile: apps/api/Dockerfile
             build_args: ''
+          - name: pdf
+            dockerfile: apps/pdf/Dockerfile
+            build_args: ''
           - name: backoffice
             dockerfile: apps/backoffice/Dockerfile
             build_args: NEXT_PUBLIC_ROLE_SYSTEM=admin
@@ -80,7 +83,7 @@ jobs:
           ref: ${{ needs.meta.outputs.sha }}
 
       - name: Exigir NEXT_PUBLIC_API_URL (apps Next)
-        if: ${{ matrix.name != 'api' && vars.NEXT_PUBLIC_API_URL == '' }}
+        if: ${{ matrix.name != 'api' && matrix.name != 'pdf' && vars.NEXT_PUBLIC_API_URL == '' }}
         run: |
           echo '::error::Defina a variável de repositório NEXT_PUBLIC_API_URL (URL pública da API): ela é embutida no build do backoffice.'
           exit 1
