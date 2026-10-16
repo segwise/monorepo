@@ -107,7 +107,7 @@ O runtime roda com raiz **só leitura**: o único caminho gravável é `.next/ca
 passar a gravar em disco, declare o caminho no `deploy/docker-compose.yml`. Build: `turbo prune` + build com Bun → output standalone do Next
 (`outputFileTracingRoot` na raiz; servidor em `apps/backoffice/server.js`) →
 runtime **Bun** (mesma imagem base da api; o `server.js` do standalone roda com `bun`, ver
-`docs/MONOREPO.md`). **Build local do Next sob Node 24 pede ≥ 6 GB de memória no Docker** (ver `docs/MONOREPO.md`). Buildado com **contexto na raiz do monorepo**
+`docs/MONOREPO.md`). O `next build` também roda no Bun (`bun --bun next build`, script `build`). **Build local da imagem: dê ≥ 6 GB de memória ao Docker** (números de memória em `docs/MONOREPO.md`). Buildado com **contexto na raiz do monorepo**
 (`docker build -f apps/backoffice/Dockerfile --build-arg NEXT_PUBLIC_ROLE_SYSTEM=admin ...`).
 O CD builda três imagens (`backoffice`, `customer`, `producer`) a partir do mesmo
 Dockerfile com build args diferentes — o valor de `NEXT_PUBLIC_ROLE_SYSTEM` do painel

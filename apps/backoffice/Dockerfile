@@ -1,19 +1,15 @@
 # Contexto de build: raiz do monorepo
 #   docker build -f apps/backoffice/Dockerfile --build-arg NEXT_PUBLIC_ROLE_SYSTEM=admin .
 #
-# Imagens base FIXADAS POR DIGEST (cadeia de suprimentos: a tag pode mudar sem aviso). O Dependabot
-# (.github/dependabot.yml) abre PR para atualizar o digest; para subir à mão:
-#   docker pull node:24-alpine && docker image inspect node:24-alpine --format '{{index .RepoDigests 0}}'
-# O build usa o Node; o runtime é a imagem do Bun (a mesma da api).
-FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS bun
-
-FROM node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS base
-# bun só nos estágios de build (copiado da imagem oficial, sem `npm install -g`).
-COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+# Build e runtime no Bun, na MESMA imagem base da api e do migrate (fixada pelo mesmo digest; o Bun
+# é atualizado à mão nos quatro lugares, ver .github/dependabot.yml). O `next build` roda no Bun
+# (`bun --bun`, script build do apps/backoffice): as páginas pré-renderizadas no build e as renderizadas
+# em runtime saem do mesmo motor (ex.: formatação Intl em pt-BR).
+FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS base
 
 FROM base AS pruner
 WORKDIR /app
-RUN npm install -g turbo@^2
+RUN bun add -g turbo@^2
 COPY . .
 RUN turbo prune @segwise/backoffice --docker
 
@@ -39,11 +35,11 @@ RUN bun run --cwd packages/core build \
            apps/backoffice/.next/standalone/node_modules/.bun/@img+sharp-libvips-linux-x64@*
 
 # Runtime: Bun, na MESMA imagem base da api e do migrate (mesmo digest). No servidor as camadas do Alpine
-# e do Bun já existem por causa da api, então cada imagem web só traz o próprio app (~17 MB) e o Node
-# (~49 MB comprimidos) sai de vez. O Next.js reconhece o Bun (adaptador verificado desde a 16.2); aqui o
-# `server.js` do standalone roda direto no Bun, o caminho do guia de Docker do Bun. O build continua no
-# Node (estágio builder). Para voltar ao Node: runner `node:24-alpine` e `CMD ["node", ...]`.
-FROM oven/bun:1.4.3-alpine@sha256:629e17411f1f129dbec3af78d5af9c9f2a937435c80349437206c6b0b7422373 AS runner
+# e do Bun já existem por causa da api, então cada imagem web só traz o próprio app (~17 MB). O Next.js
+# reconhece o Bun (adaptador verificado desde a 16.2); aqui o `server.js` do standalone roda direto no
+# Bun, o caminho do guia de Docker do Bun. Para voltar ao Node: base `node:24-alpine`, script build sem
+# `bun --bun` e `CMD ["node", ...]` (e o healthcheck do compose com `node`).
+FROM base AS runner
 WORKDIR /app
 
 # Patches de segurança do Alpine publicados depois da imagem base.
