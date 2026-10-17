@@ -127,6 +127,25 @@ de **2026-10-19** (`bun update <pacote>` em cada workspace, conferir o CI):
   para um 8.0.0-rc: use a versão explícita).
 - [ ] `turbo` 2.11.9.
 
+## Serviço de PDF: `Bun.WebView` no lugar do Playwright (estudado em 2026-10-17, adiado)
+
+Protótipo (mesmo `chrome-headless-shell`, comandos CDP via `view.cdp()`): `Page.setDocumentContent` +
+`Page.printToPDF` deram PDFs **idênticos** aos do Playwright (0 px de diferença nas 3 fixtures);
+`Emulation.setScriptExecutionDisabled` desliga o JS; `Network.emulateNetworkConditions({ offline: true })`
+bloqueia a rede (sem ele o Chrome envia as requisições); 8 renders paralelos ok; se o Chrome morre, o
+próximo `new Bun.WebView()` sobe outro.
+
+Por que não agora:
+- No Linux o WebView **controla um Chrome instalado** (o WebKit embutido é só macOS): o navegador continua na
+  imagem; sairia só o `playwright-core` (~4–5 MB comprimidos de 201 MB).
+- API marcada como **experimental** ("may change"); sem método de PDF, sem opção de JS desligado nem de
+  bloqueio de rede: tudo vira CDP cru por aba, e um esquecimento abre a rede. Sem contexto isolado por pedido
+  (o Playwright cria um `BrowserContext` por PDF).
+- Bunwright (camada sobre o WebView): 0.3.2, um mantenedor, **sem licença declarada** no npm.
+
+- [ ] Reavaliar quando o `Bun.WebView` sair do experimental e tiver PDF e bloqueio de rede próprios. Nesse caso
+  o `playwright-core` pode ficar só no estágio de build (para baixar o headless shell).
+
 ---
 
 Quando um item for resolvido, marcar o checkbox e mover para um changelog
