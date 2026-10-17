@@ -2,10 +2,13 @@ import { adminClient, organizationClient } from 'better-auth/client/plugins';
 import { nextCookies } from 'better-auth/next-js';
 import { createAuthClient } from 'better-auth/react';
 import xior from 'xior';
+import { apiBaseURL } from './api-url';
 
 const basePath = '/auth';
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL;
+// URL completa até /auth: quando a baseURL já tem caminho (a interna termina em /services), o cliente do
+// better-auth ignora o `basePath`, então ele entra na própria URL. Na pública fica igual a antes.
+const baseURL = apiBaseURL ? `${apiBaseURL}${basePath}` : undefined;
 
 const roleApplication = {
 	admin: 'backoffice',

@@ -1,8 +1,9 @@
 import { cookiesAuthRelevant } from '@segwise/core';
 import xior from 'xior';
+import { apiBaseURL, clientIpHeaders } from './api-url';
 
 const api = xior.create({
-	baseURL: process.env.NEXT_PUBLIC_API_URL,
+	baseURL: apiBaseURL,
 	credentials: 'include',
 	headers: {
 		...xior.defaults.headers,
@@ -54,9 +55,15 @@ api.interceptors.request.use(
 	async (config) => {
 		if (typeof window === 'undefined') {
 			try {
-				const { cookies } = await import('next/headers');
+				const { cookies, headers } = await import('next/headers');
 
 				const cookieStore = await cookies();
+
+				config.headers = {
+					...config.headers,
+					...clientIpHeaders(await headers()),
+				};
+
 				const cookieString = cookiesAuthRelevant(
 					// @ts-expect-error
 					process.env.NEXT_PUBLIC_ROLE_SYSTEM,

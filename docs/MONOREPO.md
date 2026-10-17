@@ -267,6 +267,15 @@ serviço `migrate` roda a cada deploy antes da api (`depends_on: service_complet
 erro interrompe o deploy com a api anterior no ar), e a api não tem mais o CLI do Prisma (o `smoke-api` falha
 se ele voltar). O pacote do GHCR herda a visibilidade pública do repositório.
 
+**Backoffice → api pela rede interna.** O servidor do Next (SSR, `proxy.ts`, server actions) chama a api por
+`API_INTERNAL_URL=http://segwise-api:3000/services`, na rede `api-web-network` do compose (`internal: true`,
+só api + backoffice/customer/producer; `segwise-api` é um apelido exclusivo porque na `dokploy-network` outros
+projetos podem ter um serviço `api`). Antes essas chamadas iam pela URL pública: saíam do servidor, passavam
+pelo Cloudflare e voltavam (dois TLS, dezenas de ms). O navegador continua com `NEXT_PUBLIC_API_URL`
+(`src/libraries/api-url.ts`). Como pela rede interna não há Cloudflare/Traefik acrescentando o IP, o Next
+repassa o IP do usuário (`cf-connecting-ip` → `x-forwarded-for`): sem ele o rate limit do better-auth junta
+todos os usuários num balde só. Postgres e Redis da fila já eram internos (host interno do Dokploy).
+
 O **primeiro deploy** depois destas mudanças baixa as camadas novas (bases e Chromium); os seguintes voltam a
 ser incrementais.
 
