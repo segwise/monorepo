@@ -2,6 +2,7 @@ import { cookiesAuthRelevant } from '@segwise/core/utils';
 import { getSessionCookie } from 'better-auth/cookies';
 import { unstable_cache } from 'next/cache';
 import { type NextRequest, NextResponse } from 'next/server';
+import { clientIpHeaders } from './libraries/api-url';
 import { auth, getCookiePrefix } from './libraries/auth';
 
 const ACCESS = process.env.NEXT_PUBLIC_ROLE_SYSTEM;
@@ -33,7 +34,8 @@ function withVersion(response: NextResponse) {
 }
 
 const getSessionCached = unstable_cache(
-	async (cookie: string) => {
+	// `ipHeaders` (IP do usuário) também entra na chave do cache; o cookie já é único por sessão.
+	async (cookie: string, ipHeaders: Record<string, string>) => {
 		const sessionCookie = getSessionCookie(
 			new Headers({
 				cookie,
@@ -51,6 +53,7 @@ const getSessionCached = unstable_cache(
 			fetchOptions: {
 				headers: {
 					cookie,
+					...ipHeaders,
 				},
 			},
 		});
@@ -83,6 +86,7 @@ async function proxy(request: NextRequest) {
 	const session = await getSessionCached(
 		// @ts-expect-error
 		cookiesAuthRelevant(ACCESS, request.cookies.toString()),
+		clientIpHeaders(request.headers),
 	);
 
 	if (session && pathname === '/') {

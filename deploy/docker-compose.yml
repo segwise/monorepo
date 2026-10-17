@@ -23,6 +23,9 @@ x-web-environment: &web-environment
   # O Next standalone escuta em HOSTNAME; no Docker o padrão é o id do container.
   HOSTNAME: 0.0.0.0
   NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+  # O servidor do Next (SSR, proxy, server actions) fala com a api pela rede interna `api-web`, sem ir ao
+  # Cloudflare e voltar. O navegador continua usando NEXT_PUBLIC_API_URL (ver src/libraries/api-url.ts).
+  API_INTERNAL_URL: http://segwise-api:3000/services
   BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
 
 x-web-healthcheck: &web-healthcheck
@@ -124,9 +127,12 @@ services:
       retries: 5
       start_period: 90s
     networks:
-      - internal-network
-      - pdf-network
-      - dokploy-network
+      internal-network: {}
+      pdf-network: {}
+      # Apelido exclusivo: na dokploy-network outros projetos podem ter um serviço chamado `api`.
+      api-web-network:
+        aliases: [segwise-api]
+      dokploy-network: {}
 
   # Migrations do banco (`prisma migrate deploy`), uma vez a cada deploy, antes da api. Imagem própria
   # (packages/database/Dockerfile): a api não carrega o CLI do Prisma. Sem migration pendente, só
@@ -194,6 +200,7 @@ services:
       NEXT_PUBLIC_ROLE_SYSTEM: admin
     healthcheck: *web-healthcheck
     networks:
+      - api-web-network
       - dokploy-network
 
   customer:
@@ -213,6 +220,7 @@ services:
       NEXT_PUBLIC_ROLE_SYSTEM: customer
     healthcheck: *web-healthcheck
     networks:
+      - api-web-network
       - dokploy-network
 
   producer:
@@ -232,6 +240,7 @@ services:
       NEXT_PUBLIC_ROLE_SYSTEM: producer
     healthcheck: *web-healthcheck
     networks:
+      - api-web-network
       - dokploy-network
 
   # Cache e sessões do better-auth: só expulsa chaves com TTL (preserva as consultas pagas de CPF/CNPJ
@@ -271,6 +280,11 @@ networks:
     internal: true
   # Só api e pdf. `internal: true` = sem rota para a internet.
   pdf-network:
+    driver: bridge
+    internal: true
+  # api + backoffice/customer/producer: o servidor do Next chama a api por aqui (http://segwise-api:3000).
+  # `internal: true`: sem rota para a internet; o Traefik e a saída para a internet seguem pela dokploy-network.
+  api-web-network:
     driver: bridge
     internal: true
   dokploy-network:
