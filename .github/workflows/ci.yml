@@ -387,11 +387,12 @@ jobs:
             const { createBunRedisClient, Queue } = await import("bullmq");
             const connection = createBunRedisClient(new Bun.RedisClient(process.env.QUEUE_URL));
             const queue = new Queue("marketing", { connection });
-            await queue.upsertJobScheduler("smoke-scheduler", { every: 3_600_000 }, { name: "send-campaign", data: { campaignId: "smoke-inexistente" } });
+            const campaignId = crypto.randomUUID(); // campanha que não existe no banco
+            await queue.upsertJobScheduler("smoke-scheduler", { every: 3_600_000 }, { name: "send-campaign", data: { campaignId } });
             const schedulers = await queue.getJobSchedulers();
             if (!schedulers.some((s) => s.key === "smoke-scheduler")) { console.error("scheduler não criado"); process.exit(1); }
             await queue.removeJobScheduler("smoke-scheduler");
-            const job = await queue.add("send-campaign", { campaignId: "smoke-inexistente", manual: true });
+            const job = await queue.add("send-campaign", { campaignId, manual: true });
             let state = "";
             for (let i = 0; i < 40; i++) {
               state = await (await queue.getJob(job.id)).getState();
