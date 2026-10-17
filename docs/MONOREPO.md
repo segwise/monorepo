@@ -276,6 +276,15 @@ pelo Cloudflare e voltavam (dois TLS, dezenas de ms). O navegador continua com `
 repassa o IP do usuário (`cf-connecting-ip` → `x-forwarded-for`): sem ele o rate limit do better-auth junta
 todos os usuários num balde só. Postgres e Redis da fila já eram internos (host interno do Dokploy).
 
+**Navegador → api pela origem do site (`/api`).** O código do navegador chama `${window.location.origin}/api/...`
+(`src/libraries/api-url.ts`) e o Next repassa para a api pela rede interna (rewrite em `next.config.ts`;
+destino `API_INTERNAL_URL`, argumento de build do Dockerfile, porque o Next fixa os rewrites no build).
+Mesma origem: sem CORS e sem a requisição `OPTIONS` (antes ela vinha antes de cada URL nova, já que o
+cache do preflight é por URL), e uma conexão só com o Cloudflare. Limites ajustados no `next.config.ts`:
+`experimental.proxyTimeout` 180 s (o padrão de 30 s cortaria impressões e extração por IA) e
+`proxyClientMaxBodySize` 64 MB (o padrão de 10 MB truncava uploads de PDF maiores). O Cloudflare tem o
+próprio teto de ~100 s por requisição. A api continua pública em `services.segwise.com.br` para o app mobile.
+
 O **primeiro deploy** depois destas mudanças baixa as camadas novas (bases e Chromium); os seguintes voltam a
 ser incrementais.
 

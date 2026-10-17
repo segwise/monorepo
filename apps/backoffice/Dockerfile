@@ -21,10 +21,14 @@ COPY --from=pruner /app/out/full/ .
 
 # Só o que o build precisa e é igual entre commits (role e URL da API): o SHA do commit NÃO entra aqui,
 # senão o `next build` rodaria de novo a cada commit e as camadas do backoffice nunca seriam reaproveitadas.
+# API_INTERNAL_URL: destino do rewrite `/api/*` (next.config.ts), que o Next fixa no build. É o endereço
+# da api na rede interna do compose (deploy/docker-compose.yml, apelido `segwise-api`).
 ARG NEXT_PUBLIC_ROLE_SYSTEM
 ARG NEXT_PUBLIC_API_URL
+ARG API_INTERNAL_URL=http://segwise-api:3000/services
 ENV NEXT_PUBLIC_ROLE_SYSTEM=$NEXT_PUBLIC_ROLE_SYSTEM \
     NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    API_INTERNAL_URL=$API_INTERNAL_URL \
     NEXT_TELEMETRY_DISABLED=1
 
 # O `sharp` (otimização do next/image) vem nas duas variantes de libc; o runtime é Alpine (musl) e só

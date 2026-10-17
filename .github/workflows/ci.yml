@@ -731,6 +731,10 @@ jobs:
           res="$(curl -s -o /dev/null -w '%{http_code} %{content_type}' "http://localhost:3000${chunk}")"
           echo "GET ${chunk} -> ${res}"
           case "$res" in "200 application/javascript"*|"200 text/javascript"*) ;; *) echo "::error::Chunk estático não foi servido (${res})."; exit 1 ;; esac
+          # O navegador fala com a api por `/api` no próprio domínio: o rewrite do Next (fixado no build) tem de
+          # apontar para a api na rede interna (argumento API_INTERNAL_URL do Dockerfile).
+          docker exec web sh -c 'grep -q "segwise-api:3000/services" /app/apps/backoffice/.next/routes-manifest.json' \
+            || { echo "::error::O rewrite /api do Next não aponta para http://segwise-api:3000/services."; exit 1; }
           # O healthcheck do compose (deploy/docker-compose.yml, x-web-healthcheck) dentro do container.
           docker exec web bun -e "fetch('http://127.0.0.1:3000/sign-in',{redirect:'manual'}).then((r)=>process.exit(r.status<500?0:1),()=>process.exit(1))" \
             || { echo "::error::O healthcheck do compose falha dentro do container."; exit 1; }
