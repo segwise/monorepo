@@ -1,5 +1,4 @@
-import { Queue } from 'bullmq';
-import IORedis from 'ioredis';
+import { createBunRedisClient, Queue } from 'bullmq';
 import { environment } from '@/libraries/environment';
 import {
 	applyCampaignSchedule,
@@ -9,9 +8,12 @@ import {
 
 const MARKETING_QUEUE = 'marketing';
 
-const connection = new IORedis(environment.QUEUE_URL, {
-	maxRetriesPerRequest: null,
-});
+// Cliente Redis nativo do Bun (o mesmo do cache), pelo adaptador oficial do BullMQ. O worker usa um
+// `duplicate()` dele para os comandos bloqueantes. Feche sempre pelo adaptador (`connection.quit()`),
+// nunca pelo cliente cru: senão os comandos em andamento falham com ConnectionClosedError.
+const connection = createBunRedisClient(
+	new Bun.RedisClient(environment.QUEUE_URL),
+);
 
 const marketingQueue = new Queue(MARKETING_QUEUE, { connection });
 
