@@ -377,6 +377,35 @@ jobs:
             exit 1
           fi
 
+      # Fila de marketing no cliente Redis nativo do Bun (createBunRedisClient): agenda e remove um
+      # scheduler (como as campanhas) e põe um job real na fila; o worker da própria api tem de concluí-lo
+      # (campanha inexistente: o processador retorna sem enviar nada). Prova comandos normais e bloqueantes.
+      - name: Fila (BullMQ no Redis nativo do Bun)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.api == 'true'
+        run: |
+          docker exec api bun -e '
+            const { createBunRedisClient, Queue } = await import("bullmq");
+            const connection = createBunRedisClient(new Bun.RedisClient(process.env.QUEUE_URL));
+            const queue = new Queue("marketing", { connection });
+            const campaignId = crypto.randomUUID(); // campanha que não existe no banco
+            await queue.upsertJobScheduler("smoke-scheduler", { every: 3_600_000 }, { name: "send-campaign", data: { campaignId } });
+            const schedulers = await queue.getJobSchedulers();
+            if (!schedulers.some((s) => s.key === "smoke-scheduler")) { console.error("scheduler não criado"); process.exit(1); }
+            await queue.removeJobScheduler("smoke-scheduler");
+            const job = await queue.add("send-campaign", { campaignId, manual: true });
+            let state = "";
+            for (let i = 0; i < 40; i++) {
+              state = await (await queue.getJob(job.id)).getState();
+              if (state === "completed" || state === "failed") break;
+              await Bun.sleep(250);
+            }
+            const done = await queue.getJob(job.id);
+            console.log("job", job.id, "->", state, JSON.stringify(done?.returnvalue ?? null));
+            await queue.close();
+            await connection.quit();
+            if (state !== "completed") process.exit(1);
+          ' || { echo "::error::A fila (BullMQ no Redis nativo do Bun) não processou o job."; exit 1; }
+
       # Como no deploy: SIGTERM e até 30 s. A api tem de sair sozinha, com código 0, pelo desligamento
       # gracioso (src/libraries/shutdown.ts), e não pelo SIGKILL do Docker.
       - name: Desligamento gracioso (SIGTERM)

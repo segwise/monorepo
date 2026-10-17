@@ -9,7 +9,7 @@ principalmente [`../../docs/DOMAIN.md`](../../docs/DOMAIN.md) para os nomes de d
 ## Stack
 Hono (framework HTTP) + Bun (roda TS nativo via `bun --bun run`, sem passo de
 transpile separado) + Prisma 7 com `@prisma/adapter-pg` (PostgreSQL) +
-better-auth + ioredis (Redis) + pdf-lib/pdf-parse; PDFs saem do serviço `apps/pdf` (Chromium isolado,
+better-auth + Redis pelo cliente nativo do Bun (`Bun.RedisClient`, cache e fila do BullMQ via `createBunRedisClient`) + pdf-lib/pdf-parse; PDFs saem do serviço `apps/pdf` (Chromium isolado,
 `libraries/pdf/client.ts`; em dev rode também `bun run --cwd apps/pdf dev`)
 + Resend + react-email/handlebars (templates de e-mail) + openai SDK + Biome.
 ## Comandos
