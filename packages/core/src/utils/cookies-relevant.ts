@@ -1,4 +1,9 @@
+// Chave = X-Client-App / NEXT_PUBLIC_ROLE_SYSTEM; valor = prefixo dos cookies daquele app. O painel
+// interno roda com `admin`, mas os cookies dele usam o prefixo `backoffice` (a api grava assim: ver
+// apps/api/src/functions/response/replace-session.ts). Sem `admin` aqui, o proxy do backoffice e o
+// middleware de sessão da api descartavam o cookie e o admin nunca ficava logado.
 const appPrefixes = {
+	admin: ['backoffice'],
 	backoffice: ['backoffice'],
 	customer: ['customer'],
 	producer: ['producer'],
